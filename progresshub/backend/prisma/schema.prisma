@@ -1,0 +1,145 @@
+// ProgressHub Prisma Schema
+// 專案進度回報系統資料庫結構
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ===================================
+// 員工表
+// ===================================
+model Employee {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  slackUserId     String           @unique @map("slack_user_id")
+  department      String?
+  role            String?          // 職能：前端、後端、美術、企劃等
+  permissionLevel PermissionLevel  @default(EMPLOYEE) @map("permission_level")
+  managedProjects String[]         @default([]) @map("managed_projects") // PM 負責的專案 ID
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  // 關聯
+  assignedTasks   Task[]           @relation("AssignedTasks")
+  progressLogs    ProgressLog[]
+
+  @@map("employees")
+}
+
+enum PermissionLevel {
+  EMPLOYEE
+  PM
+  ADMIN
+}
+
+// ===================================
+// 專案表
+// ===================================
+model Project {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  startDate   DateTime      @map("start_date")
+  endDate     DateTime?     @map("end_date")
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  // 關聯
+  tasks       Task[]
+  milestones  Milestone[]
+
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+// ===================================
+// 任務表
+// ===================================
+model Task {
+  id                 String     @id @default(uuid())
+  projectId          String     @map("project_id")
+  name               String
+  description        String?
+  assignedToId       String     @map("assigned_to")
+  collaborators      String[]   @default([]) // 協作者 ID 列表
+  plannedStartDate   DateTime   @map("planned_start_date")
+  plannedEndDate     DateTime   @map("planned_end_date")
+  actualStartDate    DateTime?  @map("actual_start_date")
+  actualEndDate      DateTime?  @map("actual_end_date")
+  progressPercentage Int        @default(0) @map("progress_percentage")
+  status             TaskStatus @default(NOT_STARTED)
+  dependencies       String[]   @default([]) // 相依任務 ID 列表
+  milestoneId        String?    @map("milestone_id")
+  createdAt          DateTime   @default(now()) @map("created_at")
+  updatedAt          DateTime   @updatedAt @map("updated_at")
+
+  // 關聯
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo   Employee      @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  milestone    Milestone?    @relation(fields: [milestoneId], references: [id])
+  progressLogs ProgressLog[]
+
+  @@map("tasks")
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+// ===================================
+// 里程碑表
+// ===================================
+model Milestone {
+  id          String          @id @default(uuid())
+  projectId   String          @map("project_id")
+  name        String
+  description String?
+  targetDate  DateTime        @map("target_date")
+  status      MilestoneStatus @default(PENDING)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // 關聯
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks   Task[]
+
+  @@map("milestones")
+}
+
+enum MilestoneStatus {
+  PENDING
+  ACHIEVED
+}
+
+// ===================================
+// 進度記錄表
+// ===================================
+model ProgressLog {
+  id                 String   @id @default(uuid())
+  taskId             String   @map("task_id")
+  employeeId         String   @map("employee_id")
+  progressPercentage Int      @map("progress_percentage")
+  notes              String?
+  reportedAt         DateTime @default(now()) @map("reported_at")
+
+  // 關聯
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  @@map("progress_logs")
+}
