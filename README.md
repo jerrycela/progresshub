@@ -1,253 +1,284 @@
-# Slack Bot - 小龍蝦專屬回應機器人
+# ProgressHub
 
-這個 Slack 機器人會積極回應小龍蝦（<@U08CF634LSH>）在頻道中發起的所有討論訊息。
+專案進度回報系統 - 讓團隊協作更透明
 
-## 功能特點
+## 系統概述
 
-- ✅ 自動檢測小龍蝦（用戶 ID: U08CF634LSH）發送的所有訊息
-- ✅ 積極且友好地回應每一條訊息
-- ✅ 支持在討論串（thread）中回應
-- ✅ 根據訊息內容提供智能回應
-- ✅ 24/7 持續運行
+ProgressHub 是一個內網專案進度管理系統，讓員工可以透過 Slack 輕鬆回報每日工作進度，PM 則能透過甘特圖即時掌握所有專案的執行狀況。
 
-## 設置說明
+### 核心功能
 
-### 1. 前置需求
+- 員工每日透過 Slack 回報工作進度
+- PM 用甘特圖檢視所有人/所有專案的進度
+- 支援多專案管理、任務分配、里程碑追蹤
+- 自動提醒機制確保回報完整性
+- 權限分層管理（員工/PM/管理員）
 
-- Python 3.8 或更高版本
-- Slack 工作區的管理員權限（用於創建應用）
+## 技術架構
 
-### 2. 創建 Slack App
+### 前端
+- **框架**: Vue 3
+- **建構工具**: Vite
+- **甘特圖**: Frappe Gantt
 
-1. 前往 [Slack API](https://api.slack.com/apps) 並點擊 "Create New App"
-2. 選擇 "From scratch"
-3. 輸入應用名稱（例如：小龍蝦助手）並選擇工作區
+### 後端
+- **執行環境**: Node.js
+- **框架**: Express
+- **ORM**: Prisma
+- **資料庫**: PostgreSQL
+- **認證**: Slack OAuth + JWT
 
-### 3. 配置 App 權限
+### 部署
+- **容器化**: Docker + Docker Compose
+- **服務拆分**:
+  - `postgres` - PostgreSQL 資料庫
+  - `backend` - Node.js API 服務
+  - `frontend` - Vue 3 前端（nginx serve）
+  - `scheduler` - 排程服務（每日提醒）
 
-在 "OAuth & Permissions" 部分，添加以下 Bot Token Scopes：
+## 快速開始
 
-- `app_mentions:read` - 讀取 @mentions
-- `channels:history` - 讀取公開頻道的訊息歷史
-- `channels:read` - 查看公開頻道信息
+### 前置需求
+
+- Docker & Docker Compose
+- Node.js 20+ (本地開發)
+- Slack App 設定（參考下方說明）
+
+### 安裝步驟
+
+1. **複製專案**
+   ```bash
+   git clone <repository-url>
+   cd openclawfortest
+   ```
+
+2. **設定環境變數**
+   ```bash
+   cp .env.example .env
+   # 編輯 .env 檔案，填入必要的設定值
+   ```
+
+3. **啟動服務**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **執行資料庫遷移**
+   ```bash
+   docker-compose exec backend npx prisma migrate dev
+   ```
+
+5. **訪問應用**
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:3000
+   - Health Check: http://localhost:3000/health
+
+## 專案結構
+
+```
+.
+├── backend/                # Backend API 服務
+│   ├── prisma/            # Prisma Schema & Migrations
+│   │   └── schema.prisma  # 資料庫 Schema 定義
+│   ├── src/
+│   │   ├── config/        # 設定檔
+│   │   ├── controllers/   # 控制器
+│   │   ├── middleware/    # 中間件
+│   │   ├── routes/        # 路由
+│   │   ├── services/      # 業務邏輯
+│   │   ├── types/         # TypeScript 類型定義
+│   │   └── index.ts       # 應用入口
+│   ├── Dockerfile
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── frontend/              # Vue 3 前端應用
+│   ├── src/
+│   ├── Dockerfile
+│   └── package.json
+│
+├── scheduler/             # 排程服務（每日提醒）
+│   ├── src/
+│   │   └── index.ts
+│   ├── Dockerfile
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── docker-compose.yml     # Docker Compose 配置
+├── .env.example           # 環境變數範例
+└── README.md
+```
+
+## 資料庫 Schema
+
+### 5 個核心資料表
+
+1. **Employee** - 員工表
+   - 儲存員工資訊、權限等級、Slack User ID
+
+2. **Project** - 專案表
+   - 專案基本資訊、開始/結束日期、狀態
+
+3. **Task** - 任務表
+   - 任務資訊、負責人、計劃/實際日期、進度百分比
+
+4. **Milestone** - 里程碑表
+   - 專案里程碑、目標日期、達成狀態
+
+5. **ProgressLog** - 進度記錄表
+   - 每日進度回報記錄、備註
+
+## Slack 整合設定
+
+### 1. 建立 Slack App
+
+1. 前往 https://api.slack.com/apps
+2. 點選「Create New App」→「From scratch」
+3. 輸入 App 名稱（如：ProgressHub）
+4. 選擇要安裝的 Workspace
+
+### 2. 設定 OAuth Permissions
+
+在「OAuth & Permissions」頁面，新增以下 Bot Token Scopes：
+
 - `chat:write` - 發送訊息
-- `groups:history` - 讀取私有頻道的訊息歷史（如需要）
-- `im:history` - 讀取直接訊息（如需要）
-- `mpim:history` - 讀取群組訊息（如需要）
+- `commands` - 處理 Slash Commands
+- `users:read` - 讀取用戶資訊
+- `users:read.email` - 讀取用戶 Email
 
-### 4. 啟用 Socket Mode
+### 3. 建立 Slash Command
 
-1. 前往 "Socket Mode" 並啟用它
-2. 創建一個 App-Level Token，範圍選擇 `connections:write`
-3. 保存這個 token（以 `xapp-` 開頭）
+在「Slash Commands」頁面，建立指令：
 
-### 5. 訂閱事件
+- **Command**: `/report`
+- **Request URL**: `https://your-domain.com/api/slack/commands`
+- **Short Description**: 回報工作進度
 
-在 "Event Subscriptions" 部分：
+### 4. 安裝 App 到 Workspace
 
-1. 啟用 Events
-2. 在 "Subscribe to bot events" 中添加：
-   - `app_mention` - 當有人 @提及機器人
-   - `message.channels` - 公開頻道的訊息
-   - `message.groups` - 私有頻道的訊息（如需要）
-   - `message.im` - 直接訊息（如需要）
-   - `message.mpim` - 群組訊息（如需要）
+1. 在「Install App」頁面，點選「Install to Workspace」
+2. 授權後，複製「Bot User OAuth Token」（以 `xoxb-` 開頭）
+3. 將 Token 貼到 `.env` 檔案的 `SLACK_BOT_TOKEN`
 
-### 6. 安裝 App 到工作區
+### 5. 取得其他 Credentials
 
-1. 前往 "Install App"
-2. 點擊 "Install to Workspace"
-3. 授權應用
-4. 複製 "Bot User OAuth Token"（以 `xoxb-` 開頭）
+- **Client ID** & **Client Secret**: 在「Basic Information」→「App Credentials」
+- **Signing Secret**: 在「Basic Information」→「App Credentials」
 
-### 7. 本地設置
+將這些值填入 `.env` 檔案。
 
-1. 克隆此倉庫：
-```bash
-git clone <repository-url>
-cd openclawfortest
-```
+## 開發指南
 
-2. 創建虛擬環境並安裝依賴：
-```bash
-python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-3. 創建 `.env` 文件：
-```bash
-cp .env.example .env
-```
-
-4. 編輯 `.env` 文件，填入你的令牌：
-```
-SLACK_BOT_TOKEN=xoxb-your-actual-bot-token
-SLACK_APP_TOKEN=xapp-your-actual-app-token
-```
-
-### 8. 運行機器人
+### Backend 開發
 
 ```bash
-python app.py
+cd backend
+
+# 安裝依賴
+npm install
+
+# 執行資料庫遷移
+npx prisma migrate dev
+
+# 啟動開發伺服器
+npm run dev
+
+# 開啟 Prisma Studio (資料庫管理介面)
+npx prisma studio
 ```
 
-你應該會看到類似這樣的輸出：
-```
-INFO:__main__:Starting Slack bot...
-INFO:__main__:Target user (Xiaolongxia): U08CF634LSH
-⚡️ Bolt app is running!
-```
+### Scheduler 開發
 
-### 9. 邀請機器人到頻道
-
-在你想讓機器人工作的 Slack 頻道中：
-```
-/invite @你的機器人名稱
-```
-
-## 使用方法
-
-機器人會自動執行以下操作：
-
-1. **監聽所有訊息**：機器人會監聽它被邀請的頻道中的所有訊息
-2. **識別小龍蝦**：當檢測到用戶 ID 為 `U08CF634LSH` 的訊息時
-3. **積極回應**：自動生成友好的回應並發送
-
-### 回應示例
-
-當小龍蝦說：
-- "你好" → 機器人回應："你好！很高興見到你！有什麼我可以幫忙的嗎？"
-- "謝謝" → 機器人回應："不客氣！隨時樂意幫忙！"
-- "幫助" → 機器人回應："當然！請告訴我你需要什麼幫助，我會盡力協助你。"
-- 任何問題 → 機器人回應："這是個好問題！讓我想想... 我會盡力回答你的問題。"
-- 其他訊息 → 機器人回應："我收到你的訊息了！我在這裡隨時準備協助你。"
-
-## 自定義
-
-### 修改目標用戶
-
-編輯 `app.py` 中的 `TARGET_USER_ID`：
-```python
-TARGET_USER_ID = "U08CF634LSH"  # 改成其他用戶 ID
-```
-
-### 添加更多回應
-
-在 `generate_response()` 函數中添加更多關鍵詞匹配：
-```python
-def generate_response(text):
-    text_lower = text.lower()
-
-    if "你的關鍵詞" in text:
-        return "你的自定義回應"
-    # ... 更多條件
-```
-
-### 整合 AI（可選）
-
-你可以整合 OpenAI、Claude 或其他 AI API 來生成更智能的回應：
-
-```python
-def generate_response(text):
-    # 調用 AI API
-    response = your_ai_api.generate(text)
-    return response
-```
-
-## 部署到生產環境
-
-### 使用 Systemd（Linux）
-
-創建服務文件 `/etc/systemd/system/slack-bot.service`：
-```ini
-[Unit]
-Description=Slack Bot for Xiaolongxia
-After=network.target
-
-[Service]
-Type=simple
-User=your-user
-WorkingDirectory=/path/to/openclawfortest
-Environment="PATH=/path/to/openclawfortest/venv/bin"
-ExecStart=/path/to/openclawfortest/venv/bin/python app.py
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-啟動服務：
 ```bash
-sudo systemctl enable slack-bot
-sudo systemctl start slack-bot
-sudo systemctl status slack-bot
+cd scheduler
+
+# 安裝依賴
+npm install
+
+# 啟動開發伺服器
+npm run dev
 ```
 
-### 使用 Docker
+## API 端點
 
-創建 `Dockerfile`：
-```dockerfile
-FROM python:3.11-slim
+### 認證相關
+- `POST /api/auth/slack` - Slack OAuth 登入
+- `GET /api/auth/me` - 取得當前用戶資訊
 
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+### 專案管理
+- `GET /api/projects` - 取得專案列表
+- `POST /api/projects` - 建立新專案 (PM/Admin)
+- `GET /api/projects/:id` - 取得單一專案詳情
+- `PUT /api/projects/:id` - 更新專案 (PM/Admin)
 
-COPY app.py .
-CMD ["python", "app.py"]
-```
+### 任務管理
+- `GET /api/projects/:projectId/tasks` - 取得專案任務
+- `POST /api/projects/:projectId/tasks` - 建立新任務 (PM/Admin)
+- `GET /api/tasks/my` - 取得我的任務
 
-構建並運行：
+### 進度回報
+- `POST /api/progress` - 提交進度回報
+- `GET /api/progress` - 查詢進度記錄
+
+### 甘特圖
+- `GET /api/gantt` - 取得甘特圖資料（支援多種篩選）
+
+## 權限系統
+
+### Employee (一般員工)
+- 回報自己負責任務的進度
+- 查看自己參與的專案甘特圖
+
+### PM (專案經理)
+- 查看所有專案的甘特圖
+- 編輯專案資訊、任務、里程碑
+- 分配任務給員工
+
+### Admin (系統管理員)
+- 擁有所有 PM 權限
+- 管理員工帳號
+- 系統設定
+
+## 自動提醒機制
+
+Scheduler 服務會在每天下午 5:00（可設定）自動檢查當日尚未回報進度的員工，並透過 Slack 發送提醒訊息。
+
+提醒設定：
+- **時間**: 在 `.env` 中設定 `REMINDER_TIME`
+- **時區**: 在 `.env` 中設定 `REMINDER_TIMEZONE`
+- **排除**: 週末不提醒
+
+## 常見問題
+
+### 如何重置資料庫？
+
 ```bash
-docker build -t slack-bot .
-docker run -d --env-file .env --name slack-bot slack-bot
+docker-compose down -v
+docker-compose up -d
+docker-compose exec backend npx prisma migrate dev
 ```
 
-### 使用雲平台
+### 如何查看 logs？
 
-- **Heroku**: 添加 `Procfile` 文件
-- **AWS EC2**: 使用 systemd 或 supervisor
-- **Google Cloud Run**: 容器化部署
-- **Railway/Render**: 直接連接 GitHub 倉庫
-
-## 故障排除
-
-### 機器人沒有回應
-
-1. 檢查機器人是否被邀請到頻道
-2. 驗證 `.env` 文件中的令牌是否正確
-3. 確認事件訂閱已正確配置
-4. 查看日誌輸出是否有錯誤訊息
-
-### 權限錯誤
-
-確保在 Slack App 設置中授予了所有必需的權限，然後重新安裝 App 到工作區。
-
-### Socket Mode 連接失敗
-
-確保 `SLACK_APP_TOKEN` 正確且 Socket Mode 已啟用。
-
-## 日誌
-
-機器人會記錄以下信息：
-- 接收到的訊息
-- 發送的回應
-- 錯誤和異常
-
-查看日誌：
 ```bash
-# 如果使用 systemd
-sudo journalctl -u slack-bot -f
+# 查看所有服務 logs
+docker-compose logs -f
 
-# 如果直接運行
-# 日誌會輸出到終端
+# 查看特定服務 logs
+docker-compose logs -f backend
+docker-compose logs -f scheduler
 ```
 
-## 許可證
+### Scheduler 沒有發送提醒？
 
-MIT License
+1. 檢查 `SLACK_BOT_TOKEN` 是否正確設定
+2. 檢查 Bot 是否有 `chat:write` 權限
+3. 查看 scheduler 服務 logs
 
-## 支持
+## License
 
-如有問題或建議，請提交 Issue 或 Pull Request。
+MIT
+
+## 開發團隊
+
+ProgressHub Development Team
