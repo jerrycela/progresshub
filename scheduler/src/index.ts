@@ -106,12 +106,38 @@ function timeToCron(time: string): string {
 }
 
 /**
+ * Validate Slack token on startup
+ * Issue #11 修復：Slack Token 啟動時驗證
+ */
+async function validateSlackToken(): Promise<boolean> {
+  if (!process.env.SLACK_BOT_TOKEN) {
+    console.warn('⚠️ SLACK_BOT_TOKEN not configured');
+    return false;
+  }
+
+  try {
+    const result = await slackClient.auth.test();
+    console.log(`✅ Slack connected as: ${result.user} (Team: ${result.team})`);
+    return true;
+  } catch (error) {
+    console.error('❌ Invalid Slack token:', error);
+    return false;
+  }
+}
+
+/**
  * Start scheduler
  */
 async function startScheduler(): Promise<void> {
   try {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
+
+    // Issue #11: 驗證 Slack Token
+    const isSlackValid = await validateSlackToken();
+    if (!isSlackValid && process.env.NODE_ENV === 'production') {
+      throw new Error('Slack token validation failed in production environment');
+    }
 
     const cronExpression = timeToCron(REMINDER_TIME);
     console.log(`📅 Scheduler configured for: ${REMINDER_TIME} (${REMINDER_TIMEZONE})`);
