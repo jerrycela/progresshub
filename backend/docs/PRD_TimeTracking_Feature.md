@@ -1,10 +1,10 @@
 # 產品需求文件 (PRD)
 # ProgressHub - 工時計算功能
 
-> **文件版本**: v1.1
+> **文件版本**: v1.2
 > **建立日期**: 2026-02-02
 > **最後更新**: 2026-02-02
-> **文件狀態**: 待審核
+> **文件狀態**: 企劃已確認，可進入開發
 > **負責人**: 產品經理
 
 ---
@@ -523,22 +523,49 @@ Refs: #TASK-124, #TASK-125
 ### 8.7 新增資料模型
 
 ```prisma
+// GitLab 實例配置（支援多實例）
+model GitLabInstance {
+  id              String   @id @default(uuid())
+  name            String   // 顯示名稱，如「公司內部 GitLab」
+  baseUrl         String   @map("base_url")  // e.g., "https://gitlab.company.com"
+  clientId        String   @map("client_id")
+  clientSecret    String   @map("client_secret")  // 加密儲存
+  webhookSecret   String?  @map("webhook_secret") // 加密儲存
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  connections     GitLabConnection[]
+
+  @@unique([baseUrl])
+  @@map("gitlab_instances")
+}
+
 // GitLab 帳號連結
 model GitLabConnection {
   id              String   @id @default(uuid())
-  employeeId      String   @unique @map("employee_id")
+  employeeId      String   @map("employee_id")
+  instanceId      String   @map("instance_id")    // 關聯到哪個 GitLab 實例
   gitlabUserId    Int      @map("gitlab_user_id")
   gitlabUsername  String   @map("gitlab_username")
   accessToken     String   @map("access_token")  // 加密儲存
   refreshToken    String?  @map("refresh_token") // 加密儲存
   tokenExpiresAt  DateTime? @map("token_expires_at")
+
+  // 使用者偏好設定
+  autoConvertTime Boolean  @default(false) @map("auto_convert_time") // 自動工時轉換開關
+  syncCommits     Boolean  @default(true) @map("sync_commits")
+  syncMRs         Boolean  @default(true) @map("sync_mrs")
+  syncIssues      Boolean  @default(true) @map("sync_issues")       // Issues 雙向同步
+
   connectedAt     DateTime @default(now()) @map("connected_at")
   lastSyncAt      DateTime? @map("last_sync_at")
   isActive        Boolean  @default(true) @map("is_active")
 
   employee        Employee @relation(fields: [employeeId], references: [id])
+  instance        GitLabInstance @relation(fields: [instanceId], references: [id])
   activities      GitLabActivity[]
 
+  @@unique([employeeId, instanceId])  // 同一使用者可連結多個實例
   @@map("gitlab_connections")
 }
 
@@ -585,21 +612,78 @@ enum GitLabActivityType {
   MR_CLOSED       // MR 關閉
   MR_COMMENT      // MR 評論
   MR_APPROVED     // MR 審核通過
+  ISSUE_CREATED   // Issue 建立
+  ISSUE_CLOSED    // Issue 關閉
+  ISSUE_UPDATED   // Issue 更新
+}
+
+// GitLab Issue 與 Task 雙向同步對照表
+model GitLabIssueMapping {
+  id              String   @id @default(uuid())
+  connectionId    String   @map("connection_id")
+  gitlabIssueId   Int      @map("gitlab_issue_id")
+  gitlabIssueIid  Int      @map("gitlab_issue_iid")  // Issue 在專案內的編號
+  projectPath     String   @map("project_path")
+  taskId          String   @unique @map("task_id")
+
+  syncDirection   SyncDirection @default(BIDIRECTIONAL) @map("sync_direction")
+  lastSyncAt      DateTime? @map("last_sync_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  connection      GitLabConnection @relation(fields: [connectionId], references: [id])
+  task            Task @relation(fields: [taskId], references: [id])
+
+  @@unique([connectionId, gitlabIssueId])
+  @@map("gitlab_issue_mappings")
+}
+
+enum SyncDirection {
+  GITLAB_TO_TASK    // 僅 GitLab → Task
+  TASK_TO_GITLAB    // 僅 Task → GitLab
+  BIDIRECTIONAL     // 雙向同步
 }
 ```
 
 ### 8.8 新增 API 端點
 
+#### 實例管理 API（Admin）
+
 | Method | Endpoint | 說明 | 權限 |
 |--------|----------|------|------|
-| `GET` | `/api/gitlab/auth` | 發起 GitLab OAuth | 全員 |
+| `GET` | `/api/gitlab/instances` | 列出所有 GitLab 實例 | Admin |
+| `POST` | `/api/gitlab/instances` | 新增 GitLab 實例 | Admin |
+| `PUT` | `/api/gitlab/instances/:id` | 更新實例設定 | Admin |
+| `DELETE` | `/api/gitlab/instances/:id` | 刪除實例 | Admin |
+
+#### 帳號連結 API
+
+| Method | Endpoint | 說明 | 權限 |
+|--------|----------|------|------|
+| `GET` | `/api/gitlab/auth/:instanceId` | 發起特定實例的 OAuth | 全員 |
 | `GET` | `/api/gitlab/callback` | OAuth 回調處理 | 系統 |
-| `DELETE` | `/api/gitlab/disconnect` | 解除 GitLab 連結 | 全員 |
-| `GET` | `/api/gitlab/status` | 查詢連結狀態 | 全員 |
+| `GET` | `/api/gitlab/connections` | 查詢我的所有連結 | 全員 |
+| `PUT` | `/api/gitlab/connections/:id/settings` | 更新連結偏好設定 | 全員 |
+| `DELETE` | `/api/gitlab/connections/:id` | 解除特定連結 | 全員 |
+
+#### 活動同步 API
+
+| Method | Endpoint | 說明 | 權限 |
+|--------|----------|------|------|
 | `GET` | `/api/gitlab/activities` | 查詢同步活動 | 全員 |
 | `POST` | `/api/gitlab/activities/:id/convert` | 將活動轉為工時 | 全員 |
-| `POST` | `/api/gitlab/webhook` | GitLab Webhook 接收 | 系統 |
+| `POST` | `/api/gitlab/activities/batch-convert` | 批次確認工時 | 全員 |
+| `POST` | `/api/gitlab/webhook/:instanceId` | Webhook 接收（per 實例） | 系統 |
 | `GET` | `/api/gitlab/stats` | GitLab 活動統計 | PM+ |
+
+#### Issues 雙向同步 API
+
+| Method | Endpoint | 說明 | 權限 |
+|--------|----------|------|------|
+| `GET` | `/api/gitlab/issues/mappings` | 查詢 Issue-Task 對照 | 全員 |
+| `POST` | `/api/gitlab/issues/link` | 手動建立 Issue-Task 關聯 | 全員 |
+| `DELETE` | `/api/gitlab/issues/mappings/:id` | 解除關聯 | 全員 |
+| `POST` | `/api/gitlab/issues/sync/:mappingId` | 手動觸發同步 | 全員 |
+| `POST` | `/api/tasks/:taskId/create-gitlab-issue` | 從 Task 建立 GitLab Issue | PM+ |
 
 ### 8.9 新增頁面
 
@@ -757,16 +841,19 @@ GitLab 專案設定步驟：
 
 **GitLab 整合總點數**: 34 點（建議納入 Phase 2-3）
 
-### 8.14 待確認事項
+### 8.14 企劃確認事項 ✅
 
-> 請企劃確認：
+> **確認日期**: 2026-02-02
+> **確認人員**: 企劃
 
-- [ ] GitLab 版本：使用 GitLab.com 或 Self-hosted？
-- [ ] 是否需要支援多個 GitLab 實例？
-- [ ] 自動工時轉換的預設行為？（建議/自動/僅記錄）
-- [ ] commit 預設工時 0.5h 是否合理？
-- [ ] 是否需要雙向同步 GitLab Issues？
-- [ ] 活動資料保留期限？
+| 項目 | 確認結果 | 備註 |
+|------|----------|------|
+| GitLab 版本 | **Self-hosted（自架）** | 需支援內部 GitLab 伺服器 |
+| 多實例支援 | **是，需支援** | 可能有多個 GitLab 環境 |
+| 自動工時轉換 | **設有開關** | 使用者可自行選擇啟用/停用 |
+| commit 預設工時 | **0.5h 合理** | 維持原設計 |
+| Issues 雙向同步 | **是，需雙向同步** | GitLab Issue ↔ ProgressHub Task |
+| 資料保留期限 | **1 年** | 符合原設計 |
 
 ---
 
@@ -1010,7 +1097,8 @@ GitLab 專案設定步驟：
 |------|------|--------|------|
 | v1.0 | 2026-02-02 | PM | 初版建立 |
 | v1.1 | 2026-02-02 | PM | 新增「第八章：GitLab 整合」功能規劃 |
+| v1.2 | 2026-02-02 | PM | 企劃確認 GitLab 整合需求：支援多實例、Issues 雙向同步、自動工時開關 |
 
 ---
 
-> **下一步**: 請企劃審閱後，於「待討論事項」區塊標註確認結果，並回覆是否可進入開發階段。
+> **狀態**: ✅ 企劃已確認，PRD 已定案，可進入開發階段。
