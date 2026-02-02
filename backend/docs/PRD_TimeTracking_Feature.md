@@ -1,8 +1,9 @@
 # 產品需求文件 (PRD)
 # ProgressHub - 工時計算功能
 
-> **文件版本**: v1.0
+> **文件版本**: v1.1
 > **建立日期**: 2026-02-02
+> **最後更新**: 2026-02-02
 > **文件狀態**: 待審核
 > **負責人**: 產品經理
 
@@ -406,9 +407,372 @@ Bot 回覆:
 
 ---
 
-## 八、自動化提醒
+## 八、GitLab 整合（新增）
 
-### 8.1 提醒規則
+### 8.1 功能概述
+
+允許使用者選擇性連結 GitLab 帳號，自動同步開發活動至 ProgressHub，實現：
+- **自動工時推算**：根據 commit 活動推算開發時間
+- **任務自動關聯**：commit message 中的任務編號自動關聯
+- **進度自動更新**：MR 合併時自動更新任務狀態
+
+### 8.2 整合架構
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      GitLab 整合架構                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐         ┌─────────────┐         ┌───────────┐ │
+│  │   GitLab    │ Webhook │ ProgressHub │  關聯   │   Task    │ │
+│  │   Server    │────────►│   Backend   │────────►│  System   │ │
+│  └─────────────┘         └─────────────┘         └───────────┘ │
+│         │                       │                       │       │
+│         │ OAuth                 │ 同步                  │ 更新  │
+│         ▼                       ▼                       ▼       │
+│  ┌─────────────┐         ┌─────────────┐         ┌───────────┐ │
+│  │    User     │         │  Activity   │         │   Time    │ │
+│  │   Account   │         │    Logs     │         │  Entries  │ │
+│  └─────────────┘         └─────────────┘         └───────────┘ │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 8.3 使用者故事
+
+```
+US-08: 連結 GitLab 帳號
+作為一名開發人員，
+我希望能將我的 GitLab 帳號連結至 ProgressHub，
+以便自動同步我的開發活動。
+
+驗收條件：
+✓ 在個人設定頁面可發起 GitLab OAuth 授權
+✓ 授權成功後顯示已連結的 GitLab 帳號資訊
+✓ 可隨時解除連結
+✓ 連結狀態清楚顯示（已連結/未連結）
+```
+
+```
+US-09: 自動同步 Commit 記錄
+作為一名開發人員，
+我希望我的 GitLab commit 能自動同步至系統，
+以便減少手動填寫工時的負擔。
+
+驗收條件：
+✓ 每次 push 後，commit 記錄自動同步
+✓ 可在「我的活動」頁面查看同步的 commit
+✓ commit message 包含任務編號時自動關聯（如 #TASK-123）
+✓ 可選擇是否將 commit 轉換為工時記錄
+```
+
+```
+US-10: 查看 GitLab 活動報表
+作為一名專案經理，
+我希望能查看團隊成員的 GitLab 活動統計，
+以便了解實際開發產出。
+
+驗收條件：
+✓ 顯示每位成員的 commit 數量、程式碼變更量
+✓ 顯示 MR 提交/合併統計
+✓ 可與工時記錄交叉比對
+✓ 支援日期範圍篩選
+```
+
+### 8.4 可同步資料類型
+
+| 資料類型 | 說明 | 同步方式 | 用途 |
+|----------|------|----------|------|
+| **Commits** | Git 提交記錄 | Webhook 即時 | 推算開發工時、關聯任務 |
+| **Merge Requests** | 合併請求 | Webhook 即時 | 追蹤 Code Review、更新任務狀態 |
+| **MR Comments** | MR 評論 | Webhook 即時 | 計算 Code Review 工時 |
+| **Issues** | GitLab Issue | 雙向同步（可選） | 任務狀態同步 |
+| **Time Tracking** | GitLab 內建工時 | API 拉取 | 直接匯入工時記錄 |
+| **Pipeline Status** | CI/CD 狀態 | Webhook 即時 | 任務狀態參考 |
+
+### 8.5 自動工時推算規則
+
+| 規則編號 | 規則說明 |
+|----------|----------|
+| GL-01 | 單一 commit 預設工時 = 0.5h（可調整） |
+| GL-02 | 同一小時內多個 commit 合併計算 |
+| GL-03 | 大型 commit（>500 行變更）工時 = 1h |
+| GL-04 | Code Review 評論每則 = 0.25h |
+| GL-05 | MR 審核通過 = 0.5h（審核者） |
+| GL-06 | 推算工時標記為「待確認」，需使用者確認 |
+
+### 8.6 任務關聯規則
+
+```
+Commit Message 格式：
+─────────────────────────────────────────
+feat: 完成登入功能 #TASK-123
+
+- 新增 OAuth 整合
+- 修復 token 過期問題
+
+Refs: #TASK-124, #TASK-125
+─────────────────────────────────────────
+
+解析規則：
+• #TASK-XXX → 關聯至任務 XXX
+• Refs: → 額外關聯（不作為主任務）
+• fix/close #TASK-XXX → 關聯並標記任務完成
+```
+
+### 8.7 新增資料模型
+
+```prisma
+// GitLab 帳號連結
+model GitLabConnection {
+  id              String   @id @default(uuid())
+  employeeId      String   @unique @map("employee_id")
+  gitlabUserId    Int      @map("gitlab_user_id")
+  gitlabUsername  String   @map("gitlab_username")
+  accessToken     String   @map("access_token")  // 加密儲存
+  refreshToken    String?  @map("refresh_token") // 加密儲存
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  connectedAt     DateTime @default(now()) @map("connected_at")
+  lastSyncAt      DateTime? @map("last_sync_at")
+  isActive        Boolean  @default(true) @map("is_active")
+
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  activities      GitLabActivity[]
+
+  @@map("gitlab_connections")
+}
+
+// GitLab 活動記錄
+model GitLabActivity {
+  id              String   @id @default(uuid())
+  connectionId    String   @map("connection_id")
+  activityType    GitLabActivityType @map("activity_type")
+  gitlabEventId   String   @unique @map("gitlab_event_id")
+  projectPath     String   @map("project_path")      // e.g., "group/repo"
+
+  // Commit 相關
+  commitSha       String?  @map("commit_sha")
+  commitMessage   String?  @map("commit_message")
+  additions       Int?     @default(0)
+  deletions       Int?     @default(0)
+
+  // MR 相關
+  mrIid           Int?     @map("mr_iid")
+  mrTitle         String?  @map("mr_title")
+  mrState         String?  @map("mr_state")
+
+  // 時間與關聯
+  activityAt      DateTime @map("activity_at")
+  taskId          String?  @map("task_id")           // 自動關聯的任務
+  timeEntryId     String?  @map("time_entry_id")     // 轉換後的工時記錄
+  suggestedHours  Decimal? @db.Decimal(4, 2) @map("suggested_hours")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  connection      GitLabConnection @relation(fields: [connectionId], references: [id])
+  task            Task?    @relation(fields: [taskId], references: [id])
+  timeEntry       TimeEntry? @relation(fields: [timeEntryId], references: [id])
+
+  @@index([connectionId, activityAt])
+  @@index([taskId])
+  @@map("gitlab_activities")
+}
+
+enum GitLabActivityType {
+  COMMIT          // Git commit
+  MR_OPENED       // MR 開啟
+  MR_MERGED       // MR 合併
+  MR_CLOSED       // MR 關閉
+  MR_COMMENT      // MR 評論
+  MR_APPROVED     // MR 審核通過
+}
+```
+
+### 8.8 新增 API 端點
+
+| Method | Endpoint | 說明 | 權限 |
+|--------|----------|------|------|
+| `GET` | `/api/gitlab/auth` | 發起 GitLab OAuth | 全員 |
+| `GET` | `/api/gitlab/callback` | OAuth 回調處理 | 系統 |
+| `DELETE` | `/api/gitlab/disconnect` | 解除 GitLab 連結 | 全員 |
+| `GET` | `/api/gitlab/status` | 查詢連結狀態 | 全員 |
+| `GET` | `/api/gitlab/activities` | 查詢同步活動 | 全員 |
+| `POST` | `/api/gitlab/activities/:id/convert` | 將活動轉為工時 | 全員 |
+| `POST` | `/api/gitlab/webhook` | GitLab Webhook 接收 | 系統 |
+| `GET` | `/api/gitlab/stats` | GitLab 活動統計 | PM+ |
+
+### 8.9 新增頁面
+
+| 頁面名稱 | 路徑 | 權限 | 說明 |
+|----------|------|------|------|
+| GitLab 設定 | `/settings/gitlab` | 全員 | 連結/解除 GitLab 帳號 |
+| 我的活動 | `/activities` | 全員 | 查看同步的 GitLab 活動 |
+| 團隊活動報表 | `/reports/gitlab` | PM+ | 團隊 GitLab 活動統計 |
+
+### 8.10 頁面線框圖
+
+#### GitLab 設定頁面
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ProgressHub > 設定 > GitLab 整合                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  GitLab 帳號連結                                                 │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  🦊 GitLab 帳號                                         │   │
+│  │                                                         │   │
+│  │  狀態: ✅ 已連結                                        │   │
+│  │  帳號: @alice.chen                                      │   │
+│  │  連結時間: 2026-01-15 14:30                             │   │
+│  │  最後同步: 2026-02-02 09:15                             │   │
+│  │                                                         │   │
+│  │  [重新授權]  [解除連結]                                  │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  同步設定                                                        │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  同步項目                                               │   │
+│  │  ☑ Commits（推送記錄）                                  │   │
+│  │  ☑ Merge Requests（合併請求）                           │   │
+│  │  ☑ MR Comments（評論）                                  │   │
+│  │  ☐ Issues（議題）- 雙向同步                             │   │
+│  │                                                         │   │
+│  │  自動工時轉換                                           │   │
+│  │  ◉ 建議工時，手動確認                                   │   │
+│  │  ○ 自動轉換為工時記錄                                   │   │
+│  │  ○ 僅記錄活動，不轉換工時                               │   │
+│  │                                                         │   │
+│  │  [儲存設定]                                             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  監控的專案                                                      │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  ┌──────────────────────┬────────────┬─────────┬────────────┐  │
+│  │ GitLab 專案          │ 關聯專案   │ 狀態    │ 操作       │  │
+│  ├──────────────────────┼────────────┼─────────┼────────────┤  │
+│  │ company/frontend     │ 專案 A     │ ✅ 同步 │ [設定]     │  │
+│  │ company/backend      │ 專案 A     │ ✅ 同步 │ [設定]     │  │
+│  │ company/mobile-app   │ 專案 B     │ ⏸ 暫停  │ [設定]     │  │
+│  └──────────────────────┴────────────┴─────────┴────────────┘  │
+│                                                                 │
+│  [+ 新增專案關聯]                                                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 我的活動頁面
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ProgressHub > 我的活動                                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  GitLab 活動記錄                     [本週 ▼] [全部類型 ▼]       │
+│  ─────────────────────────────────────────────────────────────  │
+│                                                                 │
+│  📊 本週摘要: 23 commits │ 5 MRs │ 建議工時: 18.5h              │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │ 📅 2026-02-02 (今日)                                    │   │
+│  ├─────────────────────────────────────────────────────────┤   │
+│  │ 🔷 09:45  COMMIT  company/frontend                      │   │
+│  │    feat: 完成登入頁面 UI #TASK-123                      │   │
+│  │    +156 -23 │ 建議: 1h │ 關聯: 登入功能                 │   │
+│  │    [✓ 確認工時] [修改] [忽略]                           │   │
+│  │                                                         │   │
+│  │ 🔷 11:20  COMMIT  company/frontend                      │   │
+│  │    fix: 修復表單驗證問題                                │   │
+│  │    +12 -5 │ 建議: 0.5h │ 關聯: -                        │   │
+│  │    [✓ 確認工時] [關聯任務] [忽略]                       │   │
+│  │                                                         │   │
+│  │ 🟢 14:30  MR_MERGED  company/frontend                   │   │
+│  │    MR !42: 登入功能完整實作                             │   │
+│  │    審核者: @bob │ 關聯: 登入功能 → 已完成               │   │
+│  │    [查看詳情]                                           │   │
+│  ├─────────────────────────────────────────────────────────┤   │
+│  │ 📅 2026-02-01 (昨日)                                    │   │
+│  ├─────────────────────────────────────────────────────────┤   │
+│  │ 🔷 10:15  COMMIT  company/backend                       │   │
+│  │    feat: 新增 API endpoint #TASK-125                    │   │
+│  │    +89 -12 │ ✅ 已轉換: 1h │ 關聯: API 開發             │   │
+│  │                                                         │   │
+│  │ ...                                                     │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  待確認工時: 3 筆                    [批次確認所有建議工時]      │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 8.11 Webhook 設定指南
+
+```
+GitLab 專案設定步驟：
+───────────────────────────────────────────────────
+
+1. 進入 GitLab 專案 > Settings > Webhooks
+
+2. 新增 Webhook：
+   URL: https://your-domain.com/api/gitlab/webhook
+   Secret Token: [系統產生的 token]
+
+3. 勾選觸發事件：
+   ☑ Push events
+   ☑ Merge request events
+   ☑ Comments
+   ☑ Pipeline events (optional)
+
+4. 點擊 "Add webhook"
+
+5. 測試 Webhook 連線
+```
+
+### 8.12 權限與隱私
+
+| 權限項目 | 說明 |
+|----------|------|
+| GitLab OAuth Scope | `read_user`, `read_api`, `read_repository` |
+| Token 儲存 | AES-256 加密儲存 |
+| 資料保留 | 活動記錄保留 1 年 |
+| 隱私選項 | 使用者可選擇不公開 commit 詳情給 PM |
+
+### 8.13 開發工作量預估
+
+| 功能項目 | 預估點數 | 階段 |
+|----------|----------|------|
+| GitLab OAuth 整合 | 5 | Phase 2 |
+| Webhook 接收處理 | 5 | Phase 2 |
+| 活動同步與儲存 | 3 | Phase 2 |
+| 自動任務關聯 | 3 | Phase 2 |
+| 工時推算邏輯 | 3 | Phase 2 |
+| GitLab 設定頁面 | 5 | Phase 2 |
+| 我的活動頁面 | 5 | Phase 2 |
+| 團隊活動報表 | 5 | Phase 3 |
+
+**GitLab 整合總點數**: 34 點（建議納入 Phase 2-3）
+
+### 8.14 待確認事項
+
+> 請企劃確認：
+
+- [ ] GitLab 版本：使用 GitLab.com 或 Self-hosted？
+- [ ] 是否需要支援多個 GitLab 實例？
+- [ ] 自動工時轉換的預設行為？（建議/自動/僅記錄）
+- [ ] commit 預設工時 0.5h 是否合理？
+- [ ] 是否需要雙向同步 GitLab Issues？
+- [ ] 活動資料保留期限？
+
+---
+
+## 九、自動化提醒
+
+### 9.1 提醒規則
 
 | 提醒類型 | 觸發時機 | 對象 | 頻率 |
 |----------|----------|------|------|
@@ -418,7 +782,7 @@ Bot 回覆:
 | 異常警示 | 單日 > 12h | PM | 即時 |
 | 超時預警 | 實際 > 預估 80% | PM | 即時 |
 
-### 8.2 提醒訊息範例
+### 9.2 提醒訊息範例
 
 ```
 週報提醒:
@@ -645,6 +1009,7 @@ Bot 回覆:
 | 版本 | 日期 | 修改者 | 說明 |
 |------|------|--------|------|
 | v1.0 | 2026-02-02 | PM | 初版建立 |
+| v1.1 | 2026-02-02 | PM | 新增「第八章：GitLab 整合」功能規劃 |
 
 ---
 
