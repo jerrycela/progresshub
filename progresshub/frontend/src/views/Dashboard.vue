@@ -110,10 +110,10 @@ const getProgressColor = (progress: number) => {
         <div class="stat-card group cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">總任務數</p>
-              <p class="text-3xl font-bold text-gray-900 tracking-tight">{{ stats.totalTasks }}</p>
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">總任務數</p>
+              <p class="text-3xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{{ stats.totalTasks }}</p>
             </div>
-            <div class="stat-card-icon bg-primary-50 text-primary-600">
+            <div class="stat-card-icon bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
@@ -125,10 +125,10 @@ const getProgressColor = (progress: number) => {
         <div class="stat-card group cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">完成率</p>
-              <p class="text-3xl font-bold text-success-600 tracking-tight">{{ stats.completionRate }}%</p>
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">完成率</p>
+              <p class="text-3xl font-bold text-success-600 dark:text-success-400 tracking-tight">{{ stats.completionRate }}%</p>
             </div>
-            <div class="stat-card-icon bg-success-50 text-success-600">
+            <div class="stat-card-icon bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -148,10 +148,10 @@ const getProgressColor = (progress: number) => {
         <div class="stat-card group cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">平均進度</p>
-              <p class="text-3xl font-bold text-primary-600 tracking-tight">{{ stats.averageProgress }}%</p>
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">平均進度</p>
+              <p class="text-3xl font-bold text-primary-600 dark:text-primary-400 tracking-tight">{{ stats.averageProgress }}%</p>
             </div>
-            <div class="stat-card-icon bg-primary-50 text-primary-600">
+            <div class="stat-card-icon bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
@@ -171,10 +171,10 @@ const getProgressColor = (progress: number) => {
         <div class="stat-card group cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300">
           <div class="flex items-start justify-between">
             <div>
-              <p class="text-sm font-medium text-gray-500 mb-1">進行中</p>
-              <p class="text-3xl font-bold text-warning-600 tracking-tight">{{ stats.inProgressTasks }}</p>
+              <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">進行中</p>
+              <p class="text-3xl font-bold text-warning-600 dark:text-warning-400 tracking-tight">{{ stats.inProgressTasks }}</p>
             </div>
-            <div class="stat-card-icon bg-warning-50 text-warning-600">
+            <div class="stat-card-icon bg-warning-50 dark:bg-warning-900/30 text-warning-600 dark:text-warning-400">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -188,12 +188,12 @@ const getProgressColor = (progress: number) => {
         <div class="card">
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h2 class="text-lg font-semibold text-gray-900">我的任務</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">我的任務</h2>
             </div>
             <RouterLink to="/my-tasks" class="link text-sm flex items-center gap-1">
               查看全部
@@ -218,15 +218,15 @@ const getProgressColor = (progress: number) => {
               class="task-item group"
             >
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-gray-900 truncate group-hover:text-primary-600 transition-colors">
+                <p class="font-medium text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                   {{ task.name }}
                 </p>
-                <p class="text-sm text-gray-500 mt-0.5">{{ task.project?.name }}</p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ task.project?.name }}</p>
               </div>
               <div class="flex items-center gap-4">
                 <div class="text-right">
-                  <div class="text-sm font-semibold text-gray-900">{{ task.progressPercentage }}%</div>
-                  <div class="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden mt-1">
+                  <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">{{ task.progressPercentage }}%</div>
+                  <div class="w-24 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-1">
                     <div
                       class="h-full rounded-full transition-all duration-500 bg-gradient-to-r"
                       :class="getProgressColor(task.progressPercentage)"
@@ -246,12 +246,12 @@ const getProgressColor = (progress: number) => {
         <div class="card">
           <div class="flex items-center justify-between mb-6">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-accent-50 text-accent-600 flex items-center justify-center">
+              <div class="w-10 h-10 rounded-xl bg-accent-50 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400 flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </div>
-              <h2 class="text-lg font-semibold text-gray-900">最近回報</h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">最近回報</h2>
             </div>
             <RouterLink to="/report" class="btn-primary text-sm py-2">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,22 +273,22 @@ const getProgressColor = (progress: number) => {
             <div
               v-for="log in recentLogs"
               :key="log.id"
-              class="p-4 bg-gray-50/50 rounded-xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all duration-200"
+              class="p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600 transition-all duration-200"
             >
               <div class="flex items-center justify-between">
-                <p class="font-medium text-gray-900">{{ log.task?.name }}</p>
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                <p class="font-medium text-gray-900 dark:text-gray-100">{{ log.task?.name }}</p>
+                <span class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-md">
                   {{ formatDate(log.reportedAt) }}
                 </span>
               </div>
               <div class="flex items-center gap-3 mt-2">
-                <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600">
+                <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 dark:text-primary-400">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                   {{ log.progressPercentage }}%
                 </span>
-                <span v-if="log.notes" class="text-sm text-gray-500 truncate flex-1">
+                <span v-if="log.notes" class="text-sm text-gray-500 dark:text-gray-400 truncate flex-1">
                   {{ log.notes }}
                 </span>
               </div>

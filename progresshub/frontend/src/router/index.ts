@@ -87,6 +87,18 @@ const router = createRouter({
       component: () => import('@/views/TimeApproval.vue'),
       meta: { requiresAuth: true, requiresPM: true },
     },
+    {
+      path: '/projects/:id/timesheet',
+      name: 'ProjectTimesheet',
+      component: () => import('@/views/ProjectTimesheet.vue'),
+      meta: { requiresAuth: true, requiresPM: true },
+    },
+    {
+      path: '/reports/cost',
+      name: 'CostReport',
+      component: () => import('@/views/CostReport.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
   ],
 })
 
