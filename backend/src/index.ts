@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import prisma from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { startScheduler } from './scheduler/reminder';
 
 const app: Application = express();
 
@@ -84,9 +85,16 @@ const startServer = async () => {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
 
+    // Start the scheduler (integrated mode)
+    const enableScheduler = process.env.ENABLE_SCHEDULER !== 'false';
+    if (enableScheduler) {
+      startScheduler();
+    }
+
     app.listen(env.PORT, () => {
       console.log(`🚀 Server is running on port ${env.PORT}`);
       console.log(`📝 Environment: ${env.NODE_ENV}`);
+      console.log(`📅 Scheduler: ${enableScheduler ? 'enabled' : 'disabled'}`);
       console.log(`🏥 Health check: http://localhost:${env.PORT}/health`);
     });
   } catch (error) {

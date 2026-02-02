@@ -4,6 +4,6 @@
     "command": "npm install && npm run prisma:generate && npm run build"
   },
   "start": {
-    "command": "npm run prisma:migrate deploy && npm start"
+    "command": "npx prisma migrate deploy && npm start"
   }
 }
