@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import prisma from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import routes from './routes';
 
 const app: Application = express();
 
@@ -59,17 +60,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API Routes (to be added)
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'ProgressHub API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      api: '/api',
-    },
-  });
-});
+// API Routes
+app.use('/api', routes);
 
 // 404 handler
 app.use(notFoundHandler);
