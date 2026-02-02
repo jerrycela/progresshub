@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import prisma from './config/database';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -10,7 +11,41 @@ const app: Application = express();
 
 // Middleware
 app.use(helmet()); // Security headers
-app.use(cors()); // Enable CORS
+
+// Issue #2 修復：CORS 白名單配置
+const corsOptions = {
+  origin:
+    env.NODE_ENV === 'production'
+      ? env.ALLOWED_ORIGINS.length > 0
+        ? env.ALLOWED_ORIGINS
+        : ['https://your-domain.com']
+      : true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+app.use(cors(corsOptions));
+
+// Issue #3 修復：Rate Limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 分鐘
+  max: 100, // 每個 IP 最多 100 次請求
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 分鐘
+  max: 5, // 登入嘗試限制更嚴格
+  message: { error: 'Too many login attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined')); // Logging
