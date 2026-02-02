@@ -3,10 +3,15 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import prisma from './config/database';
+import logger, { httpLogStream } from './config/logger';
+import { swaggerSpec } from './config/swagger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { startScheduler } from './scheduler/reminder';
+import routes from './routes';
+import healthRoutes from './routes/health';
 
 const app: Application = express();
 
@@ -49,28 +54,21 @@ app.use('/api/auth/login', authLimiter);
 
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined')); // Logging
+// Issue #15: 整合 Winston logger
+app.use(
+  morgan(env.NODE_ENV === 'development' ? 'dev' : 'combined', {
+    stream: httpLogStream,
+  })
+);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: env.NODE_ENV,
-  });
-});
+// Issue #14: Swagger API 文檔
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// API Routes (to be added)
-app.get('/api', (req, res) => {
-  res.json({
-    message: 'ProgressHub API',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      api: '/api',
-    },
-  });
-});
+// Issue #16: 增強健康檢查端點
+app.use('/health', healthRoutes);
+
+// API Routes
+app.use('/api', routes);
 
 // 404 handler
 app.use(notFoundHandler);
@@ -83,7 +81,7 @@ const startServer = async () => {
   try {
     // Test database connection
     await prisma.$connect();
-    console.log('✅ Database connected successfully');
+    logger.info('Database connected successfully');
 
     // Start the scheduler (integrated mode)
     const enableScheduler = process.env.ENABLE_SCHEDULER !== 'false';
@@ -92,13 +90,14 @@ const startServer = async () => {
     }
 
     app.listen(env.PORT, () => {
-      console.log(`🚀 Server is running on port ${env.PORT}`);
-      console.log(`📝 Environment: ${env.NODE_ENV}`);
-      console.log(`📅 Scheduler: ${enableScheduler ? 'enabled' : 'disabled'}`);
-      console.log(`🏥 Health check: http://localhost:${env.PORT}/health`);
+      logger.info(`Server is running on port ${env.PORT}`);
+      logger.info(`Environment: ${env.NODE_ENV}`);
+      logger.info(`Scheduler: ${enableScheduler ? 'enabled' : 'disabled'}`);
+      logger.info(`Health check: http://localhost:${env.PORT}/health`);
+      logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
     });
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 };
@@ -107,13 +106,13 @@ startServer();
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n⏳ Shutting down gracefully...');
+  logger.info('Shutting down gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n⏳ Shutting down gracefully...');
+  logger.info('Shutting down gracefully...');
   await prisma.$disconnect();
   process.exit(0);
 });
