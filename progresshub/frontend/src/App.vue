@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import Sidebar from '@/components/Sidebar.vue'
 import { onMounted } from 'vue'
 
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 onMounted(async () => {
   // Try to restore session from localStorage
@@ -21,7 +23,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
     <Sidebar v-if="authStore.isAuthenticated" />
     <main :class="authStore.isAuthenticated ? 'ml-64' : ''">
       <RouterView />
