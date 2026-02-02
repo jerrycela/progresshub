@@ -13,6 +13,7 @@ const REMINDER_TIMEZONE = process.env.REMINDER_TIMEZONE || 'Asia/Taipei';
 
 /**
  * Check which employees haven't reported progress today
+ * Issue #13 修復：使用分頁查詢優化效能
  */
 async function checkUnreportedEmployees(): Promise<void> {
   try {
@@ -21,40 +22,48 @@ async function checkUnreportedEmployees(): Promise<void> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get all employees
-    const employees = await prisma.employee.findMany({
-      include: {
-        assignedTasks: {
-          where: {
-            status: 'IN_PROGRESS',
+    const BATCH_SIZE = 100;
+    let cursor: string | undefined;
+    let processedCount = 0;
+    let reminderCount = 0;
+
+    while (true) {
+      // Issue #13: 使用分頁查詢，只取有進行中任務的員工
+      const employees = await prisma.employee.findMany({
+        take: BATCH_SIZE,
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
+        where: {
+          assignedTasks: {
+            some: { status: 'IN_PROGRESS' },
           },
         },
-      },
-    });
-
-    for (const employee of employees) {
-      // Skip if employee has no active tasks
-      if (employee.assignedTasks.length === 0) {
-        continue;
-      }
-
-      // Check if employee has reported today
-      const todayReport = await prisma.progressLog.findFirst({
-        where: {
-          employeeId: employee.id,
-          reportedAt: {
-            gte: today,
+        include: {
+          progressLogs: {
+            where: { reportedAt: { gte: today } },
+            take: 1,
           },
         },
       });
 
-      // If no report today, send reminder
-      if (!todayReport) {
-        await sendReminder(employee.slackUserId, employee.name);
+      if (employees.length === 0) break;
+
+      for (const employee of employees) {
+        // 如果今天沒有回報，發送提醒
+        if (employee.progressLogs.length === 0) {
+          await sendReminder(employee.slackUserId, employee.name);
+          reminderCount++;
+        }
+        processedCount++;
       }
+
+      cursor = employees[employees.length - 1].id;
+
+      // 如果取得的數量少於 BATCH_SIZE，表示已經是最後一批
+      if (employees.length < BATCH_SIZE) break;
     }
 
-    console.log(`[${new Date().toISOString()}] Reminder check completed`);
+    console.log(`[${new Date().toISOString()}] Reminder check completed. Processed: ${processedCount}, Reminders sent: ${reminderCount}`);
   } catch (error) {
     console.error('Error checking unreported employees:', error);
   }
