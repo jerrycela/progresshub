@@ -1,0 +1,140 @@
+// Prisma Schema for ProgressHub
+// Database: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 員工表
+model Employee {
+  id                String   @id @default(uuid())
+  name              String
+  email             String   @unique
+  slackUserId       String   @unique @map("slack_user_id")
+  department        String?
+  permissionLevel   PermissionLevel @default(EMPLOYEE) @map("permission_level")
+  managedProjects   String[] @map("managed_projects") // JSON Array of project IDs for PM
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  assignedTasks     Task[]   @relation("AssignedTasks")
+  progressLogs      ProgressLog[]
+
+  @@map("employees")
+}
+
+// 專案表
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  tasks       Task[]
+  milestones  Milestone[]
+
+  @@map("projects")
+}
+
+// 任務表
+model Task {
+  id                  String   @id @default(uuid())
+  projectId           String   @map("project_id")
+  name                String
+  assignedToId        String   @map("assigned_to")
+  collaborators       String[] // JSON Array of employee IDs
+  plannedStartDate    DateTime @map("planned_start_date")
+  plannedEndDate      DateTime @map("planned_end_date")
+  actualStartDate     DateTime? @map("actual_start_date")
+  actualEndDate       DateTime? @map("actual_end_date")
+  progressPercentage  Int      @default(0) @map("progress_percentage")
+  status              TaskStatus @default(NOT_STARTED)
+  dependencies        String[] // JSON Array of task IDs
+  milestoneId         String?  @map("milestone_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignedTo          Employee @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  milestone           Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  progressLogs        ProgressLog[]
+
+  @@index([projectId])
+  @@index([assignedToId])
+  @@index([milestoneId])
+  @@map("tasks")
+}
+
+// 里程碑表
+model Milestone {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  name        String
+  targetDate  DateTime @map("target_date")
+  status      MilestoneStatus @default(PENDING)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId])
+  @@map("milestones")
+}
+
+// 進度記錄表
+model ProgressLog {
+  id                  String   @id @default(uuid())
+  taskId              String   @map("task_id")
+  employeeId          String   @map("employee_id")
+  progressPercentage  Int      @map("progress_percentage")
+  notes               String?  @db.Text
+  reportedAt          DateTime @default(now()) @map("reported_at")
+
+  // Relations
+  task                Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employee            Employee @relation(fields: [employeeId], references: [id])
+
+  @@index([taskId])
+  @@index([employeeId])
+  @@index([reportedAt])
+  @@map("progress_logs")
+}
+
+// Enums
+enum PermissionLevel {
+  EMPLOYEE
+  PM
+  ADMIN
+}
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+}
+
+enum TaskStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum MilestoneStatus {
+  PENDING
+  ACHIEVED
+}
