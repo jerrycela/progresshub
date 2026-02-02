@@ -4,6 +4,10 @@ import employeeRoutes from './employees';
 import projectRoutes from './projects';
 import taskRoutes from './tasks';
 import progressRoutes from './progress';
+import timeEntryRoutes from './timeEntries';
+import timeCategoryRoutes from './timeCategories';
+import timeStatsRoutes from './timeStats';
+import slackRoutes from './slack';
 
 const router = Router();
 
@@ -13,6 +17,10 @@ router.use('/employees', employeeRoutes);
 router.use('/projects', projectRoutes);
 router.use('/tasks', taskRoutes);
 router.use('/progress', progressRoutes);
+router.use('/time-entries', timeEntryRoutes);
+router.use('/time-categories', timeCategoryRoutes);
+router.use('/time-stats', timeStatsRoutes);
+router.use('/slack', slackRoutes);
 
 // API Info
 router.get('/', (req, res) => {
@@ -25,6 +33,10 @@ router.get('/', (req, res) => {
       projects: '/api/projects',
       tasks: '/api/tasks',
       progress: '/api/progress',
+      timeEntries: '/api/time-entries',
+      timeCategories: '/api/time-categories',
+      timeStats: '/api/time-stats',
+      slack: '/api/slack',
     },
   });
 });

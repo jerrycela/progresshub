@@ -19,12 +19,16 @@ model Employee {
   department        String?
   permissionLevel   PermissionLevel @default(EMPLOYEE) @map("permission_level")
   managedProjects   String[] @map("managed_projects") // JSON Array of project IDs for PM
+  hourlyRate        Decimal? @map("hourly_rate") @db.Decimal(10, 2) // 時薪（用於成本計算）
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   // Relations
-  assignedTasks     Task[]   @relation("AssignedTasks")
+  assignedTasks     Task[]        @relation("AssignedTasks")
   progressLogs      ProgressLog[]
+  timeEntries       TimeEntry[]   @relation("EmployeeTimeEntries")
+  approvedEntries   TimeEntry[]   @relation("ApprovedTimeEntries")
+  timeEstimates     TimeEstimate[] @relation("TimeEstimates")
 
   @@map("employees")
 }
@@ -43,6 +47,7 @@ model Project {
   // Relations
   tasks       Task[]
   milestones  Milestone[]
+  timeEntries TimeEntry[]
 
   @@map("projects")
 }
@@ -70,6 +75,8 @@ model Task {
   assignedTo          Employee @relation("AssignedTasks", fields: [assignedToId], references: [id])
   milestone           Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   progressLogs        ProgressLog[]
+  timeEntries         TimeEntry[]
+  timeEstimate        TimeEstimate?
 
   @@index([projectId])
   @@index([assignedToId])
@@ -113,6 +120,84 @@ model ProgressLog {
   @@index([employeeId])
   @@index([reportedAt])
   @@map("progress_logs")
+}
+
+// ============================================
+// 工時追蹤功能 (Time Tracking Feature)
+// ============================================
+
+// 工時類別表
+model TimeCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String   @default("#3B82F6")
+  billable  Boolean  @default(true)
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  timeEntries TimeEntry[]
+
+  @@map("time_categories")
+}
+
+// 工時記錄表
+model TimeEntry {
+  id          String          @id @default(uuid())
+  employeeId  String          @map("employee_id")
+  projectId   String          @map("project_id")
+  taskId      String?         @map("task_id")
+  categoryId  String          @map("category_id")
+  date        DateTime        @db.Date
+  hours       Decimal         @db.Decimal(4, 2)
+  description String?         @db.Text
+  status      TimeEntryStatus @default(PENDING)
+  approvedBy  String?         @map("approved_by")
+  approvedAt  DateTime?       @map("approved_at")
+  rejectedReason String?      @map("rejected_reason") @db.Text
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  employee    Employee      @relation("EmployeeTimeEntries", fields: [employeeId], references: [id])
+  project     Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task        Task?         @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  category    TimeCategory  @relation(fields: [categoryId], references: [id])
+  approver    Employee?     @relation("ApprovedTimeEntries", fields: [approvedBy], references: [id])
+
+  @@index([employeeId])
+  @@index([projectId])
+  @@index([taskId])
+  @@index([categoryId])
+  @@index([date])
+  @@index([status])
+  @@map("time_entries")
+}
+
+// 工時預估表
+model TimeEstimate {
+  id             String   @id @default(uuid())
+  taskId         String   @unique @map("task_id")
+  estimatedHours Decimal  @map("estimated_hours") @db.Decimal(6, 2)
+  estimatedBy    String   @map("estimated_by")
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  estimator      Employee @relation("TimeEstimates", fields: [estimatedBy], references: [id])
+
+  @@map("time_estimates")
+}
+
+// 工時記錄狀態
+enum TimeEntryStatus {
+  PENDING   // 待審核
+  APPROVED  // 已核准
+  REJECTED  // 已駁回
 }
 
 // Enums
