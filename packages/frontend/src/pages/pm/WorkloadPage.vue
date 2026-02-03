@@ -4,7 +4,10 @@ import { mockFunctionWorkloads, functionTypeLabels, mockUsers, mockTasks } from 
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 
+// ============================================
 // 職能負載頁面 - PM 專用，各職能待辦量統計
+// Ralph Loop 迭代 21: RWD 響應式優化
+// ============================================
 
 // 職能工作負載資料
 const workloads = computed(() => mockFunctionWorkloads)
@@ -51,10 +54,10 @@ const totalStats = computed(() => ({
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
+    <!-- 頁面標題 (RWD: 迭代 21) -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">職能負載分析</h1>
-      <p class="text-gray-500 mt-1">各職能的任務分配與人力狀況</p>
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">職能負載分析</h1>
+      <p class="text-sm md:text-base text-gray-500 mt-1">各職能的任務分配與人力狀況</p>
     </div>
 
     <!-- 整體統計 -->
@@ -93,7 +96,8 @@ const totalStats = computed(() => ({
           :key="workload.functionType"
           class="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
         >
-          <div class="flex items-center justify-between mb-3">
+          <!-- RWD: 迭代 21 - 行動裝置堆疊排列 -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <div class="flex items-center gap-3">
               <div :class="['w-3 h-3 rounded-full', functionColors[workload.functionType]]" />
               <span class="font-medium text-gray-900">
@@ -103,7 +107,7 @@ const totalStats = computed(() => ({
                 {{ getLoadLevel(workload).label }}
               </Badge>
             </div>
-            <div class="flex items-center gap-4 text-sm text-gray-500">
+            <div class="flex items-center gap-4 text-sm text-gray-500 ml-6 sm:ml-0">
               <span>{{ workload.memberCount }} 人</span>
               <span>{{ workload.totalTasks }} 任務</span>
             </div>
