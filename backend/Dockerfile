@@ -37,6 +37,9 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl
+
 # Copy production dependencies and build
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
