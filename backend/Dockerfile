@@ -1,51 +1,55 @@
-# Development stage
-FROM node:20-alpine AS development
+# ===================================
+# Stage 1: Build
+# ===================================
+FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Install dependencies
+# Install build dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
-# Copy application code
+# Copy source code
 COPY . .
 
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Expose port
-EXPOSE 3000
-
-# Start development server
-CMD ["npm", "run", "dev"]
-
-# Production build stage
-FROM node:20-alpine AS build
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npx prisma generate
+# Build TypeScript
 RUN npm run build
 
-# Production stage
+# ===================================
+# Stage 2: Production
+# ===================================
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy production dependencies and build
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/package.json ./
+# Install OpenSSL for Prisma (CRITICAL for Alpine)
+RUN apk add --no-cache openssl
 
-# Generate Prisma Client for production
+# Copy production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built files from build stage
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=build /app/prisma ./prisma
+
+# Regenerate Prisma Client for production
 RUN npx prisma generate
 
+# Set environment
+ENV NODE_ENV=production
+
+# Expose port
 EXPOSE 3000
 
-# Run production server
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Start application
 CMD ["node", "dist/index.js"]

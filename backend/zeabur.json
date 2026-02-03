@@ -1,9 +1,14 @@
 {
   "$schema": "https://schema.zeabur.app/zeabur.json",
   "build": {
-    "command": "npm install && npm run prisma:generate && npm run build"
+    "type": "dockerfile",
+    "dockerfile": "Dockerfile"
   },
   "start": {
-    "command": "npx prisma migrate deploy && npm start"
+    "command": "npx prisma migrate deploy && node dist/index.js"
+  },
+  "healthcheck": {
+    "path": "/health",
+    "port": 3000
   }
 }
