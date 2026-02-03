@@ -59,7 +59,7 @@ watch(() => route.path, () => {
 
       <!-- 頁面內容 -->
       <main class="flex-1 p-4 md:p-6 overflow-auto">
-        <slot />
+        <router-view />
       </main>
     </div>
 
