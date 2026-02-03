@@ -39,3 +39,15 @@
 - **前端**: Vue 3, TypeScript, Pinia, Tailwind CSS
 - **認證**: Slack OAuth + JWT
 - **部署**: Docker, Zeabur
+
+## 專案慣例
+
+### PRD 文件
+- 位置：`backend/docs/`
+- 命名：`PRD_<功能名稱>.md`
+- 版本記錄：每次更新需更新版本號和變更記錄
+
+### Git 提交訊息
+- 使用繁體中文
+- 格式：`<type>: <描述>`
+- 類型：`feat`, `fix`, `docs`, `chore`, `refactor`
