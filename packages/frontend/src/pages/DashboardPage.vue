@@ -13,6 +13,7 @@ import type { Task } from 'shared/types'
 // ============================================
 // 儀表板頁面 - 個人任務總覽
 // Ralph Loop 迭代 12: 使用新元件和 Composables
+// Ralph Loop 迭代 17: RWD 響應式優化
 // ============================================
 
 const authStore = useAuthStore()
@@ -41,16 +42,16 @@ const icons = {
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
+    <!-- 頁面標題 (RWD: 迭代 17) -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">
         {{ user?.name }}，歡迎回來！
       </h1>
-      <p class="text-gray-500 mt-1">以下是您今天的工作概覽</p>
+      <p class="text-sm md:text-base text-gray-500 mt-1">以下是您今天的工作概覽</p>
     </div>
 
-    <!-- 統計卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- 統計卡片 (RWD: 迭代 17 - 行動裝置 2 欄) -->
+    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       <StatCard
         title="總任務數"
         :value="stats.totalTasks"

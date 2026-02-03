@@ -11,8 +11,11 @@ import Modal from '@/components/common/Modal.vue'
 import ProgressBar from '@/components/common/ProgressBar.vue'
 import type { Task, ReportType } from 'shared/types'
 
+// ============================================
 // 進度回報頁面 - 每日進度回報（含「繼續」快速回報功能）
 // Ralph Loop 迭代 7: 改用全域 Toast 通知
+// Ralph Loop 迭代 18: RWD 響應式優化
+// ============================================
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useToast()
@@ -127,11 +130,11 @@ const today = new Date().toLocaleDateString('zh-TW', {
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
-    <div class="flex items-center justify-between">
+    <!-- 頁面標題 (RWD: 迭代 18) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">每日進度回報</h1>
-        <p class="text-gray-500 mt-1">{{ today }}</p>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900">每日進度回報</h1>
+        <p class="text-sm md:text-base text-gray-500 mt-1">{{ today }}</p>
       </div>
       <Badge variant="primary" size="md">
         {{ myInProgressTasks.length }} 個任務待回報
