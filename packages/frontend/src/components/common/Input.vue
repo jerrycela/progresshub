@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // ============================================
-// 輸入框元件 - Ralph Loop 迭代 11
-// 統一的文字輸入框樣式
+// 輸入框元件 - SG-Arts 精品金屬質感設計
+// 統一的文字輸入框樣式 + Dark mode
 // ============================================
 
 interface Props {
@@ -41,7 +41,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | number]
 }>()
 
-const handleInput = (event: Event) => {
+const handleInput = (event: Event): void => {
   const target = event.target as HTMLInputElement
   const value = props.type === 'number' ? Number(target.value) : target.value
   emit('update:modelValue', value)
@@ -51,15 +51,16 @@ const inputId = props.id || `input-${Math.random().toString(36).slice(2, 9)}`
 </script>
 
 <template>
-  <div class="space-y-1">
+  <div class="space-y-1.5">
     <!-- 標籤 -->
     <label
       v-if="props.label"
       :for="inputId"
-      class="block text-sm font-medium text-gray-700"
+      class="block text-sm font-medium"
+      style="color: var(--text-secondary);"
     >
       {{ props.label }}
-      <span v-if="props.required" class="text-danger">*</span>
+      <span v-if="props.required" class="text-samurai">*</span>
     </label>
 
     <!-- 輸入框 -->
@@ -70,12 +71,14 @@ const inputId = props.id || `input-${Math.random().toString(36).slice(2, 9)}`
       :placeholder="props.placeholder"
       :disabled="props.disabled"
       :required="props.required"
-      :class="[
-        'w-full px-3 py-2 border rounded-lg transition-colors duration-200',
-        'focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none',
-        props.disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white',
-        props.error ? 'border-danger' : 'border-gray-300',
-      ]"
+      class="input"
+      :class="{
+        'opacity-60 cursor-not-allowed': props.disabled,
+        'border-danger focus:ring-danger/30 focus:border-danger': props.error,
+      }"
+      :style="{
+        backgroundColor: props.disabled ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
+      }"
       @input="handleInput"
     >
 
@@ -83,6 +86,12 @@ const inputId = props.id || `input-${Math.random().toString(36).slice(2, 9)}`
     <p v-if="props.error" class="text-sm text-danger">{{ props.error }}</p>
 
     <!-- 輔助文字 -->
-    <p v-else-if="props.hint" class="text-sm text-gray-500">{{ props.hint }}</p>
+    <p
+      v-else-if="props.hint"
+      class="text-sm"
+      style="color: var(--text-muted);"
+    >
+      {{ props.hint }}
+    </p>
   </div>
 </template>

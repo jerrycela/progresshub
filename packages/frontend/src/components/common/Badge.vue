@@ -1,5 +1,9 @@
 <script setup lang="ts">
-// 標籤徽章元件 - 用於顯示狀態、職能等標籤
+// ============================================
+// 標籤徽章元件 - SG-Arts 精品金屬質感設計
+// 用於顯示狀態、職能等標籤
+// ============================================
+
 interface Props {
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
   size?: 'sm' | 'md'
@@ -11,43 +15,47 @@ withDefaults(defineProps<Props>(), {
   size: 'md',
   dot: false,
 })
-
-// 樣式對照表
-const variantClasses: Record<string, string> = {
-  default: 'bg-gray-100 text-gray-700',
-  primary: 'bg-blue-100 text-blue-700',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-yellow-100 text-yellow-700',
-  danger: 'bg-red-100 text-red-700',
-  info: 'bg-purple-100 text-purple-700',
-}
-
-const dotClasses: Record<string, string> = {
-  default: 'bg-gray-400',
-  primary: 'bg-blue-500',
-  success: 'bg-green-500',
-  warning: 'bg-yellow-500',
-  danger: 'bg-red-500',
-  info: 'bg-purple-500',
-}
-
-const sizeClasses: Record<string, string> = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2.5 py-1 text-sm',
-}
 </script>
 
 <template>
   <span
     :class="[
-      'inline-flex items-center font-medium rounded-full',
-      variantClasses[variant],
-      sizeClasses[size],
+      'inline-flex items-center font-medium rounded-md transition-colors duration-150',
+      // Size classes
+      {
+        'px-1.5 py-0.5 text-xs': size === 'sm',
+        'px-2 py-0.5 text-xs': size === 'md',
+      },
+      // Variant classes - 使用透明度實現精緻感
+      {
+        // Default: 金屬灰
+        'bg-metal-light text-ink-cool dark:bg-metal-obsidian/50 dark:text-ink-muted': variant === 'default',
+        // Primary: 侍魂赤紅
+        'bg-samurai/10 text-samurai dark:bg-samurai-light/20 dark:text-samurai-light': variant === 'primary',
+        // Success: 翡翠綠
+        'bg-success/10 text-success dark:bg-success-light/20 dark:text-success-light': variant === 'success',
+        // Warning: 琥珀橙
+        'bg-warning/10 text-warning dark:bg-warning-light/20 dark:text-warning-light': variant === 'warning',
+        // Danger: 危險紅
+        'bg-danger/10 text-danger dark:bg-danger-light/20 dark:text-danger-light': variant === 'danger',
+        // Info: 資訊藍
+        'bg-info/10 text-info dark:bg-info-light/20 dark:text-info-light': variant === 'info',
+      },
     ]"
   >
     <span
       v-if="dot"
-      :class="['w-1.5 h-1.5 rounded-full mr-1.5', dotClasses[variant]]"
+      :class="[
+        'w-1.5 h-1.5 rounded-full mr-1.5',
+        {
+          'bg-ink-muted dark:bg-ink-medium': variant === 'default',
+          'bg-samurai dark:bg-samurai-light': variant === 'primary',
+          'bg-success dark:bg-success-light': variant === 'success',
+          'bg-warning dark:bg-warning-light': variant === 'warning',
+          'bg-danger dark:bg-danger-light': variant === 'danger',
+          'bg-info dark:bg-info-light': variant === 'info',
+        },
+      ]"
     />
     <slot />
   </span>

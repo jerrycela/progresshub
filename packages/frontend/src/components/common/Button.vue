@@ -1,5 +1,9 @@
 <script setup lang="ts">
-// 按鈕元件 - 支援多種樣式變體
+// ============================================
+// 按鈕元件 - SG-Arts 精品金屬質感設計
+// 支援多種樣式變體 + Dark mode
+// ============================================
+
 interface Props {
   variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
@@ -20,35 +24,41 @@ const emit = defineEmits<{
   click: [event: MouseEvent]
 }>()
 
-const handleClick = (event: MouseEvent) => {
+const handleClick = (event: MouseEvent): void => {
   if (!props.disabled && !props.loading) {
     emit('click', event)
   }
-}
-
-// 樣式對照表 - UI/UX Pro Max 設計系統
-const variantClasses: Record<string, string> = {
-  primary: 'bg-primary-700 hover:bg-primary-800 text-white border-transparent',
-  secondary: 'bg-gray-100 hover:bg-gray-200 text-primary-950 border-gray-200',
-  success: 'bg-success hover:bg-success-dark text-white border-transparent',
-  warning: 'bg-warning hover:bg-warning-dark text-white border-transparent',
-  danger: 'bg-danger hover:bg-danger-dark text-white border-transparent',
-  ghost: 'bg-transparent hover:bg-primary-50 text-primary-700 border-transparent',
-}
-
-const sizeClasses: Record<string, string> = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-base',
-  lg: 'px-6 py-3 text-lg',
 }
 </script>
 
 <template>
   <button
     :class="[
-      'inline-flex items-center justify-center font-medium rounded-lg border transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 cursor-pointer',
-      variantClasses[variant],
-      sizeClasses[size],
+      // 基礎樣式
+      'inline-flex items-center justify-center font-medium rounded-md border transition-all duration-150',
+      'focus:outline-none focus:ring-2 focus:ring-offset-2 cursor-pointer',
+      // Size classes
+      {
+        'px-2.5 py-1.5 text-xs': size === 'sm',
+        'px-3.5 py-2 text-sm': size === 'md',
+        'px-5 py-2.5 text-base': size === 'lg',
+      },
+      // Variant classes - SG-Arts 配色
+      {
+        // Primary: 侍魂赤紅 - CTA 按鈕
+        'bg-samurai hover:bg-samurai-dark text-white border-transparent focus:ring-samurai/50 dark:bg-samurai-light dark:hover:bg-samurai dark:focus:ring-samurai-light/50': variant === 'primary',
+        // Secondary: 金屬灰 - 次要按鈕
+        'bg-metal-light hover:bg-metal-silver text-ink-carbon border-metal-silver dark:bg-metal-obsidian/80 dark:hover:bg-metal-obsidian dark:text-metal-pearl dark:border-metal-obsidian focus:ring-metal-silver/50': variant === 'secondary',
+        // Success: 翡翠綠
+        'bg-success hover:bg-success-dark text-white border-transparent focus:ring-success/50': variant === 'success',
+        // Warning: 琥珀橙
+        'bg-warning hover:bg-warning-dark text-white border-transparent focus:ring-warning/50': variant === 'warning',
+        // Danger: 危險紅
+        'bg-danger hover:bg-danger-dark text-white border-transparent focus:ring-danger/50': variant === 'danger',
+        // Ghost: 透明背景
+        'bg-transparent hover:bg-metal-light text-ink-cool border-transparent dark:hover:bg-metal-obsidian/50 dark:text-ink-muted focus:ring-metal-silver/50': variant === 'ghost',
+      },
+      // 狀態類
       {
         'opacity-50 cursor-not-allowed': disabled || loading,
         'w-full': block,
