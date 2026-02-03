@@ -73,8 +73,41 @@ progresshub/
 | 2 | 根目錄 Python Dockerfile | 🔴 Critical | 舊 Slack Bot 遺留檔案 | Zeabur 載入錯誤的 Dockerfile |
 | 3 | vue-tsc 建構錯誤 | 🟠 High | 前端/後端目錄混淆 | Build 失敗 |
 | 4 | 非 Production Build | 🟡 Medium | Dockerfile 使用 npm run dev | 效能差、不穩定 |
+| 5 | Monorepo shared 模組找不到 | 🔴 Critical | Dockerfile 只在 frontend 目錄運行，無法存取 shared | Build 失敗 |
 
 ### 必須遵守的 Dockerfile 規範
+
+**Frontend Dockerfile 標準模板（Monorepo）:**
+```dockerfile
+# ⚠️ 關鍵：必須放在專案根目錄，從根目錄構建才能存取 shared 包
+FROM node:22-alpine
+LABEL "language"="nodejs"
+LABEL "framework"="vue"
+
+WORKDIR /src
+
+# 安裝 pnpm
+RUN npm install -g pnpm@8
+
+# 複製整個專案（包含 pnpm-workspace.yaml 和所有 packages）
+COPY . .
+
+# 安裝所有 workspace 依賴（包含 shared）
+RUN pnpm install
+
+# 使用 filter 構建 frontend（可以存取 shared 包的類型）
+RUN pnpm --filter frontend build
+
+# 使用 Zeabur 的 Caddy 靜態文件服務
+FROM zeabur/caddy-static
+
+# 複製構建產物
+COPY --from=0 /src/packages/frontend/dist /usr/share/caddy
+
+EXPOSE 8080
+```
+
+> ⚠️ **重要**：Monorepo 前端部署必須從根目錄構建，不能只在 `packages/frontend` 目錄內構建，否則無法存取 `shared` 包。
 
 **Backend Dockerfile 標準模板:**
 ```dockerfile
@@ -355,6 +388,31 @@ CLAUDE.md 是 Claude Code 的專屬背景記憶文件：
 2. ✅ 根目錄 Dockerfile 混淆
 3. ✅ vue-tsc 建構錯誤
 4. ✅ 非 Production Build 問題
+5. ✅ Monorepo shared 模組找不到
+
+### [Monorepo] Shared 模組找不到
+
+| 項目 | 內容 |
+|------|------|
+| **嚴重度** | 🔴 Critical |
+| **錯誤訊息** | `Cannot find module 'shared/types' or its corresponding type declarations` |
+| **根本原因** | pnpm monorepo 專案中，frontend 使用 `import from 'shared/types'`，但 Dockerfile 只在 `packages/frontend` 目錄運行，無法存取上層的 `packages/shared` |
+| **解決方案** | Dockerfile 必須放在專案根目錄，從根目錄執行 `pnpm install` 和 `pnpm --filter frontend build` |
+| **預防措施** | Monorepo 前端部署一律使用根目錄構建模式 |
+
+**Zeabur 部署配置（JSON）：**
+```json
+{
+  "source": {
+    "type": "BUILD_FROM_SOURCE",
+    "build_from_source": {
+      "dockerfile": {
+        "content": "FROM node:22-alpine\nLABEL \"language\"=\"nodejs\"\nLABEL \"framework\"=\"vue\"\n\nWORKDIR /src\n\nRUN npm install -g pnpm@8\n\nCOPY . .\n\nRUN pnpm install\n\nRUN pnpm --filter frontend build\n\nFROM zeabur/caddy-static\n\nCOPY --from=0 /src/packages/frontend/dist /usr/share/caddy\n\nEXPOSE 8080"
+      }
+    }
+  }
+}
+```
 
 ---
 
