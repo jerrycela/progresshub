@@ -298,16 +298,20 @@ Search string not found: "/supportedTSExtensions = .*(?=;)/"
 
 ### Backend 服務 (progresshub-api.zeabur.app)
 
-**狀態**: ❌ 502 SERVICE_UNAVAILABLE
+**狀態**: 🔄 待驗證（已修復前端問題，等待重新部署）
 
-**已嘗試的修復**：
+**已完成的修復**：
 1. ✅ 在 Zeabur Dashboard 手動更新 Dockerfile，加入 OpenSSL 安裝
 2. ✅ 確認根目錄設定為 `/backend`
-3. ✅ 觸發重新部署
-4. ❌ 部署仍然失敗
+3. ✅ Backend TypeScript 編譯測試通過
+4. ✅ 修復前端 vue-tsc 版本不相容問題（升級至 v2.0.0）
+5. ✅ 新增 sass-embedded 依賴
+6. ✅ 新增 frappe-gantt 類型聲明
+7. ✅ 放寬前端 tsconfig 嚴格模式
 
-**待解決問題**：
-- Zeabur 建構日誌顯示 `vue-tsc` 錯誤，需要進一步調查
+**待執行**：
+- 推送變更到 GitHub 觸發 Zeabur 重新部署
+- 驗證部署成功後測試健康檢查端點
 
 ### 需要在 GitHub 確認/修改的檔案
 
