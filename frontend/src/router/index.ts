@@ -63,6 +63,43 @@ const router = createRouter({
       component: () => import('@/views/Employees.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
     },
+    // 工時追蹤系統
+    {
+      path: '/timesheet',
+      name: 'TimeSheet',
+      component: () => import('@/views/TimeSheet.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/timesheet/stats',
+      name: 'TimeStats',
+      component: () => import('@/views/TimeStats.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/reports/utilization',
+      name: 'Utilization',
+      component: () => import('@/views/Utilization.vue'),
+      meta: { requiresAuth: true, requiresPM: true },
+    },
+    {
+      path: '/approval/timesheet',
+      name: 'TimeApproval',
+      component: () => import('@/views/TimeApproval.vue'),
+      meta: { requiresAuth: true, requiresPM: true },
+    },
+    {
+      path: '/projects/:id/timesheet',
+      name: 'ProjectTimesheet',
+      component: () => import('@/views/ProjectTimesheet.vue'),
+      meta: { requiresAuth: true, requiresPM: true },
+    },
+    {
+      path: '/reports/cost',
+      name: 'CostReport',
+      component: () => import('@/views/CostReport.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
     // 404 頁面
     {
       path: '/:pathMatch(.*)*',

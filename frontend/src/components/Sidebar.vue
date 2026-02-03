@@ -38,6 +38,25 @@ const isActive = (path: string) => route.path === path
         進度回報
       </RouterLink>
 
+      <!-- 工時追蹤 -->
+      <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase">
+        工時追蹤
+      </div>
+
+      <RouterLink to="/timesheet" class="sidebar-link" :class="{ active: isActive('/timesheet') }">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        工時填報
+      </RouterLink>
+
+      <RouterLink to="/timesheet/stats" class="sidebar-link" :class="{ active: isActive('/timesheet/stats') }">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        工時統計
+      </RouterLink>
+
       <!-- PM/Admin 選單 -->
       <template v-if="authStore.isPM">
         <div class="px-4 py-2 mt-4 text-xs font-semibold text-gray-500 uppercase">
@@ -57,6 +76,20 @@ const isActive = (path: string) => route.path === path
           </svg>
           專案管理
         </RouterLink>
+
+        <RouterLink to="/approval/timesheet" class="sidebar-link" :class="{ active: isActive('/approval/timesheet') }">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          工時審核
+        </RouterLink>
+
+        <RouterLink to="/reports/utilization" class="sidebar-link" :class="{ active: isActive('/reports/utilization') }">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          利用率分析
+        </RouterLink>
       </template>
 
       <!-- Admin 選單 -->
@@ -70,6 +103,13 @@ const isActive = (path: string) => route.path === path
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
           </svg>
           員工管理
+        </RouterLink>
+
+        <RouterLink to="/reports/cost" class="sidebar-link" :class="{ active: isActive('/reports/cost') }">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          成本報表
         </RouterLink>
       </template>
     </nav>

@@ -35,12 +35,23 @@
 │    Nginx      │          │  + Scheduler    │          │                 │
 └───────────────┘          └─────────────────┘          └─────────────────┘
         │                            │
-        │                            ▼
-        │                   ┌─────────────────┐
-        └──────────────────▶│   Slack API     │
-                            │  (OAuth + Bot)  │
-                            └─────────────────┘
+        │              ┌─────────────┴─────────────┐
+        │              ▼                           ▼
+        │     ┌─────────────────┐         ┌─────────────────┐
+        └────▶│   Slack API     │         │   GitLab API    │
+              │  (OAuth + Bot)  │         │ (OAuth + Webhook)│
+              └─────────────────┘         └─────────────────┘
 ```
+
+### 系統功能
+
+| 功能模組 | 說明 |
+|----------|------|
+| **專案管理** | 專案、任務、里程碑管理 |
+| **進度追蹤** | 甘特圖、進度回報 |
+| **工時追蹤** | 工時填報、審核、統計報表 |
+| **GitLab 整合** | OAuth 連結、活動同步、自動工時轉換 |
+| **Slack 整合** | OAuth 登入、斜線指令、提醒通知 |
 
 ### 服務清單
 
@@ -157,6 +168,9 @@ ALLOWED_ORIGINS=https://<你的前端網域>.zeabur.app
 ENABLE_SCHEDULER=true
 REMINDER_TIME=17:00
 REMINDER_TIMEZONE=Asia/Taipei
+
+# ===== GitLab 整合（可選）=====
+GITLAB_ENCRYPTION_KEY=<32字元加密金鑰，用於加密 GitLab tokens>
 ```
 
 #### 3.2 綁定網域
@@ -219,6 +233,7 @@ ALLOWED_ORIGINS=https://progresshub-xxxxx.zeabur.app
 | `ENABLE_SCHEDULER` | ❌ | 啟用排程（預設 true） | `true` |
 | `REMINDER_TIME` | ❌ | 提醒時間（預設 17:00） | `17:00` |
 | `REMINDER_TIMEZONE` | ❌ | 時區（預設 Asia/Taipei） | `Asia/Taipei` |
+| `GITLAB_ENCRYPTION_KEY` | ⚠️ | GitLab Token 加密金鑰（使用 GitLab 整合時必填） | `your-32-char-key...` |
 
 ### Frontend 完整環境變數
 
@@ -325,7 +340,8 @@ curl https://<你的後端網域>.zeabur.app/api
     "timeEntries": "/api/time-entries",
     "timeCategories": "/api/time-categories",
     "timeStats": "/api/time-stats",
-    "slack": "/api/slack"
+    "slack": "/api/slack",
+    "gitlab": "/api/gitlab"
   }
 }
 ```
@@ -366,6 +382,67 @@ https://<你的前端網域>.zeabur.app
 ```
 
 應該看到工時指令的使用說明。
+
+---
+
+## GitLab 整合設定（可選）
+
+如需使用 GitLab 整合功能，請依照以下步驟設定：
+
+### 1. 建立 GitLab Application
+
+1. 前往 GitLab → **Settings** → **Applications**
+2. 點擊 **New Application**
+3. 填寫以下資訊：
+   - **Name**: `ProgressHub`
+   - **Redirect URI**: `https://<你的後端網域>.zeabur.app/api/gitlab/connections/oauth/callback`
+   - **Confidential**: ✅ 勾選
+   - **Scopes**: 勾選 `api`, `read_user`, `read_repository`
+
+4. 點擊 **Save application**
+5. 記錄 **Application ID** 和 **Secret**
+
+### 2. 產生加密金鑰
+
+```bash
+# 產生 32 字元加密金鑰
+node -e "console.log(require('crypto').randomBytes(32).toString('hex').slice(0, 32))"
+```
+
+### 3. 設定環境變數
+
+在 Backend 服務新增：
+```env
+GITLAB_ENCRYPTION_KEY=<你產生的32字元金鑰>
+```
+
+### 4. 在 ProgressHub 中設定 GitLab 實例
+
+部署完成後，使用 Admin 帳號登入，前往：
+**系統管理 → GitLab 實例**
+
+新增實例：
+- **名稱**: 公司 GitLab（或 gitlab.com）
+- **URL**: `https://gitlab.example.com`（或 `https://gitlab.com`）
+- **Client ID**: 你的 Application ID
+- **Client Secret**: 你的 Secret
+
+### 5. 使用者連結 GitLab
+
+使用者可在個人設定中：
+1. 點擊「連結 GitLab」
+2. 授權存取
+3. 設定同步選項（自動轉換工時等）
+
+### 6. 設定 Webhook（可選）
+
+如需即時接收 GitLab 事件：
+
+1. 前往 GitLab 專案 → **Settings** → **Webhooks**
+2. 新增 Webhook：
+   - **URL**: `https://<你的後端網域>.zeabur.app/api/gitlab/webhook/<instance-id>`
+   - **Secret Token**: 在 ProgressHub 中設定的 Webhook Secret
+   - **Trigger**: ✅ Push events, ✅ Merge request events, ✅ Issue events
 
 ---
 
@@ -522,4 +599,5 @@ Zeabur 預設會在 Git push 時自動部署。如需調整：
 
 ---
 
-> 最後更新：2026-02-02
+> 最後更新：2026-02-03
+> 版本：v2.0（新增 GitLab 整合、工時追蹤功能）
