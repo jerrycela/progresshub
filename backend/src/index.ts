@@ -9,6 +9,7 @@ import prisma from './config/database';
 import logger, { httpLogStream } from './config/logger';
 import { swaggerSpec } from './config/swagger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { startScheduler } from './scheduler/reminder';
 import routes from './routes';
 import healthRoutes from './routes/health';
 
@@ -82,9 +83,16 @@ const startServer = async () => {
     await prisma.$connect();
     logger.info('Database connected successfully');
 
+    // Start the scheduler (integrated mode)
+    const enableScheduler = process.env.ENABLE_SCHEDULER !== 'false';
+    if (enableScheduler) {
+      startScheduler();
+    }
+
     app.listen(env.PORT, () => {
       logger.info(`Server is running on port ${env.PORT}`);
       logger.info(`Environment: ${env.NODE_ENV}`);
+      logger.info(`Scheduler: ${enableScheduler ? 'enabled' : 'disabled'}`);
       logger.info(`Health check: http://localhost:${env.PORT}/health`);
       logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
     });
