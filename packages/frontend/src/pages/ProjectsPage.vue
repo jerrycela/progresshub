@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { mockProjects, mockTasks, mockUsers } from '@/mocks/data'
+import { useToast } from '@/composables/useToast'
+import { useFormatDate } from '@/composables/useFormatDate'
+import { commonRules, validateField } from '@/composables/useFormValidation'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
@@ -9,7 +12,10 @@ import ProgressBar from '@/components/common/ProgressBar.vue'
 import type { Project } from 'shared/types'
 
 // 專案管理頁面 (PM+ 權限)
+// Ralph Loop 迭代 9: 添加表單驗證
 const projects = ref(mockProjects)
+const { showSuccess, showError } = useToast()
+const { formatFull } = useFormatDate()
 
 // 計算專案統計
 const getProjectStats = (projectId: string) => {
@@ -72,21 +78,58 @@ const openEditModal = (project: Project) => {
   showProjectModal.value = true
 }
 
+// 表單驗證錯誤
+const formErrors = ref<Record<string, string>>({})
+
+// 驗證規則
+const validateProjectForm = (): boolean => {
+  formErrors.value = {}
+  let isValid = true
+
+  // 驗證專案名稱
+  const nameError = validateField(editingProject.value.name, commonRules.projectName())
+  if (nameError) {
+    formErrors.value.name = nameError
+    isValid = false
+  }
+
+  // 驗證日期範圍
+  if (editingProject.value.startDate && editingProject.value.endDate) {
+    const dateRangeError = validateField(null, [
+      commonRules.dateRange(editingProject.value.startDate, editingProject.value.endDate),
+    ])
+    if (dateRangeError) {
+      formErrors.value.endDate = dateRangeError
+      isValid = false
+    }
+  }
+
+  return isValid
+}
+
+// 清除特定欄位錯誤
+const clearFieldError = (field: string) => {
+  delete formErrors.value[field]
+}
+
+// 監聽欄位變化清除錯誤
+watch(() => editingProject.value.name, () => clearFieldError('name'))
+watch(() => editingProject.value.endDate, () => clearFieldError('endDate'))
+
 const saveProject = () => {
+  if (!validateProjectForm()) {
+    showError('請修正表單錯誤')
+    return
+  }
+
   // Mock: 實際會呼叫 API
   console.log('儲存專案:', editingProject.value)
+  showSuccess(isEditing.value ? '專案已更新' : '專案已建立')
   showProjectModal.value = false
 }
 
 // 格式化日期
-const formatDate = (date?: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
+const formatDate = (date?: string) => formatFull(date)
 </script>
 
 <template>
@@ -170,13 +213,19 @@ const formatDate = (date?: string) => {
     >
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">專案名稱</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            專案名稱 <span class="text-danger">*</span>
+          </label>
           <input
             v-model="editingProject.name"
             type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            :class="[
+              'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+              formErrors.name ? 'border-danger' : 'border-gray-300'
+            ]"
             placeholder="輸入專案名稱"
           >
+          <p v-if="formErrors.name" class="mt-1 text-sm text-danger">{{ formErrors.name }}</p>
         </div>
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">專案說明</label>
@@ -201,8 +250,12 @@ const formatDate = (date?: string) => {
             <input
               v-model="editingProject.endDate"
               type="date"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              :class="[
+                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
+                formErrors.endDate ? 'border-danger' : 'border-gray-300'
+              ]"
             >
+            <p v-if="formErrors.endDate" class="mt-1 text-sm text-danger">{{ formErrors.endDate }}</p>
           </div>
         </div>
         <div>
