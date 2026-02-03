@@ -11,22 +11,22 @@ export const useTaskStore = defineStore('tasks', () => {
 
   // Getters
   const backlogTasks = computed(() =>
-    tasks.value.filter(t => t.status === 'UNCLAIMED')
+    tasks.value.filter((t: Task) => t.status === 'UNCLAIMED')
   )
 
   const myTasks = computed(() =>
-    tasks.value.filter(t =>
+    tasks.value.filter((t: Task) =>
       t.assigneeId && ['CLAIMED', 'IN_PROGRESS'].includes(t.status)
     )
   )
 
   const completedTasks = computed(() =>
-    tasks.value.filter(t => t.status === 'DONE')
+    tasks.value.filter((t: Task) => t.status === 'DONE')
   )
 
   const overdueTasks = computed(() => {
     const today = new Date().toISOString().split('T')[0]
-    return tasks.value.filter(t =>
+    return tasks.value.filter((t: Task) =>
       t.dueDate &&
       t.dueDate < today &&
       t.status !== 'DONE'
@@ -34,13 +34,13 @@ export const useTaskStore = defineStore('tasks', () => {
   })
 
   const getTasksByProject = (projectId: string) =>
-    computed(() => tasks.value.filter(t => t.projectId === projectId))
+    computed(() => tasks.value.filter((t: Task) => t.projectId === projectId))
 
   const getTasksByFunction = (functionType: FunctionType) =>
-    computed(() => tasks.value.filter(t => t.functionTags.includes(functionType)))
+    computed(() => tasks.value.filter((t: Task) => t.functionTags.includes(functionType)))
 
   const getTasksByStatus = (status: TaskStatus) =>
-    computed(() => tasks.value.filter(t => t.status === status))
+    computed(() => tasks.value.filter((t: Task) => t.status === status))
 
   // Actions
   const fetchTasks = async () => {
@@ -58,7 +58,7 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const claimTask = async (taskId: string, userId: string) => {
-    const task = tasks.value.find(t => t.id === taskId)
+    const task = tasks.value.find((t: Task) => t.id === taskId)
     if (task && task.status === 'UNCLAIMED') {
       task.status = 'CLAIMED'
       task.assigneeId = userId
@@ -66,7 +66,7 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const unclaimTask = async (taskId: string) => {
-    const task = tasks.value.find(t => t.id === taskId)
+    const task = tasks.value.find((t: Task) => t.id === taskId)
     if (task && ['CLAIMED', 'IN_PROGRESS'].includes(task.status)) {
       task.status = 'UNCLAIMED'
       task.assigneeId = undefined
@@ -74,8 +74,8 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   }
 
-  const updateTaskProgress = async (taskId: string, progress: number, notes?: string) => {
-    const task = tasks.value.find(t => t.id === taskId)
+  const updateTaskProgress = async (taskId: string, progress: number, _notes?: string) => {
+    const task = tasks.value.find((t: Task) => t.id === taskId)
     if (task) {
       task.progress = progress
       if (progress > 0 && task.status === 'CLAIMED') {
@@ -88,7 +88,7 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const updateTaskStatus = async (taskId: string, status: TaskStatus) => {
-    const task = tasks.value.find(t => t.id === taskId)
+    const task = tasks.value.find((t: Task) => t.id === taskId)
     if (task) {
       task.status = status
     }

@@ -1,4 +1,4 @@
-import type { User, Project, Task, ProgressLog, DashboardStats, FunctionWorkload, ReportType, ReportCycle } from 'shared/types'
+import type { User, Project, Task, ProgressLog, DashboardStats, FunctionWorkload } from 'shared/types'
 
 // ============================================
 // Mock 使用者資料
