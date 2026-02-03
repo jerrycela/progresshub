@@ -7,7 +7,21 @@ import { SIDEBAR_MENU_CLASSES } from '@/constants/ui'
 // ============================================
 // 側邊選單元件 - Ralph Loop 迭代 11 重構
 // 移至 layout 目錄，使用 SIDEBAR_MENU_CLASSES 常數
+// Ralph Loop 迭代 16: RWD - 行動裝置響應式側邊欄
 // ============================================
+
+interface Props {
+  /** 行動裝置側邊欄展開狀態 */
+  isOpen?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isOpen: false,
+})
+
+const emit = defineEmits<{
+  close: []
+}>()
 
 const route = useRoute()
 const router = useRouter()
@@ -113,7 +127,26 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <aside class="w-64 bg-gray-900 text-white flex flex-col">
+  <!-- 行動裝置側邊欄 (滑入式) -->
+  <aside
+    :class="[
+      'fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0',
+      props.isOpen ? 'translate-x-0' : '-translate-x-full',
+    ]"
+  >
+    <!-- 行動裝置關閉按鈕 -->
+    <div class="lg:hidden flex items-center justify-between h-16 px-4 border-b border-gray-800">
+      <span class="text-lg font-bold">選單</span>
+      <button
+        class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+        @click="emit('close')"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
     <!-- 選單區域 -->
     <nav class="flex-1 py-4 overflow-y-auto">
       <!-- 主選單 -->
