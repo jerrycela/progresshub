@@ -168,3 +168,77 @@ await prisma.$queryRaw`SELECT 1`;
 - 每次部署前確認 Zeabur 使用的 Dockerfile 內容正確
 - 檢查 Dockerfile 的 `FROM` 指令確認是正確的基礎映像
 - Backend 應使用 `node:20-alpine`，而非 `python:3.11-slim`
+
+### 問題 6：Repository 包含多個專案導致部署混淆
+
+**根本原因**：
+- `openclawfortest` repository 包含**兩套**獨立的專案結構：
+  ```
+  openclawfortest/
+  ├── backend/              ← 根目錄 backend (含 GitLab 整合程式碼)
+  ├── frontend/             ← 根目錄 frontend
+  ├── progresshub/          ← ProgressHub 子專案
+  │   ├── backend/         ← ProgressHub 後端
+  │   └── frontend/        ← ProgressHub 前端
+  ```
+- Zeabur 部署時使用**根目錄的 backend/**，而非 **progresshub/backend/**
+- 修復工作若在錯誤的目錄進行，將不會影響實際部署
+
+**解決方案**：
+1. 確認 Zeabur 服務的 Root Directory 設定
+2. 修復正確目錄的程式碼（根目錄 backend 或 progresshub/backend）
+3. 根據實際部署需求，考慮將專案分開到不同的 repository
+
+**改進策略**：
+- 部署前確認 Zeabur 服務連結的目錄路徑
+- 在 CLAUDE.md 明確記錄哪個目錄是被部署的
+- 考慮使用 monorepo 管理工具或分開 repository
+
+### 問題 7：GitLab 整合程式碼的 TypeScript 錯誤
+
+**錯誤訊息**：
+- `env.API_BASE_URL` 屬性不存在
+- `unknown` 類型無法賦值給 `Record<string, unknown>`
+- `response.json()` 返回 `unknown` 類型的屬性存取問題
+
+**根本原因**：
+- `env.ts` 的 `EnvConfig` interface 缺少 `API_BASE_URL` 定義
+- GitLab API Client 的類型轉換不完整
+- TypeScript 嚴格模式下的類型推斷問題
+
+**解決方案**：
+1. 在 `backend/src/config/env.ts` 新增 `API_BASE_URL` 屬性：
+   ```typescript
+   interface EnvConfig {
+     // ... 其他屬性
+     API_BASE_URL: string;
+   }
+
+   export const env: EnvConfig = {
+     // ... 其他值
+     API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000',
+   };
+   ```
+
+2. 在 GitLab API Client 中使用正確的類型斷言：
+   ```typescript
+   // 修復前
+   return response.data.map((item: unknown) => this.transform(item));
+
+   // 修復後
+   return response.data.map((item: unknown) => this.transform(item as Record<string, unknown>));
+   ```
+
+3. 修復 `prisma generate` 未執行問題：
+   ```json
+   {
+     "scripts": {
+       "build": "prisma generate && tsc"
+     }
+   }
+   ```
+
+**改進策略**：
+- 本地執行 `npm run build` 確保編譯通過後再提交
+- 新增環境變數時，同時更新 `EnvConfig` interface
+- 使用 TypeScript 嚴格模式時，確保所有類型正確定義
