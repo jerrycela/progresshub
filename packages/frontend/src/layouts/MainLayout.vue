@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import AppHeader from '@/components/common/AppHeader.vue'
-import AppSidebar from '@/components/common/AppSidebar.vue'
+import { AppHeader, AppSidebar } from '@/components/layout'
 import Toast from '@/components/common/Toast.vue'
 
+// ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
 // Ralph Loop 迭代 7: 新增全域 Toast 容器
+// Ralph Loop 迭代 11: 使用重構後的 layout 元件
+// ============================================
 </script>
 
 <template>

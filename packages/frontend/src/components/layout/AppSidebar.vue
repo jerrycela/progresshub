@@ -2,8 +2,13 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { SIDEBAR_MENU_CLASSES } from '@/constants/ui'
 
-// 側邊選單元件
+// ============================================
+// 側邊選單元件 - Ralph Loop 迭代 11 重構
+// 移至 layout 目錄，使用 SIDEBAR_MENU_CLASSES 常數
+// ============================================
+
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -91,6 +96,12 @@ const filteredAdminMenuItems = computed(() => {
 
 const isActive = (path: string) => route.path === path
 
+// 使用常數組合樣式類別
+const getMenuItemClass = (path: string) => [
+  SIDEBAR_MENU_CLASSES.base,
+  isActive(path) ? SIDEBAR_MENU_CLASSES.active : SIDEBAR_MENU_CLASSES.inactive,
+]
+
 const navigateTo = (path: string) => {
   router.push(path)
 }
@@ -113,12 +124,7 @@ const handleLogout = async () => {
         <ul class="space-y-1">
           <li v-for="item in menuItems" :key="item.path">
             <button
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
-                isActive(item.path)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white',
-              ]"
+              :class="getMenuItemClass(item.path)"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,12 +144,7 @@ const handleLogout = async () => {
         <ul class="space-y-1">
           <li v-for="item in filteredPmMenuItems" :key="item.path">
             <button
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
-                isActive(item.path)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white',
-              ]"
+              :class="getMenuItemClass(item.path)"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,12 +164,7 @@ const handleLogout = async () => {
         <ul class="space-y-1">
           <li v-for="item in filteredAdminMenuItems" :key="item.path">
             <button
-              :class="[
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
-                isActive(item.path)
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white',
-              ]"
+              :class="getMenuItemClass(item.path)"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -184,7 +180,7 @@ const handleLogout = async () => {
     <!-- 底部登出按鈕 -->
     <div class="p-3 border-t border-gray-800">
       <button
-        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+        :class="[SIDEBAR_MENU_CLASSES.base, SIDEBAR_MENU_CLASSES.inactive]"
         @click="handleLogout"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
