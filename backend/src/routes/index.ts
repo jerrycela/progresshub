@@ -8,6 +8,7 @@ import timeEntryRoutes from './timeEntries';
 import timeCategoryRoutes from './timeCategories';
 import timeStatsRoutes from './timeStats';
 import slackRoutes from './slack';
+import gitlabRoutes from './gitlab';
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.use('/time-entries', timeEntryRoutes);
 router.use('/time-categories', timeCategoryRoutes);
 router.use('/time-stats', timeStatsRoutes);
 router.use('/slack', slackRoutes);
+router.use('/gitlab', gitlabRoutes);
 
 // API Info
 router.get('/', (req, res) => {
@@ -37,6 +39,7 @@ router.get('/', (req, res) => {
       timeCategories: '/api/time-categories',
       timeStats: '/api/time-stats',
       slack: '/api/slack',
+      gitlab: '/api/gitlab',
     },
   });
 });
