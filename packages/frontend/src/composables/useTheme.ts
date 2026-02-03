@@ -8,7 +8,8 @@ import { ref, computed, onMounted } from 'vue'
 type Theme = 'light' | 'dark' | 'system'
 
 // 全域狀態，確保所有元件共用同一個主題狀態
-const currentTheme = ref<Theme>('system')
+// 預設使用 light mode，避免因系統偏好導致非預期的深色模式
+const currentTheme = ref<Theme>('light')
 const isDark = ref(false)
 
 // 是否已初始化

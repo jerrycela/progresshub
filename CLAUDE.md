@@ -75,6 +75,7 @@ progresshub/
 | 4 | 非 Production Build | 🟡 Medium | Dockerfile 使用 npm run dev | 效能差、不穩定 |
 | 5 | Monorepo shared 模組找不到 | 🔴 Critical | Dockerfile 只在 frontend 目錄運行，無法存取 shared | Build 失敗 |
 | 6 | Vue Router 嵌套路由使用 slot | 🔴 Critical | MainLayout 使用 `<slot />` 而非 `<router-view />` | 頁面內容區域空白 |
+| 7 | Dark mode 預設啟用導致看不見內容 | 🔴 Critical | 主題預設為 `system` + 使用者系統是深色模式 | 深色背景配深色文字，完全看不清 |
 
 ### 必須遵守的 Dockerfile 規範
 
@@ -474,6 +475,35 @@ CLAUDE.md 是 Claude Code 的專屬背景記憶文件：
 |------|------|---------|
 | `<slot />` | Vue 元件插槽 | 父元件傳遞內容給子元件 |
 | `<router-view />` | Vue Router 出口 | 渲染當前路由匹配的子組件 |
+
+### [Dark Mode] 主題初始化導致內容不可見
+
+| 項目 | 內容 |
+|------|------|
+| **嚴重度** | 🔴 Critical |
+| **錯誤症狀** | 頁面背景和文字都是深色，導致內容完全看不見 |
+| **根本原因** | 1. 主題預設為 `system` 跟隨系統偏好<br>2. 用戶系統是 Dark mode<br>3. CSS 變數在 `.dark` class 下會套用深色配色<br>4. 主題初始化不在根元件，某些頁面（如 LoginPage）可能在初始化前就渲染 |
+| **解決方案** | 1. 將 `useTheme()` 初始化移至 `App.vue` 根元件<br>2. 預設主題改為 `light` 而非 `system` |
+| **預防措施** | 1. **永遠在 App.vue 根元件初始化全域狀態**<br>2. **推送前必須實際預覽頁面**，不能只靠 Build 通過 |
+
+**正確的主題初始化方式：**
+```vue
+<!-- App.vue -->
+<script setup lang="ts">
+import { RouterView } from 'vue-router'
+import { useTheme } from '@/composables/useTheme'
+
+// 在根元件初始化主題，確保所有頁面都能正確套用
+const { initTheme } = useTheme()
+initTheme()
+</script>
+```
+
+**QA 檢查清單（推送前必做）：**
+- [ ] 實際在瀏覽器預覽所有主要頁面
+- [ ] 測試 Light mode 顯示正常
+- [ ] 測試 Dark mode 切換功能
+- [ ] 確認文字在背景上清晰可見
 
 ---
 
