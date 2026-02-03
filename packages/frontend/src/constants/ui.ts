@@ -96,4 +96,7 @@ export const TRANSITIONS = {
   fast: 'duration-150',
   normal: 'duration-200',
   slow: 'duration-300',
+  // Toast 動畫（Ralph Loop 迭代 7）
+  TOAST_ENTER: 'transition-all duration-300 ease-out',
+  TOAST_LEAVE: 'transition-all duration-200 ease-in',
 } as const

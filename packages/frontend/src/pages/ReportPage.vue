@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import { mockProjects, reportTypeLabels } from '@/mocks/data'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
@@ -11,8 +12,10 @@ import ProgressBar from '@/components/common/ProgressBar.vue'
 import type { Task, ReportType } from 'shared/types'
 
 // 進度回報頁面 - 每日進度回報（含「繼續」快速回報功能）
+// Ralph Loop 迭代 7: 改用全域 Toast 通知
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const { showSuccess, showError } = useToast()
 
 // 我的進行中任務
 const myInProgressTasks = computed(() => {
@@ -38,10 +41,6 @@ const newProgress = ref(0)
 const progressNotes = ref('')
 const blockerReason = ref('')
 
-// 成功訊息
-const showSuccessToast = ref(false)
-const successMessage = ref('')
-
 // 開啟回報對話框
 const openReportModal = (task: Task, type: ReportType) => {
   selectedTask.value = task
@@ -64,13 +63,9 @@ const submitContinue = async (task: Task) => {
   try {
     // Mock: 模擬 API 呼叫
     await new Promise(resolve => setTimeout(resolve, 500))
-
-    // 顯示成功訊息
-    successMessage.value = `✅ 已回報「${task.title}」繼續進行中`
-    showSuccessToast.value = true
-    setTimeout(() => {
-      showSuccessToast.value = false
-    }, 3000)
+    showSuccess(`已回報「${task.title}」繼續進行中`)
+  } catch {
+    showError('回報失敗，請稍後再試')
   } finally {
     isReporting.value = false
   }
@@ -82,16 +77,25 @@ const submitReport = async () => {
 
   isReporting.value = true
   try {
-    // Mock: 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 500))
-
     // 根據回報類型處理
     if (reportType.value === 'PROGRESS') {
-      await taskStore.updateTaskProgress(selectedTask.value.id, newProgress.value, progressNotes.value)
+      const result = await taskStore.updateTaskProgress(selectedTask.value.id, newProgress.value, progressNotes.value)
+      if (!result.success) {
+        showError(result.error?.message || '更新進度失敗')
+        return
+      }
     } else if (reportType.value === 'COMPLETE') {
-      await taskStore.updateTaskProgress(selectedTask.value.id, 100)
+      const result = await taskStore.updateTaskProgress(selectedTask.value.id, 100)
+      if (!result.success) {
+        showError(result.error?.message || '完成任務失敗')
+        return
+      }
     } else if (reportType.value === 'BLOCKED') {
-      await taskStore.updateTaskStatus(selectedTask.value.id, 'BLOCKED')
+      const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'BLOCKED')
+      if (!result.success) {
+        showError(result.error?.message || '回報卡關失敗')
+        return
+      }
     }
 
     // 關閉對話框
@@ -104,11 +108,9 @@ const submitReport = async () => {
       BLOCKED: '卡關回報',
       COMPLETE: '任務完成',
     }
-    successMessage.value = `✅ 已完成「${selectedTask.value.title}」的${labels[reportType.value]}`
-    showSuccessToast.value = true
-    setTimeout(() => {
-      showSuccessToast.value = false
-    }, 3000)
+    showSuccess(`已完成「${selectedTask.value.title}」的${labels[reportType.value]}`)
+  } catch {
+    showError('操作失敗，請稍後再試')
   } finally {
     isReporting.value = false
   }
@@ -315,31 +317,5 @@ const today = new Date().toLocaleDateString('zh-TW', {
         </Button>
       </template>
     </Modal>
-
-    <!-- 成功提示 Toast -->
-    <Transition name="toast">
-      <div
-        v-if="showSuccessToast"
-        class="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        {{ successMessage }}
-      </div>
-    </Transition>
   </div>
 </template>
-
-<style scoped>
-.toast-enter-active,
-.toast-leave-active {
-  transition: all 0.3s ease;
-}
-
-.toast-enter-from,
-.toast-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
-}
-</style>

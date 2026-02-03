@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import AppHeader from '@/components/common/AppHeader.vue'
 import AppSidebar from '@/components/common/AppSidebar.vue'
+import Toast from '@/components/common/Toast.vue'
 
-// 主框架佈局元件 - 包含 Header + Sidebar + 內容區
+// 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
+// Ralph Loop 迭代 7: 新增全域 Toast 容器
 </script>
 
 <template>
@@ -20,5 +22,8 @@ import AppSidebar from '@/components/common/AppSidebar.vue'
         <slot />
       </main>
     </div>
+
+    <!-- 全域 Toast 通知 -->
+    <Toast />
   </div>
 </template>
