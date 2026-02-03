@@ -75,8 +75,8 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
   <div class="space-y-6">
     <!-- 頁面標題 (RWD: 迭代 28) -->
     <div>
-      <h1 class="text-xl md:text-2xl font-bold text-gray-900">追殺清單</h1>
-      <p class="text-sm md:text-base text-gray-500 mt-1">需要立即關注的任務警示</p>
+      <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">追殺清單</h1>
+      <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">需要立即關注的任務警示</p>
     </div>
 
     <!-- 統計概覽 -->
@@ -90,7 +90,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
           </div>
           <div>
             <p class="text-2xl font-bold text-danger">{{ overdueTasks.length }}</p>
-            <p class="text-sm text-gray-600">逾期任務</p>
+            <p class="text-sm" style="color: var(--text-secondary);">逾期任務</p>
           </div>
         </div>
       </Card>
@@ -104,35 +104,35 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
           </div>
           <div>
             <p class="text-2xl font-bold text-warning">{{ longUnclaimedTasks.length }}</p>
-            <p class="text-sm text-gray-600">久未認領</p>
+            <p class="text-sm" style="color: var(--text-secondary);">久未認領</p>
           </div>
         </div>
       </Card>
 
-      <Card class="bg-primary-50 border-primary-200">
+      <Card class="bg-samurai/5 border-samurai/20">
         <div class="flex items-center gap-3">
-          <div class="p-3 bg-primary-100 rounded-xl">
-            <svg class="w-6 h-6 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-3 bg-samurai/10 rounded-xl">
+            <svg class="w-6 h-6 text-samurai" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
           </div>
           <div>
-            <p class="text-2xl font-bold text-primary-700">{{ blockedTasks.length }}</p>
-            <p class="text-sm text-gray-600">卡關中</p>
+            <p class="text-2xl font-bold text-samurai">{{ blockedTasks.length }}</p>
+            <p class="text-sm" style="color: var(--text-secondary);">卡關中</p>
           </div>
         </div>
       </Card>
 
-      <Card class="bg-gray-50 border-gray-200">
+      <Card style="background-color: var(--bg-tertiary); border-color: var(--border-primary);">
         <div class="flex items-center gap-3">
-          <div class="p-3 bg-gray-100 rounded-xl">
-            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-3 rounded-xl" style="background-color: var(--bg-hover);">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--text-secondary);">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
           <div>
-            <p class="text-2xl font-bold text-gray-700">{{ staleTasks.length }}</p>
-            <p class="text-sm text-gray-600">無進度更新</p>
+            <p class="text-2xl font-bold" style="color: var(--text-primary);">{{ staleTasks.length }}</p>
+            <p class="text-sm" style="color: var(--text-secondary);">無進度更新</p>
           </div>
         </div>
       </Card>
@@ -143,18 +143,18 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
       <template #header-actions>
         <Badge variant="danger">{{ overdueTasks.length }}</Badge>
       </template>
-      <div class="divide-y divide-gray-100">
+      <div class="divide-y" style="border-color: var(--border-primary);">
         <div
           v-for="task in overdueTasks"
           :key="task.id"
-          class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:bg-gray-50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200"
+          class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
         >
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
-              <h4 class="font-medium text-gray-900 truncate">{{ task.title }}</h4>
+              <h4 class="font-medium truncate" style="color: var(--text-primary);">{{ task.title }}</h4>
               <Badge variant="danger" size="sm">逾期 {{ getOverdueDays(task.dueDate!) }} 天</Badge>
             </div>
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-sm text-gray-500">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-sm" style="color: var(--text-tertiary);">
               <span>{{ getProjectName(task.projectId) }}</span>
               <span class="hidden sm:inline">•</span>
               <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
@@ -175,19 +175,19 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
     </Card>
 
     <!-- 卡關任務 -->
-    <Card v-if="blockedTasks.length > 0" title="卡關任務" class="border-primary-200">
+    <Card v-if="blockedTasks.length > 0" title="卡關任務" class="border-samurai/30">
       <template #header-actions>
         <Badge variant="primary">{{ blockedTasks.length }}</Badge>
       </template>
-      <div class="divide-y divide-gray-100">
+      <div class="divide-y" style="border-color: var(--border-primary);">
         <div
           v-for="task in blockedTasks"
           :key="task.id"
-          class="py-3 flex items-center justify-between hover:bg-gray-50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200"
+          class="py-3 flex items-center justify-between px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
         >
           <div class="flex-1 min-w-0">
-            <h4 class="font-medium text-gray-900 truncate">{{ task.title }}</h4>
-            <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+            <h4 class="font-medium truncate" style="color: var(--text-primary);">{{ task.title }}</h4>
+            <div class="flex items-center gap-3 mt-1 text-sm" style="color: var(--text-tertiary);">
               <span>{{ getProjectName(task.projectId) }}</span>
               <span>•</span>
               <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
@@ -205,15 +205,15 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
       <template #header-actions>
         <Badge variant="warning">{{ longUnclaimedTasks.length }}</Badge>
       </template>
-      <div class="divide-y divide-gray-100">
+      <div class="divide-y" style="border-color: var(--border-primary);">
         <div
           v-for="task in longUnclaimedTasks"
           :key="task.id"
-          class="py-3 flex items-center justify-between hover:bg-gray-50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200"
+          class="py-3 flex items-center justify-between px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
         >
           <div class="flex-1 min-w-0">
-            <h4 class="font-medium text-gray-900 truncate">{{ task.title }}</h4>
-            <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+            <h4 class="font-medium truncate" style="color: var(--text-primary);">{{ task.title }}</h4>
+            <div class="flex items-center gap-3 mt-1 text-sm" style="color: var(--text-tertiary);">
               <span>{{ getProjectName(task.projectId) }}</span>
               <span>•</span>
               <span>建立於 {{ formatDate(task.createdAt) }}</span>

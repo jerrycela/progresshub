@@ -149,8 +149,8 @@ const formatDate = (date?: string) => formatFull(date)
     <!-- 頁面標題 (RWD: 迭代 27) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-xl md:text-2xl font-bold text-gray-900">專案管理</h1>
-        <p class="text-sm md:text-base text-gray-500 mt-1">管理所有專案與任務分配</p>
+        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">專案管理</h1>
+        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">管理所有專案與任務分配</p>
       </div>
       <Button @click="openCreateModal">
         <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,8 +173,8 @@ const formatDate = (date?: string) => formatFull(date)
           <!-- 標題與狀態 -->
           <div class="flex items-start justify-between">
             <div>
-              <h3 class="text-lg font-semibold text-gray-900">{{ project.name }}</h3>
-              <p class="text-sm text-gray-500 mt-0.5">{{ project.description }}</p>
+              <h3 class="text-lg font-semibold" style="color: var(--text-primary);">{{ project.name }}</h3>
+              <p class="text-sm mt-0.5" style="color: var(--text-tertiary);">{{ project.description }}</p>
             </div>
             <Badge :variant="statusBadgeVariant(project.status)" size="sm" dot>
               {{ statusLabels[project.status] }}
@@ -184,32 +184,32 @@ const formatDate = (date?: string) => formatFull(date)
           <!-- 進度條 -->
           <ProgressBar :value="getProjectStats(project.id).progress" size="md">
             <template #label>
-              <span class="text-sm text-gray-600">整體進度</span>
+              <span class="text-sm" style="color: var(--text-secondary);">整體進度</span>
             </template>
           </ProgressBar>
 
           <!-- 任務統計 (RWD: 迭代 27 - 行動裝置 2x2 網格) -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
-            <div class="p-2 bg-gray-50 rounded-lg">
-              <p class="text-lg sm:text-xl font-bold text-gray-900">{{ getProjectStats(project.id).total }}</p>
-              <p class="text-xs text-gray-500">總任務</p>
+            <div class="p-2 rounded-lg" style="background-color: var(--bg-tertiary);">
+              <p class="text-lg sm:text-xl font-bold" style="color: var(--text-primary);">{{ getProjectStats(project.id).total }}</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">總任務</p>
             </div>
             <div class="p-2 bg-success/10 rounded-lg">
               <p class="text-lg sm:text-xl font-bold text-success">{{ getProjectStats(project.id).completed }}</p>
-              <p class="text-xs text-gray-500">已完成</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">已完成</p>
             </div>
-            <div class="p-2 bg-primary-50 rounded-lg">
-              <p class="text-lg sm:text-xl font-bold text-primary-700">{{ getProjectStats(project.id).inProgress }}</p>
-              <p class="text-xs text-gray-500">進行中</p>
+            <div class="p-2 bg-samurai/10 rounded-lg">
+              <p class="text-lg sm:text-xl font-bold text-samurai">{{ getProjectStats(project.id).inProgress }}</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">進行中</p>
             </div>
             <div class="p-2 bg-warning/10 rounded-lg">
               <p class="text-lg sm:text-xl font-bold text-warning">{{ getProjectStats(project.id).unclaimed }}</p>
-              <p class="text-xs text-gray-500">待認領</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">待認領</p>
             </div>
           </div>
 
           <!-- 專案資訊 (RWD: 迭代 27) -->
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-sm text-gray-500 pt-3 border-t border-gray-100">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-sm pt-3 border-t" style="color: var(--text-tertiary); border-color: var(--border-primary);">
             <span>負責人：{{ getProjectOwner(project.createdById) }}</span>
             <span>{{ formatDate(project.startDate) }} - {{ formatDate(project.endDate) }}</span>
           </div>
@@ -233,11 +233,11 @@ const formatDate = (date?: string) => formatFull(date)
           :error="formErrors.name"
         />
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">專案說明</label>
+          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">專案說明</label>
           <textarea
             v-model="editingProject.description"
             rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            class="input"
             placeholder="輸入專案說明"
           />
         </div>

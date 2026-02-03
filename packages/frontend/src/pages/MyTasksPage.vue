@@ -97,8 +97,8 @@ const showCompleted = ref(false)
     <!-- 頁面標題 (RWD: 迭代 26) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-xl md:text-2xl font-bold text-gray-900">我的任務</h1>
-        <p class="text-sm md:text-base text-gray-500 mt-1">管理您已認領的所有任務</p>
+        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">我的任務</h1>
+        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">管理您已認領的所有任務</p>
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
         <Badge variant="primary" size="md">
@@ -125,9 +125,10 @@ const showCompleted = ref(false)
             <input
               v-model="showCompleted"
               type="checkbox"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 rounded accent-samurai"
+              style="border-color: var(--border-primary);"
             >
-            <span class="text-sm text-gray-700">顯示已完成任務</span>
+            <span class="text-sm" style="color: var(--text-secondary);">顯示已完成任務</span>
           </label>
         </div>
       </div>
@@ -135,7 +136,7 @@ const showCompleted = ref(false)
 
     <!-- 進行中任務 -->
     <div>
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">進行中的任務</h2>
+      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">進行中的任務</h2>
       <div v-if="myTasks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <TaskCard
           v-for="task in myTasks"
@@ -153,7 +154,7 @@ const showCompleted = ref(false)
         >
           <RouterLink
             to="/backlog"
-            class="inline-block mt-2 text-primary-600 hover:text-primary-700 font-medium"
+            class="inline-block mt-2 font-medium text-samurai hover:text-samurai-dark transition-colors"
           >
             前往需求池認領任務
           </RouterLink>
@@ -163,7 +164,7 @@ const showCompleted = ref(false)
 
     <!-- 已完成任務 -->
     <div v-if="showCompleted && completedTasks.length > 0">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">已完成的任務</h2>
+      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">已完成的任務</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <TaskCard
           v-for="task in completedTasks"
@@ -178,13 +179,13 @@ const showCompleted = ref(false)
     <!-- 放棄認領對話框 -->
     <Modal v-model="showUnclaimModal" title="確認放棄認領" size="md">
       <div v-if="taskToUnclaim" class="space-y-4">
-        <p class="text-gray-600">您確定要放棄認領以下任務嗎？此操作將使任務回到需求池。</p>
-        <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h4 class="font-semibold text-gray-900">{{ taskToUnclaim.title }}</h4>
-          <p class="text-sm text-gray-500 mt-1">目前進度：{{ taskToUnclaim.progress }}%</p>
+        <p style="color: var(--text-secondary);">您確定要放棄認領以下任務嗎？此操作將使任務回到需求池。</p>
+        <div class="p-4 rounded-lg bg-warning/10 border border-warning/30">
+          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToUnclaim.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary);">目前進度：{{ taskToUnclaim.progress }}%</p>
         </div>
-        <p class="text-sm text-yellow-600">
-          ⚠️ 注意：放棄認領後，您的進度將被清除
+        <p class="text-sm text-warning">
+          注意：放棄認領後，您的進度將被清除
         </p>
       </div>
 

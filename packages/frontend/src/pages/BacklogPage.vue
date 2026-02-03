@@ -85,8 +85,8 @@ const projectOptions = computed(() => getProjectOptions(true))
     <!-- 頁面標題 -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">需求池</h1>
-        <p class="text-gray-500 mt-1">瀏覽並認領適合您的任務</p>
+        <h1 class="text-2xl font-bold" style="color: var(--text-primary);">需求池</h1>
+        <p class="mt-1" style="color: var(--text-secondary);">瀏覽並認領適合您的任務</p>
       </div>
       <Badge variant="info" size="md">
         {{ backlogTasks.length }} 個待認領任務
@@ -97,10 +97,10 @@ const projectOptions = computed(() => getProjectOptions(true))
     <Card>
       <div class="flex flex-wrap gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">職能篩選</label>
+          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">職能篩選</label>
           <select
             v-model="selectedFunction"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="input"
           >
             <option v-for="opt in functionOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -108,10 +108,10 @@ const projectOptions = computed(() => getProjectOptions(true))
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">專案篩選</label>
+          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">專案篩選</label>
           <select
             v-model="selectedProject"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            class="input"
           >
             <option v-for="opt in projectOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -145,10 +145,10 @@ const projectOptions = computed(() => getProjectOptions(true))
     <!-- 認領確認對話框 -->
     <Modal v-model="showClaimModal" title="確認認領任務" size="md">
       <div v-if="taskToClaim" class="space-y-4">
-        <p class="text-gray-600">您確定要認領以下任務嗎？</p>
-        <div class="p-4 bg-gray-50 rounded-lg">
-          <h4 class="font-semibold text-gray-900">{{ taskToClaim.title }}</h4>
-          <p class="text-sm text-gray-500 mt-1">{{ taskToClaim.description }}</p>
+        <p style="color: var(--text-secondary);">您確定要認領以下任務嗎？</p>
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary);">
+          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToClaim.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary);">{{ taskToClaim.description }}</p>
           <div class="flex flex-wrap gap-1.5 mt-3">
             <Badge
               v-for="func in taskToClaim.functionTags"

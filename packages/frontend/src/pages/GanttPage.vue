@@ -81,13 +81,13 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
   <div class="space-y-6">
     <!-- 頁面標題 (RWD: 迭代 24) -->
     <div>
-      <h1 class="text-xl md:text-2xl font-bold text-gray-900">甘特圖</h1>
-      <p class="text-sm md:text-base text-gray-500 mt-1">專案時程視覺化總覽</p>
+      <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">甘特圖</h1>
+      <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">專案時程視覺化總覽</p>
     </div>
 
     <!-- 行動裝置提示 (迭代 25) -->
-    <div class="md:hidden p-3 bg-primary-50 border border-primary-200 rounded-lg text-primary-800 text-sm flex items-center gap-2">
-      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="md:hidden p-3 rounded-lg text-sm flex items-center gap-2 bg-info/10 border border-info/30" style="color: var(--text-primary);">
+      <svg class="w-5 h-5 flex-shrink-0 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
       <span>建議使用桌面裝置獲得更完整的甘特圖體驗</span>
@@ -113,7 +113,7 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
     <Card title="任務時程" :subtitle="`${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`">
       <div v-if="filteredTasks.length > 0" class="space-y-3">
         <!-- 時間軸標記 (RWD: 迭代 10) -->
-        <div class="flex justify-between text-xs text-gray-400 mb-4 px-4 md:px-12 lg:px-32 xl:px-48">
+        <div class="flex justify-between text-xs mb-4 px-4 md:px-12 lg:px-32 xl:px-48" style="color: var(--text-muted);">
           <span>{{ formatDate(dateRange.start) }}</span>
           <span>{{ formatDate(dateRange.end) }}</span>
         </div>
@@ -122,20 +122,21 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
         <div
           v-for="task in filteredTasks"
           :key="task.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-gray-100 last:border-0"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b last:border-0"
+          style="border-color: var(--border-primary);"
         >
           <!-- 任務資訊 -->
           <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
-            <p class="font-medium text-gray-900 text-sm truncate">{{ task.title }}</p>
-            <p class="text-xs text-gray-500">{{ getProjectName(task.projectId) }}</p>
+            <p class="font-medium text-sm truncate" style="color: var(--text-primary);">{{ task.title }}</p>
+            <p class="text-xs" style="color: var(--text-tertiary);">{{ getProjectName(task.projectId) }}</p>
             <!-- 行動裝置顯示日期範圍 (迭代 25) -->
-            <p class="text-xs text-gray-400 sm:hidden mt-1">
+            <p class="text-xs sm:hidden mt-1" style="color: var(--text-muted);">
               {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
             </p>
           </div>
 
           <!-- 甘特條 -->
-          <div class="flex-1 h-8 bg-gray-100 rounded-lg relative">
+          <div class="flex-1 h-8 rounded-lg relative" style="background-color: var(--bg-tertiary);">
             <div
               :class="['absolute h-full rounded-lg transition-all duration-200', statusColors[task.status]]"
               :style="{
@@ -166,32 +167,32 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
     <Card>
       <div class="flex flex-wrap gap-4">
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-gray-300 rounded" />
-          <span class="text-sm text-gray-600">待認領</span>
+          <div class="w-4 h-4 bg-ink-muted/30 rounded" />
+          <span class="text-sm" style="color: var(--text-secondary);">待認領</span>
         </div>
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-secondary rounded" />
-          <span class="text-sm text-gray-600">已認領</span>
+          <div class="w-4 h-4 bg-info/60 rounded" />
+          <span class="text-sm" style="color: var(--text-secondary);">已認領</span>
         </div>
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-primary-600 rounded" />
-          <span class="text-sm text-gray-600">進行中</span>
+          <div class="w-4 h-4 bg-samurai rounded" />
+          <span class="text-sm" style="color: var(--text-secondary);">進行中</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-success rounded" />
-          <span class="text-sm text-gray-600">已完成</span>
+          <span class="text-sm" style="color: var(--text-secondary);">已完成</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-danger rounded" />
-          <span class="text-sm text-gray-600">卡關</span>
+          <span class="text-sm" style="color: var(--text-secondary);">卡關</span>
         </div>
       </div>
     </Card>
 
     <!-- 提示：整合 Frappe Gantt -->
-    <div class="p-4 bg-primary-50 border border-primary-200 rounded-lg text-primary-800 text-sm">
+    <div class="p-4 rounded-lg text-sm bg-info/10 border border-info/30" style="color: var(--text-primary);">
       <p class="font-medium">開發中提示</p>
-      <p class="mt-1">
+      <p class="mt-1" style="color: var(--text-secondary);">
         此為簡化版甘特圖預覽。正式版本將整合 Frappe Gantt 套件，支援拖拽調整、縮放、互動編輯等功能。
       </p>
     </div>

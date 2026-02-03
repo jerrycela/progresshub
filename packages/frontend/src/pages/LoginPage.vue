@@ -22,26 +22,43 @@ const handleSlackLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center p-4">
+  <!-- SG-Arts 精品金屬質感登入頁 -->
+  <div
+    class="min-h-screen flex items-center justify-center p-4"
+    style="background: linear-gradient(135deg, #1A1A1A 0%, #262626 50%, #1A1A1A 100%);"
+  >
     <div class="w-full max-w-md">
-      <!-- Logo 與標題 -->
+      <!-- Logo 與標題 - 金屬質感 -->
       <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur rounded-2xl mb-4">
-          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+          style="background: linear-gradient(145deg, #303030, #262626); box-shadow: 4px 4px 8px #1a1a1a, -4px -4px 8px #333333;"
+        >
+          <!-- 侍魂赤紅圖示 -->
+          <svg class="w-10 h-10 text-samurai" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
         </div>
         <h1 class="text-3xl font-bold text-white mb-2">ProgressHub</h1>
-        <p class="text-gray-300">專案進度管理系統</p>
+        <p class="text-ink-muted">專案進度管理系統</p>
       </div>
 
-      <!-- 登入卡片 -->
-      <div class="bg-white rounded-2xl shadow-xl p-8">
-        <h2 class="text-xl font-semibold text-gray-900 text-center mb-6">
+      <!-- 登入卡片 - 精緻金屬風格 -->
+      <div
+        class="rounded-2xl p-8"
+        style="background-color: var(--card-bg); border: 1px solid var(--card-border); box-shadow: var(--card-shadow);"
+      >
+        <h2
+          class="text-xl font-semibold text-center mb-6"
+          style="color: var(--text-primary);"
+        >
           歡迎回來
         </h2>
 
-        <p class="text-gray-600 text-center mb-8">
+        <p
+          class="text-center mb-8"
+          style="color: var(--text-secondary);"
+        >
           請使用公司 Slack 帳號登入系統
         </p>
 
@@ -58,14 +75,34 @@ const handleSlackLogin = async () => {
           使用 Slack 登入
         </Button>
 
-        <p class="text-xs text-gray-400 text-center mt-6">
+        <!-- 分隔線 -->
+        <div class="flex items-center my-6">
+          <div class="flex-1 border-t" style="border-color: var(--border-primary);"></div>
+          <span class="px-3 text-sm" style="color: var(--text-muted);">或</span>
+          <div class="flex-1 border-t" style="border-color: var(--border-primary);"></div>
+        </div>
+
+        <!-- Demo 登入按鈕 - 侍魂赤紅 -->
+        <Button
+          variant="primary"
+          block
+          :loading="isLoading"
+          @click="handleSlackLogin"
+        >
+          Demo 模式快速登入
+        </Button>
+
+        <p
+          class="text-xs text-center mt-6"
+          style="color: var(--text-muted);"
+        >
           登入即表示您同意我們的服務條款與隱私政策
         </p>
       </div>
 
       <!-- 底部版權 -->
-      <p class="text-gray-400 text-sm text-center mt-8">
-        © 2026 ProgressHub. All rights reserved.
+      <p class="text-ink-muted text-sm text-center mt-8">
+        © 2026 SG-Arts ProgressHub. All rights reserved.
       </p>
     </div>
   </div>
