@@ -83,8 +83,8 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
       <!-- 頂部：標題與狀態 -->
       <div class="flex items-start justify-between gap-3">
         <div class="flex-1 min-w-0">
-          <h4 class="font-semibold text-gray-900 truncate">{{ task.title }}</h4>
-          <p v-if="project" class="text-sm text-gray-500 mt-0.5">
+          <h4 class="font-semibold truncate" style="color: var(--text-primary);">{{ task.title }}</h4>
+          <p v-if="project" class="text-sm mt-0.5" style="color: var(--text-tertiary);">
             {{ project.name }}
           </p>
         </div>
@@ -110,47 +110,31 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
 
       <!-- 截止日期 -->
       <div class="flex items-center justify-between text-sm">
-        <span class="text-gray-500">截止日期</span>
-        <span :class="[isOverdue ? 'text-red-600 font-medium' : 'text-gray-700']">
+        <span style="color: var(--text-tertiary);">截止日期</span>
+        <span :class="[isOverdue ? 'text-danger font-medium' : '']" :style="isOverdue ? '' : 'color: var(--text-secondary);'">
           {{ formatDate(task.dueDate) }}
           <span v-if="isOverdue" class="ml-1">(已逾期)</span>
         </span>
       </div>
 
       <!-- 快速回報按鈕（進度回報頁面使用） -->
-      <div v-if="showQuickReport && canReport" class="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-        <Button
-          variant="primary"
-          size="sm"
-          @click.stop="emit('continue', task.id)"
-        >
-          🔄 繼續
+      <div v-if="showQuickReport && canReport" class="flex flex-wrap gap-2 pt-2 border-t" style="border-color: var(--border-primary);">
+        <Button variant="primary" size="sm" @click.stop="emit('continue', task.id)">
+          繼續
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          @click.stop="emit('updateProgress', task.id)"
-        >
-          📝 更新
+        <Button variant="secondary" size="sm" @click.stop="emit('updateProgress', task.id)">
+          更新
         </Button>
-        <Button
-          variant="warning"
-          size="sm"
-          @click.stop="emit('blocked', task.id)"
-        >
-          ⚠️ 卡關
+        <Button variant="warning" size="sm" @click.stop="emit('blocked', task.id)">
+          卡關
         </Button>
-        <Button
-          variant="success"
-          size="sm"
-          @click.stop="emit('complete', task.id)"
-        >
-          ✅ 完成
+        <Button variant="success" size="sm" @click.stop="emit('complete', task.id)">
+          完成
         </Button>
       </div>
 
       <!-- 一般操作按鈕 -->
-      <div v-else-if="showActions" class="flex gap-2 pt-2 border-t border-gray-100">
+      <div v-else-if="showActions" class="flex gap-2 pt-2 border-t" style="border-color: var(--border-primary);">
         <Button
           v-if="canClaim"
           variant="primary"

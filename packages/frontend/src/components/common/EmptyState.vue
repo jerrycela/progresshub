@@ -32,7 +32,8 @@ const iconSizeClasses = {
 <template>
   <div class="text-center py-8">
     <svg
-      :class="['mx-auto mb-3 text-gray-300', iconSizeClasses[props.iconSize]]"
+      :class="['mx-auto mb-3', iconSizeClasses[props.iconSize]]"
+      style="color: var(--border-secondary);"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -44,8 +45,8 @@ const iconSizeClasses = {
         :d="props.icon"
       />
     </svg>
-    <p class="text-gray-500 font-medium">{{ props.title }}</p>
-    <p v-if="props.description" class="text-gray-400 text-sm mt-1">{{ props.description }}</p>
+    <p class="font-medium" style="color: var(--text-secondary);">{{ props.title }}</p>
+    <p v-if="props.description" class="text-sm mt-1" style="color: var(--text-muted);">{{ props.description }}</p>
     <slot />
   </div>
 </template>

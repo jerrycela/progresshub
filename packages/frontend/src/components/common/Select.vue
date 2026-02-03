@@ -57,7 +57,8 @@ const selectId = props.id || `select-${Math.random().toString(36).slice(2, 9)}`
     <label
       v-if="props.label"
       :for="selectId"
-      class="block text-sm font-medium text-gray-700"
+      class="block text-sm font-medium"
+      style="color: var(--text-secondary);"
     >
       {{ props.label }}
       <span v-if="props.required" class="text-danger">*</span>
@@ -69,11 +70,10 @@ const selectId = props.id || `select-${Math.random().toString(36).slice(2, 9)}`
       :value="props.modelValue"
       :disabled="props.disabled"
       :required="props.required"
+      class="input cursor-pointer"
       :class="[
-        'w-full px-3 py-2 border rounded-lg transition-colors duration-200 cursor-pointer',
-        'focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none',
-        props.disabled ? 'bg-gray-100 cursor-not-allowed' : 'bg-white',
-        props.error ? 'border-danger' : 'border-gray-300',
+        props.disabled ? 'opacity-50 cursor-not-allowed' : '',
+        props.error ? '!border-danger' : '',
       ]"
       @change="handleChange"
     >

@@ -15,23 +15,23 @@ const props = withDefaults(defineProps<Props>(), {
   color: 'auto',
 })
 
-// 根據進度自動決定顏色
+// 根據進度自動決定顏色（使用 SG-Arts 配色）
 const barColor = computed(() => {
   if (props.color !== 'auto') {
     const colorMap: Record<string, string> = {
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      yellow: 'bg-yellow-500',
-      red: 'bg-red-500',
+      blue: 'bg-info',
+      green: 'bg-success',
+      yellow: 'bg-warning',
+      red: 'bg-danger',
     }
     return colorMap[props.color]
   }
 
   // 自動模式：根據進度決定顏色
-  if (props.value >= 100) return 'bg-green-500'
-  if (props.value >= 70) return 'bg-blue-500'
-  if (props.value >= 30) return 'bg-yellow-500'
-  return 'bg-red-500'
+  if (props.value >= 100) return 'bg-success'
+  if (props.value >= 70) return 'bg-samurai'   // 使用侍魂赤紅
+  if (props.value >= 30) return 'bg-warning'
+  return 'bg-danger'
 })
 
 const sizeClasses: Record<string, { bar: string; text: string }> = {
@@ -51,15 +51,16 @@ const normalizedValue = computed(() => Math.min(100, Math.max(0, props.value)))
       class="flex justify-between items-center mb-1"
     >
       <slot name="label" />
-      <span :class="['font-medium text-gray-700', sizeClasses[size].text]">
+      <span :class="['font-medium', sizeClasses[size].text]" style="color: var(--text-secondary);">
         {{ normalizedValue }}%
       </span>
     </div>
     <div
       :class="[
-        'w-full bg-gray-200 rounded-full overflow-hidden',
+        'w-full rounded-full overflow-hidden',
         sizeClasses[size].bar,
       ]"
+      style="background-color: var(--border-secondary);"
     >
       <div
         :class="['h-full rounded-full transition-all duration-300', barColor]"

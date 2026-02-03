@@ -80,21 +80,24 @@ const sizeClasses: Record<string, string> = {
         <!-- 對話框內容 -->
         <div
           :class="[
-            'relative w-full bg-white rounded-xl shadow-xl',
+            'relative w-full rounded-xl shadow-xl',
             sizeClasses[size],
           ]"
+          style="background-color: var(--card-bg);"
         >
           <!-- 標頭 -->
           <div
             v-if="title || $slots.header"
-            class="flex items-center justify-between px-6 py-4 border-b border-gray-200"
+            class="flex items-center justify-between px-6 py-4 border-b"
+            style="border-color: var(--border-primary);"
           >
             <slot name="header">
-              <h3 class="text-lg font-semibold text-gray-900">{{ title }}</h3>
+              <h3 class="text-lg font-semibold" style="color: var(--text-primary);">{{ title }}</h3>
             </slot>
             <button
               v-if="closable"
-              class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              class="p-1 rounded-lg transition-colors hover-bg"
+              style="color: var(--text-muted);"
               @click="close"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +114,8 @@ const sizeClasses: Record<string, string> = {
           <!-- 底部 -->
           <div
             v-if="$slots.footer"
-            class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl"
+            class="flex items-center justify-end gap-3 px-6 py-4 border-t rounded-b-xl"
+            style="border-color: var(--border-primary); background-color: var(--bg-secondary);"
           >
             <slot name="footer" />
           </div>
