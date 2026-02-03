@@ -96,15 +96,39 @@ export interface TaskClaim {
 // ============================================
 // 進度回報記錄
 // ============================================
+export type ReportType =
+  | 'PROGRESS'  // 進度更新（有實際進展）
+  | 'CONTINUE'  // 繼續進行（無明顯進展變化）
+  | 'BLOCKED'   // 阻塞回報
+  | 'COMPLETE'  // 完成回報
+
 export interface ProgressLog {
   id: string
   taskId: string
   task?: Task
   userId: string
   user?: User
-  progress: number
-  notes?: string
+  reportType: ReportType      // 回報類型
+  progress: number            // 進度百分比
+  progressDelta?: number      // 進度變化量（本次增加多少）
+  notes?: string              // 備註
+  blockerReason?: string      // 阻塞原因（當 reportType 為 BLOCKED 時）
   reportedAt: string
+}
+
+// ============================================
+// 回報週期設定
+// ============================================
+export type ReportCycle =
+  | 'DAILY'     // 每日回報（預設）
+  | 'WEEKLY'    // 每週回報
+  | 'CUSTOM'    // 自訂週期
+
+export interface TaskReportSetting {
+  taskId: string
+  reportCycle: ReportCycle
+  customDays?: number         // 當 reportCycle 為 CUSTOM 時，幾天回報一次
+  nextReportDue?: string      // 下次應回報日期
 }
 
 // ============================================

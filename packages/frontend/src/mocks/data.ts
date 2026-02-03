@@ -1,4 +1,4 @@
-import type { User, Project, Task, ProgressLog, DashboardStats, FunctionWorkload } from 'shared/types'
+import type { User, Project, Task, ProgressLog, DashboardStats, FunctionWorkload, ReportType, ReportCycle } from 'shared/types'
 
 // ============================================
 // Mock 使用者資料
@@ -218,7 +218,9 @@ export const mockProgressLogs: ProgressLog[] = [
     id: '1',
     taskId: '1',
     userId: '1',
+    reportType: 'PROGRESS',
     progress: 65,
+    progressDelta: 15,
     notes: '完成新手教學前三關的程式邏輯',
     reportedAt: '2024-02-10T17:30:00Z',
   },
@@ -226,7 +228,9 @@ export const mockProgressLogs: ProgressLog[] = [
     id: '2',
     taskId: '2',
     userId: '2',
+    reportType: 'PROGRESS',
     progress: 30,
+    progressDelta: 10,
     notes: '完成主要 UI 元件設計稿',
     reportedAt: '2024-02-10T16:00:00Z',
   },
@@ -234,11 +238,42 @@ export const mockProgressLogs: ProgressLog[] = [
     id: '3',
     taskId: '6',
     userId: '4',
+    reportType: 'CONTINUE',
     progress: 45,
-    notes: '完成走路動畫優化，開始處理攻擊動畫',
+    progressDelta: 0,
+    notes: '繼續處理攻擊動畫',
     reportedAt: '2024-03-01T18:00:00Z',
   },
+  {
+    id: '4',
+    taskId: '1',
+    userId: '1',
+    reportType: 'CONTINUE',
+    progress: 65,
+    progressDelta: 0,
+    notes: '繼續進行中',
+    reportedAt: '2024-02-11T17:00:00Z',
+  },
 ]
+
+// ============================================
+// 回報類型名稱對照
+// ============================================
+export const reportTypeLabels: Record<string, string> = {
+  PROGRESS: '進度更新',
+  CONTINUE: '繼續進行',
+  BLOCKED: '遇到阻塞',
+  COMPLETE: '已完成',
+}
+
+// ============================================
+// 回報週期名稱對照
+// ============================================
+export const reportCycleLabels: Record<string, string> = {
+  DAILY: '每日回報',
+  WEEKLY: '每週回報',
+  CUSTOM: '自訂週期',
+}
 
 // ============================================
 // Mock Dashboard 統計
