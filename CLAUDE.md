@@ -274,3 +274,93 @@ RUN apk add --no-cache openssl
 - 使用 Prisma 時，記得在 Alpine Linux 中安裝 OpenSSL
 - 或考慮使用非 Alpine 的基礎映像（如 `node:20-slim`）
 - 在本地用 Docker 測試建構後再部署
+
+### 問題 9：vue-tsc 建構錯誤 (2026-02-03 發現)
+
+**錯誤訊息**：
+```
+Search string not found: "/supportedTSExtensions = .*(?=;)/"
+```
+
+**根本原因**：
+- 此錯誤出現在 Zeabur 建構日誌中
+- `vue-tsc` 版本可能與 TypeScript 版本不相容
+- 需要確認 Zeabur 是否在正確的目錄執行建構
+
+**可能的解決方案**：
+1. 檢查 `frontend/package.json` 中的 `vue-tsc` 和 `typescript` 版本相容性
+2. 嘗試更新或降級 `vue-tsc` 版本
+3. 確認 Zeabur 前端服務的根目錄設定正確
+
+---
+
+## 🚨 當前部署狀態 (2026-02-03 更新)
+
+### Backend 服務 (progresshub-api.zeabur.app)
+
+**狀態**: ❌ 502 SERVICE_UNAVAILABLE
+
+**已嘗試的修復**：
+1. ✅ 在 Zeabur Dashboard 手動更新 Dockerfile，加入 OpenSSL 安裝
+2. ✅ 確認根目錄設定為 `/backend`
+3. ✅ 觸發重新部署
+4. ❌ 部署仍然失敗
+
+**待解決問題**：
+- Zeabur 建構日誌顯示 `vue-tsc` 錯誤，需要進一步調查
+
+### 需要在 GitHub 確認/修改的檔案
+
+#### 1. `/backend/Dockerfile` - 確保包含以下內容：
+```dockerfile
+# Production build stage
+FROM node:20-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --include=dev
+
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# 關鍵: 安裝 OpenSSL 給 Prisma 使用
+RUN apk add --no-cache openssl
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/package.json ./
+
+RUN npx prisma generate
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+#### 2. `/backend/src/config/env.ts` - 確保有 API_BASE_URL：
+```typescript
+interface EnvConfig {
+  // ... 其他屬性
+  API_BASE_URL: string;
+}
+
+export const env: EnvConfig = {
+  // ... 其他值
+  API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000',
+};
+```
+
+### Zeabur Dashboard 設定檢查清單
+
+- [ ] Backend 服務根目錄: `/backend`
+- [ ] Backend Dockerfile 使用 `node:20-alpine`（不是 `python:3.11-slim`）
+- [ ] Frontend 服務根目錄: `/frontend`
+- [ ] 所有必要環境變數已設定
