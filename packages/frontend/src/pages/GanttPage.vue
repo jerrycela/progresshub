@@ -7,10 +7,16 @@ import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
 import { STATUS_COLORS } from '@/constants/ui'
 import { GANTT } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
+import Select from '@/components/common/Select.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import type { FunctionType, Task } from 'shared/types'
 
+// ============================================
 // 甘特圖頁面 - 專案時程視覺化 (Placeholder，待整合 Frappe Gantt)
 // Ralph Loop 迭代 8: 使用 Composables 和常數
+// Ralph Loop 迭代 24: RWD 改進與新元件
+// Ralph Loop 迭代 25: 行動裝置體驗優化
+// ============================================
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { formatShort } = useFormatDate()
@@ -73,37 +79,33 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
+    <!-- 頁面標題 (RWD: 迭代 24) -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">甘特圖</h1>
-      <p class="text-gray-500 mt-1">專案時程視覺化總覽</p>
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">甘特圖</h1>
+      <p class="text-sm md:text-base text-gray-500 mt-1">專案時程視覺化總覽</p>
     </div>
 
-    <!-- 篩選器 -->
+    <!-- 行動裝置提示 (迭代 25) -->
+    <div class="md:hidden p-3 bg-primary-50 border border-primary-200 rounded-lg text-primary-800 text-sm flex items-center gap-2">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      <span>建議使用桌面裝置獲得更完整的甘特圖體驗</span>
+    </div>
+
+    <!-- 篩選器 (RWD: 迭代 24 - 使用 Select 元件) -->
     <Card>
-      <div class="flex flex-wrap gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">專案篩選</label>
-          <select
-            v-model="selectedProject"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in projectOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">職能篩選</label>
-          <select
-            v-model="selectedFunction"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in functionOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Select
+          v-model="selectedProject"
+          label="專案篩選"
+          :options="projectOptions"
+        />
+        <Select
+          v-model="selectedFunction"
+          label="職能篩選"
+          :options="functionOptions"
+        />
       </div>
     </Card>
 
@@ -116,7 +118,7 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
           <span>{{ formatDate(dateRange.end) }}</span>
         </div>
 
-        <!-- 任務列表 (RWD: 迭代 10) -->
+        <!-- 任務列表 (RWD: 迭代 10, 25 - 行動裝置優化) -->
         <div
           v-for="task in filteredTasks"
           :key="task.id"
@@ -126,6 +128,10 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
           <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
             <p class="font-medium text-gray-900 text-sm truncate">{{ task.title }}</p>
             <p class="text-xs text-gray-500">{{ getProjectName(task.projectId) }}</p>
+            <!-- 行動裝置顯示日期範圍 (迭代 25) -->
+            <p class="text-xs text-gray-400 sm:hidden mt-1">
+              {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
+            </p>
           </div>
 
           <!-- 甘特條 -->
@@ -147,13 +153,13 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
         </div>
       </div>
 
-      <!-- 空狀態 -->
-      <div v-else class="text-center py-12 text-gray-500">
-        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-        <p>目前沒有符合條件的任務</p>
-      </div>
+      <!-- 空狀態 (迭代 24: 使用 EmptyState 元件) -->
+      <EmptyState
+        v-else
+        icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+        title="目前沒有符合條件的任務"
+        description="請調整篩選條件或新增有時程的任務"
+      />
     </Card>
 
     <!-- 圖例 -->

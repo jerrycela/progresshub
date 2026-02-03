@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { mockUsers, functionTypeLabels, roleLabels } from '@/mocks/data'
+import { FUNCTION_OPTIONS, ROLE_OPTIONS } from '@/constants/filterOptions'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
 import Modal from '@/components/common/Modal.vue'
+import Input from '@/components/common/Input.vue'
+import Select from '@/components/common/Select.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import type { User, Role, FunctionType } from 'shared/types'
 
+// ============================================
 // 員工管理頁面 - Admin 專用
+// Ralph Loop 迭代 28: RWD 與元件升級
+// ============================================
 
 const users = ref(mockUsers)
 
@@ -106,34 +113,22 @@ const createUser = () => {
   showCreateModal.value = false
 }
 
-// 角色選項
-const roleOptions: { value: Role | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: '全部角色' },
-  { value: 'MEMBER', label: '成員' },
-  { value: 'PM', label: '專案經理' },
-  { value: 'ADMIN', label: '管理員' },
-]
+// 使用常數選項（迭代 28）
+const roleOptions = ROLE_OPTIONS
+const functionOptions = FUNCTION_OPTIONS
 
-// 職能選項
-const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: '全部職能' },
-  { value: 'PLANNING', label: '企劃' },
-  { value: 'PROGRAMMING', label: '程式' },
-  { value: 'ART', label: '美術' },
-  { value: 'ANIMATION', label: '動態' },
-  { value: 'SOUND', label: '音效' },
-  { value: 'VFX', label: '特效' },
-  { value: 'COMBAT', label: '戰鬥' },
-]
+// 表單專用選項（排除 ALL）
+const roleFormOptions = computed(() => ROLE_OPTIONS.filter(opt => opt.value !== 'ALL'))
+const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL'))
 </script>
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
-    <div class="flex items-center justify-between">
+    <!-- 頁面標題 (RWD: 迭代 28) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">員工管理</h1>
-        <p class="text-gray-500 mt-1">管理團隊成員帳號與權限</p>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900">員工管理</h1>
+        <p class="text-sm md:text-base text-gray-500 mt-1">管理團隊成員帳號與權限</p>
       </div>
       <Button @click="openCreateModal">
         <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,45 +138,27 @@ const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
       </Button>
     </div>
 
-    <!-- 搜尋與篩選 -->
+    <!-- 搜尋與篩選 (迭代 28: 使用 Input/Select 元件) -->
     <Card>
-      <div class="flex flex-wrap gap-4">
-        <div class="flex-1 min-w-[200px]">
-          <label class="block text-sm font-medium text-gray-700 mb-1">搜尋</label>
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              v-model="searchQuery"
-              type="text"
-              class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              placeholder="搜尋姓名或信箱..."
-            >
-          </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="sm:col-span-2 lg:col-span-2">
+          <Input
+            v-model="searchQuery"
+            type="search"
+            label="搜尋"
+            placeholder="搜尋姓名或信箱..."
+          />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
-          <select
-            v-model="selectedRole"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">職能</label>
-          <select
-            v-model="selectedFunction"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in functionOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+        <Select
+          v-model="selectedRole"
+          label="角色"
+          :options="roleOptions"
+        />
+        <Select
+          v-model="selectedFunction"
+          label="職能"
+          :options="functionOptions"
+        />
       </div>
     </Card>
 
@@ -270,56 +247,37 @@ const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
         </div>
       </div>
 
-      <!-- 空狀態 -->
-      <div v-if="filteredUsers.length === 0" class="text-center py-8 text-gray-500">
-        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-        <p>沒有符合條件的成員</p>
-      </div>
+      <!-- 空狀態 (迭代 28: 使用 EmptyState 元件) -->
+      <EmptyState
+        v-if="filteredUsers.length === 0"
+        icon="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+        title="沒有符合條件的成員"
+        description="請嘗試調整搜尋條件"
+      />
     </Card>
 
-    <!-- 編輯使用者對話框 -->
+    <!-- 編輯使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showEditModal" title="編輯成員資料" size="md">
       <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-          <input
-            v-model="editingUser.name"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">信箱</label>
-          <input
-            v-model="editingUser.email"
-            type="email"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-          >
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
-          <select
-            v-model="editingUser.role"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option value="MEMBER">成員</option>
-            <option value="PM">專案經理</option>
-            <option value="ADMIN">管理員</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">職能</label>
-          <select
-            v-model="editingUser.functionType"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in functionOptions.slice(1)" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+        <Input
+          v-model="editingUser.name"
+          label="姓名"
+        />
+        <Input
+          v-model="editingUser.email"
+          type="email"
+          label="信箱"
+        />
+        <Select
+          v-model="editingUser.role"
+          label="角色"
+          :options="roleFormOptions"
+        />
+        <Select
+          v-model="editingUser.functionType"
+          label="職能"
+          :options="functionFormOptions"
+        />
       </div>
 
       <template #footer>
@@ -332,49 +290,30 @@ const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
       </template>
     </Modal>
 
-    <!-- 新增使用者對話框 -->
+    <!-- 新增使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showCreateModal" title="新增成員" size="md">
       <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">姓名</label>
-          <input
-            v-model="newUser.name"
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="輸入成員姓名"
-          >
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">信箱</label>
-          <input
-            v-model="newUser.email"
-            type="email"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            placeholder="輸入公司信箱"
-          >
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
-          <select
-            v-model="newUser.role"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option value="MEMBER">成員</option>
-            <option value="PM">專案經理</option>
-            <option value="ADMIN">管理員</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">職能</label>
-          <select
-            v-model="newUser.functionType"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option v-for="opt in functionOptions.slice(1)" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
-        </div>
+        <Input
+          v-model="newUser.name"
+          label="姓名"
+          placeholder="輸入成員姓名"
+        />
+        <Input
+          v-model="newUser.email"
+          type="email"
+          label="信箱"
+          placeholder="輸入公司信箱"
+        />
+        <Select
+          v-model="newUser.role"
+          label="角色"
+          :options="roleFormOptions"
+        />
+        <Select
+          v-model="newUser.functionType"
+          label="職能"
+          :options="functionFormOptions"
+        />
       </div>
 
       <template #footer>

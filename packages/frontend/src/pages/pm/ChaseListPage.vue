@@ -8,10 +8,14 @@ import { mockUsers, functionTypeLabels } from '@/mocks/data'
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 import Button from '@/components/common/Button.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import type { Task } from 'shared/types'
 
+// ============================================
 // 追殺清單頁面 - PM 專用，顯示逾期/未認領任務警示
 // Ralph Loop 迭代 8: 使用 Composables 和常數
+// Ralph Loop 迭代 28: RWD 與元件升級
+// ============================================
 
 const taskStore = useTaskStore()
 const { getProjectName } = useProject()
@@ -69,10 +73,10 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
+    <!-- 頁面標題 (RWD: 迭代 28) -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">追殺清單</h1>
-      <p class="text-gray-500 mt-1">需要立即關注的任務警示</p>
+      <h1 class="text-xl md:text-2xl font-bold text-gray-900">追殺清單</h1>
+      <p class="text-sm md:text-base text-gray-500 mt-1">需要立即關注的任務警示</p>
     </div>
 
     <!-- 統計概覽 -->
@@ -134,7 +138,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
       </Card>
     </div>
 
-    <!-- 逾期任務 -->
+    <!-- 逾期任務 (RWD: 迭代 28) -->
     <Card v-if="overdueTasks.length > 0" title="逾期任務" class="border-danger/30">
       <template #header-actions>
         <Badge variant="danger">{{ overdueTasks.length }}</Badge>
@@ -143,20 +147,20 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
         <div
           v-for="task in overdueTasks"
           :key="task.id"
-          class="py-3 flex items-center justify-between hover:bg-gray-50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200"
+          class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 hover:bg-gray-50 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200"
         >
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
               <h4 class="font-medium text-gray-900 truncate">{{ task.title }}</h4>
               <Badge variant="danger" size="sm">逾期 {{ getOverdueDays(task.dueDate!) }} 天</Badge>
             </div>
-            <div class="flex items-center gap-3 mt-1 text-sm text-gray-500">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mt-1 text-sm text-gray-500">
               <span>{{ getProjectName(task.projectId) }}</span>
-              <span>•</span>
+              <span class="hidden sm:inline">•</span>
               <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <Badge
               v-for="func in task.functionTags"
               :key="func"
@@ -229,16 +233,17 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
       </div>
     </Card>
 
-    <!-- 無異常狀態 -->
+    <!-- 無異常狀態 (迭代 28: 使用 EmptyState 元件) -->
     <Card
       v-if="overdueTasks.length === 0 && blockedTasks.length === 0 && longUnclaimedTasks.length === 0"
-      class="text-center py-12 bg-success/5 border-success/20"
+      class="bg-success/5 border-success/20"
     >
-      <svg class="w-16 h-16 mx-auto mb-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-1">太棒了！目前沒有需要追蹤的異常任務</h3>
-      <p class="text-gray-500">所有任務都在正常進度中</p>
+      <EmptyState
+        icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        title="太棒了！目前沒有需要追蹤的異常任務"
+        description="所有任務都在正常進度中"
+        icon-size="lg"
+      />
     </Card>
   </div>
 </template>

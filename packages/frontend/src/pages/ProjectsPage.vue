@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { mockProjects, mockTasks, mockUsers } from '@/mocks/data'
 import { useToast } from '@/composables/useToast'
 import { useFormatDate } from '@/composables/useFormatDate'
@@ -9,10 +9,15 @@ import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
 import Modal from '@/components/common/Modal.vue'
 import ProgressBar from '@/components/common/ProgressBar.vue'
+import Input from '@/components/common/Input.vue'
+import Select from '@/components/common/Select.vue'
 import type { Project } from 'shared/types'
 
+// ============================================
 // 專案管理頁面 (PM+ 權限)
 // Ralph Loop 迭代 9: 添加表單驗證
+// Ralph Loop 迭代 27: RWD 與元件升級
+// ============================================
 const projects = ref(mockProjects)
 const { showSuccess, showError } = useToast()
 const { formatFull } = useFormatDate()
@@ -48,6 +53,13 @@ const statusLabels: Record<string, string> = {
   ON_HOLD: '暫停',
   COMPLETED: '已完成',
 }
+
+// 專案狀態選項（迭代 27）
+const projectStatusOptions = computed(() => [
+  { value: 'ACTIVE', label: '進行中' },
+  { value: 'ON_HOLD', label: '暫停' },
+  { value: 'COMPLETED', label: '已完成' },
+])
 
 // 新增/編輯專案對話框
 const showProjectModal = ref(false)
@@ -134,11 +146,11 @@ const formatDate = (date?: string) => formatFull(date)
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
-    <div class="flex items-center justify-between">
+    <!-- 頁面標題 (RWD: 迭代 27) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">專案管理</h1>
-        <p class="text-gray-500 mt-1">管理所有專案與任務分配</p>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900">專案管理</h1>
+        <p class="text-sm md:text-base text-gray-500 mt-1">管理所有專案與任務分配</p>
       </div>
       <Button @click="openCreateModal">
         <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,28 +188,28 @@ const formatDate = (date?: string) => formatFull(date)
             </template>
           </ProgressBar>
 
-          <!-- 任務統計 -->
-          <div class="grid grid-cols-4 gap-3 text-center">
+          <!-- 任務統計 (RWD: 迭代 27 - 行動裝置 2x2 網格) -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-center">
             <div class="p-2 bg-gray-50 rounded-lg">
-              <p class="text-xl font-bold text-gray-900">{{ getProjectStats(project.id).total }}</p>
+              <p class="text-lg sm:text-xl font-bold text-gray-900">{{ getProjectStats(project.id).total }}</p>
               <p class="text-xs text-gray-500">總任務</p>
             </div>
             <div class="p-2 bg-success/10 rounded-lg">
-              <p class="text-xl font-bold text-success">{{ getProjectStats(project.id).completed }}</p>
+              <p class="text-lg sm:text-xl font-bold text-success">{{ getProjectStats(project.id).completed }}</p>
               <p class="text-xs text-gray-500">已完成</p>
             </div>
             <div class="p-2 bg-primary-50 rounded-lg">
-              <p class="text-xl font-bold text-primary-700">{{ getProjectStats(project.id).inProgress }}</p>
+              <p class="text-lg sm:text-xl font-bold text-primary-700">{{ getProjectStats(project.id).inProgress }}</p>
               <p class="text-xs text-gray-500">進行中</p>
             </div>
             <div class="p-2 bg-warning/10 rounded-lg">
-              <p class="text-xl font-bold text-warning">{{ getProjectStats(project.id).unclaimed }}</p>
+              <p class="text-lg sm:text-xl font-bold text-warning">{{ getProjectStats(project.id).unclaimed }}</p>
               <p class="text-xs text-gray-500">待認領</p>
             </div>
           </div>
 
-          <!-- 專案資訊 -->
-          <div class="flex items-center justify-between text-sm text-gray-500 pt-3 border-t border-gray-100">
+          <!-- 專案資訊 (RWD: 迭代 27) -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-sm text-gray-500 pt-3 border-t border-gray-100">
             <span>負責人：{{ getProjectOwner(project.createdById) }}</span>
             <span>{{ formatDate(project.startDate) }} - {{ formatDate(project.endDate) }}</span>
           </div>
@@ -211,22 +223,15 @@ const formatDate = (date?: string) => formatFull(date)
       :title="isEditing ? '編輯專案' : '新增專案'"
       size="lg"
     >
+      <!-- 表單 (迭代 27: 使用 Input/Select 元件) -->
       <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            專案名稱 <span class="text-danger">*</span>
-          </label>
-          <input
-            v-model="editingProject.name"
-            type="text"
-            :class="[
-              'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-              formErrors.name ? 'border-danger' : 'border-gray-300'
-            ]"
-            placeholder="輸入專案名稱"
-          >
-          <p v-if="formErrors.name" class="mt-1 text-sm text-danger">{{ formErrors.name }}</p>
-        </div>
+        <Input
+          v-model="editingProject.name"
+          label="專案名稱"
+          placeholder="輸入專案名稱"
+          required
+          :error="formErrors.name"
+        />
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">專案說明</label>
           <textarea
@@ -236,39 +241,25 @@ const formatDate = (date?: string) => formatFull(date)
             placeholder="輸入專案說明"
           />
         </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">開始日期</label>
-            <input
-              v-model="editingProject.startDate"
-              type="date"
-              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-            >
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">結束日期</label>
-            <input
-              v-model="editingProject.endDate"
-              type="date"
-              :class="[
-                'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500',
-                formErrors.endDate ? 'border-danger' : 'border-gray-300'
-              ]"
-            >
-            <p v-if="formErrors.endDate" class="mt-1 text-sm text-danger">{{ formErrors.endDate }}</p>
-          </div>
+        <!-- 日期選擇 (RWD: 迭代 27 - 行動裝置堆疊) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            v-model="editingProject.startDate"
+            type="date"
+            label="開始日期"
+          />
+          <Input
+            v-model="editingProject.endDate"
+            type="date"
+            label="結束日期"
+            :error="formErrors.endDate"
+          />
         </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">狀態</label>
-          <select
-            v-model="editingProject.status"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 cursor-pointer"
-          >
-            <option value="ACTIVE">進行中</option>
-            <option value="ON_HOLD">暫停</option>
-            <option value="COMPLETED">已完成</option>
-          </select>
-        </div>
+        <Select
+          v-model="editingProject.status"
+          label="狀態"
+          :options="projectStatusOptions"
+        />
       </div>
 
       <template #footer>

@@ -9,11 +9,16 @@ import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
 import Modal from '@/components/common/Modal.vue'
+import Select from '@/components/common/Select.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { TaskCard } from '@/components/task'
 import type { TaskStatus, Task } from 'shared/types'
 
+// ============================================
 // 我的任務頁面 - 已認領/進行中任務
 // Ralph Loop 迭代 8: 使用 Composables 和常數
+// Ralph Loop 迭代 26: RWD 與元件升級
+// ============================================
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { getProjectById } = useProject()
@@ -89,13 +94,13 @@ const showCompleted = ref(false)
 
 <template>
   <div class="space-y-6">
-    <!-- 頁面標題 -->
-    <div class="flex items-center justify-between">
+    <!-- 頁面標題 (RWD: 迭代 26) -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">我的任務</h1>
-        <p class="text-gray-500 mt-1">管理您已認領的所有任務</p>
+        <h1 class="text-xl md:text-2xl font-bold text-gray-900">我的任務</h1>
+        <p class="text-sm md:text-base text-gray-500 mt-1">管理您已認領的所有任務</p>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3">
         <Badge variant="primary" size="md">
           {{ myTasks.length }} 個進行中
         </Badge>
@@ -105,26 +110,22 @@ const showCompleted = ref(false)
       </div>
     </div>
 
-    <!-- 篩選器 -->
+    <!-- 篩選器 (迭代 26: 使用 Select 元件) -->
     <Card>
-      <div class="flex flex-wrap items-center gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">狀態篩選</label>
-          <select
+      <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+        <div class="w-full sm:w-48">
+          <Select
             v-model="selectedStatus"
-            class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-              {{ opt.label }}
-            </option>
-          </select>
+            label="狀態篩選"
+            :options="statusOptions"
+          />
         </div>
-        <div class="flex items-center ml-auto">
+        <div class="flex items-center sm:ml-auto">
           <label class="flex items-center gap-2 cursor-pointer">
             <input
               v-model="showCompleted"
               type="checkbox"
-              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             >
             <span class="text-sm text-gray-700">顯示已完成任務</span>
           </label>
@@ -144,17 +145,19 @@ const showCompleted = ref(false)
           @unclaim="openUnclaimModal"
         />
       </div>
-      <Card v-else class="text-center py-8">
-        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-        </svg>
-        <p class="text-gray-500">目前沒有進行中的任務</p>
-        <RouterLink
-          to="/backlog"
-          class="inline-block mt-2 text-blue-600 hover:text-blue-700 font-medium"
+      <!-- 空狀態 (迭代 26: 使用 EmptyState 元件) -->
+      <Card v-else>
+        <EmptyState
+          icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+          title="目前沒有進行中的任務"
         >
-          前往需求池認領任務
-        </RouterLink>
+          <RouterLink
+            to="/backlog"
+            class="inline-block mt-2 text-primary-600 hover:text-primary-700 font-medium"
+          >
+            前往需求池認領任務
+          </RouterLink>
+        </EmptyState>
       </Card>
     </div>
 
