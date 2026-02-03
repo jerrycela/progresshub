@@ -262,7 +262,7 @@ export const mockProgressLogs: ProgressLog[] = [
 export const reportTypeLabels: Record<string, string> = {
   PROGRESS: '進度更新',
   CONTINUE: '繼續進行',
-  BLOCKED: '遇到阻塞',
+  BLOCKED: '卡關',
   COMPLETE: '已完成',
 }
 

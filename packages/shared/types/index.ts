@@ -99,7 +99,7 @@ export interface TaskClaim {
 export type ReportType =
   | 'PROGRESS'  // 進度更新（有實際進展）
   | 'CONTINUE'  // 繼續進行（無明顯進展變化）
-  | 'BLOCKED'   // 阻塞回報
+  | 'BLOCKED'   // 卡關回報
   | 'COMPLETE'  // 完成回報
 
 export interface ProgressLog {
@@ -112,7 +112,7 @@ export interface ProgressLog {
   progress: number            // 進度百分比
   progressDelta?: number      // 進度變化量（本次增加多少）
   notes?: string              // 備註
-  blockerReason?: string      // 阻塞原因（當 reportType 為 BLOCKED 時）
+  blockerReason?: string      // 卡關原因（當 reportType 為 BLOCKED 時）
   reportedAt: string
 }
 
