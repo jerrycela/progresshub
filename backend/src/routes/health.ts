@@ -37,7 +37,7 @@ router.get('/', (req, res) => {
  */
 router.get('/ready', async (req, res) => {
   try {
-    await prisma.\$queryRaw`SELECT 1`;
+    await prisma.$queryRaw`SELECT 1`;
     res.json({
       status: 'ready',
       database: 'connected',
