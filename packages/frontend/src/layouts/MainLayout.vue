@@ -31,21 +31,7 @@ watch(() => route.path, () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
-    <!-- 行動裝置遮罩 -->
-    <Transition
-      enter-active-class="transition-opacity duration-300"
-      leave-active-class="transition-opacity duration-300"
-      enter-from-class="opacity-0"
-      leave-to-class="opacity-0"
-    >
-      <div
-        v-if="isSidebarOpen"
-        class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-        @click="closeSidebar"
-      />
-    </Transition>
-
+  <div class="min-h-screen flex" style="background-color: var(--bg-primary);">
     <!-- 側邊選單 -->
     <AppSidebar
       :is-open="isSidebarOpen"
@@ -58,7 +44,10 @@ watch(() => route.path, () => {
       <AppHeader @toggle-sidebar="toggleSidebar" />
 
       <!-- 頁面內容 -->
-      <main class="flex-1 p-4 md:p-6 overflow-auto">
+      <main
+        class="flex-1 p-4 md:p-6 overflow-auto"
+        style="background-color: var(--bg-secondary);"
+      >
         <router-view />
       </main>
     </div>

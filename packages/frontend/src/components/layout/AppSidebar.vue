@@ -2,12 +2,10 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { SIDEBAR_MENU_CLASSES } from '@/constants/ui'
 
 // ============================================
-// 側邊選單元件 - Ralph Loop 迭代 11 重構
-// 移至 layout 目錄，使用 SIDEBAR_MENU_CLASSES 常數
-// Ralph Loop 迭代 16: RWD - 行動裝置響應式側邊欄
+// 側邊選單元件 - SG-Arts 精品金屬質感設計
+// 淺色側邊欄 + Dark mode 支援
 // ============================================
 
 interface Props {
@@ -97,48 +95,57 @@ const adminMenuItems: MenuItem[] = [
 const filteredPmMenuItems = computed(() => {
   if (!authStore.user) return []
   return pmMenuItems.filter(
-    item => !item.roles || item.roles.includes(authStore.user!.role)
+    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role)
   )
 })
 
 const filteredAdminMenuItems = computed(() => {
   if (!authStore.user) return []
   return adminMenuItems.filter(
-    item => !item.roles || item.roles.includes(authStore.user!.role)
+    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role)
   )
 })
 
-const isActive = (path: string) => route.path === path
+const isActive = (path: string): boolean => route.path === path
 
-// 使用常數組合樣式類別
-const getMenuItemClass = (path: string) => [
-  SIDEBAR_MENU_CLASSES.base,
-  isActive(path) ? SIDEBAR_MENU_CLASSES.active : SIDEBAR_MENU_CLASSES.inactive,
-]
-
-const navigateTo = (path: string) => {
+const navigateTo = (path: string): void => {
   router.push(path)
+  // 行動裝置點擊後自動關閉側邊欄
+  emit('close')
 }
 
-const handleLogout = async () => {
+const handleLogout = async (): Promise<void> => {
   await authStore.logout()
   router.push('/login')
 }
 </script>
 
 <template>
-  <!-- 行動裝置側邊欄 (滑入式) -->
+  <!-- 行動裝置遮罩 -->
+  <div
+    v-if="props.isOpen"
+    class="fixed inset-0 bg-black/20 z-40 lg:hidden"
+    @click="emit('close')"
+  />
+
+  <!-- 側邊欄 -->
   <aside
     :class="[
-      'fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0',
+      'fixed inset-y-0 left-0 z-50 w-64 flex flex-col transform transition-transform duration-200 ease-out',
+      'lg:relative lg:translate-x-0',
       props.isOpen ? 'translate-x-0' : '-translate-x-full',
     ]"
+    style="background-color: var(--sidebar-bg); border-right: 1px solid var(--border-primary);"
   >
-    <!-- 行動裝置關閉按鈕 -->
-    <div class="lg:hidden flex items-center justify-between h-16 px-4 border-b border-gray-800">
-      <span class="text-lg font-bold">選單</span>
+    <!-- 行動裝置標題列 -->
+    <div
+      class="lg:hidden flex items-center justify-between h-14 px-4"
+      style="border-bottom: 1px solid var(--border-primary);"
+    >
+      <span class="text-sm font-semibold" style="color: var(--text-primary);">選單</span>
       <button
-        class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+        class="p-2 rounded-md transition-colors duration-150"
+        style="color: var(--text-tertiary);"
         @click="emit('close')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,19 +158,25 @@ const handleLogout = async () => {
     <nav class="flex-1 py-4 overflow-y-auto">
       <!-- 主選單 -->
       <div class="px-3 mb-6">
-        <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <p
+          class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
+          style="color: var(--text-muted);"
+        >
           主選單
         </p>
         <ul class="space-y-1">
           <li v-for="item in menuItems" :key="item.path">
             <button
-              :class="getMenuItemClass(item.path)"
+              :class="[
+                'sidebar-item w-full',
+                isActive(item.path) ? 'active' : '',
+              ]"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
               </svg>
-              <span class="font-medium">{{ item.name }}</span>
+              <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
           </li>
         </ul>
@@ -171,19 +184,25 @@ const handleLogout = async () => {
 
       <!-- PM 選單 -->
       <div v-if="filteredPmMenuItems.length > 0" class="px-3 mb-6">
-        <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <p
+          class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
+          style="color: var(--text-muted);"
+        >
           PM 專區
         </p>
         <ul class="space-y-1">
           <li v-for="item in filteredPmMenuItems" :key="item.path">
             <button
-              :class="getMenuItemClass(item.path)"
+              :class="[
+                'sidebar-item w-full',
+                isActive(item.path) ? 'active' : '',
+              ]"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
               </svg>
-              <span class="font-medium">{{ item.name }}</span>
+              <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
           </li>
         </ul>
@@ -191,19 +210,25 @@ const handleLogout = async () => {
 
       <!-- Admin 選單 -->
       <div v-if="filteredAdminMenuItems.length > 0" class="px-3 mb-6">
-        <p class="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <p
+          class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
+          style="color: var(--text-muted);"
+        >
           系統管理
         </p>
         <ul class="space-y-1">
           <li v-for="item in filteredAdminMenuItems" :key="item.path">
             <button
-              :class="getMenuItemClass(item.path)"
+              :class="[
+                'sidebar-item w-full',
+                isActive(item.path) ? 'active' : '',
+              ]"
               @click="navigateTo(item.path)"
             >
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="item.icon" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
               </svg>
-              <span class="font-medium">{{ item.name }}</span>
+              <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
           </li>
         </ul>
@@ -211,15 +236,15 @@ const handleLogout = async () => {
     </nav>
 
     <!-- 底部登出按鈕 -->
-    <div class="p-3 border-t border-gray-800">
+    <div class="p-3" style="border-top: 1px solid var(--border-primary);">
       <button
-        :class="[SIDEBAR_MENU_CLASSES.base, SIDEBAR_MENU_CLASSES.inactive]"
+        class="sidebar-item w-full"
         @click="handleLogout"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
         </svg>
-        <span class="font-medium">登出</span>
+        <span class="text-sm font-medium">登出</span>
       </button>
     </div>
   </aside>

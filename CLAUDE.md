@@ -74,6 +74,7 @@ progresshub/
 | 3 | vue-tsc 建構錯誤 | 🟠 High | 前端/後端目錄混淆 | Build 失敗 |
 | 4 | 非 Production Build | 🟡 Medium | Dockerfile 使用 npm run dev | 效能差、不穩定 |
 | 5 | Monorepo shared 模組找不到 | 🔴 Critical | Dockerfile 只在 frontend 目錄運行，無法存取 shared | Build 失敗 |
+| 6 | Vue Router 嵌套路由使用 slot | 🔴 Critical | MainLayout 使用 `<slot />` 而非 `<router-view />` | 頁面內容區域空白 |
 
 ### 必須遵守的 Dockerfile 規範
 
@@ -258,18 +259,61 @@ python3 src/ui-ux-pro-max/scripts/search.py "<關鍵字>" --domain <domain>
 └── CLAUDE.md                 # Skill 說明文件
 ```
 
-### ProgressHub 設計系統 (已生成)
+### ProgressHub 設計系統 (SG-Arts 品牌規範)
 
-| 項目 | 值 |
-|------|-----|
-| **風格** | Minimalism & Swiss Style |
-| **主色** | `#7C3AED` (primary-700) |
-| **次色** | `#A78BFA` (secondary) |
-| **CTA** | `#F97316` (accent) |
-| **背景** | `#FAF5FF` (background) |
-| **文字** | `#4C1D95` (primary-950) |
-| **字體** | Plus Jakarta Sans |
-| **過渡** | 200-250ms |
+> **品牌來源**: 侍達遊戲集團 (SG-Arts) 2026 戰略簡報色彩規範
+> **設計風格**: 精品金屬質感
+> **核心主題**: 以黑、白、金屬灰為主體，赤紅為點綴
+
+#### 色彩系統
+
+**核心強調色:**
+| 名稱 | Hex | 用途 |
+|------|-----|------|
+| 侍魂赤紅 | `#C41E3A` | 核心標題線、關鍵數據、重點圖表、CTA 按鈕 |
+
+**基底背景色:**
+| 名稱 | Hex | 用途 |
+|------|-----|------|
+| 明亮白 | `#FFFFFF` | 主體背景 |
+| 金屬銀灰 | `#E5E7EB` | 次要邊框線、分隔線 |
+| 淺金屬灰 | `#F3F4F6` | 裝飾性漸層、圖表軌道背景、卡片背景 |
+| 曜石黑 | `#1A1A1A` | 底部識別線、主體條形圖填充、Dark mode 背景 |
+
+**UI 元素色:**
+| 名稱 | Hex | 用途 |
+|------|-----|------|
+| 珍珠灰 | `#F9FAFB` | 功能卡片背景、側邊欄背景 |
+| 霧銀灰 | `#D1D5DB` | 圖片邊框、細微裝飾線條 |
+
+**文字色彩:**
+| 名稱 | Hex | 用途 |
+|------|-----|------|
+| 深黑 | `#000000` | 主標題、封面標題、巨型數據 |
+| 碳黑 | `#1A1A1A` | 次級標題、表格標題 |
+| 冷灰 | `#4B5563` | 內文、清單描述、表格內容 |
+| 中灰 | `#6B7280` | 副標題、補充說明文字 |
+| 淺灰 | `#9CA3AF` | 頁碼提示、英文標籤、背景小字 |
+
+#### Dark Mode 配色
+
+| 元素 | Light Mode | Dark Mode |
+|------|------------|-----------|
+| 背景主色 | `#FFFFFF` | `#1A1A1A` |
+| 背景次色 | `#F9FAFB` | `#262626` |
+| 背景卡片 | `#F3F4F6` | `#303030` |
+| 文字主色 | `#1A1A1A` | `#F9FAFB` |
+| 文字次色 | `#4B5563` | `#9CA3AF` |
+| 邊框色 | `#E5E7EB` | `#404040` |
+| 強調色 | `#C41E3A` | `#E85A6B` (稍亮) |
+
+#### 設計原則
+
+1. **赤紅色面積佔比低於 5%** - 維持精品高級感
+2. **根據資訊重要程度進行色調分層** - 重要資訊用深色，次要用淺色
+3. **利用微弱漸層模擬金屬表面折射感** - `#F3F4F6` → `#FFFFFF`
+4. **字體**: Inter (Google Fonts)
+5. **過渡動畫**: 150-200ms ease
 
 ### Pre-Delivery Checklist (交付前檢查)
 
@@ -389,6 +433,7 @@ CLAUDE.md 是 Claude Code 的專屬背景記憶文件：
 3. ✅ vue-tsc 建構錯誤
 4. ✅ 非 Production Build 問題
 5. ✅ Monorepo shared 模組找不到
+6. ✅ Vue Router 嵌套路由使用 slot
 
 ### [Monorepo] Shared 模組找不到
 
@@ -413,6 +458,22 @@ CLAUDE.md 是 Claude Code 的專屬背景記憶文件：
   }
 }
 ```
+
+### [Vue Router] 嵌套路由使用錯誤元素
+
+| 項目 | 內容 |
+|------|------|
+| **嚴重度** | 🔴 Critical |
+| **錯誤症狀** | 部署成功但頁面主內容區域空白，只有導航欄和側邊欄顯示 |
+| **根本原因** | 在佈局元件（如 MainLayout.vue）中使用 `<slot />` 而非 `<router-view />` |
+| **解決方案** | 將 `<slot />` 改為 `<router-view />` |
+| **預防措施** | Vue Router 嵌套路由的父元件必須使用 `<router-view />` 來渲染子路由組件 |
+
+**Vue Router vs Vue Component 渲染方式：**
+| 元素 | 用途 | 使用場景 |
+|------|------|---------|
+| `<slot />` | Vue 元件插槽 | 父元件傳遞內容給子元件 |
+| `<router-view />` | Vue Router 出口 | 渲染當前路由匹配的子組件 |
 
 ---
 
