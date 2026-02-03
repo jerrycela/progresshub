@@ -110,20 +110,20 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
     <!-- 甘特圖區域 -->
     <Card title="任務時程" :subtitle="`${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`">
       <div v-if="filteredTasks.length > 0" class="space-y-3">
-        <!-- 時間軸標記 -->
-        <div class="flex justify-between text-xs text-gray-400 mb-4 px-48">
+        <!-- 時間軸標記 (RWD: 迭代 10) -->
+        <div class="flex justify-between text-xs text-gray-400 mb-4 px-4 md:px-12 lg:px-32 xl:px-48">
           <span>{{ formatDate(dateRange.start) }}</span>
           <span>{{ formatDate(dateRange.end) }}</span>
         </div>
 
-        <!-- 任務列表 -->
+        <!-- 任務列表 (RWD: 迭代 10) -->
         <div
           v-for="task in filteredTasks"
           :key="task.id"
-          class="flex items-center gap-4 py-2 border-b border-gray-100 last:border-0"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b border-gray-100 last:border-0"
         >
           <!-- 任務資訊 -->
-          <div class="w-44 flex-shrink-0">
+          <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
             <p class="font-medium text-gray-900 text-sm truncate">{{ task.title }}</p>
             <p class="text-xs text-gray-500">{{ getProjectName(task.projectId) }}</p>
           </div>

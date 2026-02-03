@@ -185,9 +185,10 @@ const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
       </div>
     </Card>
 
-    <!-- 使用者列表 -->
+    <!-- 使用者列表 (RWD: 迭代 10) -->
     <Card title="成員列表" :subtitle="`共 ${filteredUsers.length} 人`">
-      <div class="overflow-x-auto">
+      <!-- 桌面版：表格視圖 -->
+      <div class="hidden md:block overflow-x-auto">
         <table class="w-full">
           <thead>
             <tr class="border-b border-gray-200">
@@ -233,6 +234,40 @@ const functionOptions: { value: FunctionType | 'ALL'; label: string }[] = [
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- 手機版：卡片視圖 -->
+      <div class="md:hidden space-y-3">
+        <div
+          v-for="user in filteredUsers"
+          :key="user.id"
+          class="p-4 bg-gray-50 rounded-lg space-y-3"
+        >
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img
+                :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
+                :alt="user.name"
+                class="w-12 h-12 rounded-full bg-gray-100"
+              >
+              <div>
+                <p class="font-medium text-gray-900">{{ user.name }}</p>
+                <p class="text-sm text-gray-500">{{ user.email }}</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" @click="openEditModal(user)">
+              編輯
+            </Button>
+          </div>
+          <div class="flex items-center gap-2">
+            <Badge :variant="roleBadgeVariant(user.role)" size="sm">
+              {{ roleLabels[user.role] }}
+            </Badge>
+            <Badge variant="info" size="sm">
+              {{ functionTypeLabels[user.functionType] }}
+            </Badge>
+          </div>
+        </div>
       </div>
 
       <!-- 空狀態 -->
