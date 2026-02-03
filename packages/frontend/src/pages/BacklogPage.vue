@@ -2,7 +2,10 @@
 import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
-import { mockProjects, functionTypeLabels } from '@/mocks/data'
+import { useProject } from '@/composables/useProject'
+import { useToast } from '@/composables/useToast'
+import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
+import { functionTypeLabels } from '@/mocks/data'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
@@ -11,8 +14,11 @@ import { TaskCard } from '@/components/task'
 import type { FunctionType, Task } from 'shared/types'
 
 // 需求池頁面 - 待認領任務列表
+// Ralph Loop 迭代 8: 使用 Composables 和常數
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const { getProjectById, getProjectOptions } = useProject()
+const { showSuccess, showError } = useToast()
 
 // 篩選條件
 const selectedFunction = ref<FunctionType | 'ALL'>('ALL')
@@ -35,10 +41,6 @@ const backlogTasks = computed(() => {
   return tasks
 })
 
-// 取得專案
-const getProject = (projectId: string) =>
-  mockProjects.find(p => p.id === projectId)
-
 // 認領確認對話框
 const showClaimModal = ref(false)
 const taskToClaim = ref<Task | null>(null)
@@ -54,31 +56,24 @@ const confirmClaim = async () => {
 
   isClaimLoading.value = true
   try {
-    await taskStore.claimTask(taskToClaim.value.id, authStore.user.id)
-    showClaimModal.value = false
-    taskToClaim.value = null
+    const result = await taskStore.claimTask(taskToClaim.value.id, authStore.user.id)
+    if (result.success) {
+      showSuccess(`已成功認領「${taskToClaim.value.title}」`)
+      showClaimModal.value = false
+      taskToClaim.value = null
+    } else {
+      showError(result.error?.message || '認領失敗')
+    }
+  } catch {
+    showError('認領失敗，請稍後再試')
   } finally {
     isClaimLoading.value = false
   }
 }
 
-// 職能選項
-const functionOptions = [
-  { value: 'ALL', label: '全部職能' },
-  { value: 'PLANNING', label: '企劃' },
-  { value: 'PROGRAMMING', label: '程式' },
-  { value: 'ART', label: '美術' },
-  { value: 'ANIMATION', label: '動態' },
-  { value: 'SOUND', label: '音效' },
-  { value: 'VFX', label: '特效' },
-  { value: 'COMBAT', label: '戰鬥' },
-]
-
-// 專案選項
-const projectOptions = computed(() => [
-  { value: 'ALL', label: '全部專案' },
-  ...mockProjects.map(p => ({ value: p.id, label: p.name })),
-])
+// 使用常數和 composable
+const functionOptions = FUNCTION_OPTIONS
+const projectOptions = computed(() => getProjectOptions(true))
 </script>
 
 <template>
@@ -128,7 +123,7 @@ const projectOptions = computed(() => [
         v-for="task in backlogTasks"
         :key="task.id"
         :task="task"
-        :project="getProject(task.projectId)"
+        :project="getProjectById(task.projectId)"
         @claim="openClaimModal(task)"
       />
     </div>

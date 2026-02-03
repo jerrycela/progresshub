@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
-import { mockProjects, mockUsers, functionTypeLabels } from '@/mocks/data'
+import { useProject } from '@/composables/useProject'
+import { useFormatDate } from '@/composables/useFormatDate'
+import { CHASE_LIST } from '@/constants/pageSettings'
+import { mockUsers, functionTypeLabels } from '@/mocks/data'
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 import Button from '@/components/common/Button.vue'
 import type { Task } from 'shared/types'
 
 // 追殺清單頁面 - PM 專用，顯示逾期/未認領任務警示
+// Ralph Loop 迭代 8: 使用 Composables 和常數
 
 const taskStore = useTaskStore()
+const { getProjectName } = useProject()
+const { getToday, getDaysAgo, formatShort, getRelativeDays } = useFormatDate()
 
 // 取得今天日期
-const today = new Date().toISOString().split('T')[0]
+const today = getToday()
 
 // 逾期任務
 const overdueTasks = computed(() =>
@@ -23,16 +29,14 @@ const overdueTasks = computed(() =>
   )
 )
 
-// 超過 3 天未認領的任務
+// 超過 N 天未認領的任務（使用常數）
 const longUnclaimedTasks = computed(() => {
-  const threeDaysAgo = new Date()
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
-  const threeDaysAgoStr = threeDaysAgo.toISOString().split('T')[0]
+  const thresholdDate = getDaysAgo(CHASE_LIST.UNCLAIMED_DAYS_THRESHOLD)
 
   return (taskStore.tasks as Task[]).filter((t: Task) =>
     t.status === 'UNCLAIMED' &&
     t.createdAt &&
-    t.createdAt.split('T')[0] < threeDaysAgoStr
+    t.createdAt.split('T')[0] < thresholdDate
   )
 })
 
@@ -41,43 +45,26 @@ const blockedTasks = computed(() =>
   (taskStore.tasks as Task[]).filter((t: Task) => t.status === 'BLOCKED')
 )
 
-// 長期無進度的任務（超過 7 天未更新）
+// 長期無進度的任務（使用常數）
 const staleTasks = computed(() => {
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
+  const thresholdDate = getDaysAgo(CHASE_LIST.STALE_UPDATE_DAYS)
 
   return (taskStore.tasks as Task[]).filter((t: Task) =>
     ['IN_PROGRESS', 'CLAIMED'].includes(t.status) &&
     t.updatedAt &&
-    t.updatedAt.split('T')[0] < sevenDaysAgoStr
+    t.updatedAt.split('T')[0] < thresholdDate
   )
 })
-
-// 取得專案名稱
-const getProjectName = (projectId: string) =>
-  mockProjects.find(p => p.id === projectId)?.name || '未知專案'
 
 // 取得負責人
 const getAssigneeName = (assigneeId?: string) =>
   assigneeId ? mockUsers.find(u => u.id === assigneeId)?.name || '未指派' : '未認領'
 
 // 格式化日期
-const formatDate = (date?: string) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleDateString('zh-TW', {
-    month: 'short',
-    day: 'numeric',
-  })
-}
+const formatDate = (date?: string) => formatShort(date)
 
 // 計算逾期天數
-const getOverdueDays = (dueDate: string) => {
-  const due = new Date(dueDate)
-  const now = new Date()
-  const diff = Math.floor((now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24))
-  return diff
-}
+const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
 </script>
 
 <template>

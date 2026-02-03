@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
-import { mockProjects } from '@/mocks/data'
+import { useProject } from '@/composables/useProject'
+import { useFormatDate } from '@/composables/useFormatDate'
+import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
+import { STATUS_COLORS } from '@/constants/ui'
+import { GANTT } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import type { FunctionType, Task } from 'shared/types'
 
 // 甘特圖頁面 - 專案時程視覺化 (Placeholder，待整合 Frappe Gantt)
+// Ralph Loop 迭代 8: 使用 Composables 和常數
 const taskStore = useTaskStore()
+const { getProjectName, getProjectOptions } = useProject()
+const { formatShort } = useFormatDate()
 
 // 篩選條件
 const selectedProject = ref<string>('ALL')
@@ -27,36 +34,10 @@ const filteredTasks = computed(() => {
   return tasks.filter((t: Task) => t.startDate && t.dueDate)
 })
 
-// 專案選項
-const projectOptions = computed(() => [
-  { value: 'ALL', label: '全部專案' },
-  ...mockProjects.map(p => ({ value: p.id, label: p.name })),
-])
-
-// 職能選項
-const functionOptions = [
-  { value: 'ALL', label: '全部職能' },
-  { value: 'PLANNING', label: '企劃' },
-  { value: 'PROGRAMMING', label: '程式' },
-  { value: 'ART', label: '美術' },
-  { value: 'ANIMATION', label: '動態' },
-  { value: 'SOUND', label: '音效' },
-  { value: 'VFX', label: '特效' },
-  { value: 'COMBAT', label: '戰鬥' },
-]
-
-// 任務狀態顏色
-const statusColors: Record<string, string> = {
-  UNCLAIMED: 'bg-gray-300',
-  CLAIMED: 'bg-secondary',
-  IN_PROGRESS: 'bg-primary-600',
-  DONE: 'bg-success',
-  BLOCKED: 'bg-danger',
-}
-
-// 取得專案名稱
-const getProjectName = (projectId: string) =>
-  mockProjects.find(p => p.id === projectId)?.name || '未知專案'
+// 使用常數和 composable
+const projectOptions = computed(() => getProjectOptions(true))
+const functionOptions = FUNCTION_OPTIONS
+const statusColors = STATUS_COLORS
 
 // 計算甘特圖時間範圍
 const dateRange = computed(() => {
@@ -83,12 +64,11 @@ const getTaskPosition = (task: { startDate?: string; dueDate?: string }) => {
   const left = ((taskStart - dateRange.value.start.getTime()) / range) * 100
   const width = ((taskEnd - taskStart) / range) * 100
 
-  return { left: Math.max(0, left), width: Math.max(5, width) }
+  return { left: Math.max(0, left), width: Math.max(GANTT.MIN_BAR_WIDTH, width) }
 }
 
-// 格式化日期
-const formatDate = (date: Date) =>
-  date.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' })
+// 格式化日期（用於顯示）
+const formatDate = (date: Date) => formatShort(date.toISOString())
 </script>
 
 <template>

@@ -2,7 +2,9 @@
 import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
-import { mockProjects } from '@/mocks/data'
+import { useProject } from '@/composables/useProject'
+import { useToast } from '@/composables/useToast'
+import { TASK_STATUS_OPTIONS } from '@/constants/filterOptions'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
@@ -11,8 +13,11 @@ import { TaskCard } from '@/components/task'
 import type { TaskStatus, Task } from 'shared/types'
 
 // 我的任務頁面 - 已認領/進行中任務
+// Ralph Loop 迭代 8: 使用 Composables 和常數
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const { getProjectById } = useProject()
+const { showSuccess, showError } = useToast()
 
 // 篩選條件
 const selectedStatus = ref<TaskStatus | 'ALL'>('ALL')
@@ -40,10 +45,6 @@ const completedTasks = computed(() => {
   return (taskStore.tasks as Task[]).filter((t: Task) => t.assigneeId === userId && t.status === 'DONE')
 })
 
-// 取得專案
-const getProject = (projectId: string) =>
-  mockProjects.find((p) => p.id === projectId)
-
 // 放棄認領對話框
 const showUnclaimModal = ref(false)
 const taskToUnclaim = ref<Task | null>(null)
@@ -62,21 +63,25 @@ const confirmUnclaim = async () => {
 
   isUnclaimLoading.value = true
   try {
-    await taskStore.unclaimTask(taskToUnclaim.value.id)
-    showUnclaimModal.value = false
-    taskToUnclaim.value = null
+    const result = await taskStore.unclaimTask(taskToUnclaim.value.id)
+    if (result.success) {
+      showSuccess(`已放棄「${taskToUnclaim.value.title}」`)
+      showUnclaimModal.value = false
+      taskToUnclaim.value = null
+    } else {
+      showError(result.error?.message || '放棄認領失敗')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
   } finally {
     isUnclaimLoading.value = false
   }
 }
 
-// 狀態選項
-const statusOptions = [
-  { value: 'ALL', label: '全部狀態' },
-  { value: 'CLAIMED', label: '已認領' },
-  { value: 'IN_PROGRESS', label: '進行中' },
-  { value: 'BLOCKED', label: '卡關' },
-]
+// 使用常數（排除 UNCLAIMED 和 DONE）
+const statusOptions = TASK_STATUS_OPTIONS.filter(
+  opt => !['UNCLAIMED', 'DONE'].includes(opt.value as string)
+)
 
 // 顯示已完成
 const showCompleted = ref(false)
@@ -135,7 +140,7 @@ const showCompleted = ref(false)
           v-for="task in myTasks"
           :key="task.id"
           :task="task"
-          :project="getProject(task.projectId)"
+          :project="getProjectById(task.projectId)"
           @unclaim="openUnclaimModal"
         />
       </div>
@@ -161,7 +166,7 @@ const showCompleted = ref(false)
           v-for="task in completedTasks"
           :key="task.id"
           :task="task"
-          :project="getProject(task.projectId)"
+          :project="getProjectById(task.projectId)"
           :show-actions="false"
         />
       </div>
