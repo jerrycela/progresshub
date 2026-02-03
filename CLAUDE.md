@@ -242,3 +242,35 @@ await prisma.$queryRaw`SELECT 1`;
 - 本地執行 `npm run build` 確保編譯通過後再提交
 - 新增環境變數時，同時更新 `EnvConfig` interface
 - 使用 TypeScript 嚴格模式時，確保所有類型正確定義
+
+### 問題 8：Alpine Linux 缺少 OpenSSL 導致 Prisma 無法啟動
+
+**錯誤訊息**：
+```
+Error: libssl.so.1.1: cannot open shared object file: No such file or directory
+```
+
+**根本原因**：
+- Prisma 需要 `libssl.so.1.1`（OpenSSL 1.1）
+- Alpine Linux 預設不包含 OpenSSL
+- Docker 的 production stage 缺少必要的系統依賴
+
+**解決方案**：
+在 Dockerfile 的 production stage 安裝 OpenSSL：
+
+```dockerfile
+# Production stage
+FROM node:20-alpine AS production
+
+WORKDIR /app
+
+# Install OpenSSL for Prisma compatibility
+RUN apk add --no-cache openssl
+
+# ... rest of the Dockerfile
+```
+
+**改進策略**：
+- 使用 Prisma 時，記得在 Alpine Linux 中安裝 OpenSSL
+- 或考慮使用非 Alpine 的基礎映像（如 `node:20-slim`）
+- 在本地用 Docker 測試建構後再部署
