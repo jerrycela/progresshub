@@ -73,7 +73,7 @@ router.post('/slack', async (req, res, next) => {
     const token = jwt.sign(
       { userId: employee.id },
       process.env.JWT_SECRET || 'default-secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as any
     );
 
     res.json({
@@ -118,7 +118,7 @@ router.post('/refresh', authenticate, async (req: AuthRequest, res: Response) =>
   const token = jwt.sign(
     { userId: req.user!.id },
     process.env.JWT_SECRET || 'default-secret',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as any
   );
 
   res.json({ success: true, token });

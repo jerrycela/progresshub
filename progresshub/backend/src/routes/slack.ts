@@ -76,7 +76,7 @@ router.post('/commands', async (req: Request, res: Response, next) => {
       });
 
       const projectOptions = Array.from(projectMap.entries()).map(([id, name]) => ({
-        text: { type: 'plain_text', text: name as string },
+        text: { type: 'plain_text' as const, text: name as string },
         value: id,
       }));
 
@@ -111,7 +111,7 @@ router.post('/commands', async (req: Request, res: Response, next) => {
                 action_id: 'task_select',
                 placeholder: { type: 'plain_text', text: '選擇任務' },
                 options: tasks.slice(0, 100).map((t) => ({
-                  text: { type: 'plain_text', text: `${t.project.name} - ${t.name}` },
+                  text: { type: 'plain_text' as const, text: `${t.project.name} - ${t.name}` },
                   value: t.id,
                 })),
               },

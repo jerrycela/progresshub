@@ -29,7 +29,7 @@ export class GitLabActivityService {
     const projects = await client.getProjects(true);
 
     for (const project of projects) {
-      const projectPath = project.path_with_namespace;
+      const projectPath = (project as Record<string, unknown>).path_with_namespace as string;
 
       // 同步 Commits
       if (connection.syncCommits) {

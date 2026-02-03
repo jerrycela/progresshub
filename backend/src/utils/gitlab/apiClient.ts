@@ -57,7 +57,7 @@ export class GitLabApiClient {
       `/projects/${encodedPath}/repository/commits`,
       { params }
     );
-    return response.data.map((commit: unknown) => this.transformCommit(commit));
+    return response.data.map((commit: unknown) => this.transformCommit(commit as Record<string, unknown>));
   }
 
   // 取得 Commit 詳情（包含 stats）
@@ -76,7 +76,7 @@ export class GitLabApiClient {
     const response = await this.client.get('/merge_requests', {
       params: { state: state || 'all', scope: 'all', per_page: 100 },
     });
-    return response.data.map((mr: unknown) => this.transformMergeRequest(mr));
+    return response.data.map((mr: unknown) => this.transformMergeRequest(mr as Record<string, unknown>));
   }
 
   // 取得專案的 MRs
@@ -97,7 +97,7 @@ export class GitLabApiClient {
     const response = await this.client.get(`/projects/${encodedPath}/merge_requests`, {
       params,
     });
-    return response.data.map((mr: unknown) => this.transformMergeRequest(mr));
+    return response.data.map((mr: unknown) => this.transformMergeRequest(mr as Record<string, unknown>));
   }
 
   // 取得使用者的 Issues
@@ -105,7 +105,7 @@ export class GitLabApiClient {
     const response = await this.client.get('/issues', {
       params: { state: state || 'all', scope: 'all', per_page: 100 },
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue));
+    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
   }
 
   // 取得專案的 Issues
@@ -126,7 +126,7 @@ export class GitLabApiClient {
     const response = await this.client.get(`/projects/${encodedPath}/issues`, {
       params,
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue));
+    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
   }
 
   // 取得單一 Issue
@@ -152,7 +152,7 @@ export class GitLabApiClient {
     const response = await this.client.get(`/projects/${encodedPath}/issues`, {
       params: { search: query, per_page: 20 },
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue));
+    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
   }
 
   // 建立 Issue
