@@ -51,3 +51,71 @@
 - 使用繁體中文
 - 格式：`<type>: <描述>`
 - 類型：`feat`, `fix`, `docs`, `chore`, `refactor`
+
+## 部署問題檢討與改進策略
+
+### 問題 1：TypeScript 編譯器未找到 (tsc not found)
+
+**錯誤訊息**：`sh: tsc: not found`
+
+**根本原因**：
+- 雲端部署平台（如 Zeabur）預設設定 `NODE_ENV=production`
+- 當 `NODE_ENV=production` 時，`npm ci` 會跳過 `devDependencies`
+- TypeScript 是 `devDependencies`，導致建構階段無法找到 `tsc`
+
+**解決方案**：
+在 Dockerfile 的建構階段使用 `npm ci --include=dev` 明確安裝 devDependencies
+
+```dockerfile
+# Production build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+# 關鍵：確保安裝 devDependencies 以進行 TypeScript 編譯
+RUN npm ci --include=dev
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+```
+
+**改進策略**：
+- 部署前檢查 Dockerfile 是否正確處理 devDependencies
+- 記住：生產環境建構 ≠ 生產環境執行，建構時需要開發工具
+
+### 問題 2：TypeScript 編譯錯誤 - 無效字符
+
+**錯誤訊息**：`error TS1127: Invalid character` 在 `health.ts` 第 40 行
+
+**根本原因**：
+- 程式碼中使用了 `prisma.\$queryRaw` 而非 `prisma.$queryRaw`
+- 多餘的反斜線 `\` 被 TypeScript 視為無效字符
+- 可能是複製貼上或自動轉義造成
+
+**解決方案**：
+移除多餘的反斜線，使用正確的 Prisma API 語法
+
+```typescript
+// 錯誤
+await prisma.\$queryRaw`SELECT 1`;
+
+// 正確
+await prisma.$queryRaw`SELECT 1`;
+```
+
+**改進策略**：
+- 編輯程式碼後，在本地執行 `npm run build` 或 `npx tsc --noEmit` 驗證編譯
+- 特別注意包含特殊字符（如 `$`）的 API 調用
+- 部署前進行本地建構測試
+
+### 問題 3：package-lock.json 未納入版本控制
+
+**根本原因**：
+- `.gitignore` 排除了 `package-lock.json`
+- 部署時 `npm ci` 需要此檔案
+
+**解決方案**：
+從 `.gitignore` 移除 `package-lock.json` 並提交該檔案
+
+**改進策略**：
+- `package-lock.json` 應始終納入版本控制
+- 確保所有環境使用相同的依賴版本
