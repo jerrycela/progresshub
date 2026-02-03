@@ -38,6 +38,9 @@ export interface User {
   gitlabId?: string
   role: Role
   functionType: FunctionType
+  isActive?: boolean              // Ralph Loop 迭代 2 新增
+  lastActiveAt?: string           // Ralph Loop 迭代 2 新增
+  department?: string             // Ralph Loop 迭代 2 新增
   createdAt: string
   updatedAt: string
 }
@@ -66,9 +69,12 @@ export interface Task {
   title: string
   description?: string
   status: TaskStatus
+  priority?: TaskPriority         // Ralph Loop 迭代 2 新增
   progress: number // 0-100
   projectId: string
   project?: Project
+  creatorId?: string              // Ralph Loop 迭代 2 新增
+  creator?: User                  // Ralph Loop 迭代 2 新增
   assigneeId?: string
   assignee?: User
   functionTags: FunctionType[]
@@ -76,8 +82,13 @@ export interface Task {
   gitlabIssueUrl?: string
   startDate?: string
   dueDate?: string
+  estimatedHours?: number         // Ralph Loop 迭代 2 新增
+  actualHours?: number            // Ralph Loop 迭代 2 新增
+  blockerReason?: string          // Ralph Loop 迭代 2 新增
+  dependsOnTaskIds?: string[]     // Ralph Loop 迭代 2 新增
   createdAt: string
   updatedAt: string
+  closedAt?: string               // Ralph Loop 迭代 2 新增
 }
 
 // ============================================
@@ -142,6 +153,85 @@ export interface Milestone {
   targetDate: string
   status: 'PENDING' | 'ACHIEVED'
   createdAt: string
+}
+
+// ============================================
+// 錯誤代碼（Ralph Loop 迭代 2 新增）
+// ============================================
+export type ErrorCode =
+  // 認證相關
+  | 'AUTH_LOGIN_FAILED'
+  | 'AUTH_LOGOUT_FAILED'
+  | 'AUTH_UNAUTHORIZED'
+  // 任務相關
+  | 'TASK_NOT_FOUND'
+  | 'TASK_NOT_UNCLAIMED'
+  | 'TASK_ALREADY_CLAIMED'
+  | 'TASK_UPDATE_FAILED'
+  | 'TASK_CREATE_FAILED'
+  // 專案相關
+  | 'PROJECT_NOT_FOUND'
+  // 驗證相關
+  | 'VALIDATION_ERROR'
+  // 通用
+  | 'NETWORK_ERROR'
+  | 'UNKNOWN_ERROR'
+
+// ============================================
+// 統一操作結果類型（Ralph Loop 迭代 2 新增）
+// ============================================
+export interface ActionResult<T = void> {
+  success: boolean
+  data?: T
+  error?: {
+    code: ErrorCode
+    message: string
+    details?: Record<string, unknown>
+  }
+}
+
+// ============================================
+// 任務優先級（Ralph Loop 迭代 2 新增）
+// ============================================
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+
+// ============================================
+// 任務狀態轉換規則（Ralph Loop 迭代 2 新增）
+// ============================================
+export const TaskStatusTransitions: Record<TaskStatus, TaskStatus[]> = {
+  UNCLAIMED: ['CLAIMED'],
+  CLAIMED: ['UNCLAIMED', 'IN_PROGRESS'],
+  IN_PROGRESS: ['CLAIMED', 'BLOCKED', 'DONE'],
+  BLOCKED: ['IN_PROGRESS'],
+  DONE: [],
+}
+
+// ============================================
+// 建立任務輸入類型（Ralph Loop 迭代 2 新增）
+// ============================================
+export interface CreateTaskInput {
+  title: string
+  description?: string
+  priority?: TaskPriority
+  projectId: string
+  functionTags?: FunctionType[]
+  startDate?: string
+  dueDate?: string
+  estimatedHours?: number
+}
+
+// ============================================
+// 更新任務輸入類型（Ralph Loop 迭代 2 新增）
+// ============================================
+export interface UpdateTaskInput {
+  title?: string
+  description?: string
+  status?: TaskStatus
+  priority?: TaskPriority
+  progress?: number
+  assigneeId?: string
+  estimatedHours?: number
+  actualHours?: number
 }
 
 // ============================================
