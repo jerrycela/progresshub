@@ -55,9 +55,6 @@ export class AuthService {
    * 產生 JWT Token
    */
   generateToken(employee: Employee): string {
-    const options: SignOptions = {
-      expiresIn: env.JWT_EXPIRES_IN as string,
-    };
     return jwt.sign(
       {
         userId: employee.id,
@@ -65,7 +62,7 @@ export class AuthService {
         permissionLevel: employee.permissionLevel,
       },
       env.JWT_SECRET,
-      options
+      { expiresIn: env.JWT_EXPIRES_IN } as SignOptions
     );
   }
 

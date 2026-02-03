@@ -13,6 +13,7 @@ interface EnvConfig {
   SLACK_SIGNING_SECRET: string;
   SLACK_BOT_TOKEN: string;
   ALLOWED_ORIGINS: string[];
+  API_BASE_URL: string;
 }
 
 // Issue #1 修復：JWT Secret 安全性檢查
@@ -35,6 +36,7 @@ export const env: EnvConfig = {
   SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || '',
   SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || '',
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(',') || [],
+  API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:3000',
 };
 
 // Issue #4 修復：完整的環境變數驗證

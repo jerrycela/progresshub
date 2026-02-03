@@ -195,7 +195,7 @@ export class GitLabInstanceService {
       // 嘗試存取 GitLab API（無需認證的端點）
       const response = await fetch(`${instance.baseUrl}/api/v4/version`);
       if (response.ok) {
-        const data = await response.json();
+        const data = await response.json() as { version: string };
         return {
           success: true,
           message: `Connected to GitLab ${data.version}`,
