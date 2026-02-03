@@ -2,29 +2,32 @@
 import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTaskStore } from '@/stores/tasks'
-import { mockDashboardStats, mockProjects } from '@/mocks/data'
+import { useProject } from '@/composables/useProject'
+import { mockDashboardStats } from '@/mocks/data'
+import { DASHBOARD } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
-import { StatCard } from '@/components/task'
-import { TaskCard } from '@/components/task'
+import EmptyState from '@/components/common/EmptyState.vue'
+import { StatCard, TaskCard } from '@/components/task'
 import type { Task } from 'shared/types'
 
+// ============================================
 // 儀表板頁面 - 個人任務總覽
+// Ralph Loop 迭代 12: 使用新元件和 Composables
+// ============================================
+
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
+const { getProjectById } = useProject()
 
 const user = computed(() => authStore.user)
 const stats = mockDashboardStats
 
-// 取得使用者的進行中任務
+// 取得使用者的進行中任務（使用常數限制數量）
 const myInProgressTasks = computed(() =>
   (taskStore.tasks as Task[]).filter(
     (t: Task) => t.assigneeId === user.value?.id && ['CLAIMED', 'IN_PROGRESS'].includes(t.status)
-  ).slice(0, 3)
+  ).slice(0, DASHBOARD.TASK_LIMIT)
 )
-
-// 取得專案對照
-const getProject = (projectId: string) =>
-  mockProjects.find(p => p.id === projectId)
 
 // 統計卡片圖示
 const icons = {
@@ -94,22 +97,22 @@ const icons = {
               v-for="task in myInProgressTasks"
               :key="task.id"
               :task="task"
-              :project="getProject(task.projectId)"
+              :project="getProjectById(task.projectId)"
               :show-actions="false"
             />
           </div>
-          <div v-else class="text-center py-8 text-gray-500">
-            <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-            <p>目前沒有進行中的任務</p>
+          <EmptyState
+            v-else
+            icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            title="目前沒有進行中的任務"
+          >
             <RouterLink
               to="/backlog"
               class="inline-block mt-2 text-blue-600 hover:text-blue-700 font-medium"
             >
               前往需求池認領任務
             </RouterLink>
-          </div>
+          </EmptyState>
         </Card>
       </div>
 

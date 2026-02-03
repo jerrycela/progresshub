@@ -10,11 +10,15 @@ import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
 import Modal from '@/components/common/Modal.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { TaskCard } from '@/components/task'
 import type { FunctionType, Task } from 'shared/types'
 
+// ============================================
 // 需求池頁面 - 待認領任務列表
 // Ralph Loop 迭代 8: 使用 Composables 和常數
+// Ralph Loop 迭代 12: 使用 EmptyState 元件
+// ============================================
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { getProjectById, getProjectOptions } = useProject()
@@ -129,12 +133,13 @@ const projectOptions = computed(() => getProjectOptions(true))
     </div>
 
     <!-- 空狀態 -->
-    <Card v-else class="text-center py-12">
-      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-      </svg>
-      <h3 class="text-lg font-medium text-gray-900 mb-1">目前沒有待認領的任務</h3>
-      <p class="text-gray-500">所有任務都已被認領，請稍後再回來查看</p>
+    <Card v-else>
+      <EmptyState
+        icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+        title="目前沒有待認領的任務"
+        description="所有任務都已被認領，請稍後再回來查看"
+        icon-size="lg"
+      />
     </Card>
 
     <!-- 認領確認對話框 -->
