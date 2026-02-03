@@ -244,6 +244,28 @@ python3 src/ui-ux-pro-max/scripts/search.py "<關鍵字>" --stack vue
 python3 src/ui-ux-pro-max/scripts/search.py "<關鍵字>" --domain <domain>
 ```
 
+### [強制規則] 前端頁面改動必須使用 UI/UX Pro Max Skill
+
+| 項目 | 內容 |
+|------|------|
+| **嚴重度** | 🔴 Critical |
+| **規則** | 所有前端頁面相關的改動，一律必須呼叫 UI/UX Pro Max Skill 協作 |
+| **原因** | 確保設計一致性、遵循最佳實踐、避免 UI/UX 問題 |
+| **違規後果** | 設計品質不佳、用戶體驗差、需要返工 |
+
+**每次前端改動前必須執行：**
+```bash
+# 1. 查詢相關設計指南
+cd /home/user/ui-ux-pro-max-skill
+python3 src/ui-ux-pro-max/scripts/search.py "<改動類型>" --stack vue
+
+# 2. 如果是配色相關
+python3 src/ui-ux-pro-max/scripts/search.py "<關鍵字>" --domain color
+
+# 3. 如果是頁面結構相關
+python3 src/ui-ux-pro-max/scripts/search.py "<關鍵字>" --domain landing
+```
+
 ### UI/UX Pro Max Skill 架構
 
 ```
