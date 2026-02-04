@@ -7,10 +7,12 @@ import {
   mockDepartments,
   type PoolTask,
 } from '@/mocks/taskPool'
-import type { Department } from 'shared/types'
+import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
+import type { Department, FunctionType } from 'shared/types'
 
 // ============================================
 // 任務池頁面 - 瀏覽和認領任務
+// 整合原「需求池」功能
 // ============================================
 
 const router = useRouter()
@@ -18,16 +20,28 @@ const router = useRouter()
 // 篩選狀態
 const selectedProject = ref<string>('')
 const selectedDepartment = ref<Department | ''>('')
+const selectedFunction = ref<FunctionType | ''>('')
 const selectedStatus = ref<string>('')
 const searchQuery = ref('')
+
+// 快速篩選：只看待認領
+const showOnlyUnclaimed = ref(false)
 
 // 篩選後的任務
 const filteredTasks = computed(() => {
   return mockPoolTasks.filter((task: PoolTask) => {
+    // 快速篩選：只看待認領
+    if (showOnlyUnclaimed.value && task.status !== 'UNCLAIMED') {
+      return false
+    }
     if (selectedProject.value && task.projectId !== selectedProject.value) {
       return false
     }
     if (selectedDepartment.value && task.department !== selectedDepartment.value) {
+      return false
+    }
+    // 職能篩選
+    if (selectedFunction.value && !task.functionTags.includes(selectedFunction.value)) {
       return false
     }
     if (selectedStatus.value && task.status !== selectedStatus.value) {
@@ -127,9 +141,22 @@ const claimTask = (task: PoolTask): void => {
 const clearFilters = (): void => {
   selectedProject.value = ''
   selectedDepartment.value = ''
+  selectedFunction.value = ''
   selectedStatus.value = ''
   searchQuery.value = ''
+  showOnlyUnclaimed.value = false
 }
+
+// 切換快速篩選
+const toggleUnclaimedFilter = (): void => {
+  showOnlyUnclaimed.value = !showOnlyUnclaimed.value
+  if (showOnlyUnclaimed.value) {
+    selectedStatus.value = ''
+  }
+}
+
+// 職能選項
+const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 </script>
 
 <template>
@@ -173,6 +200,24 @@ const clearFilters = (): void => {
       </div>
     </div>
 
+    <!-- 快速篩選按鈕 -->
+    <div class="flex items-center gap-3">
+      <button
+        :class="[
+          'px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
+          showOnlyUnclaimed
+            ? 'bg-indigo text-white'
+            : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+        ]"
+        @click="toggleUnclaimedFilter"
+      >
+        只看待認領
+      </button>
+      <span class="text-sm" style="color: var(--text-muted);">
+        共 {{ filteredTasks.length }} 個任務
+      </span>
+    </div>
+
     <!-- 篩選區域 -->
     <div class="card p-4">
       <div class="flex flex-wrap items-center gap-4">
@@ -199,6 +244,14 @@ const clearFilters = (): void => {
           </option>
         </select>
 
+        <!-- 職能篩選 -->
+        <select v-model="selectedFunction" class="input-field cursor-pointer">
+          <option value="">所有職能</option>
+          <option v-for="func in functionOptions" :key="func.value" :value="func.value">
+            {{ func.label }}
+          </option>
+        </select>
+
         <!-- 部門篩選 -->
         <select v-model="selectedDepartment" class="input-field cursor-pointer">
           <option value="">所有部門</option>
@@ -208,7 +261,11 @@ const clearFilters = (): void => {
         </select>
 
         <!-- 狀態篩選 -->
-        <select v-model="selectedStatus" class="input-field cursor-pointer">
+        <select
+          v-model="selectedStatus"
+          class="input-field cursor-pointer"
+          :disabled="showOnlyUnclaimed"
+        >
           <option value="">所有狀態</option>
           <option value="UNCLAIMED">待認領</option>
           <option value="IN_PROGRESS">進行中</option>
@@ -217,7 +274,7 @@ const clearFilters = (): void => {
 
         <!-- 清除篩選 -->
         <button
-          v-if="selectedProject || selectedDepartment || selectedStatus || searchQuery"
+          v-if="selectedProject || selectedDepartment || selectedFunction || selectedStatus || searchQuery || showOnlyUnclaimed"
           class="text-sm cursor-pointer transition-colors"
           style="color: var(--text-muted);"
           @click="clearFilters"
