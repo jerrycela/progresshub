@@ -57,6 +57,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/TaskDetailPage.vue'),
       },
       {
+        path: 'task-pool/:id/edit',
+        name: 'TaskEdit',
+        component: () => import('@/pages/TaskEditPage.vue'),
+      },
+      {
         path: 'roles',
         name: 'RoleDemo',
         component: () => import('@/pages/RoleDemoPage.vue'),

@@ -81,6 +81,30 @@ export interface GitLabIssue {
   state: 'opened' | 'closed'
 }
 
+// 任務註記介面
+export interface TaskNote {
+  id: string
+  taskId: string
+  content: string
+  authorId: string
+  authorName: string
+  authorRole: 'EMPLOYEE' | 'PM' | 'PRODUCER' | 'MANAGER'
+  createdAt: string
+}
+
+// 里程碑介面（前端擴展）
+export interface MilestoneData {
+  id: string
+  projectId: string
+  name: string
+  description?: string
+  date: string
+  color?: string
+  createdById: string
+  createdByName: string
+  createdAt: string
+}
+
 // 擴展的任務介面（包含任務池欄位）
 export interface PoolTask extends Task {
   sourceType: 'ASSIGNED' | 'POOL' | 'SELF_CREATED'
@@ -325,6 +349,106 @@ export const mockProgressLogs: ProgressLog[] = [
     user: { id: 'emp-2', name: '林小美', email: 'lin@company.com', role: 'MEMBER', functionType: 'ART', createdAt: '2025-01-01', updatedAt: '2026-02-01' },
   },
 ]
+
+// Mock 任務註記資料
+export const mockTaskNotes: TaskNote[] = [
+  {
+    id: 'note-1',
+    taskId: 'task-3',
+    content: '請注意這個功能需要和後端 API 同步，建議先確認 API 規格',
+    authorId: 'emp-5',
+    authorName: '李小龍',
+    authorRole: 'MANAGER',
+    createdAt: '2026-02-03T10:00:00Z',
+  },
+  {
+    id: 'note-2',
+    taskId: 'task-3',
+    content: '已與後端確認 API 規格，可以開始實作',
+    authorId: 'emp-6',
+    authorName: '黃美玲',
+    authorRole: 'PM',
+    createdAt: '2026-02-03T14:30:00Z',
+  },
+  {
+    id: 'note-3',
+    taskId: 'task-4',
+    content: '音效風格請參考魔法王國世界觀設定文件',
+    authorId: 'emp-7',
+    authorName: '吳建國',
+    authorRole: 'PRODUCER',
+    createdAt: '2026-02-01T09:00:00Z',
+  },
+]
+
+// Mock 里程碑資料
+export const mockMilestones: MilestoneData[] = [
+  {
+    id: 'ms-1',
+    projectId: 'proj-1',
+    name: 'Alpha 測試',
+    description: '內部功能測試版本',
+    date: '2026-02-15',
+    color: '#F59E0B',
+    createdById: 'emp-7',
+    createdByName: '吳建國',
+    createdAt: '2026-01-15T10:00:00Z',
+  },
+  {
+    id: 'ms-2',
+    projectId: 'proj-1',
+    name: 'Beta 測試',
+    description: '外部測試版本',
+    date: '2026-03-01',
+    color: '#3B82F6',
+    createdById: 'emp-7',
+    createdByName: '吳建國',
+    createdAt: '2026-01-15T10:00:00Z',
+  },
+  {
+    id: 'ms-3',
+    projectId: 'proj-1',
+    name: '正式上線',
+    description: '遊戲正式發布',
+    date: '2026-03-15',
+    color: '#10B981',
+    createdById: 'emp-3',
+    createdByName: '張大華',
+    createdAt: '2026-01-20T14:00:00Z',
+  },
+  {
+    id: 'ms-4',
+    projectId: 'proj-2',
+    name: '戰鬥系統完成',
+    description: '核心戰鬥機制開發完成',
+    date: '2026-02-20',
+    color: '#EF4444',
+    createdById: 'emp-5',
+    createdByName: '李小龍',
+    createdAt: '2026-01-25T09:00:00Z',
+  },
+]
+
+// 根據任務 ID 取得註記
+export function getNotesByTaskId(taskId: string): TaskNote[] {
+  return mockTaskNotes
+    .filter((note: TaskNote) => note.taskId === taskId)
+    .sort((a: TaskNote, b: TaskNote) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+}
+
+// 根據專案 ID 取得里程碑
+export function getMilestonesByProjectId(projectId: string): MilestoneData[] {
+  return mockMilestones
+    .filter((ms: MilestoneData) => ms.projectId === projectId)
+    .sort((a: MilestoneData, b: MilestoneData) => new Date(a.date).getTime() - new Date(b.date).getTime())
+}
+
+// 取得所有里程碑
+export function getAllMilestones(): MilestoneData[] {
+  return [...mockMilestones].sort((a: MilestoneData, b: MilestoneData) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+}
 
 // 根據任務 ID 取得進度歷程
 export function getProgressLogsByTaskId(taskId: string): ProgressLog[] {

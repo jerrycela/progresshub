@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import {
   getTaskById,
   getProgressLogsByTaskId,
+  getNotesByTaskId,
   mockEmployees,
+  mockTaskNotes,
   type PoolTask,
   type GitLabIssue,
+  type TaskNote,
 } from '@/mocks/taskPool'
-import type { ProgressLog } from 'shared/types'
+import type { ProgressLog, UserRole } from 'shared/types'
 
 // ============================================
 // 任務詳情頁 - 含進度歷程 Timeline
@@ -19,10 +22,25 @@ const router = useRouter()
 
 const task = ref<PoolTask | null>(null)
 const progressLogs = ref<ProgressLog[]>([])
+const taskNotes = ref<TaskNote[]>([])
 const showAssignModal = ref(false)
 const showProgressModal = ref(false)
 const showLinkGitLabModal = ref(false)
+const showNoteModal = ref(false)
 const gitlabIssueUrl = ref('')
+const newNoteContent = ref('')
+
+// 模擬當前登入者（用於權限判斷）
+const currentUser = {
+  id: 'emp-7',
+  name: '吳建國',
+  userRole: 'PRODUCER' as UserRole,
+}
+
+// 檢查是否有新增註記權限（PM、製作人、部門主管）
+const canAddNote = computed(() => {
+  return ['PM', 'PRODUCER', 'MANAGER'].includes(currentUser.userRole)
+})
 
 // 新進度回報表單
 const newProgress = ref({
@@ -34,6 +52,7 @@ onMounted(() => {
   const taskId = route.params.id as string
   task.value = getTaskById(taskId) || null
   progressLogs.value = getProgressLogsByTaskId(taskId)
+  taskNotes.value = getNotesByTaskId(taskId)
   if (task.value) {
     newProgress.value.percentage = task.value.progress
   }
@@ -190,6 +209,61 @@ const linkGitLabIssue = (): void => {
 
   alert(`已關聯 GitLab Issue\n（此為原型展示，實際功能待後端實作）`)
 }
+
+// 新增註記
+const submitNote = (): void => {
+  if (!newNoteContent.value.trim()) {
+    alert('請輸入註記內容')
+    return
+  }
+
+  // 模擬新增註記
+  const newNote: TaskNote = {
+    id: `note-${Date.now()}`,
+    taskId: task.value?.id || '',
+    content: newNoteContent.value.trim(),
+    authorId: currentUser.id,
+    authorName: currentUser.name,
+    authorRole: currentUser.userRole,
+    createdAt: new Date().toISOString(),
+  }
+
+  // 加入到列表開頭
+  taskNotes.value = [newNote, ...taskNotes.value]
+  mockTaskNotes.push(newNote)
+
+  showNoteModal.value = false
+  newNoteContent.value = ''
+
+  alert(`已新增註記\n（此為原型展示，實際功能待後端實作）`)
+}
+
+// 取得角色標籤樣式
+const getRoleBadgeClass = (role: string): string => {
+  switch (role) {
+    case 'PM':
+      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+    case 'PRODUCER':
+      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
+    case 'MANAGER':
+      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+    default:
+      return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+  }
+}
+
+const getRoleLabel = (role: string): string => {
+  switch (role) {
+    case 'PM':
+      return 'PM'
+    case 'PRODUCER':
+      return '製作人'
+    case 'MANAGER':
+      return '部門主管'
+    default:
+      return '同仁'
+  }
+}
 </script>
 
 <template>
@@ -313,6 +387,58 @@ const linkGitLabIssue = (): void => {
             >
               刪除
             </button>
+          </div>
+        </div>
+
+        <!-- 註記區塊 -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">
+              註記
+            </h2>
+            <button
+              v-if="canAddNote"
+              class="btn-secondary text-sm flex items-center gap-1"
+              @click="showNoteModal = true"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              新增註記
+            </button>
+          </div>
+
+          <div v-if="taskNotes.length === 0" class="text-center py-6">
+            <svg class="w-10 h-10 mx-auto" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+            <p class="mt-2 text-sm" style="color: var(--text-secondary);">尚無註記</p>
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
+              v-for="note in taskNotes"
+              :key="note.id"
+              class="rounded-lg p-4"
+              style="background-color: var(--bg-secondary);"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-sm" style="color: var(--text-primary);">
+                    {{ note.authorName }}
+                  </span>
+                  <span :class="['px-2 py-0.5 text-xs font-medium rounded-full', getRoleBadgeClass(note.authorRole)]">
+                    {{ getRoleLabel(note.authorRole) }}
+                  </span>
+                </div>
+                <span class="text-xs" style="color: var(--text-muted);">
+                  {{ formatDateTime(note.createdAt) }}
+                </span>
+              </div>
+              <p class="text-sm" style="color: var(--text-secondary);">
+                {{ note.content }}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -639,6 +765,45 @@ const linkGitLabIssue = (): void => {
         <div class="flex justify-end gap-3 mt-6">
           <button class="btn-secondary" @click="showLinkGitLabModal = false">取消</button>
           <button class="btn-primary" @click="linkGitLabIssue">確認關聯</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新增註記 Modal -->
+    <div v-if="showNoteModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showNoteModal = false"></div>
+      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4" style="background-color: var(--bg-primary);">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">新增註記</h3>
+
+        <div class="space-y-4">
+          <div class="flex items-center gap-2 p-3 rounded-lg" style="background-color: var(--bg-secondary);">
+            <svg class="w-5 h-5" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span class="text-sm" style="color: var(--text-secondary);">
+              以 <strong style="color: var(--text-primary);">{{ currentUser.name }}</strong> 身份發表
+            </span>
+            <span :class="['px-2 py-0.5 text-xs font-medium rounded-full ml-auto', getRoleBadgeClass(currentUser.userRole)]">
+              {{ getRoleLabel(currentUser.userRole) }}
+            </span>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+              註記內容
+            </label>
+            <textarea
+              v-model="newNoteContent"
+              rows="4"
+              class="input-field w-full resize-none"
+              placeholder="輸入註記內容..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button class="btn-secondary" @click="showNoteModal = false">取消</button>
+          <button class="btn-primary" @click="submitNote">發表註記</button>
         </div>
       </div>
     </div>

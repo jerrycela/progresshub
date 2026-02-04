@@ -10,8 +10,13 @@ import { GANTT } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import { mockEmployees } from '@/mocks/taskPool'
-import type { FunctionType, Task } from 'shared/types'
+import {
+  mockEmployees,
+  mockMilestones,
+  getAllMilestones,
+  type MilestoneData,
+} from '@/mocks/taskPool'
+import type { FunctionType, Task, UserRole } from 'shared/types'
 
 // ============================================
 // 甘特圖頁面 - 專案時程視覺化 (Placeholder，待整合 Frappe Gantt)
@@ -30,6 +35,47 @@ const { formatShort } = useFormatDate()
 const selectedProject = ref<string>('ALL')
 const selectedFunction = ref<FunctionType | 'ALL'>('ALL')
 const selectedEmployee = ref<string>('')  // 員工視角：空值表示「全部員工」
+
+// 里程碑相關
+const showMilestoneModal = ref(false)
+const milestones = ref<MilestoneData[]>(getAllMilestones())
+const newMilestone = ref({
+  name: '',
+  description: '',
+  date: '',
+  projectId: '',
+  color: '#F59E0B',
+})
+
+// 模擬當前登入者（用於權限判斷）
+const currentUser = {
+  id: 'emp-7',
+  name: '吳建國',
+  userRole: 'PRODUCER' as UserRole,
+}
+
+// 檢查是否有管理里程碑權限（製作人、部門主管）
+const canManageMilestones = computed(() => {
+  return ['PRODUCER', 'MANAGER'].includes(currentUser.userRole)
+})
+
+// 篩選後的里程碑（根據選擇的專案）
+const filteredMilestones = computed(() => {
+  if (selectedProject.value === 'ALL') {
+    return milestones.value
+  }
+  return milestones.value.filter((ms: MilestoneData) => ms.projectId === selectedProject.value)
+})
+
+// 顏色選項
+const colorOptions = [
+  { value: '#F59E0B', label: '橙色' },
+  { value: '#3B82F6', label: '藍色' },
+  { value: '#10B981', label: '綠色' },
+  { value: '#EF4444', label: '紅色' },
+  { value: '#8B5CF6', label: '紫色' },
+  { value: '#EC4899', label: '粉色' },
+]
 
 // 員工選項（使用 taskPool 的 mockEmployees）
 const employeeOptions = computed(() => [
@@ -107,6 +153,66 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
 const navigateToTask = (taskId: string) => {
   router.push(`/task-pool/${taskId}`)
 }
+
+// 計算里程碑在甘特圖中的位置（百分比）
+const getMilestonePosition = (milestone: MilestoneData) => {
+  const range = dateRange.value.end.getTime() - dateRange.value.start.getTime()
+  if (range === 0) return 50
+
+  const msDate = new Date(milestone.date).getTime()
+  const position = ((msDate - dateRange.value.start.getTime()) / range) * 100
+
+  return Math.max(0, Math.min(100, position))
+}
+
+// 新增里程碑
+const submitMilestone = (): void => {
+  if (!newMilestone.value.name.trim()) {
+    alert('請輸入里程碑名稱')
+    return
+  }
+  if (!newMilestone.value.date) {
+    alert('請選擇里程碑日期')
+    return
+  }
+  if (!newMilestone.value.projectId) {
+    alert('請選擇專案')
+    return
+  }
+
+  const milestone: MilestoneData = {
+    id: `ms-${Date.now()}`,
+    projectId: newMilestone.value.projectId,
+    name: newMilestone.value.name.trim(),
+    description: newMilestone.value.description.trim() || undefined,
+    date: newMilestone.value.date,
+    color: newMilestone.value.color,
+    createdById: currentUser.id,
+    createdByName: currentUser.name,
+    createdAt: new Date().toISOString(),
+  }
+
+  milestones.value = [...milestones.value, milestone].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  )
+  mockMilestones.push(milestone)
+
+  showMilestoneModal.value = false
+  newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
+
+  alert(`已新增里程碑: ${milestone.name}\n（此為原型展示，實際功能待後端實作）`)
+}
+
+// 刪除里程碑
+const deleteMilestone = (msId: string): void => {
+  if (!confirm('確定要刪除此里程碑嗎？')) return
+
+  milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
+  const index = mockMilestones.findIndex((ms: MilestoneData) => ms.id === msId)
+  if (index !== -1) mockMilestones.splice(index, 1)
+
+  alert('已刪除里程碑\n（此為原型展示，實際功能待後端實作）')
+}
 </script>
 
 <template>
@@ -151,8 +257,53 @@ const navigateToTask = (taskId: string) => {
     </Card>
 
     <!-- 甘特圖區域 -->
-    <Card title="任務時程" :subtitle="`${formatDate(dateRange.start)} - ${formatDate(dateRange.end)}`">
+    <Card>
+      <!-- 標題列：含里程碑管理按鈕 -->
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <div>
+            <h3 class="text-lg font-semibold" style="color: var(--text-primary);">任務時程</h3>
+            <p class="text-sm" style="color: var(--text-secondary);">{{ formatDate(dateRange.start) }} - {{ formatDate(dateRange.end) }}</p>
+          </div>
+          <button
+            v-if="canManageMilestones"
+            class="btn-secondary text-sm flex items-center gap-1"
+            @click="showMilestoneModal = true"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            管理里程碑
+          </button>
+        </div>
+      </template>
+
       <div v-if="filteredTasks.length > 0" class="space-y-3">
+        <!-- 里程碑標記區（日期軸上方） -->
+        <div v-if="filteredMilestones.length > 0" class="relative h-10 mb-2 px-4 md:px-12 lg:px-32 xl:px-48">
+          <div class="absolute inset-x-4 md:inset-x-12 lg:inset-x-32 xl:inset-x-48 h-full">
+            <div
+              v-for="milestone in filteredMilestones"
+              :key="milestone.id"
+              class="absolute top-0 transform -translate-x-1/2 group cursor-pointer"
+              :style="{ left: `${getMilestonePosition(milestone)}%` }"
+            >
+              <!-- 菱形標記 -->
+              <div
+                class="w-4 h-4 rotate-45 shadow-md"
+                :style="{ backgroundColor: milestone.color || '#F59E0B' }"
+              ></div>
+              <!-- Tooltip -->
+              <div class="absolute top-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none">
+                <div class="px-3 py-2 rounded-lg shadow-lg text-xs whitespace-nowrap" style="background-color: var(--bg-primary); border: 1px solid var(--border-primary);">
+                  <p class="font-semibold" style="color: var(--text-primary);">{{ milestone.name }}</p>
+                  <p style="color: var(--text-muted);">{{ milestone.date }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- 時間軸標記 (RWD: 迭代 10) -->
         <div class="flex justify-between text-xs mb-4 px-4 md:px-12 lg:px-32 xl:px-48" style="color: var(--text-muted);">
           <span>{{ formatDate(dateRange.start) }}</span>
@@ -250,6 +401,125 @@ const navigateToTask = (taskId: string) => {
       <p class="mt-1" style="color: var(--text-secondary);">
         此為簡化版甘特圖預覽。正式版本將整合 Frappe Gantt 套件，支援拖拽調整、縮放、互動編輯等功能。
       </p>
+    </div>
+
+    <!-- 里程碑管理 Modal -->
+    <div v-if="showMilestoneModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showMilestoneModal = false"></div>
+      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-lg mx-4 max-h-[80vh] overflow-y-auto" style="background-color: var(--bg-primary);">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">管理里程碑</h3>
+
+        <!-- 現有里程碑列表 -->
+        <div v-if="milestones.length > 0" class="mb-6">
+          <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">現有里程碑</h4>
+          <div class="space-y-2 max-h-48 overflow-y-auto">
+            <div
+              v-for="ms in milestones"
+              :key="ms.id"
+              class="flex items-center justify-between p-3 rounded-lg"
+              style="background-color: var(--bg-secondary);"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-3 h-3 rotate-45"
+                  :style="{ backgroundColor: ms.color || '#F59E0B' }"
+                ></div>
+                <div>
+                  <p class="font-medium text-sm" style="color: var(--text-primary);">{{ ms.name }}</p>
+                  <p class="text-xs" style="color: var(--text-muted);">{{ ms.date }}</p>
+                </div>
+              </div>
+              <button
+                class="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors cursor-pointer"
+                style="color: var(--text-muted);"
+                @click="deleteMilestone(ms.id)"
+              >
+                <svg class="w-4 h-4 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 新增里程碑表單 -->
+        <div class="border-t pt-4" style="border-color: var(--border-primary);">
+          <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">新增里程碑</h4>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+                名稱 <span style="color: var(--accent-primary);">*</span>
+              </label>
+              <input
+                v-model="newMilestone.name"
+                type="text"
+                class="input-field w-full"
+                placeholder="例如：Alpha 測試"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+                說明
+              </label>
+              <input
+                v-model="newMilestone.description"
+                type="text"
+                class="input-field w-full"
+                placeholder="選填"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+                  日期 <span style="color: var(--accent-primary);">*</span>
+                </label>
+                <input
+                  v-model="newMilestone.date"
+                  type="date"
+                  class="input-field w-full cursor-pointer"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+                  專案 <span style="color: var(--accent-primary);">*</span>
+                </label>
+                <select v-model="newMilestone.projectId" class="input-field w-full cursor-pointer">
+                  <option value="">請選擇</option>
+                  <option v-for="proj in projectOptions.filter(p => p.value !== 'ALL')" :key="proj.value" :value="proj.value">
+                    {{ proj.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+                顏色
+              </label>
+              <div class="flex gap-2">
+                <button
+                  v-for="color in colorOptions"
+                  :key="color.value"
+                  :class="[
+                    'w-8 h-8 rounded-lg cursor-pointer transition-all',
+                    newMilestone.color === color.value ? 'ring-2 ring-offset-2 ring-[var(--accent-primary)]' : ''
+                  ]"
+                  :style="{ backgroundColor: color.value }"
+                  @click="newMilestone.color = color.value"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button class="btn-secondary" @click="showMilestoneModal = false">關閉</button>
+          <button class="btn-primary" @click="submitMilestone">新增里程碑</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
