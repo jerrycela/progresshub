@@ -1,11 +1,11 @@
 <script setup lang="ts">
 // ============================================
-// 按鈕元件 - SG-Arts 精品金屬質感設計
+// 按鈕元件 - ProgressHub 設計系統
 // 支援多種樣式變體 + Dark mode
 // ============================================
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
   loading?: boolean
@@ -43,18 +43,20 @@ const handleClick = (event: MouseEvent): void => {
         'px-3.5 py-2 text-sm': size === 'md',
         'px-5 py-2.5 text-base': size === 'lg',
       },
-      // Variant classes - SG-Arts 配色
+      // Variant classes - ProgressHub 配色
       {
-        // Primary: 侍魂赤紅 - CTA 按鈕
-        'bg-samurai hover:bg-samurai-dark text-white border-transparent focus:ring-samurai/50 dark:bg-samurai-light dark:hover:bg-samurai dark:focus:ring-samurai-light/50': variant === 'primary',
+        // Primary: 品牌靛藍 - CTA 按鈕
+        'bg-indigo hover:bg-indigo-dark text-white border-transparent focus:ring-indigo/50 dark:bg-indigo-light dark:hover:bg-indigo dark:focus:ring-indigo-light/50': variant === 'primary',
         // Secondary: 金屬灰 - 次要按鈕
         'bg-metal-light hover:bg-metal-silver text-ink-carbon border-metal-silver dark:bg-metal-obsidian/80 dark:hover:bg-metal-obsidian dark:text-metal-pearl dark:border-metal-obsidian focus:ring-metal-silver/50': variant === 'secondary',
-        // Success: 翡翠綠
+        // Success: 翡翠綠 - 完成
         'bg-success hover:bg-success-dark text-white border-transparent focus:ring-success/50': variant === 'success',
-        // Warning: 琥珀橙
+        // Warning: 琥珀橙 - 卡關/警告
         'bg-warning hover:bg-warning-dark text-white border-transparent focus:ring-warning/50': variant === 'warning',
         // Danger: 危險紅
         'bg-danger hover:bg-danger-dark text-white border-transparent focus:ring-danger/50': variant === 'danger',
+        // Info: 藍色 - 進行中/繼續
+        'bg-info hover:bg-info-dark text-white border-transparent focus:ring-info/50 dark:bg-info-light dark:hover:bg-info dark:focus:ring-info-light/50': variant === 'info',
         // Ghost: 透明背景
         'bg-transparent hover:bg-metal-light text-ink-cool border-transparent dark:hover:bg-metal-obsidian/50 dark:text-ink-muted focus:ring-metal-silver/50': variant === 'ghost',
       },

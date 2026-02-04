@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
-// SG-Arts 侍達遊戲集團：精品金屬質感設計系統
-// 核心主題：以黑、白、金屬灰為主體，赤紅為點綴
+// ProgressHub 設計系統
+// 核心主題：以黑、白、金屬灰為主體，靛藍為品牌色
 export default {
   content: [
     "./index.html",
@@ -14,11 +14,25 @@ export default {
         // SG-Arts 品牌色彩系統
         // ============================================
 
-        // 核心強調色 - 侍魂赤紅
+        // 核心強調色 - 品牌靛藍
+        indigo: {
+          DEFAULT: '#4F46E5',
+          light: '#818CF8',   // Dark mode 用
+          dark: '#4338CA',
+        },
+
+        // 主要色 - 藍色（用於進行中狀態）
+        blue: {
+          DEFAULT: '#2563EB',
+          light: '#60A5FA',
+          dark: '#1D4ED8',
+        },
+
+        // 保留舊名稱以相容（指向新色彩）
         samurai: {
-          DEFAULT: '#C41E3A',
-          light: '#E85A6B',   // Dark mode 用
-          dark: '#9A1830',
+          DEFAULT: '#4F46E5',
+          light: '#818CF8',
+          dark: '#4338CA',
         },
 
         // 基底背景色

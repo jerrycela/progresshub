@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // ============================================
-// 標籤徽章元件 - SG-Arts 精品金屬質感設計
+// 標籤徽章元件 - ProgressHub 設計系統
 // 用於顯示狀態、職能等標籤
 // ============================================
 
@@ -30,8 +30,8 @@ withDefaults(defineProps<Props>(), {
       {
         // Default: 金屬灰
         'bg-metal-light text-ink-cool dark:bg-metal-obsidian/50 dark:text-ink-muted': variant === 'default',
-        // Primary: 侍魂赤紅
-        'bg-samurai/10 text-samurai dark:bg-samurai-light/20 dark:text-samurai-light': variant === 'primary',
+        // Primary: 品牌靛藍
+        'bg-indigo/10 text-indigo dark:bg-indigo-light/20 dark:text-indigo-light': variant === 'primary',
         // Success: 翡翠綠
         'bg-success/10 text-success dark:bg-success-light/20 dark:text-success-light': variant === 'success',
         // Warning: 琥珀橙
@@ -49,7 +49,7 @@ withDefaults(defineProps<Props>(), {
         'w-1.5 h-1.5 rounded-full mr-1.5',
         {
           'bg-ink-muted dark:bg-ink-medium': variant === 'default',
-          'bg-samurai dark:bg-samurai-light': variant === 'primary',
+          'bg-indigo dark:bg-indigo-light': variant === 'primary',
           'bg-success dark:bg-success-light': variant === 'success',
           'bg-warning dark:bg-warning-light': variant === 'warning',
           'bg-danger dark:bg-danger-light': variant === 'danger',

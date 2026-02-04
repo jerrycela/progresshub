@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<Props>(), {
   color: 'auto',
 })
 
-// 根據進度自動決定顏色（使用 SG-Arts 配色）
+// 根據進度自動決定顏色
 const barColor = computed(() => {
   if (props.color !== 'auto') {
     const colorMap: Record<string, string> = {
@@ -29,9 +29,9 @@ const barColor = computed(() => {
 
   // 自動模式：根據進度決定顏色
   if (props.value >= 100) return 'bg-success'
-  if (props.value >= 70) return 'bg-samurai'   // 使用侍魂赤紅
-  if (props.value >= 30) return 'bg-warning'
-  return 'bg-danger'
+  if (props.value >= 70) return 'bg-indigo'   // 使用品牌靛藍
+  if (props.value >= 30) return 'bg-info'     // 使用藍色
+  return 'bg-warning'                         // 低進度用橙色警告
 })
 
 const sizeClasses: Record<string, { bar: string; text: string }> = {

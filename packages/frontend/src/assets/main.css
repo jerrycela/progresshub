@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ============================================
-   SG-Arts 侍達遊戲集團：精品金屬質感設計系統
-   核心主題：以黑、白、金屬灰為主體，赤紅為點綴
+   ProgressHub 設計系統
+   核心主題：以黑、白、金屬灰為主體，靛藍為品牌色
    ============================================ */
 
 /* Google Fonts - Inter */
@@ -30,10 +30,15 @@
   --border-primary: #E5E7EB;
   --border-secondary: #D1D5DB;
 
-  /* 強調色 - 侍魂赤紅 */
-  --accent: #C41E3A;
-  --accent-hover: #9A1830;
-  --accent-light: rgba(196, 30, 58, 0.1);
+  /* 強調色 - 品牌靛藍 */
+  --accent: #4F46E5;
+  --accent-hover: #4338CA;
+  --accent-light: rgba(79, 70, 229, 0.1);
+
+  /* 主要色 - 藍色 */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
+  --primary-light: rgba(37, 99, 235, 0.1);
 
   /* 側邊欄 */
   --sidebar-bg: #F9FAFB;
@@ -63,9 +68,13 @@
   --border-primary: #404040;
   --border-secondary: #525252;
 
-  --accent: #E85A6B;
-  --accent-hover: #F08090;
-  --accent-light: rgba(232, 90, 107, 0.15);
+  --accent: #818CF8;
+  --accent-hover: #A5B4FC;
+  --accent-light: rgba(129, 140, 248, 0.15);
+
+  --primary: #60A5FA;
+  --primary-hover: #93C5FD;
+  --primary-light: rgba(96, 165, 250, 0.15);
 
   --sidebar-bg: #262626;
   --sidebar-hover: #303030;
@@ -135,7 +144,7 @@ body {
   }
 
   .btn-primary:focus {
-    @apply ring-red-500;
+    @apply ring-indigo-500;
   }
 
   .btn-secondary {

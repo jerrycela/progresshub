@@ -202,33 +202,33 @@ const today = new Date().toLocaleDateString('zh-TW', {
           <!-- 快速回報按鈕 -->
           <div class="flex flex-wrap gap-2 pt-3 border-t" style="border-color: var(--border-primary);">
             <Button
-              variant="primary"
+              variant="info"
               size="sm"
               :loading="isReporting"
               @click="openReportModal(task, 'CONTINUE')"
             >
-              🔄 繼續
+              繼續
             </Button>
             <Button
-              variant="secondary"
+              variant="primary"
               size="sm"
               @click="openReportModal(task, 'PROGRESS')"
             >
-              📝 更新進度
+              更新進度
             </Button>
             <Button
               variant="warning"
               size="sm"
               @click="openReportModal(task, 'BLOCKED')"
             >
-              ⚠️ 卡關
+              卡關
             </Button>
             <Button
               variant="success"
               size="sm"
               @click="openReportModal(task, 'COMPLETE')"
             >
-              ✅ 完成
+              完成
             </Button>
           </div>
         </div>
