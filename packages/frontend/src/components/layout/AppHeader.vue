@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
 import { roleLabels, functionTypeLabels } from '@/mocks/data'
@@ -14,12 +15,18 @@ const emit = defineEmits<{
   'toggle-sidebar': []
 }>()
 
+const router = useRouter()
 const authStore = useAuthStore()
 const { isDark, toggleTheme } = useTheme()
 
 const user = computed(() => authStore.user)
 const roleLabel = computed(() => user.value ? roleLabels[user.value.role] : '')
 const functionLabel = computed(() => user.value ? functionTypeLabels[user.value.functionType] : '')
+
+// 導向個人設定頁
+const goToSettings = (): void => {
+  router.push('/settings/profile')
+}
 </script>
 
 <template>
@@ -113,11 +120,13 @@ const functionLabel = computed(() => user.value ? functionTypeLabels[user.value.
         />
       </button>
 
-      <!-- 使用者資訊 -->
-      <div
+      <!-- 使用者資訊（可點擊導向設定頁） -->
+      <button
         v-if="user"
-        class="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 ml-1"
+        class="flex items-center gap-2 md:gap-3 pl-2 md:pl-3 ml-1 rounded-lg transition-colors duration-150 cursor-pointer hover:bg-[var(--bg-secondary)] -mr-2 pr-2 py-1"
         style="border-left: 1px solid var(--border-primary);"
+        title="前往個人設定"
+        @click="goToSettings"
       >
         <img
           :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
@@ -125,7 +134,7 @@ const functionLabel = computed(() => user.value ? functionTypeLabels[user.value.
           class="w-8 h-8 rounded-full"
           style="background-color: var(--bg-tertiary);"
         >
-        <div class="hidden sm:block">
+        <div class="hidden sm:block text-left">
           <div class="flex items-center gap-2">
             <span class="text-sm font-medium" style="color: var(--text-primary);">
               {{ user.name }}
@@ -136,7 +145,7 @@ const functionLabel = computed(() => user.value ? functionTypeLabels[user.value.
             {{ functionLabel }}
           </span>
         </div>
-      </div>
+      </button>
     </div>
   </header>
 </template>

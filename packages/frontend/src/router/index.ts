@@ -86,6 +86,27 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/admin/UserManagementPage.vue'),
         meta: { requiresRole: ['ADMIN'] },
       },
+      // 設定頁面
+      {
+        path: 'settings',
+        component: () => import('@/pages/settings/SettingsLayout.vue'),
+        children: [
+          {
+            path: '',
+            redirect: '/settings/profile',
+          },
+          {
+            path: 'profile',
+            name: 'ProfileSettings',
+            component: () => import('@/pages/settings/ProfileSettingsPage.vue'),
+          },
+          {
+            path: 'integrations',
+            name: 'IntegrationsSettings',
+            component: () => import('@/pages/settings/IntegrationsPage.vue'),
+          },
+        ],
+      },
     ],
   },
   {

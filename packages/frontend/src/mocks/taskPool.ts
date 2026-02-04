@@ -72,6 +72,14 @@ export const mockEmployees: MockEmployee[] = [
   { id: 'emp-8', name: '劉小芳', email: 'liu@company.com', department: 'QA', userRole: 'EMPLOYEE' },
 ]
 
+// GitLab Issue 資訊介面
+export interface GitLabIssue {
+  id: number
+  title: string
+  url: string
+  state: 'opened' | 'closed'
+}
+
 // 擴展的任務介面（包含任務池欄位）
 export interface PoolTask extends Task {
   sourceType: 'ASSIGNED' | 'POOL' | 'SELF_CREATED'
@@ -80,6 +88,7 @@ export interface PoolTask extends Task {
   canEdit: boolean
   canDelete: boolean
   collaboratorNames?: string[]
+  gitlabIssue?: GitLabIssue
 }
 
 // Mock 任務池資料
@@ -143,6 +152,12 @@ export const mockPoolTasks: PoolTask[] = [
     canEdit: true,
     canDelete: true,
     collaboratorNames: ['李小龍'],
+    gitlabIssue: {
+      id: 123,
+      title: '實作戰鬥系統核心邏輯',
+      url: 'https://gitlab.com/star-battleship/game/issues/123',
+      state: 'opened',
+    },
   },
   {
     id: 'task-4',
@@ -164,6 +179,12 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'ART',
     canEdit: false,
     canDelete: false,
+    gitlabIssue: {
+      id: 456,
+      title: '戰鬥場景音效與背景音樂',
+      url: 'https://gitlab.com/magic-kingdom/game/issues/456',
+      state: 'opened',
+    },
   },
   {
     id: 'task-5',

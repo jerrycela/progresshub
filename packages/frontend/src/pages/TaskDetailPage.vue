@@ -6,6 +6,7 @@ import {
   getProgressLogsByTaskId,
   mockEmployees,
   type PoolTask,
+  type GitLabIssue,
 } from '@/mocks/taskPool'
 import type { ProgressLog } from 'shared/types'
 
@@ -20,6 +21,8 @@ const task = ref<PoolTask | null>(null)
 const progressLogs = ref<ProgressLog[]>([])
 const showAssignModal = ref(false)
 const showProgressModal = ref(false)
+const showLinkGitLabModal = ref(false)
+const gitlabIssueUrl = ref('')
 
 // 新進度回報表單
 const newProgress = ref({
@@ -153,6 +156,39 @@ const deleteTask = (): void => {
     alert('已刪除任務\n（此為原型展示，實際功能待後端實作）')
     router.push('/task-pool')
   }
+}
+
+// GitLab Issue 相關
+const openGitLabIssue = (url: string): void => {
+  window.open(url, '_blank')
+}
+
+const editGitLabIssue = (): void => {
+  alert('編輯 GitLab Issue 關聯\n（此為原型展示，實際功能待後端實作）')
+}
+
+const linkGitLabIssue = (): void => {
+  if (!gitlabIssueUrl.value.trim()) {
+    alert('請輸入 GitLab Issue URL')
+    return
+  }
+
+  // 模擬關聯 Issue（僅原型展示）
+  const mockIssue: GitLabIssue = {
+    id: Math.floor(Math.random() * 1000),
+    title: '新關聯的 GitLab Issue',
+    url: gitlabIssueUrl.value.trim(),
+    state: 'opened',
+  }
+
+  if (task.value) {
+    task.value = { ...task.value, gitlabIssue: mockIssue }
+  }
+
+  showLinkGitLabModal.value = false
+  gitlabIssueUrl.value = ''
+
+  alert(`已關聯 GitLab Issue\n（此為原型展示，實際功能待後端實作）`)
 }
 </script>
 
@@ -397,6 +433,80 @@ const deleteTask = (): void => {
           </dl>
         </div>
 
+        <!-- GitLab Issue 資訊 -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <!-- GitLab 圖示 -->
+              <svg class="w-5 h-5" style="color: #FC6D26;" viewBox="0 0 24 24" fill="currentColor">
+                <path d="m23.6 9.593-.033-.086L20.3.98a.851.851 0 0 0-.336-.405.87.87 0 0 0-.507-.164.865.865 0 0 0-.508.152.861.861 0 0 0-.336.405l-2.2 6.748H7.587L5.387.968a.861.861 0 0 0-.336-.405.87.87 0 0 0-.507-.164.865.865 0 0 0-.508.152.861.861 0 0 0-.336.405L.433 9.507l-.033.086a6.066 6.066 0 0 0 2.012 7.01l.01.008.028.02 4.97 3.722 2.458 1.86 1.497 1.132a1.014 1.014 0 0 0 1.224 0l1.497-1.131 2.458-1.86 4.998-3.743.012-.01a6.068 6.068 0 0 0 2.008-7.008z"/>
+              </svg>
+              <h3 class="text-lg font-semibold" style="color: var(--text-primary);">GitLab Issue</h3>
+            </div>
+          </div>
+
+          <!-- 已關聯 Issue -->
+          <div v-if="task.gitlabIssue" class="rounded-lg p-4" style="background-color: var(--bg-secondary);">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-sm font-medium" style="color: var(--accent-primary);">
+                    #{{ task.gitlabIssue.id }}
+                  </span>
+                  <span
+                    :class="[
+                      'px-2 py-0.5 text-xs font-medium rounded-full',
+                      task.gitlabIssue.state === 'opened'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+                        : 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
+                    ]"
+                  >
+                    {{ task.gitlabIssue.state === 'opened' ? '開啟' : '已關閉' }}
+                  </span>
+                </div>
+                <p class="text-sm font-medium truncate" style="color: var(--text-primary);">
+                  {{ task.gitlabIssue.title }}
+                </p>
+                <p class="text-xs mt-1 truncate" style="color: var(--text-muted);">
+                  {{ task.gitlabIssue.url }}
+                </p>
+              </div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="flex gap-2 mt-4">
+              <button
+                class="btn-ghost text-sm"
+                @click="editGitLabIssue"
+              >
+                編輯
+              </button>
+              <button
+                class="btn-primary text-sm"
+                @click="openGitLabIssue(task.gitlabIssue.url)"
+              >
+                開啟 Issue
+              </button>
+            </div>
+          </div>
+
+          <!-- 尚未關聯 -->
+          <div v-else class="rounded-lg p-4 text-center" style="background-color: var(--bg-secondary);">
+            <svg class="w-10 h-10 mx-auto mb-2" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+            <p class="text-sm mb-3" style="color: var(--text-secondary);">
+              尚未關聯 GitLab Issue
+            </p>
+            <button
+              class="btn-secondary text-sm"
+              @click="showLinkGitLabModal = true"
+            >
+              關聯 Issue
+            </button>
+          </div>
+        </div>
+
         <!-- 最近一次回報摘要 -->
         <div v-if="progressLogs.length > 0" class="card p-6">
           <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">最近回報</h3>
@@ -499,6 +609,36 @@ const deleteTask = (): void => {
 
         <div class="flex justify-end mt-6">
           <button class="btn-secondary" @click="showAssignModal = false">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 關聯 GitLab Issue Modal -->
+    <div v-if="showLinkGitLabModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showLinkGitLabModal = false"></div>
+      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4" style="background-color: var(--bg-primary);">
+        <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">關聯 GitLab Issue</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">
+              GitLab Issue URL
+            </label>
+            <input
+              v-model="gitlabIssueUrl"
+              type="text"
+              class="input-field w-full"
+              placeholder="https://gitlab.com/project/issues/123"
+            />
+            <p class="mt-2 text-xs" style="color: var(--text-muted);">
+              請輸入 GitLab Issue 的完整 URL
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button class="btn-secondary" @click="showLinkGitLabModal = false">取消</button>
+          <button class="btn-primary" @click="linkGitLabIssue">確認關聯</button>
         </div>
       </div>
     </div>
