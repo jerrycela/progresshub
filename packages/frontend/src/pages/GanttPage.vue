@@ -385,16 +385,6 @@ const handleTaskKeydown = (event: KeyboardEvent, taskId: string, index: number):
   }
 }
 
-// 計算任務進度顏色漸變（基於進度百分比）
-const getProgressGradient = (progress: number, isOverdue: boolean): string => {
-  if (isOverdue) return ''  // 逾期使用純色
-  if (progress === 100) return ''  // 完成使用純色
-
-  // 根據進度顯示不同深淺的顏色
-  const opacity = 0.6 + (progress / 100) * 0.4
-  return `opacity: ${opacity}`
-}
-
 // 計算預期進度（基於開始日期和截止日期）
 const getExpectedProgress = (task: Task): number => {
   if (!task.startDate || !task.dueDate) return 0
@@ -510,6 +500,10 @@ const healthScore = computed(() => {
   if (score >= 40) return { score, label: '需關注', color: 'text-orange-500' }
   return { score, label: '警示', color: 'text-red-500' }
 })
+
+// Vue template 使用標記（解決 vue-tsc 無法偵測模板使用的問題）
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _templateRefs = { EmptyState, colorOptions, submitMilestone, deleteMilestone }
 </script>
 
 <template>
