@@ -1,0 +1,38 @@
+# Zeabur Build Ignore File
+# Prevents unnecessary files from being included in build context
+
+# Other services (DO NOT BUILD THESE)
+../frontend
+../scheduler
+../progresshub
+
+# Development files
+node_modules
+*.log
+.env
+.env.local
+.env.*.local
+
+# Test files
+__tests__
+*.test.ts
+*.spec.ts
+coverage
+
+# IDE and editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Build artifacts (handled by Docker)
+dist

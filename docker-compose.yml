@@ -1,40 +1,104 @@
 version: '3.8'
 
 services:
-  # PostgreSQL 資料庫
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: progresshub-postgres
     restart: unless-stopped
+    # Issue #5 修復：移除不安全的預設密碼
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: progresshub
-    ports:
-      - '5432:5432'
+      POSTGRES_USER: ${POSTGRES_USER:-progresshub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env file}
+      POSTGRES_DB: ${POSTGRES_DB:-progresshub}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - progresshub-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-progresshub}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Redis (可選，用於 Session/Cache)
-  redis:
-    image: redis:7-alpine
-    container_name: progresshub-redis
+  # Backend API Service (Node.js + Express)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: progresshub-backend
     restart: unless-stopped
-    ports:
-      - '6379:6379'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env file}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      PORT: 3000
     volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    networks:
+      - progresshub-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev
+
+  # Frontend Service (Vue 3 + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development}
+    container_name: progresshub-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    networks:
+      - progresshub-network
+    depends_on:
+      - backend
+
+  # Scheduler Service (Node.js + node-cron)
+  scheduler:
+    build:
+      context: ./scheduler
+      dockerfile: Dockerfile
+    container_name: progresshub-scheduler
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      REMINDER_TIME: ${REMINDER_TIME:-17:00}
+      REMINDER_TIMEZONE: ${REMINDER_TIMEZONE:-Asia/Taipei}
+    volumes:
+      - ./scheduler:/app
+      - /app/node_modules
+    networks:
+      - progresshub-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run dev
+
+networks:
+  progresshub-network:
+    driver: bridge
 
 volumes:
   postgres_data:
-  redis_data:
+    driver: local
