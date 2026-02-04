@@ -1,4 +1,4 @@
-import type { Task, ProgressLog, Project, Department, UserRole } from '@/types'
+import type { Task, ProgressLog, Project, Department, UserRole, ReleasePhase, TransferLog, TaskNote } from '@/types'
 
 // Mock 專案資料
 export const mockProjects: Project[] = [
@@ -79,6 +79,9 @@ export interface PoolTask extends Omit<Task, 'assignedToId'> {
   latestNote?: string
   latestNoteAt?: string
   pauseReason?: string
+  // Phase 2: 釋出節點與轉交
+  releasePhase?: ReleasePhase
+  releaseDate?: string
 }
 
 // Mock 任務池資料
@@ -102,6 +105,8 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'ART',
     canEdit: true,
     canDelete: true,
+    releasePhase: 'ALPHA',
+    releaseDate: '2026-03-15',
   },
   {
     id: 'task-2',
@@ -147,6 +152,8 @@ export const mockPoolTasks: PoolTask[] = [
     canDelete: true,
     latestNote: '核心戰鬥邏輯框架完成，開始實作細節',
     latestNoteAt: '2026-02-03T16:45:00Z',
+    releasePhase: 'BETA',
+    releaseDate: '2026-04-01',
   },
   {
     id: 'task-4',
@@ -195,6 +202,8 @@ export const mockPoolTasks: PoolTask[] = [
     canDelete: true,
     latestNote: '已完成 8 款賽車模型，剩餘 2 款進行中',
     latestNoteAt: '2026-02-03T17:30:00Z',
+    releasePhase: 'RC',
+    releaseDate: '2026-02-28',
   },
   {
     id: 'task-6',
@@ -265,6 +274,8 @@ export const mockPoolTasks: PoolTask[] = [
     canDelete: false,
     latestNote: '待機和行走動畫完成，攻擊動畫進行中',
     latestNoteAt: '2026-02-02T11:30:00Z',
+    releasePhase: 'ALPHA',
+    releaseDate: '2026-03-15',
   },
 ]
 
@@ -364,4 +375,84 @@ export function getProjectsForFilter(): { id: string; name: string }[] {
 // 取得可用於篩選的部門列表
 export function getDepartmentsForFilter(): { id: Department; name: string }[] {
   return mockDepartments.map((d) => ({ id: d.id, name: d.name }))
+}
+
+// ===================================
+// Phase 2: 轉交記錄與備註
+// ===================================
+
+// Mock 轉交記錄資料
+export const mockTransferLogs: TransferLog[] = [
+  {
+    id: 'transfer-1',
+    taskId: 'task-8',
+    fromEmployeeId: 'emp-1',
+    toEmployeeId: 'emp-2',
+    reason: '原負責人工作量已滿',
+    notes: '王小明已完成待機動畫的基礎框架，林小美接手繼續製作',
+    transferredAt: '2026-01-20T14:00:00Z',
+    fromEmployee: { id: 'emp-1', name: '王小明' },
+    toEmployee: { id: 'emp-2', name: '林小美' },
+  },
+  {
+    id: 'transfer-2',
+    taskId: 'task-4',
+    fromEmployeeId: 'emp-2',
+    toEmployeeId: 'emp-1',
+    reason: 'C 端完成轉 S 端',
+    notes: '美術素材已完成，轉交給音效部門進行音效製作',
+    transferredAt: '2026-02-01T09:00:00Z',
+    fromEmployee: { id: 'emp-2', name: '林小美' },
+    toEmployee: { id: 'emp-1', name: '王小明' },
+  },
+]
+
+// Mock 任務備註資料
+export const mockTaskNotes: TaskNote[] = [
+  {
+    id: 'note-1',
+    taskId: 'task-3',
+    employeeId: 'emp-5',
+    content: '請注意戰鬥系統需要支援多人同時對戰',
+    createdAt: '2026-02-01T10:00:00Z',
+    employee: { id: 'emp-5', name: '李小龍' },
+  },
+  {
+    id: 'note-2',
+    taskId: 'task-3',
+    employeeId: 'emp-4',
+    content: '已確認，目前架構支援最多 8 人同時對戰',
+    createdAt: '2026-02-02T15:30:00Z',
+    employee: { id: 'emp-4', name: '陳志明' },
+  },
+  {
+    id: 'note-3',
+    taskId: 'task-8',
+    employeeId: 'emp-3',
+    content: '攻擊動畫需要配合技能系統，請先確認技能數量',
+    createdAt: '2026-01-25T11:00:00Z',
+    employee: { id: 'emp-3', name: '張大華' },
+  },
+  {
+    id: 'note-4',
+    taskId: 'task-5',
+    employeeId: 'emp-7',
+    content: '賽車模型需要考慮 LOD 層級，手機端要能流暢運行',
+    createdAt: '2026-01-18T09:00:00Z',
+    employee: { id: 'emp-7', name: '吳建國' },
+  },
+]
+
+// 根據任務 ID 取得轉交記錄
+export function getTransferLogsByTaskId(taskId: string): TransferLog[] {
+  return mockTransferLogs
+    .filter((log) => log.taskId === taskId)
+    .sort((a, b) => new Date(b.transferredAt).getTime() - new Date(a.transferredAt).getTime())
+}
+
+// 根據任務 ID 取得備註
+export function getTaskNotesByTaskId(taskId: string): TaskNote[] {
+  return mockTaskNotes
+    .filter((note) => note.taskId === taskId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }

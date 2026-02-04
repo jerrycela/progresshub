@@ -7,7 +7,8 @@ import {
   mockDepartments,
   type PoolTask,
 } from '@/stores/mockData'
-import type { Department } from '@/types'
+import type { Department, ReleasePhase } from '@/types'
+import { ReleasePhaseLables, ReleasePhaseColors } from '@/types'
 
 const router = useRouter()
 
@@ -288,6 +289,14 @@ const clearFilters = () => {
               </span>
               <span :class="['px-2 py-0.5 text-xs font-medium rounded-full', getStatusClass(task.status)]">
                 {{ getStatusLabel(task.status) }}
+              </span>
+              <!-- Phase 2.2: 釋出節點標籤 -->
+              <span
+                v-if="task.releasePhase"
+                :class="['px-2 py-0.5 text-xs font-medium rounded-full', ReleasePhaseColors[task.releasePhase]]"
+              >
+                {{ ReleasePhaseLables[task.releasePhase] }}
+                <span v-if="task.releaseDate" class="opacity-75">{{ task.releaseDate.slice(5) }}</span>
               </span>
               <span class="text-xs text-gray-500 dark:text-gray-400">
                 {{ task.project?.name }}

@@ -197,3 +197,47 @@ export interface GitLabUser {
   avatar_url?: string
   web_url: string
 }
+
+// ===================================
+// Phase 2: 任務轉交與釋出節點
+// ===================================
+
+// 釋出節點類型
+export type ReleasePhase = 'ALPHA' | 'BETA' | 'RC' | 'RELEASE'
+
+export const ReleasePhaseLables: Record<ReleasePhase, string> = {
+  ALPHA: 'Alpha',
+  BETA: 'Beta',
+  RC: 'RC',
+  RELEASE: 'Release',
+}
+
+export const ReleasePhaseColors: Record<ReleasePhase, string> = {
+  ALPHA: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
+  BETA: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+  RC: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+  RELEASE: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+}
+
+// 任務轉交記錄
+export interface TransferLog {
+  id: string
+  taskId: string
+  fromEmployeeId: string
+  toEmployeeId: string
+  reason?: string
+  notes?: string
+  transferredAt: string
+  fromEmployee?: { id: string; name: string }
+  toEmployee?: { id: string; name: string }
+}
+
+// 任務備註（建立後新增的備註）
+export interface TaskNote {
+  id: string
+  taskId: string
+  employeeId: string
+  content: string
+  createdAt: string
+  employee?: { id: string; name: string }
+}
