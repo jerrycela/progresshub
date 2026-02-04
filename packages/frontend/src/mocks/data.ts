@@ -359,6 +359,7 @@ export const taskStatusLabels: Record<string, string> = {
   UNCLAIMED: '待認領',
   CLAIMED: '已認領',
   IN_PROGRESS: '進行中',
+  PAUSED: '暫停中',
   DONE: '已完成',
   BLOCKED: '阻塞',
 }

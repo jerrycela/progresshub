@@ -45,6 +45,7 @@ export type TaskStatus =
   | 'UNCLAIMED'   // 待認領
   | 'CLAIMED'     // 已認領
   | 'IN_PROGRESS' // 進行中
+  | 'PAUSED'      // 暫停（被插件中斷）
   | 'DONE'        // 完成
   | 'BLOCKED'     // 阻塞
 
@@ -110,6 +111,9 @@ export interface Task {
   estimatedHours?: number         // Ralph Loop 迭代 2 新增
   actualHours?: number            // Ralph Loop 迭代 2 新增
   blockerReason?: string          // Ralph Loop 迭代 2 新增
+  pauseReason?: string            // 暫停原因
+  pauseNote?: string              // 暫停說明
+  pausedAt?: string               // 暫停時間
   dependsOnTaskIds?: string[]     // Ralph Loop 迭代 2 新增
   createdAt: string
   updatedAt: string
@@ -226,7 +230,8 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 export const TaskStatusTransitions: Record<TaskStatus, TaskStatus[]> = {
   UNCLAIMED: ['CLAIMED'],
   CLAIMED: ['UNCLAIMED', 'IN_PROGRESS'],
-  IN_PROGRESS: ['CLAIMED', 'BLOCKED', 'DONE'],
+  IN_PROGRESS: ['CLAIMED', 'PAUSED', 'BLOCKED', 'DONE'],
+  PAUSED: ['IN_PROGRESS'],  // 暫停後可繼續進行
   BLOCKED: ['IN_PROGRESS'],
   DONE: [],
 }

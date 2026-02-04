@@ -5,7 +5,7 @@
 // ============================================
 
 interface Props {
-  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'paused'
   size?: 'sm' | 'md'
   dot?: boolean
 }
@@ -40,6 +40,8 @@ withDefaults(defineProps<Props>(), {
         'bg-danger/10 text-danger dark:bg-danger-light/20 dark:text-danger-light': variant === 'danger',
         // Info: 資訊藍
         'bg-info/10 text-info dark:bg-info-light/20 dark:text-info-light': variant === 'info',
+        // Paused: 暫停橙黃色
+        'bg-amber-500/10 text-amber-600 dark:bg-amber-400/20 dark:text-amber-400': variant === 'paused',
       },
     ]"
   >
@@ -54,6 +56,7 @@ withDefaults(defineProps<Props>(), {
           'bg-warning dark:bg-warning-light': variant === 'warning',
           'bg-danger dark:bg-danger-light': variant === 'danger',
           'bg-info dark:bg-info-light': variant === 'info',
+          'bg-amber-500 dark:bg-amber-400': variant === 'paused',
         },
       ]"
     />

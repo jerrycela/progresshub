@@ -271,6 +271,18 @@ export const useTaskStore = defineStore('tasks', () => {
         task.closedAt = new Date().toISOString()
       }
 
+      // 暫停時記錄時間
+      if (status === 'PAUSED') {
+        task.pausedAt = new Date().toISOString()
+      }
+
+      // 從暫停恢復時清除暫停資訊
+      if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
+        task.pauseReason = undefined
+        task.pauseNote = undefined
+        task.pausedAt = undefined
+      }
+
       await new Promise(resolve => setTimeout(resolve, 200))
 
       return { success: true, data: task }

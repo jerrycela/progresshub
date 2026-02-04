@@ -89,6 +89,10 @@ export interface PoolTask extends Task {
   canDelete: boolean
   collaboratorNames?: string[]
   gitlabIssue?: GitLabIssue
+  // 暫停相關欄位（繼承自 Task，但此處再次聲明便於參考）
+  pauseReason?: string   // 暫停原因
+  pauseNote?: string     // 暫停說明
+  pausedAt?: string      // 暫停時間
 }
 
 // Mock 任務池資料

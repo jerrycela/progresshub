@@ -9,6 +9,7 @@ import { GANTT } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import { mockEmployees } from '@/mocks/taskPool'
 import type { FunctionType, Task } from 'shared/types'
 
 // ============================================
@@ -16,6 +17,7 @@ import type { FunctionType, Task } from 'shared/types'
 // Ralph Loop 迭代 8: 使用 Composables 和常數
 // Ralph Loop 迭代 24: RWD 改進與新元件
 // Ralph Loop 迭代 25: 行動裝置體驗優化
+// 新增: 員工視角、暫停狀態顯示
 // ============================================
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
@@ -24,20 +26,42 @@ const { formatShort } = useFormatDate()
 // 篩選條件
 const selectedProject = ref<string>('ALL')
 const selectedFunction = ref<FunctionType | 'ALL'>('ALL')
+const selectedEmployee = ref<string>('')  // 員工視角：空值表示「全部員工」
+
+// 員工選項（使用 taskPool 的 mockEmployees）
+const employeeOptions = computed(() => [
+  { value: '', label: '全部員工' },
+  ...mockEmployees.map((emp) => ({
+    value: emp.id,
+    label: emp.name,
+  })),
+])
 
 // 篩選後的任務
 const filteredTasks = computed(() => {
   let tasks = taskStore.tasks as Task[]
 
+  // 專案篩選
   if (selectedProject.value !== 'ALL') {
     tasks = tasks.filter((t: Task) => t.projectId === selectedProject.value)
   }
 
+  // 職能篩選
   if (selectedFunction.value !== 'ALL') {
     tasks = tasks.filter((t: Task) => t.functionTags.includes(selectedFunction.value as FunctionType))
   }
 
-  return tasks.filter((t: Task) => t.startDate && t.dueDate)
+  // 員工篩選（員工視角）
+  if (selectedEmployee.value) {
+    tasks = tasks.filter((t: Task) => t.assigneeId === selectedEmployee.value)
+    // 員工視角：顯示所有狀態（包含已完成），讓主管看到完整工作歷程
+    // 不過濾已完成任務
+  }
+
+  // 篩選有日期的任務，並依開始日期排序
+  return tasks
+    .filter((t: Task) => t.startDate && t.dueDate)
+    .sort((a: Task, b: Task) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())
 })
 
 // 使用常數和 composable
@@ -95,7 +119,7 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
 
     <!-- 篩選器 (RWD: 迭代 24 - 使用 Select 元件) -->
     <Card>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Select
           v-model="selectedProject"
           label="專案篩選"
@@ -106,6 +130,15 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
           label="職能篩選"
           :options="functionOptions"
         />
+        <Select
+          v-model="selectedEmployee"
+          label="員工篩選"
+          :options="employeeOptions"
+        />
+      </div>
+      <!-- 員工視角提示 -->
+      <div v-if="selectedEmployee" class="mt-3 p-2 rounded-lg text-sm bg-info/10 border border-info/20" style="color: var(--text-secondary);">
+        <span class="font-medium">💡 員工視角：</span>顯示該員工負責的所有任務（含已完成）
       </div>
     </Card>
 
@@ -138,15 +171,24 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
           <!-- 甘特條 -->
           <div class="flex-1 h-8 rounded-lg relative" style="background-color: var(--bg-tertiary);">
             <div
-              :class="['absolute h-full rounded-lg transition-all duration-200', statusColors[task.status]]"
+              :class="[
+                'absolute h-full rounded-lg transition-all duration-200',
+                statusColors[task.status],
+                // 暫停狀態使用條紋樣式
+                task.status === 'PAUSED' ? 'bg-gradient-to-r from-amber-500/40 via-amber-400/20 to-amber-500/40 bg-[length:10px_100%]' : ''
+              ]"
               :style="{
                 left: `${getTaskPosition(task).left}%`,
                 width: `${getTaskPosition(task).width}%`,
               }"
             >
-              <div class="flex items-center justify-center h-full px-2">
-                <span class="text-xs text-white font-medium truncate">
-                  {{ task.progress }}%
+              <div class="flex items-center justify-center h-full px-2 gap-1">
+                <!-- 暫停圖示 -->
+                <svg v-if="task.status === 'PAUSED'" class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span :class="['text-xs font-medium truncate', task.status === 'PAUSED' ? 'text-amber-700' : 'text-white']">
+                  {{ task.status === 'PAUSED' ? '暫停中' : `${task.progress}%` }}
                 </span>
               </div>
             </div>
@@ -177,6 +219,10 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-samurai rounded" />
           <span class="text-sm" style="color: var(--text-secondary);">進行中</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-amber-500/60 rounded" />
+          <span class="text-sm" style="color: var(--text-secondary);">暫停中</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-success rounded" />

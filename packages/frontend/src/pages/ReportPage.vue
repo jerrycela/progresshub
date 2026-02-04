@@ -9,23 +9,33 @@ import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
 import Modal from '@/components/common/Modal.vue'
 import ProgressBar from '@/components/common/ProgressBar.vue'
+import Select from '@/components/common/Select.vue'
 import type { Task, ReportType } from 'shared/types'
 
 // ============================================
 // 進度回報頁面 - 每日進度回報（含「繼續」快速回報功能）
 // Ralph Loop 迭代 7: 改用全域 Toast 通知
 // Ralph Loop 迭代 18: RWD 響應式優化
+// 新增: 暫停/繼續功能
 // ============================================
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useToast()
 
-// 我的進行中任務
+// 暫停原因選項
+const pauseReasonOptions = [
+  { value: 'OTHER_PROJECT', label: '被插件至其他專案' },
+  { value: 'WAITING_RESOURCE', label: '等待外部資源' },
+  { value: 'WAITING_TASK', label: '等待其他任務完成' },
+  { value: 'OTHER', label: '其他' },
+]
+
+// 我的進行中任務（包含暫停中的任務）
 const myInProgressTasks = computed(() => {
   const userId = authStore.user?.id
   if (!userId) return []
   return (taskStore.tasks as Task[]).filter(
-    (t: Task) => t.assigneeId === userId && ['CLAIMED', 'IN_PROGRESS'].includes(t.status)
+    (t: Task) => t.assigneeId === userId && ['CLAIMED', 'IN_PROGRESS', 'PAUSED'].includes(t.status)
   )
 })
 
@@ -43,6 +53,11 @@ const isReporting = ref(false)
 const newProgress = ref(0)
 const progressNotes = ref('')
 const blockerReason = ref('')
+
+// 暫停相關狀態
+const showPauseModal = ref(false)
+const pauseReason = ref('OTHER_PROJECT')
+const pauseNote = ref('')
 
 // 開啟回報對話框
 const openReportModal = (task: Task, type: ReportType) => {
@@ -64,11 +79,60 @@ const openReportModal = (task: Task, type: ReportType) => {
 const submitContinue = async (task: Task) => {
   isReporting.value = true
   try {
+    // 如果任務是暫停狀態，恢復為進行中
+    if (task.status === 'PAUSED') {
+      const result = await taskStore.updateTaskStatus(task.id, 'IN_PROGRESS')
+      if (!result.success) {
+        showError(result.error?.message || '恢復任務失敗')
+        return
+      }
+      // 清除暫停相關資訊
+      task.pauseReason = undefined
+      task.pauseNote = undefined
+      task.pausedAt = undefined
+    }
+
     // Mock: 模擬 API 呼叫
     await new Promise(resolve => setTimeout(resolve, 500))
     showSuccess(`已回報「${task.title}」繼續進行中`)
   } catch {
     showError('回報失敗，請稍後再試')
+  } finally {
+    isReporting.value = false
+  }
+}
+
+// 開啟暫停對話框
+const openPauseModal = (task: Task) => {
+  selectedTask.value = task
+  pauseReason.value = 'OTHER_PROJECT'
+  pauseNote.value = ''
+  showPauseModal.value = true
+}
+
+// 提交暫停
+const submitPause = async () => {
+  if (!selectedTask.value) return
+
+  isReporting.value = true
+  try {
+    // 更新任務狀態為暫停
+    const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'PAUSED')
+    if (!result.success) {
+      showError(result.error?.message || '暫停任務失敗')
+      return
+    }
+
+    // 記錄暫停資訊（Mock）
+    const task = selectedTask.value
+    task.pauseReason = pauseReasonOptions.find((opt) => opt.value === pauseReason.value)?.label
+    task.pauseNote = pauseNote.value
+    task.pausedAt = new Date().toISOString()
+
+    showPauseModal.value = false
+    showSuccess(`已暫停「${task.title}」`)
+  } catch {
+    showError('暫停任務失敗，請稍後再試')
   } finally {
     isReporting.value = false
   }
@@ -150,8 +214,9 @@ const today = new Date().toLocaleDateString('zh-TW', {
         <div class="text-sm" style="color: var(--text-primary);">
           <p class="font-medium mb-1">快速回報說明</p>
           <ul class="list-disc list-inside space-y-1" style="color: var(--text-secondary);">
-            <li><strong>繼續</strong> - 一鍵回報，延續昨天的工作（進度不變）</li>
+            <li><strong>繼續</strong> - 一鍵回報，延續昨天的工作（進度不變）；若任務暫停中則恢復進行</li>
             <li><strong>更新</strong> - 有實際進展時，更新進度百分比</li>
+            <li><strong>暫停</strong> - 被插件打斷時，暫停任務並記錄原因</li>
             <li><strong>卡關</strong> - 遇到問題需要協助時回報</li>
             <li><strong>完成</strong> - 任務已完成，進度設為 100%</li>
           </ul>
@@ -174,13 +239,25 @@ const today = new Date().toLocaleDateString('zh-TW', {
               <p class="text-sm mt-0.5" style="color: var(--text-tertiary);">
                 {{ getProject(task.projectId)?.name }}
               </p>
+              <!-- 暫停資訊 -->
+              <div v-if="task.status === 'PAUSED' && task.pauseReason" class="mt-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+                <p class="text-xs text-amber-600 dark:text-amber-400">
+                  <span class="font-medium">暫停原因：</span>{{ task.pauseReason }}
+                </p>
+                <p v-if="task.pauseNote" class="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                  {{ task.pauseNote }}
+                </p>
+                <p v-if="task.pausedAt" class="text-xs text-amber-600/60 dark:text-amber-400/60 mt-0.5">
+                  暫停時間：{{ new Date(task.pausedAt).toLocaleString('zh-TW') }}
+                </p>
+              </div>
             </div>
             <Badge
-              :variant="task.status === 'BLOCKED' ? 'danger' : 'primary'"
+              :variant="task.status === 'BLOCKED' ? 'danger' : task.status === 'PAUSED' ? 'paused' : 'primary'"
               size="sm"
               dot
             >
-              {{ task.status === 'BLOCKED' ? '卡關中' : '進行中' }}
+              {{ task.status === 'BLOCKED' ? '卡關中' : task.status === 'PAUSED' ? '暫停中' : '進行中' }}
             </Badge>
           </div>
 
@@ -207,18 +284,30 @@ const today = new Date().toLocaleDateString('zh-TW', {
               :loading="isReporting"
               @click="openReportModal(task, 'CONTINUE')"
             >
-              繼續
+              {{ task.status === 'PAUSED' ? '繼續' : '繼續' }}
             </Button>
             <Button
               variant="primary"
               size="sm"
+              :disabled="task.status === 'PAUSED'"
               @click="openReportModal(task, 'PROGRESS')"
             >
               更新進度
             </Button>
+            <!-- 暫停按鈕：只有進行中的任務可以暫停 -->
+            <Button
+              v-if="task.status !== 'PAUSED'"
+              variant="secondary"
+              size="sm"
+              class="!bg-amber-500/10 !text-amber-600 hover:!bg-amber-500/20 dark:!text-amber-400"
+              @click="openPauseModal(task)"
+            >
+              暫停
+            </Button>
             <Button
               variant="warning"
               size="sm"
+              :disabled="task.status === 'PAUSED'"
               @click="openReportModal(task, 'BLOCKED')"
             >
               卡關
@@ -226,6 +315,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
             <Button
               variant="success"
               size="sm"
+              :disabled="task.status === 'PAUSED'"
               @click="openReportModal(task, 'COMPLETE')"
             >
               完成
@@ -318,6 +408,57 @@ const today = new Date().toLocaleDateString('zh-TW', {
           @click="submitReport"
         >
           確認{{ reportTypeLabels[reportType] }}
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- 暫停對話框 -->
+    <Modal v-model="showPauseModal" title="暫停任務" size="md">
+      <div v-if="selectedTask" class="space-y-4">
+        <!-- 任務資訊 -->
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary);">
+          <h4 class="font-semibold" style="color: var(--text-primary);">{{ selectedTask.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary);">目前進度：{{ selectedTask.progress }}%</p>
+        </div>
+
+        <!-- 暫停原因選擇 -->
+        <div>
+          <Select
+            v-model="pauseReason"
+            label="暫停原因"
+            :options="pauseReasonOptions"
+          />
+        </div>
+
+        <!-- 暫停說明 -->
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">說明（選填）</label>
+          <textarea
+            v-model="pauseNote"
+            rows="3"
+            class="input"
+            placeholder="例如：被拉去支援 Project B"
+          />
+        </div>
+
+        <!-- 提示訊息 -->
+        <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <p class="text-sm text-amber-600 dark:text-amber-400">
+            💡 暫停後，任務會標記為「暫停中」狀態。您可以隨時點擊「繼續」按鈕恢復任務。
+          </p>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button variant="secondary" @click="showPauseModal = false">
+          取消
+        </Button>
+        <Button
+          class="!bg-amber-500 hover:!bg-amber-600 !text-white"
+          :loading="isReporting"
+          @click="submitPause"
+        >
+          確認暫停
         </Button>
       </template>
     </Modal>
