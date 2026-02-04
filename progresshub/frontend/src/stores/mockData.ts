@@ -75,6 +75,10 @@ export interface PoolTask extends Omit<Task, 'assignedToId'> {
   canEdit: boolean
   canDelete: boolean
   collaboratorNames?: string[]
+  // Phase 1.1: 進度備註可見性
+  latestNote?: string
+  latestNoteAt?: string
+  pauseReason?: string
 }
 
 // Mock 任務池資料
@@ -141,6 +145,8 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'PROGRAMMING',
     canEdit: true,
     canDelete: true,
+    latestNote: '核心戰鬥邏輯框架完成，開始實作細節',
+    latestNoteAt: '2026-02-03T16:45:00Z',
   },
   {
     id: 'task-4',
@@ -163,6 +169,8 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'ART',
     canEdit: false,
     canDelete: false,
+    latestNote: '完成戰鬥場景的背景音樂初版，等待審核',
+    latestNoteAt: '2026-02-04T14:30:00Z',
   },
   {
     id: 'task-5',
@@ -185,6 +193,8 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'ART',
     canEdit: true,
     canDelete: true,
+    latestNote: '已完成 8 款賽車模型，剩餘 2 款進行中',
+    latestNoteAt: '2026-02-03T17:30:00Z',
   },
   {
     id: 'task-6',
@@ -205,6 +215,56 @@ export const mockPoolTasks: PoolTask[] = [
     department: 'QA',
     canEdit: true,
     canDelete: true,
+  },
+  {
+    id: 'task-7',
+    projectId: 'proj-2',
+    name: 'API 串接 - 登入系統',
+    description: '與後端串接登入驗證 API',
+    sourceType: 'ASSIGNED',
+    assignedToId: 'emp-4',
+    assignedTo: { id: 'emp-4', name: '陳志明' },
+    plannedStartDate: '2026-01-20',
+    plannedEndDate: '2026-02-01',
+    progressPercentage: 40,
+    status: 'ON_HOLD',
+    dependencies: [],
+    collaborators: [],
+    createdAt: '2026-01-18',
+    updatedAt: '2026-01-28',
+    project: { id: 'proj-2', name: '星際戰艦' },
+    createdBy: { id: 'emp-5', name: '李小龍', role: 'MANAGER' },
+    department: 'PROGRAMMING',
+    canEdit: false,
+    canDelete: false,
+    latestNote: '等待後端 API 完成',
+    latestNoteAt: '2026-01-28T10:00:00Z',
+    pauseReason: '等待 S 端 API 串接完成',
+  },
+  {
+    id: 'task-8',
+    projectId: 'proj-1',
+    name: '角色動畫製作',
+    description: '製作主角的待機、行走、攻擊動畫',
+    sourceType: 'ASSIGNED',
+    assignedToId: 'emp-2',
+    assignedTo: { id: 'emp-2', name: '林小美' },
+    plannedStartDate: '2026-01-10',
+    plannedEndDate: '2026-01-31',
+    progressPercentage: 70,
+    status: 'IN_PROGRESS',
+    dependencies: [],
+    collaborators: ['emp-1'],
+    collaboratorNames: ['王小明'],
+    createdAt: '2026-01-08',
+    updatedAt: '2026-02-02',
+    project: { id: 'proj-1', name: '魔法王國 Online' },
+    createdBy: { id: 'emp-3', name: '張大華', role: 'MANAGER' },
+    department: 'ART',
+    canEdit: false,
+    canDelete: false,
+    latestNote: '待機和行走動畫完成，攻擊動畫進行中',
+    latestNoteAt: '2026-02-02T11:30:00Z',
   },
 ]
 

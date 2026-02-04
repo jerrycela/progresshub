@@ -29,7 +29,7 @@ export const DepartmentLabels: Record<Department, string> = {
   MANAGEMENT: '管理部',
 }
 export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'PAUSED'
-export type TaskStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED'
+export type TaskStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'ON_HOLD'
 export type MilestoneStatus = 'PENDING' | 'ACHIEVED'
 
 export interface User {

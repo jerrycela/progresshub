@@ -50,6 +50,8 @@ const taskStats = computed(() => ({
   available: mockPoolTasks.filter((t) => !t.assignedToId && t.status === 'NOT_STARTED').length,
   inProgress: mockPoolTasks.filter((t) => t.status === 'IN_PROGRESS').length,
   completed: mockPoolTasks.filter((t) => t.status === 'COMPLETED').length,
+  onHold: mockPoolTasks.filter((t) => t.status === 'ON_HOLD').length,
+  overdue: mockPoolTasks.filter((t) => t.status !== 'COMPLETED' && new Date(t.plannedEndDate) < new Date()).length,
 }))
 
 // 狀態標籤樣式
@@ -61,6 +63,8 @@ const getStatusClass = (status: string) => {
       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
     case 'COMPLETED':
       return 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+    case 'ON_HOLD':
+      return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -74,9 +78,32 @@ const getStatusLabel = (status: string) => {
       return '進行中'
     case 'COMPLETED':
       return '已完成'
+    case 'ON_HOLD':
+      return '暫停中'
     default:
       return status
   }
+}
+
+// Phase 1.3: 判斷是否逾期
+const isOverdue = (task: PoolTask) => {
+  if (task.status === 'COMPLETED') return false
+  return new Date(task.plannedEndDate) < new Date()
+}
+
+// 格式化時間（相對時間）
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 60) return `${diffMins} 分鐘前`
+  if (diffHours < 24) return `${diffHours} 小時前`
+  if (diffDays < 7) return `${diffDays} 天前`
+  return date.toLocaleDateString('zh-TW')
 }
 
 // 來源類型標籤
@@ -147,7 +174,7 @@ const clearFilters = () => {
     </div>
 
     <!-- 統計卡片 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <div class="card p-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">全部任務</p>
         <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ taskStats.total }}</p>
@@ -159,6 +186,14 @@ const clearFilters = () => {
       <div class="card p-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">進行中</p>
         <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{{ taskStats.inProgress }}</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">暫停中</p>
+        <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{{ taskStats.onHold }}</p>
+      </div>
+      <div class="card p-4">
+        <p class="text-sm text-gray-500 dark:text-gray-400">已逾期</p>
+        <p class="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{{ taskStats.overdue }}</p>
       </div>
       <div class="card p-4">
         <p class="text-sm text-gray-500 dark:text-gray-400">已完成</p>
@@ -214,6 +249,7 @@ const clearFilters = () => {
           <option value="">所有狀態</option>
           <option value="NOT_STARTED">未開始</option>
           <option value="IN_PROGRESS">進行中</option>
+          <option value="ON_HOLD">暫停中</option>
           <option value="COMPLETED">已完成</option>
         </select>
 
@@ -268,6 +304,37 @@ const clearFilters = () => {
               {{ task.description }}
             </p>
 
+            <!-- Phase 1.1: 暫停原因（如果有） -->
+            <div
+              v-if="task.pauseReason"
+              class="mt-2 flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800"
+            >
+              <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span class="text-sm text-yellow-700 dark:text-yellow-300">
+                <span class="font-medium">暫停原因：</span>{{ task.pauseReason }}
+              </span>
+            </div>
+
+            <!-- Phase 1.1: 最新備註（如果有） -->
+            <div
+              v-if="task.latestNote && !task.pauseReason"
+              class="mt-2 flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+            >
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+              </svg>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                  {{ task.latestNote }}
+                </p>
+                <p v-if="task.latestNoteAt" class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  {{ formatRelativeTime(task.latestNoteAt) }}
+                </p>
+              </div>
+            </div>
+
             <!-- 底部資訊 -->
             <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-500 dark:text-gray-400">
               <!-- 負責人 -->
@@ -286,12 +353,27 @@ const clearFilters = () => {
                 <span>+{{ task.collaboratorNames.length }} 協作</span>
               </div>
 
-              <!-- 日期 -->
-              <div class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <!-- 日期 + Phase 1.3: 逾期警示 -->
+              <div
+                class="flex items-center gap-1"
+                :class="isOverdue(task) ? 'text-red-600 dark:text-red-400 font-medium' : ''"
+              >
+                <svg
+                  class="w-4 h-4"
+                  :class="isOverdue(task) ? 'text-red-500' : ''"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>{{ task.plannedStartDate }} ~ {{ task.plannedEndDate }}</span>
+                <span
+                  v-if="isOverdue(task)"
+                  class="ml-1 text-xs bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded"
+                >
+                  已逾期
+                </span>
               </div>
 
               <!-- 建立者 -->
