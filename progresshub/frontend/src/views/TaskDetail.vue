@@ -65,6 +65,8 @@ const getStatusClass = (status: string) => {
       return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
     case 'COMPLETED':
       return 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
+    case 'ON_HOLD':
+      return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
     default:
       return 'bg-gray-100 text-gray-700'
   }
@@ -78,9 +80,17 @@ const getStatusLabel = (status: string) => {
       return '進行中'
     case 'COMPLETED':
       return '已完成'
+    case 'ON_HOLD':
+      return '暫停中'
     default:
       return status
   }
+}
+
+// 判斷是否逾期
+const isOverdue = () => {
+  if (!task.value || task.value.status === 'COMPLETED') return false
+  return new Date(task.value.plannedEndDate) < new Date()
 }
 
 // 來源類型
@@ -345,8 +355,22 @@ const deleteTask = () => {
 
             <div v-if="task.collaboratorNames?.length">
               <dt class="text-sm text-gray-500 dark:text-gray-400">協作者</dt>
-              <dd class="text-gray-900 dark:text-white mt-1">
-                {{ task.collaboratorNames.join('、') }}
+              <dd class="mt-2">
+                <!-- Phase 1.4: 協作者頭像列表 -->
+                <div class="flex flex-wrap gap-2">
+                  <div
+                    v-for="(name, index) in task.collaboratorNames"
+                    :key="index"
+                    class="flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 rounded-full"
+                  >
+                    <div class="w-6 h-6 rounded-full bg-purple-200 dark:bg-purple-800 flex items-center justify-center">
+                      <span class="text-xs font-medium text-purple-700 dark:text-purple-300">
+                        {{ name.charAt(0) }}
+                      </span>
+                    </div>
+                    <span class="text-sm text-purple-700 dark:text-purple-300">{{ name }}</span>
+                  </div>
+                </div>
               </dd>
             </div>
 
