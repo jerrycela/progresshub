@@ -5,6 +5,31 @@
 // 角色與權限
 export type Role = 'MEMBER' | 'PM' | 'ADMIN'
 
+// 新增：四種使用者角色（任務分配用）
+export type UserRole = 'EMPLOYEE' | 'PM' | 'PRODUCER' | 'MANAGER'
+
+export const UserRoleLabels: Record<UserRole, string> = {
+  EMPLOYEE: '一般同仁',
+  PM: 'PM',
+  PRODUCER: '製作人',
+  MANAGER: '部門主管',
+}
+
+// 任務來源類型
+export type TaskSourceType = 'ASSIGNED' | 'POOL' | 'SELF_CREATED'
+
+// 部門類型
+export type Department = 'ART' | 'PROGRAMMING' | 'PLANNING' | 'QA' | 'SOUND' | 'MANAGEMENT'
+
+export const DepartmentLabels: Record<Department, string> = {
+  ART: '美術部',
+  PROGRAMMING: '程式部',
+  PLANNING: '企劃部',
+  QA: '品管部',
+  SOUND: '音效部',
+  MANAGEMENT: '管理部',
+}
+
 // 職能類型
 export type FunctionType =
   | 'PLANNING'    // 企劃

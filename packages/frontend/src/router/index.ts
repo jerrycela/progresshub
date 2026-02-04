@@ -43,6 +43,26 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/GanttPage.vue'),
       },
       {
+        path: 'task-pool',
+        name: 'TaskPool',
+        component: () => import('@/pages/TaskPoolPage.vue'),
+      },
+      {
+        path: 'task-pool/create',
+        name: 'TaskCreate',
+        component: () => import('@/pages/TaskCreatePage.vue'),
+      },
+      {
+        path: 'task-pool/:id',
+        name: 'TaskDetail',
+        component: () => import('@/pages/TaskDetailPage.vue'),
+      },
+      {
+        path: 'roles',
+        name: 'RoleDemo',
+        component: () => import('@/pages/RoleDemoPage.vue'),
+      },
+      {
         path: 'projects',
         name: 'Projects',
         component: () => import('@/pages/ProjectsPage.vue'),
