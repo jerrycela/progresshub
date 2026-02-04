@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import Gantt from 'frappe-gantt'
 import { ganttApi, projectsApi, employeesApi } from '@/api'
 import type { GanttTask, GanttStats, Project, Employee } from '@/types'
+
+const router = useRouter()
 
 const loading = ref(true)
 const ganttData = ref<GanttTask[]>([])
@@ -101,8 +104,13 @@ const renderGantt = () => {
             <p><span class="text-gray-500">期間:</span> ${ganttTask.start} ~ ${ganttTask.end}</p>
             ${ganttTask.milestoneName ? `<p><span class="text-gray-500">里程碑:</span> ${ganttTask.milestoneName}</p>` : ''}
           </div>
+          <p class="mt-2 text-xs text-primary-600 cursor-pointer">點擊查看詳情</p>
         </div>
       `
+    },
+    on_click: (task: any) => {
+      // 點擊任務導航到任務詳情頁
+      router.push(`/task-pool/${task.id}`)
     },
     on_date_change: (task: any, start: Date, end: Date) => {
       console.log('Date changed:', task.id, start, end)
@@ -298,6 +306,16 @@ const clearFilters = () => {
 .gantt .bar-label {
   font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+}
+
+/* 左側任務名稱可點擊 */
+.gantt .bar-group {
+  cursor: pointer;
+}
+
+.gantt .bar-group:hover .bar {
+  filter: brightness(1.1);
 }
 
 .gantt .handle {

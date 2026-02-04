@@ -10,6 +10,31 @@ import type { ProgressLog } from '@/types'
 // 模擬當前用戶 ID（實際應從 auth store 取得）
 const currentUserId = 'emp-1'
 
+// 快速回報 Modal 狀態
+const showProgressModal = ref(false)
+const selectedTask = ref<PoolTask | null>(null)
+const progressForm = ref({
+  percentage: 0,
+  notes: '',
+})
+
+// 開啟快速回報 Modal
+const openProgressModal = (task: PoolTask, event: Event) => {
+  event.stopPropagation() // 防止觸發展開
+  selectedTask.value = task
+  progressForm.value.percentage = task.progressPercentage
+  progressForm.value.notes = ''
+  showProgressModal.value = true
+}
+
+// 提交進度回報
+const submitProgress = () => {
+  if (!selectedTask.value) return
+  alert(`進度回報成功！\n任務: ${selectedTask.value.name}\n進度: ${progressForm.value.percentage}%\n備註: ${progressForm.value.notes || '無'}\n\n（此為原型展示，實際功能待後端實作）`)
+  showProgressModal.value = false
+  selectedTask.value = null
+}
+
 // 取得我的任務（負責人或協作者）
 const myTasks = computed(() => {
   return mockPoolTasks.filter(
@@ -273,9 +298,22 @@ const taskStats = computed(() => ({
               </div>
             </div>
 
-            <!-- 右側：進度 -->
+            <!-- 右側：進度與快速回報 -->
             <div class="flex flex-col items-end gap-2">
-              <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ task.progressPercentage }}%</span>
+              <div class="flex items-center gap-3">
+                <span class="text-2xl font-bold text-gray-900 dark:text-white">{{ task.progressPercentage }}%</span>
+                <!-- 快速回報按鈕 -->
+                <button
+                  v-if="task.status !== 'COMPLETED'"
+                  @click="openProgressModal(task, $event)"
+                  class="p-2 rounded-lg bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
+                  title="快速回報進度"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              </div>
               <div class="w-24 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                 <div
                   class="h-full rounded-full transition-all duration-300 bg-gradient-to-r"
@@ -365,8 +403,15 @@ const taskStats = computed(() => ({
             <router-link :to="`/task-pool/${task.id}`" class="btn-primary text-sm">
               查看詳情
             </router-link>
-            <button class="btn-secondary text-sm">
-              回報進度
+            <button
+              v-if="task.status !== 'COMPLETED'"
+              @click="openProgressModal(task, $event)"
+              class="btn-secondary text-sm"
+            >
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              快速回報
             </button>
           </div>
         </div>
@@ -393,6 +438,94 @@ const taskStats = computed(() => ({
           <span class="w-2 h-2 rounded-full bg-green-500"></span>
           已完成: {{ myTasks.filter(t => t.status === 'COMPLETED').length }}
         </span>
+      </div>
+    </div>
+
+    <!-- 快速回報 Modal -->
+    <div v-if="showProgressModal" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/50" @click="showProgressModal = false"></div>
+      <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            快速回報進度
+          </div>
+        </h3>
+
+        <!-- 任務資訊 -->
+        <div v-if="selectedTask" class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-4">
+          <p class="font-medium text-gray-900 dark:text-white">{{ selectedTask.name }}</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ selectedTask.project?.name }}</p>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 進度滑桿 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              目前進度
+            </label>
+            <div class="flex items-center gap-4">
+              <input
+                v-model.number="progressForm.percentage"
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                class="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <span class="text-xl font-bold text-gray-900 dark:text-white w-16 text-right">
+                {{ progressForm.percentage }}%
+              </span>
+            </div>
+            <!-- 進度條預覽 -->
+            <div class="mt-2 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r transition-all duration-200"
+                :class="getProgressColor(progressForm.percentage)"
+                :style="{ width: `${progressForm.percentage}%` }"
+              ></div>
+            </div>
+          </div>
+
+          <!-- 備註 -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              備註（選填）
+            </label>
+            <textarea
+              v-model="progressForm.notes"
+              rows="3"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+              placeholder="描述這次進度更新的內容..."
+            ></textarea>
+          </div>
+
+          <!-- 快捷按鈕 -->
+          <div class="flex flex-wrap gap-2">
+            <button
+              v-for="preset in [25, 50, 75, 100]"
+              :key="preset"
+              @click="progressForm.percentage = preset"
+              :class="[
+                'px-3 py-1 text-sm rounded-full border transition-colors',
+                progressForm.percentage === preset
+                  ? 'bg-primary-500 text-white border-primary-500'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              ]"
+            >
+              {{ preset }}%
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6">
+          <button @click="showProgressModal = false" class="btn-secondary">取消</button>
+          <button @click="submitProgress" class="btn-primary">
+            提交回報
+          </button>
+        </div>
       </div>
     </div>
   </div>
