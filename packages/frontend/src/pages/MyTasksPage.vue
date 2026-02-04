@@ -55,6 +55,44 @@ const showUnclaimModal = ref(false)
 const taskToUnclaim = ref<Task | null>(null)
 const isUnclaimLoading = ref(false)
 
+// 快速進度回報對話框
+const showProgressModal = ref(false)
+const taskToReport = ref<Task | null>(null)
+const progressValue = ref(0)
+const progressNote = ref('')
+const isProgressLoading = ref(false)
+
+const openProgressModal = (taskId: string) => {
+  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  if (task) {
+    taskToReport.value = task
+    progressValue.value = task.progress
+    progressNote.value = ''
+    showProgressModal.value = true
+  }
+}
+
+const submitProgress = async () => {
+  if (!taskToReport.value) return
+
+  isProgressLoading.value = true
+  try {
+    const result = await taskStore.updateTaskProgress(taskToReport.value.id, progressValue.value)
+    if (result.success) {
+      showSuccess(`已更新「${taskToReport.value.title}」進度至 ${progressValue.value}%`)
+      showProgressModal.value = false
+      taskToReport.value = null
+      progressNote.value = ''
+    } else {
+      showError(result.error?.message || '更新進度失敗')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
+  } finally {
+    isProgressLoading.value = false
+  }
+}
+
 const openUnclaimModal = (taskId: string) => {
   const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
   if (task) {
@@ -143,7 +181,9 @@ const showCompleted = ref(false)
           :key="task.id"
           :task="task"
           :project="getProjectById(task.projectId)"
+          :show-quick-report="true"
           @unclaim="openUnclaimModal"
+          @updateProgress="openProgressModal"
         />
       </div>
       <!-- 空狀態 (迭代 26: 使用 EmptyState 元件) -->
@@ -195,6 +235,60 @@ const showCompleted = ref(false)
         </Button>
         <Button variant="danger" :loading="isUnclaimLoading" @click="confirmUnclaim">
           確認放棄
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- 快速進度回報對話框 -->
+    <Modal v-model="showProgressModal" title="快速進度回報" size="md">
+      <div v-if="taskToReport" class="space-y-4">
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
+          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToReport.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary);">
+            {{ getProjectById(taskToReport.projectId)?.name || '未指定專案' }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+            目前進度：{{ progressValue }}%
+          </label>
+          <input
+            v-model.number="progressValue"
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            class="w-full h-2 rounded-lg appearance-none cursor-pointer accent-samurai"
+            style="background-color: var(--bg-tertiary);"
+          >
+          <div class="flex justify-between text-xs mt-1" style="color: var(--text-muted);">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+            備註（選填）
+          </label>
+          <textarea
+            v-model="progressNote"
+            rows="3"
+            class="w-full px-3 py-2 rounded-lg text-sm resize-none"
+            style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-primary);"
+            placeholder="簡述目前進度或遇到的問題..."
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <Button variant="secondary" @click="showProgressModal = false">
+          取消
+        </Button>
+        <Button variant="primary" :loading="isProgressLoading" @click="submitProgress">
+          更新進度
         </Button>
       </template>
     </Modal>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
@@ -18,7 +19,9 @@ import type { FunctionType, Task } from 'shared/types'
 // Ralph Loop 迭代 24: RWD 改進與新元件
 // Ralph Loop 迭代 25: 行動裝置體驗優化
 // 新增: 員工視角、暫停狀態顯示
+// 新增: 點擊任務導航到任務詳情
 // ============================================
+const router = useRouter()
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { formatShort } = useFormatDate()
@@ -99,6 +102,11 @@ const getTaskPosition = (task: { startDate?: string; dueDate?: string }) => {
 
 // 格式化日期（用於顯示）
 const formatDate = (date: Date) => formatShort(date.toISOString())
+
+// 點擊任務導航到任務詳情
+const navigateToTask = (taskId: string) => {
+  router.push(`/task-pool/${taskId}`)
+}
 </script>
 
 <template>
@@ -155,12 +163,13 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
         <div
           v-for="task in filteredTasks"
           :key="task.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b last:border-0"
+          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b last:border-0 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors rounded-lg px-2 -mx-2"
           style="border-color: var(--border-primary);"
+          @click="navigateToTask(task.id)"
         >
           <!-- 任務資訊 -->
           <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
-            <p class="font-medium text-sm truncate" style="color: var(--text-primary);">{{ task.title }}</p>
+            <p class="font-medium text-sm truncate hover:text-samurai transition-colors" style="color: var(--text-primary);">{{ task.title }}</p>
             <p class="text-xs" style="color: var(--text-tertiary);">{{ getProjectName(task.projectId) }}</p>
             <!-- 行動裝置顯示日期範圍 (迭代 25) -->
             <p class="text-xs sm:hidden mt-1" style="color: var(--text-muted);">
