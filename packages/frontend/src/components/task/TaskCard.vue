@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Task, Project } from 'shared/types'
+import type { Task, Project, ProgressLog } from 'shared/types'
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 import Button from '@/components/common/Button.vue'
@@ -8,16 +8,22 @@ import ProgressBar from '@/components/common/ProgressBar.vue'
 import { functionTypeLabels, taskStatusLabels } from '@/mocks/data'
 
 // 任務卡片元件 - 顯示任務資訊與快速操作按鈕
+// 會議改進：顯示逾期天數、暫停原因、最近備註
 interface Props {
-  task: Task
+  task: Task & {
+    pauseReason?: string
+    pauseNote?: string
+  }
   project?: Project
   showActions?: boolean
   showQuickReport?: boolean
+  latestNote?: string  // 最近一筆備註
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showActions: true,
   showQuickReport: false,
+  latestNote: '',
 })
 
 const emit = defineEmits<{
@@ -36,6 +42,7 @@ const statusBadgeVariant = computed(() => {
     UNCLAIMED: 'default',
     CLAIMED: 'info',
     IN_PROGRESS: 'primary',
+    PAUSED: 'warning',
     DONE: 'success',
     BLOCKED: 'danger',
   }
@@ -69,6 +76,29 @@ const formatDate = (date?: string) => {
 const isOverdue = computed(() => {
   if (!props.task.dueDate || props.task.status === 'DONE') return false
   return new Date(props.task.dueDate) < new Date()
+})
+
+// 逾期天數
+const overdueDays = computed(() => {
+  if (!isOverdue.value || !props.task.dueDate) return 0
+  const due = new Date(props.task.dueDate)
+  const now = new Date()
+  const diffTime = now.getTime() - due.getTime()
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+})
+
+// 是否暫停中
+const isPaused = computed(() => props.task.status === 'PAUSED')
+
+// 暫停原因標籤
+const pauseReasonLabel = computed(() => {
+  const reasons: Record<string, string> = {
+    OTHER_PROJECT: '被插件至其他專案',
+    WAITING_RESOURCE: '等待資源',
+    WAITING_TASK: '等待其他任務',
+    OTHER: '其他原因',
+  }
+  return props.task.pauseReason ? reasons[props.task.pauseReason] || props.task.pauseReason : ''
 })
 
 // 可否認領
@@ -108,13 +138,39 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
       <!-- 進度條 -->
       <ProgressBar :value="task.progress" size="sm" />
 
-      <!-- 截止日期 -->
+      <!-- 截止日期（改進：顯示完整日期和逾期天數） -->
       <div class="flex items-center justify-between text-sm">
         <span style="color: var(--text-tertiary);">截止日期</span>
         <span :class="[isOverdue ? 'text-danger font-medium' : '']" :style="isOverdue ? '' : 'color: var(--text-secondary);'">
           {{ formatDate(task.dueDate) }}
-          <span v-if="isOverdue" class="ml-1">(已逾期)</span>
+          <span v-if="isOverdue" class="ml-1">(逾期 {{ overdueDays }} 天)</span>
         </span>
+      </div>
+
+      <!-- 暫停原因（改進：在卡片上直接顯示） -->
+      <div v-if="isPaused && (pauseReasonLabel || task.pauseNote)" class="p-2 rounded-lg text-sm bg-amber-500/10 border border-amber-500/30">
+        <div class="flex items-center gap-1 text-amber-600 font-medium">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span>{{ pauseReasonLabel || '暫停中' }}</span>
+        </div>
+        <p v-if="task.pauseNote" class="mt-1 text-xs" style="color: var(--text-secondary);">
+          {{ task.pauseNote }}
+        </p>
+      </div>
+
+      <!-- 最近備註預覽（改進：直接在卡片上顯示） -->
+      <div v-if="latestNote" class="p-2 rounded-lg text-sm" style="background-color: var(--bg-tertiary);">
+        <div class="flex items-center gap-1 mb-1" style="color: var(--text-muted);">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+          </svg>
+          <span class="text-xs">最近備註</span>
+        </div>
+        <p class="text-xs line-clamp-2" style="color: var(--text-secondary);">
+          {{ latestNote }}
+        </p>
       </div>
 
       <!-- 快速回報按鈕（進度回報頁面使用） -->

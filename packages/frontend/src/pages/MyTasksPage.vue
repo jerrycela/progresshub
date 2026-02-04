@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { useProject } from '@/composables/useProject'
@@ -18,11 +19,30 @@ import type { TaskStatus, Task } from 'shared/types'
 // 我的任務頁面 - 已認領/進行中任務
 // Ralph Loop 迭代 8: 使用 Composables 和常數
 // Ralph Loop 迭代 26: RWD 與元件升級
+// 會議改進：點擊卡片導航到任務詳情
 // ============================================
+const router = useRouter()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { getProjectById } = useProject()
 const { showSuccess, showError } = useToast()
+
+// Mock 最近備註（實際應從 ProgressLog 獲取）
+const latestNotes = computed(() => {
+  // 這裡模擬每個任務的最近備註，實際應該從 API 獲取
+  const notes: Record<string, string> = {
+    '1': '完成新手教學前三關的程式邏輯',
+    '2': '已完成基礎 UI 框架，下週繼續細節調整',
+    '6': '繼續處理攻擊動畫',
+    '9': '等待後端 API 完成，預計下週可繼續',
+  }
+  return notes
+})
+
+// 點擊任務卡片導航到詳情頁
+const handleTaskClick = (task: Task) => {
+  router.push(`/task-pool/${task.id}`)
+}
 
 // 篩選條件
 const selectedStatus = ref<TaskStatus | 'ALL'>('ALL')
@@ -182,6 +202,8 @@ const showCompleted = ref(false)
           :task="task"
           :project="getProjectById(task.projectId)"
           :show-quick-report="true"
+          :latest-note="latestNotes[task.id]"
+          @click="handleTaskClick"
           @unclaim="openUnclaimModal"
           @updateProgress="openProgressModal"
         />
@@ -212,6 +234,8 @@ const showCompleted = ref(false)
           :task="task"
           :project="getProjectById(task.projectId)"
           :show-actions="false"
+          :latest-note="latestNotes[task.id]"
+          @click="handleTaskClick"
         />
       </div>
     </div>

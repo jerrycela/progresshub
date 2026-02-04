@@ -208,6 +208,23 @@ export const mockTasks: Task[] = [
     createdAt: '2024-02-01T00:00:00Z',
     updatedAt: '2024-02-08T00:00:00Z',
   },
+  {
+    id: '9',
+    title: 'API 串接 - 用戶系統',
+    description: '串接後端用戶登入與註冊 API',
+    status: 'PAUSED',
+    progress: 40,
+    projectId: '1',
+    assigneeId: '1',
+    functionTags: ['PROGRAMMING'],
+    startDate: '2024-02-15',
+    dueDate: '2024-03-05',
+    pauseReason: 'WAITING_TASK',
+    pauseNote: '等待後端 API 完成，預計下週可繼續',
+    pausedAt: '2024-02-28T10:00:00Z',
+    createdAt: '2024-02-15T00:00:00Z',
+    updatedAt: '2024-02-28T10:00:00Z',
+  },
 ]
 
 // ============================================

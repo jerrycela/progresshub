@@ -1,4 +1,5 @@
 import type { Task, Project, ProgressLog, Department, UserRole } from 'shared/types'
+import { mockTasks as dataMockTasks, mockProjects as dataMockProjects } from './data'
 
 // ============================================
 // 任務池 Mock 資料
@@ -332,9 +333,27 @@ export function getProgressLogsByTaskId(taskId: string): ProgressLog[] {
     .sort((a: ProgressLog, b: ProgressLog) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
 }
 
-// 根據任務 ID 取得任務詳情
+// 根據任務 ID 取得任務詳情（同時搜索 mockPoolTasks 和 data.ts 的 mockTasks）
 export function getTaskById(taskId: string): PoolTask | undefined {
-  return mockPoolTasks.find((task: PoolTask) => task.id === taskId)
+  // 先從 mockPoolTasks 搜索
+  const poolTask = mockPoolTasks.find((task: PoolTask) => task.id === taskId)
+  if (poolTask) return poolTask
+
+  // 如果找不到，從 data.ts 的 mockTasks 搜索並轉換為 PoolTask 格式
+  const simpleTask = dataMockTasks.find((t: Task) => t.id === taskId)
+  if (simpleTask) {
+    const project = dataMockProjects.find((p: Project) => p.id === simpleTask.projectId)
+    return {
+      ...simpleTask,
+      sourceType: 'POOL' as const,
+      createdBy: { id: 'system', name: '系統', userRole: 'PM' as const },
+      canEdit: true,
+      canDelete: true,
+      project: project ? { ...project } : undefined,
+    } as PoolTask
+  }
+
+  return undefined
 }
 
 // 取得可用於篩選的專案列表
