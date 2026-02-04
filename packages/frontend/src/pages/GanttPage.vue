@@ -249,36 +249,80 @@ const allProjectsCollapsed = computed(() => {
   return groupedTasks.value.every(g => collapsedProjects.value.has(g.projectId))
 })
 
+// 檢查是否有任務完全在可視範圍外
+const tasksOutsideRange = computed(() => {
+  const { start, end } = dateRange.value
+  const tasks = filteredTasks.value
+
+  let beforeCount = 0 // 在範圍之前結束的任務
+  let afterCount = 0  // 在範圍之後開始的任務
+
+  tasks.forEach((task: Task) => {
+    if (!task.startDate || !task.dueDate) return
+    const taskEnd = new Date(task.dueDate)
+    const taskStart = new Date(task.startDate)
+
+    if (taskEnd < start) beforeCount++
+    if (taskStart > end) afterCount++
+  })
+
+  return { before: beforeCount, after: afterCount, total: beforeCount + afterCount }
+})
+
 // 使用常數和 composable
 const projectOptions = computed(() => getProjectOptions(true))
 const functionOptions = FUNCTION_OPTIONS
 const statusColors = STATUS_COLORS
 
-// 計算甘特圖時間範圍（包含里程碑日期）
+// 時間刻度對應的顯示窗口（天數）
+const TIME_SCALE_WINDOWS: Record<TimeScale, { before: number; after: number }> = {
+  day: { before: 14, after: 14 },    // ±2 週 = 28 天
+  week: { before: 35, after: 35 },   // ±5 週 = 70 天
+  month: { before: 60, after: 60 },  // ±2 月 = 120 天
+}
+
+// 計算甘特圖時間範圍（時間刻度感知）
 const dateRange = computed(() => {
   const tasks = filteredTasks.value
   const msArr = filteredMilestones.value
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
+  // 取得當前時間刻度的窗口大小
+  const window = TIME_SCALE_WINDOWS[timeScale.value]
+  const msPerDay = 24 * 60 * 60 * 1000
+
+  // 計算以今天為中心的理想窗口
+  const idealStart = new Date(today.getTime() - window.before * msPerDay)
+  const idealEnd = new Date(today.getTime() + window.after * msPerDay)
+
+  // 如果沒有任務和里程碑，返回理想窗口
   if (tasks.length === 0 && msArr.length === 0) {
-    return { start: new Date(), end: new Date() }
+    return { start: idealStart, end: idealEnd }
   }
 
+  // 收集所有日期
   const taskDates = tasks.flatMap((t: Task) => [new Date(t.startDate!), new Date(t.dueDate!)])
   const msDates = msArr.map((ms: MilestoneData) => new Date(ms.date))
   const allDates = [...taskDates, ...msDates]
 
-  // 加入今天的日期確保今天始終可見
-  const today = new Date()
-  allDates.push(today)
+  const dataMin = new Date(Math.min(...allDates.map((d: Date) => d.getTime())))
+  const dataMax = new Date(Math.max(...allDates.map((d: Date) => d.getTime())))
 
-  const minDate = new Date(Math.min(...allDates.map((d: Date) => d.getTime())))
-  const maxDate = new Date(Math.max(...allDates.map((d: Date) => d.getTime())))
+  // 智慧範圍選擇：
+  // 1. 如果數據範圍在理想窗口內，使用理想窗口（確保時間刻度有意義）
+  // 2. 如果數據範圍超出理想窗口，擴展以包含所有數據
+  // 3. 永遠確保今天在範圍內
+  let start = new Date(Math.min(idealStart.getTime(), dataMin.getTime()))
+  let end = new Date(Math.max(idealEnd.getTime(), dataMax.getTime()))
 
-  // 前後各加 3 天緩衝，避免任務條貼邊
-  minDate.setDate(minDate.getDate() - 3)
-  maxDate.setDate(maxDate.getDate() + 3)
+  // 加緩衝（3 天或範圍的 5%，取較大者）
+  const range = end.getTime() - start.getTime()
+  const buffer = Math.max(3 * msPerDay, range * 0.05)
+  start = new Date(start.getTime() - buffer)
+  end = new Date(end.getTime() + buffer)
 
-  return { start: minDate, end: maxDate }
+  return { start, end }
 })
 
 // 今天的位置（百分比）
@@ -302,20 +346,31 @@ const timeAxisMarks = computed(() => {
   const current = new Date(start)
   current.setHours(0, 0, 0, 0)
 
+  // 計算總天數，用於決定日視圖的標記密度
+  const totalDays = Math.ceil(range / (24 * 60 * 60 * 1000))
+  const dayStep = totalDays > 21 ? 2 : 1 // 超過 21 天時每 2 天顯示一個標記
+
   // 根據不同時間刻度生成標記
   if (timeScale.value === 'day') {
-    // 日視圖：每天一個標記
+    // 日視圖：每天或每隔一天一個標記
+    let dayCount = 0
     while (current <= end) {
       const position = ((current.getTime() - start.getTime()) / range) * 100
       if (position >= 0 && position <= 100) {
-        marks.push({
-          position,
-          label: `${current.getMonth() + 1}/${current.getDate()}`,
-          isMain: current.getDay() === 1, // 週一為主標記
-          isWeekend: current.getDay() === 0 || current.getDay() === 6,
-        })
+        // 根據密度決定是否顯示
+        const isMonday = current.getDay() === 1
+        const shouldShow = dayStep === 1 || (dayCount % dayStep === 0) || isMonday
+        if (shouldShow) {
+          marks.push({
+            position,
+            label: `${current.getMonth() + 1}/${current.getDate()}`,
+            isMain: isMonday, // 週一為主標記
+            isWeekend: current.getDay() === 0 || current.getDay() === 6,
+          })
+        }
       }
       current.setDate(current.getDate() + 1)
+      dayCount++
     }
   } else if (timeScale.value === 'week') {
     // 週視圖：每週一個標記（週一）
@@ -582,6 +637,22 @@ const deleteMilestone = (msId: string): void => {
           >
             只看逾期
           </button>
+        </div>
+      </div>
+
+      <!-- 超出顯示範圍提示 -->
+      <div v-if="tasksOutsideRange.total > 0" class="mt-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+        <div class="flex items-center gap-2 text-sm">
+          <svg class="w-5 h-5 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-amber-700 dark:text-amber-400">
+            <span class="font-medium">{{ tasksOutsideRange.total }} 項任務</span>
+            不在目前顯示範圍內
+            <span v-if="tasksOutsideRange.before > 0" class="text-xs">（{{ tasksOutsideRange.before }} 項在更早之前）</span>
+            <span v-if="tasksOutsideRange.after > 0" class="text-xs">（{{ tasksOutsideRange.after }} 項在更晚之後）</span>
+          </span>
+          <span class="ml-auto text-xs text-amber-600 dark:text-amber-400">切換至「月」視圖可看到更多</span>
         </div>
       </div>
 
