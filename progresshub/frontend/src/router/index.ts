@@ -32,6 +32,37 @@ const router = createRouter({
       component: () => import('@/views/MyTasks.vue'),
       meta: { requiresAuth: true },
     },
+    // 任務池相關路由
+    {
+      path: '/task-pool',
+      name: 'TaskPool',
+      component: () => import('@/views/TaskPool.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/task-pool/create',
+      name: 'TaskCreate',
+      component: () => import('@/views/TaskCreate.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/task-pool/:id',
+      name: 'TaskDetail',
+      component: () => import('@/views/TaskDetail.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/task-pool/:id/edit',
+      name: 'TaskEdit',
+      component: () => import('@/views/TaskCreate.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/roles',
+      name: 'RoleDemo',
+      component: () => import('@/views/RoleDemo.vue'),
+      meta: { requiresAuth: true },
+    },
     {
       path: '/report',
       name: 'Report',
@@ -98,6 +129,13 @@ const router = createRouter({
       name: 'CostReport',
       component: () => import('@/views/CostReport.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    // 設定頁面
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: () => import('@/views/Settings.vue'),
+      meta: { requiresAuth: true },
     },
   ],
 })
