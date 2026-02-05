@@ -175,7 +175,7 @@ body {
   }
 
   .btn-secondary:hover {
-    @apply from-gray-100 to-gray-150 border-gray-300;
+    @apply from-gray-100 to-gray-200 border-gray-300;
     @apply -translate-y-0.5 text-gray-900;
     box-shadow:
       0 2px 4px rgba(0, 0, 0, 0.08),
