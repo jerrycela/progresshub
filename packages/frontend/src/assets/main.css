@@ -128,51 +128,225 @@ body {
    Component Classes
    ============================================ */
 @layer components {
-  /* Buttons */
+  /* ============================================
+     Buttons - ProgressHub 設計系統 v2.0
+     精緻固態風格：漸層背景 + 多層陰影 + 微動效
+     ============================================ */
+
+  /* Base button styles */
   .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-all duration-150 cursor-pointer;
-    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply inline-flex items-center justify-center font-semibold;
+    @apply px-4 py-2.5 text-sm rounded-lg border;
+    @apply transition-all duration-200 ease-out cursor-pointer select-none;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+    @apply active:scale-[0.98];
   }
 
+  /* Primary: 品牌靛藍 - 漸層 + 光澤邊框 */
   .btn-primary {
-    background-color: var(--accent);
-    color: #FFFFFF;
+    @apply bg-gradient-to-b from-indigo-500 to-indigo-600;
+    @apply text-white border-indigo-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(79, 70, 229, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .btn-primary:hover {
-    background-color: var(--accent-hover);
+    @apply from-indigo-400 to-indigo-500 border-indigo-500;
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(79, 70, 229, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
-  .btn-primary:focus {
-    @apply ring-indigo-500;
+  .btn-primary:focus-visible {
+    @apply ring-indigo-500/50;
   }
 
+  /* Secondary: 金屬灰 - 玻璃質感 */
   .btn-secondary {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-primary);
+    @apply bg-gradient-to-b from-gray-50 to-gray-100;
+    @apply text-gray-700 border-gray-200;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
 
   .btn-secondary:hover {
-    background-color: var(--bg-hover);
+    @apply from-gray-100 to-gray-150 border-gray-300;
+    @apply -translate-y-0.5 text-gray-900;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
+  .btn-secondary:focus-visible {
+    @apply ring-gray-400/50;
+  }
+
+  /* Dark mode - Secondary */
+  .dark .btn-secondary {
+    @apply from-gray-700 to-gray-800;
+    @apply text-gray-200 border-gray-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .dark .btn-secondary:hover {
+    @apply from-gray-600 to-gray-700 border-gray-500 text-white;
+  }
+
+  /* Ghost: 幽靈按鈕 - 純文字 */
   .btn-ghost {
-    background-color: transparent;
-    color: var(--text-secondary);
+    @apply bg-transparent text-gray-600 border-transparent shadow-none;
   }
 
   .btn-ghost:hover {
-    background-color: var(--bg-hover);
-    color: var(--text-primary);
+    @apply bg-gray-100 text-gray-900;
   }
 
+  .btn-ghost:focus-visible {
+    @apply ring-gray-400/50;
+  }
+
+  .dark .btn-ghost {
+    @apply text-gray-400;
+  }
+
+  .dark .btn-ghost:hover {
+    @apply bg-gray-800 text-gray-100;
+  }
+
+  /* Danger: 玫瑰紅 */
   .btn-danger {
-    @apply bg-danger text-white;
+    @apply bg-gradient-to-b from-rose-500 to-rose-600;
+    @apply text-white border-rose-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(244, 63, 94, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
   .btn-danger:hover {
-    @apply bg-danger-dark;
+    @apply from-rose-400 to-rose-500 border-rose-500;
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(244, 63, 94, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-danger:focus-visible {
+    @apply ring-rose-500/50;
+  }
+
+  /* Danger Outline: 紅色邊框按鈕 */
+  .btn-danger-outline {
+    @apply inline-flex items-center justify-center font-semibold;
+    @apply px-4 py-2.5 text-sm rounded-lg;
+    @apply bg-transparent text-rose-600 border border-rose-300;
+    @apply transition-all duration-200 ease-out cursor-pointer select-none;
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-rose-500/50;
+    @apply active:scale-[0.98];
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .btn-danger-outline:hover {
+    @apply bg-rose-50 border-rose-400 text-rose-700;
+    @apply -translate-y-0.5;
+    box-shadow: 0 2px 4px rgba(244, 63, 94, 0.1);
+  }
+
+  .dark .btn-danger-outline {
+    @apply text-rose-400 border-rose-500/50;
+  }
+
+  .dark .btn-danger-outline:hover {
+    @apply bg-rose-950 border-rose-400 text-rose-300;
+  }
+
+  /* Success: 翡翠綠 */
+  .btn-success {
+    @apply bg-gradient-to-b from-emerald-500 to-emerald-600;
+    @apply text-white border-emerald-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(16, 185, 129, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-success:hover {
+    @apply from-emerald-400 to-emerald-500 border-emerald-500;
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(16, 185, 129, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Warning: 琥珀橙 */
+  .btn-warning {
+    @apply bg-gradient-to-b from-amber-500 to-amber-600;
+    @apply text-white border-amber-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(245, 158, 11, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-warning:hover {
+    @apply from-amber-400 to-amber-500 border-amber-500;
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(245, 158, 11, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Info: 天藍色 */
+  .btn-info {
+    @apply bg-gradient-to-b from-blue-500 to-blue-600;
+    @apply text-white border-blue-600;
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(59, 130, 246, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-info:hover {
+    @apply from-blue-400 to-blue-500 border-blue-500;
+    @apply -translate-y-0.5;
+    box-shadow:
+      0 2px 4px rgba(0, 0, 0, 0.12),
+      0 4px 8px rgba(59, 130, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  /* Size variations */
+  .btn-sm {
+    @apply px-3 py-2 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-5 py-3 text-base;
+  }
+
+  .btn-xl {
+    @apply px-7 py-3.5 text-lg;
+  }
+
+  /* Block button */
+  .btn-block {
+    @apply w-full;
+  }
+
+  /* Disabled state */
+  .btn:disabled,
+  .btn-disabled {
+    @apply opacity-60 cursor-not-allowed pointer-events-none;
   }
 
   /* Cards */
