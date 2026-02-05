@@ -786,7 +786,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
                   :style="{ left: `${todayPosition}%`, transform: 'translateX(-50%)' }"
                 >
                   <span class="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-red-500 text-white whitespace-nowrap">今天</span>
-                  <div class="w-0.5 h-3 bg-red-500"></div>
+                  <div class="w-0.5 h-6 bg-red-500"></div>
                 </div>
               </div>
             </div>
@@ -795,13 +795,11 @@ const deleteMilestone = async (msId: string): Promise<void> => {
 
         <!-- 任務列表容器（含今天指示線） -->
         <div class="relative">
-          <!-- 今天的垂直線 -->
+          <!-- 今天的垂直線（標籤在時間軸區域顯示） -->
           <div
             class="absolute top-0 bottom-0 w-0.5 bg-red-500/70 z-10 pointer-events-none hidden sm:block"
             :style="{ left: `calc(${todayPosition}% + 176px * (1 - ${todayPosition} / 100))` }"
-          >
-            <div class="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-medium rounded whitespace-nowrap">今天</div>
-          </div>
+          ></div>
 
           <!-- 分組顯示模式 -->
           <template v-if="groupByProject && groupedTasks">
