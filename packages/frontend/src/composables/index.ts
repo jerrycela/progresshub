@@ -16,3 +16,4 @@ export {
   getRoleBadgeClass,
 } from './useStatusUtils'
 export { useConfirm, type ConfirmOptions } from './useConfirm'
+export { useErrorHandler, getErrorMessage, type ErrorHandlerOptions } from './useErrorHandler'

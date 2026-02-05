@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import type { RouteRecordRaw } from 'vue-router'
+import type { RouteRecordRaw, RouteLocationNormalized } from 'vue-router'
+import type { Role } from 'shared/types'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -125,15 +126,78 @@ const router = createRouter({
   routes,
 })
 
-// Navigation guard (will be connected to auth store later)
-router.beforeEach((to, _from, next) => {
-  // For now, allow all routes (mock mode)
-  // TODO: Implement actual auth check when backend is ready
-  if (to.path === '/login') {
-    next()
-  } else {
-    next()
+// ============================================
+// 導航守衛 - 認證與權限檢查
+// ROI 優化：實作 Router 認證守衛
+// ============================================
+
+/**
+ * 檢查路由是否需要認證
+ */
+const requiresAuth = (to: RouteLocationNormalized): boolean => {
+  // 檢查路由或其父路由是否需要認證
+  return to.matched.some((record) => record.meta.requiresAuth === true)
+}
+
+/**
+ * 檢查路由是否有角色限制
+ */
+const getRequiredRoles = (to: RouteLocationNormalized): Role[] | null => {
+  // 取得最近一個有 requiresRole 的路由記錄
+  for (let i = to.matched.length - 1; i >= 0; i--) {
+    const roles = to.matched[i].meta.requiresRole
+    if (roles) {
+      return roles as Role[]
+    }
   }
+  return null
+}
+
+router.beforeEach(async (to, _from, next) => {
+  // 動態導入 auth store（避免循環依賴）
+  const { useAuthStore } = await import('@/stores/auth')
+  const authStore = useAuthStore()
+
+  const isAuthenticated = authStore.isAuthenticated
+  const needsAuth = requiresAuth(to)
+  const requiredRoles = getRequiredRoles(to)
+
+  // 情況 1：已登入用戶訪問登入頁 → 導向首頁
+  if (to.path === '/login' && isAuthenticated) {
+    return next({ path: '/dashboard' })
+  }
+
+  // 情況 2：需要認證但未登入 → 導向登入頁（保存原目標路徑）
+  if (needsAuth && !isAuthenticated) {
+    return next({
+      path: '/login',
+      query: { redirect: to.fullPath },
+    })
+  }
+
+  // 情況 3：需要特定角色但用戶沒有權限 → 導向 403 或首頁
+  if (requiredRoles && isAuthenticated) {
+    const hasRequiredRole = authStore.hasRole(requiredRoles)
+
+    if (!hasRequiredRole) {
+      // 開發環境顯示警告
+      if (import.meta.env.DEV) {
+        console.warn(
+          `[Router] 權限不足: 需要 ${requiredRoles.join(' 或 ')}，` +
+          `當前角色: ${authStore.userRole}`
+        )
+      }
+
+      // 導向首頁並顯示提示（可改為專門的 403 頁面）
+      return next({
+        path: '/dashboard',
+        query: { error: 'permission_denied' },
+      })
+    }
+  }
+
+  // 情況 4：其他情況正常通過
+  next()
 })
 
 export default router
