@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========== Enums ==========
+
+enum UserRole {
+  EMPLOYEE
+  PM
+  PRODUCER
+  MANAGER
+}
+
+enum Department {
+  ART
+  PROGRAMMING
+  PLANNING
+  QA
+  SOUND
+  MANAGEMENT
+}
+
+enum TaskStatus {
+  UNCLAIMED
+  CLAIMED
+  IN_PROGRESS
+  PAUSED
+  BLOCKED
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+}
+
+// ========== Models ==========
+
+model Employee {
+  id            String      @id @default(cuid())
+  slackId       String?     @unique
+  email         String      @unique
+  name          String
+  avatar        String?
+  role          UserRole    @default(EMPLOYEE)
+  department    Department?
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  assignedTasks Task[]       @relation("AssignedTasks")
+  createdTasks  Task[]       @relation("CreatedTasks")
+  progressLogs  ProgressLog[]
+
+  @@map("employees")
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  tasks       Task[]
+  milestones  Milestone[]
+
+  @@map("projects")
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  dueDate     DateTime
+  projectId   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@map("milestones")
+}
+
+model Task {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?
+  status        TaskStatus   @default(UNCLAIMED)
+  priority      TaskPriority @default(MEDIUM)
+  progress      Int          @default(0)
+  estimatedHours Float?
+  actualHours   Float?
+  dueDate       DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  projectId     String
+  milestoneId   String?
+  assigneeId    String?
+  createdById   String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone     Milestone?   @relation(fields: [milestoneId], references: [id])
+  assignee      Employee?    @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  createdBy     Employee     @relation("CreatedTasks", fields: [createdById], references: [id])
+  progressLogs  ProgressLog[]
+
+  @@map("tasks")
+}
+
+model ProgressLog {
+  id          String   @id @default(cuid())
+  content     String
+  progress    Int
+  hoursSpent  Float?
+  taskId      String
+  employeeId  String
+  createdAt   DateTime @default(now())
+
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  employee    Employee @relation(fields: [employeeId], references: [id])
+
+  @@map("progress_logs")
+}
