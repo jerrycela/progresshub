@@ -1,7 +1,7 @@
 # Phase 4: 甘特圖 API 實作計畫
 
 **日期**: 2026-02-06
-**狀態**: 進行中
+**狀態**: ✅ 完成
 
 ---
 
@@ -130,9 +130,11 @@ packages/backend/
 
 | Task | 狀態 | 測試 | 備註 |
 |------|-----|------|------|
-| 1. 類型定義 | ⬜ | - | |
-| 2. Service | ⬜ | - | |
-| 3. 路由 | ⬜ | - | |
+| 1. 類型定義 | ✅ | 12/12 | isTaskOverdue, getProgressBucket |
+| 2. Service | ✅ | 10/10 | getGanttData, getGanttStats |
+| 3. 路由 | ✅ | 8/8 | GET /gantt, GET /gantt/stats |
+
+**總測試數**: 123/123 通過（含所有模組）
 
 ---
 
