@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { sendSuccess } from './middleware/responseFormatter'
+import authRoutes from './routes/auth'
 
 dotenv.config()
 
@@ -27,9 +28,9 @@ app.get('/health', (_req, res) => {
   })
 })
 
-// API Routes (TODO: 後續 Phase 加入)
-// app.use('/api/auth', authRoutes)
-// app.use('/api/tasks', taskRoutes)
+// API Routes
+app.use('/api/auth', authRoutes)
+// app.use('/api/tasks', taskRoutes)  // TODO: Phase 3
 
 // 404 Handler
 app.use((_req, res) => {
