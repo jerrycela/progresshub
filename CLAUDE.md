@@ -627,6 +627,97 @@ export const env: EnvConfig = {
 };
 ```
 
+### 問題 12：Tailwind CSS 按鈕樣式不生效 (2026-02-05 發現) 🔴 Critical
+
+**錯誤症狀**：
+- 更新了按鈕樣式（漸層、陰影、hover 效果）
+- 建置成功但部署後按鈕外觀沒有變化
+- CSS 編譯後樣式存在，但視覺上沒有套用
+
+**根本原因**：
+
+此專案有**兩種按鈕使用方式**並存：
+
+```vue
+<!-- 方式 1：CSS 類別（35 處） -->
+<button class="btn-primary">確認</button>
+
+<!-- 方式 2：Vue 組件（36 處） -->
+<Button variant="primary">確認</Button>
+```
+
+**問題**：
+- 原本設計需要 `class="btn btn-primary"`（基礎 + 變體）
+- 但頁面只用了 `class="btn-primary"`（只有變體）
+- 導致缺少基礎樣式（padding、font-size、rounded-lg 等）
+
+**錯誤範例**：
+```css
+/* ❌ 錯誤設計 - 需要兩個類別才有完整樣式 */
+.btn {
+  @apply px-4 py-2.5 text-sm rounded-lg border;
+}
+.btn-primary {
+  @apply bg-gradient-to-b from-indigo-500 to-indigo-600;
+}
+
+/* 使用時：<button class="btn btn-primary"> */
+```
+
+**正確做法**：
+```css
+/* ✅ 正確設計 - 每個變體自帶完整樣式 */
+.btn-primary {
+  /* 基礎樣式 */
+  @apply inline-flex items-center justify-center font-semibold;
+  @apply px-4 py-2.5 text-sm rounded-lg border;
+  @apply transition-all duration-200 ease-out cursor-pointer select-none;
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  @apply active:scale-[0.98];
+
+  /* 變體樣式 */
+  @apply bg-gradient-to-b from-indigo-500 to-indigo-600;
+  @apply text-white border-indigo-600;
+}
+
+/* 使用時：<button class="btn-primary"> ← 單一類別即可 */
+```
+
+**另一個錯誤**：使用不存在的 Tailwind 類別
+```css
+/* ❌ 錯誤 - Tailwind 沒有 gray-150 */
+@apply from-gray-100 to-gray-150;
+
+/* ✅ 正確 - 使用有效色階 */
+@apply from-gray-100 to-gray-200;
+```
+
+**Tailwind 有效色階**：50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950
+
+**預防措施**：
+
+| 項目 | 內容 |
+|------|------|
+| **嚴重度** | 🔴 Critical |
+| **檢查點 1** | CSS 類別設計時，每個變體自帶完整基礎樣式 |
+| **檢查點 2** | 使用 Tailwind 類別前，確認色階有效（無 150, 250 等） |
+| **檢查點 3** | 修改 CSS 後執行 `npm run build` 驗證編譯成功 |
+| **檢查點 4** | 搜尋專案中實際使用方式：`grep "btn-primary" src/` |
+
+**迭代完成前必做檢查（CSS 部分）**：
+```bash
+# 1. 驗證建置成功
+cd packages/frontend && npm run build
+
+# 2. 檢查編譯後的 CSS 是否包含預期樣式
+grep "btn-primary" dist/assets/*.css | head -5
+
+# 3. 搜尋無效的 Tailwind 類別（色階不存在）
+grep -rE "(gray|indigo|blue|red|green)-[0-9]{2}[05](?![0-9])" src/
+```
+
+---
+
 ### Zeabur Dashboard 設定檢查清單
 
 - [ ] Backend 服務根目錄: `/backend`
