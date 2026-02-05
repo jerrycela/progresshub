@@ -171,26 +171,26 @@ body {
     @apply ring-indigo-500/50;
   }
 
-  /* Secondary: 金屬灰 - 玻璃質感 */
+  /* Secondary: 金屬灰 - 清晰邊框 */
   .btn-secondary {
     @apply inline-flex items-center justify-center font-semibold;
     @apply px-4 py-2.5 text-sm rounded-lg border;
     @apply transition-all duration-200 ease-out cursor-pointer select-none;
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
     @apply active:scale-[0.98];
-    @apply bg-gradient-to-b from-gray-50 to-gray-100;
-    @apply text-gray-700 border-gray-200;
+    @apply bg-gradient-to-b from-white to-gray-50;
+    @apply text-gray-700 border-gray-300;
     box-shadow:
-      0 1px 2px rgba(0, 0, 0, 0.05),
-      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      0 1px 2px rgba(0, 0, 0, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
   }
 
   .btn-secondary:hover {
-    @apply from-gray-100 to-gray-200 border-gray-300;
+    @apply from-gray-50 to-gray-100 border-gray-400;
     @apply -translate-y-0.5 text-gray-900;
     box-shadow:
-      0 2px 4px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
   .btn-secondary:focus-visible {
@@ -210,18 +210,20 @@ body {
     @apply from-gray-600 to-gray-700 border-gray-500 text-white;
   }
 
-  /* Ghost: 幽靈按鈕 - 純文字 */
+  /* Ghost: 幽靈按鈕 - 淺灰底色 + 微邊框 */
   .btn-ghost {
     @apply inline-flex items-center justify-center font-semibold;
     @apply px-4 py-2.5 text-sm rounded-lg border;
     @apply transition-all duration-200 ease-out cursor-pointer select-none;
     @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
     @apply active:scale-[0.98];
-    @apply bg-transparent text-gray-600 border-transparent shadow-none;
+    @apply bg-gray-50 text-gray-600 border-gray-200;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   }
 
   .btn-ghost:hover {
-    @apply bg-gray-100 text-gray-900;
+    @apply bg-gray-100 text-gray-900 border-gray-300;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
   .btn-ghost:focus-visible {
@@ -229,11 +231,13 @@ body {
   }
 
   .dark .btn-ghost {
-    @apply text-gray-400;
+    @apply bg-gray-800 text-gray-400 border-gray-700;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
 
   .dark .btn-ghost:hover {
-    @apply bg-gray-800 text-gray-100;
+    @apply bg-gray-700 text-gray-100 border-gray-600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   /* Danger: 玫瑰紅 */

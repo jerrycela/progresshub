@@ -113,6 +113,21 @@ const permissionMatrix: PermissionItem[] = [
     permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: false },
   },
   {
+    name: '建立里程碑',
+    description: '在專案中建立新的里程碑節點',
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+  },
+  {
+    name: '編輯里程碑',
+    description: '修改里程碑名稱、日期等資訊',
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+  },
+  {
+    name: '刪除里程碑',
+    description: '刪除專案中的里程碑',
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+  },
+  {
     name: '員工管理',
     description: '管理員工帳號和權限',
     permissions: { EMPLOYEE: false, PM: false, PRODUCER: false, MANAGER: true },
