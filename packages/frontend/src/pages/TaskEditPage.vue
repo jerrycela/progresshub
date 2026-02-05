@@ -10,9 +10,12 @@ import {
   type PoolTask,
 } from '@/mocks/taskPool'
 import type { Department, FunctionType } from 'shared/types'
+import { useToast } from '@/composables/useToast'
 
 // ============================================
 // 任務編輯頁面 - 編輯現有任務
+
+const { showSuccess } = useToast()
 // 複用 TaskCreatePage 表單結構
 // ============================================
 
@@ -100,7 +103,8 @@ const toggleCollaborator = (empId: string): void => {
 
 // 提交表單
 const handleSubmit = (): void => {
-  const taskData = {
+  // 任務資料（待後端 API 實作時使用）
+  const _taskData = {
     id: originalTask.value?.id,
     title: title.value,
     description: description.value,
@@ -112,9 +116,9 @@ const handleSubmit = (): void => {
     dueDate: dueDate.value,
     functionTags: functionTags.value,
   }
+  void _taskData // 避免 TS 未使用警告
 
-  console.log('更新任務:', taskData)
-  alert(`任務更新成功！\n\n標題: ${title.value}\n\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`任務「${title.value}」已更新`)
   router.push(`/task-pool/${originalTask.value?.id}`)
 }
 

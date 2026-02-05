@@ -8,10 +8,13 @@ import {
   type MockEmployee,
 } from '@/mocks/taskPool'
 import type { Department, FunctionType, UserRole } from 'shared/types'
+import { useToast } from '@/composables/useToast'
 
 // ============================================
 // 任務建立頁面 - 建立任務池任務、指派任務、自建任務
 // ============================================
+
+const { showSuccess } = useToast()
 
 const router = useRouter()
 
@@ -109,7 +112,8 @@ const toggleCollaborator = (empId: string): void => {
 
 // 提交表單
 const handleSubmit = (): void => {
-  const taskData = {
+  // 任務資料（待後端 API 實作時使用）
+  const _taskData = {
     sourceType: sourceType.value,
     title: title.value,
     description: description.value,
@@ -122,21 +126,15 @@ const handleSubmit = (): void => {
     functionTags: functionTags.value,
     createdBy: currentUser,
   }
+  void _taskData // 避免 TS 未使用警告
 
-  console.log('建立任務:', taskData)
-  alert(`任務建立成功！\n\n類型: ${getSourceTypeLabel(sourceType.value)}\n標題: ${title.value}\n\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`任務「${title.value}」已建立`)
   router.push('/task-pool')
 }
 
 // 取消建立
 const handleCancel = (): void => {
   router.push('/task-pool')
-}
-
-// 取得來源類型標籤
-const getSourceTypeLabel = (type: SourceType): string => {
-  const option = sourceTypeOptions.find((opt) => opt.value === type)
-  return option?.label || type
 }
 </script>
 

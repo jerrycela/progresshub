@@ -4,6 +4,9 @@ import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
+import { getStatusLabel } from '@/composables/useStatusUtils'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
 import { STATUS_COLORS } from '@/constants/ui'
 import { GANTT } from '@/constants/pageSettings'
@@ -30,6 +33,8 @@ const router = useRouter()
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { formatShort } = useFormatDate()
+const { showSuccess, showWarning } = useToast()
+const { showConfirm } = useConfirm()
 
 // 篩選條件
 const selectedProject = ref<string>('ALL')
@@ -441,19 +446,6 @@ const getTaskDuration = (task: Task): number => {
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1 // 包含起始日
 }
 
-// 取得狀態顯示文字
-const getStatusLabel = (status: string): string => {
-  const labels: Record<string, string> = {
-    UNCLAIMED: '待認領',
-    CLAIMED: '已認領',
-    IN_PROGRESS: '進行中',
-    PAUSED: '暫停中',
-    DONE: '已完成',
-    BLOCKED: '卡關',
-  }
-  return labels[status] || status
-}
-
 // 計算剩餘天數
 const getDaysRemaining = (task: Task): number | null => {
   if (!task.dueDate || task.status === 'DONE') return null
@@ -484,15 +476,15 @@ const getMilestonePosition = (milestone: MilestoneData) => {
 // 新增里程碑
 const submitMilestone = (): void => {
   if (!newMilestone.value.name.trim()) {
-    alert('請輸入里程碑名稱')
+    showWarning('請輸入里程碑名稱')
     return
   }
   if (!newMilestone.value.date) {
-    alert('請選擇里程碑日期')
+    showWarning('請選擇里程碑日期')
     return
   }
   if (!newMilestone.value.projectId) {
-    alert('請選擇專案')
+    showWarning('請選擇專案')
     return
   }
 
@@ -516,18 +508,24 @@ const submitMilestone = (): void => {
   showMilestoneModal.value = false
   newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
 
-  alert(`已新增里程碑: ${milestone.name}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已新增里程碑：${milestone.name}`)
 }
 
 // 刪除里程碑
-const deleteMilestone = (msId: string): void => {
-  if (!confirm('確定要刪除此里程碑嗎？')) return
+const deleteMilestone = async (msId: string): Promise<void> => {
+  const confirmed = await showConfirm({
+    title: '刪除里程碑',
+    message: '確定要刪除此里程碑嗎？',
+    type: 'danger',
+    confirmText: '刪除',
+  })
+  if (!confirmed) return
 
   milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
   const index = mockMilestones.findIndex((ms: MilestoneData) => ms.id === msId)
   if (index !== -1) mockMilestones.splice(index, 1)
 
-  alert('已刪除里程碑\n（此為原型展示，實際功能待後端實作）')
+  showSuccess('已刪除里程碑')
 }
 </script>
 

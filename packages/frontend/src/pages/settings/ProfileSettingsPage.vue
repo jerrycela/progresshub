@@ -8,10 +8,13 @@ import {
 } from '@/mocks/userSettings'
 import { roleLabels, functionTypeLabels } from '@/mocks/data'
 import Badge from '@/components/common/Badge.vue'
+import { useToast } from '@/composables/useToast'
 
 // ============================================
 // 個人資料設定頁
 // ============================================
+
+const { showSuccess, showInfo } = useToast()
 
 const user = ref<UserSettings>({ ...mockCurrentUserSettings })
 const isEditing = ref(false)
@@ -67,7 +70,7 @@ const saveChanges = async (): Promise<void> => {
   isEditing.value = false
   isSaving.value = false
 
-  alert('個人資料已更新\n（此為原型展示，實際功能待後端實作）')
+  showSuccess('個人資料已更新')
 }
 
 // 檢查表單是否有變更
@@ -77,7 +80,7 @@ const hasChanges = computed(() => {
 
 // 更換頭像（待實作）
 const changeAvatar = (): void => {
-  alert('更換頭像功能待實作')
+  showInfo('更換頭像功能即將推出')
 }
 </script>
 

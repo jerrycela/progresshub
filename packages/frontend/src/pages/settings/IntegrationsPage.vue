@@ -8,10 +8,15 @@ import {
   unlinkSlackAccount,
   type UserSettings,
 } from '@/mocks/userSettings'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 // ============================================
 // 整合設定頁 - Slack / GitLab 帳號連結
 // ============================================
+
+const { showSuccess, showWarning } = useToast()
+const { showConfirm } = useConfirm()
 
 const user = ref<UserSettings>({ ...mockCurrentUserSettings })
 
@@ -24,7 +29,7 @@ const slackUsername = ref('')
 // 連結 GitLab
 const handleLinkGitLab = (): void => {
   if (!gitlabUsername.value.trim()) {
-    alert('請輸入 GitLab 使用者名稱')
+    showWarning('請輸入 GitLab 使用者名稱')
     return
   }
 
@@ -33,23 +38,29 @@ const handleLinkGitLab = (): void => {
   showLinkGitLabModal.value = false
   gitlabUsername.value = ''
 
-  alert(`已連結 GitLab 帳號: ${user.value.gitlabUsername}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已連結 GitLab 帳號：${user.value.gitlabUsername}`)
 }
 
 // 解除 GitLab 連結
-const handleUnlinkGitLab = (): void => {
-  if (!confirm('確定要解除 GitLab 帳號連結嗎？')) return
+const handleUnlinkGitLab = async (): Promise<void> => {
+  const confirmed = await showConfirm({
+    title: '解除連結',
+    message: '確定要解除 GitLab 帳號連結嗎？',
+    type: 'warning',
+    confirmText: '解除連結',
+  })
+  if (!confirmed) return
 
   const updatedUser = unlinkGitLabAccount()
   user.value = { ...updatedUser }
 
-  alert('已解除 GitLab 帳號連結\n（此為原型展示，實際功能待後端實作）')
+  showSuccess('已解除 GitLab 帳號連結')
 }
 
 // 連結 Slack
 const handleLinkSlack = (): void => {
   if (!slackUsername.value.trim()) {
-    alert('請輸入 Slack 使用者名稱')
+    showWarning('請輸入 Slack 使用者名稱')
     return
   }
 
@@ -58,17 +69,23 @@ const handleLinkSlack = (): void => {
   showLinkSlackModal.value = false
   slackUsername.value = ''
 
-  alert(`已連結 Slack 帳號: ${user.value.slackUsername}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已連結 Slack 帳號：${user.value.slackUsername}`)
 }
 
 // 解除 Slack 連結
-const handleUnlinkSlack = (): void => {
-  if (!confirm('確定要解除 Slack 帳號連結嗎？')) return
+const handleUnlinkSlack = async (): Promise<void> => {
+  const confirmed = await showConfirm({
+    title: '解除連結',
+    message: '確定要解除 Slack 帳號連結嗎？',
+    type: 'warning',
+    confirmText: '解除連結',
+  })
+  if (!confirmed) return
 
   const updatedUser = unlinkSlackAccount()
   user.value = { ...updatedUser }
 
-  alert('已解除 Slack 帳號連結\n（此為原型展示，實際功能待後端實作）')
+  showSuccess('已解除 Slack 帳號連結')
 }
 </script>
 

@@ -135,7 +135,6 @@ const saveProject = () => {
   }
 
   // Mock: 實際會呼叫 API
-  console.log('儲存專案:', editingProject.value)
   showSuccess(isEditing.value ? '專案已更新' : '專案已建立')
   showProjectModal.value = false
 }

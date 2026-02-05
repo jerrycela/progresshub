@@ -12,10 +12,16 @@ import {
   type TaskNote,
 } from '@/mocks/taskPool'
 import type { ProgressLog, UserRole } from 'shared/types'
+import { getStatusLabel, getStatusClass, getRoleBadgeClass } from '@/composables/useStatusUtils'
+import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 // ============================================
 // 任務詳情頁 - 含進度歷程 Timeline
 // ============================================
+
+const { showSuccess, showWarning, showInfo } = useToast()
+const { showConfirm } = useConfirm()
 
 const route = useRoute()
 const router = useRouter()
@@ -85,40 +91,6 @@ const getProgressDelta = (log: ProgressLog, index: number): number => {
   return log.progress - prevLog.progress
 }
 
-// 狀態標籤
-const getStatusClass = (status: string): string => {
-  switch (status) {
-    case 'UNCLAIMED':
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-    case 'CLAIMED':
-    case 'IN_PROGRESS':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-    case 'DONE':
-      return 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
-    case 'BLOCKED':
-      return 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
-    default:
-      return 'bg-gray-100 text-gray-700'
-  }
-}
-
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'UNCLAIMED':
-      return '待認領'
-    case 'CLAIMED':
-      return '已認領'
-    case 'IN_PROGRESS':
-      return '進行中'
-    case 'DONE':
-      return '已完成'
-    case 'BLOCKED':
-      return '阻塞'
-    default:
-      return status
-  }
-}
-
 // 來源類型
 const getSourceLabel = (sourceType: string): string => {
   switch (sourceType) {
@@ -140,19 +112,25 @@ const goBack = (): void => {
 
 // 認領任務
 const claimTask = (): void => {
-  alert('認領任務成功！\n（此為原型展示，實際功能待後端實作）')
+  showSuccess('認領任務成功！')
 }
 
 // 退回任務
-const returnTask = (): void => {
-  if (confirm('確定要退回此任務嗎？')) {
-    alert('已退回任務\n（此為原型展示，實際功能待後端實作）')
+const returnTask = async (): Promise<void> => {
+  const confirmed = await showConfirm({
+    title: '退回任務',
+    message: '確定要退回此任務嗎？',
+    type: 'warning',
+    confirmText: '退回',
+  })
+  if (confirmed) {
+    showSuccess('已退回任務')
   }
 }
 
 // 提交進度
 const submitProgress = (): void => {
-  alert(`提交進度: ${newProgress.value.percentage}%\n備註: ${newProgress.value.notes}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已提交進度：${newProgress.value.percentage}%`)
   showProgressModal.value = false
   newProgress.value = { percentage: task.value?.progress || 0, notes: '' }
 }
@@ -160,7 +138,7 @@ const submitProgress = (): void => {
 // 指派任務
 const assignTask = (employeeId: string): void => {
   const employee = mockEmployees.find((e) => e.id === employeeId)
-  alert(`已指派給: ${employee?.name}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已指派給：${employee?.name}`)
   showAssignModal.value = false
 }
 
@@ -170,9 +148,15 @@ const editTask = (): void => {
 }
 
 // 刪除任務
-const deleteTask = (): void => {
-  if (confirm('確定要刪除此任務嗎？此操作無法復原。')) {
-    alert('已刪除任務\n（此為原型展示，實際功能待後端實作）')
+const deleteTask = async (): Promise<void> => {
+  const confirmed = await showConfirm({
+    title: '刪除任務',
+    message: '確定要刪除此任務嗎？此操作無法復原。',
+    type: 'danger',
+    confirmText: '刪除',
+  })
+  if (confirmed) {
+    showSuccess('已刪除任務')
     router.push('/task-pool')
   }
 }
@@ -183,12 +167,12 @@ const openGitLabIssue = (url: string): void => {
 }
 
 const editGitLabIssue = (): void => {
-  alert('編輯 GitLab Issue 關聯\n（此為原型展示，實際功能待後端實作）')
+  showInfo('GitLab Issue 編輯功能即將推出')
 }
 
 const linkGitLabIssue = (): void => {
   if (!gitlabIssueUrl.value.trim()) {
-    alert('請輸入 GitLab Issue URL')
+    showWarning('請輸入 GitLab Issue URL')
     return
   }
 
@@ -207,13 +191,13 @@ const linkGitLabIssue = (): void => {
   showLinkGitLabModal.value = false
   gitlabIssueUrl.value = ''
 
-  alert(`已關聯 GitLab Issue\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess('已關聯 GitLab Issue')
 }
 
 // 新增註記
 const submitNote = (): void => {
   if (!newNoteContent.value.trim()) {
-    alert('請輸入註記內容')
+    showWarning('請輸入註記內容')
     return
   }
 
@@ -235,23 +219,10 @@ const submitNote = (): void => {
   showNoteModal.value = false
   newNoteContent.value = ''
 
-  alert(`已新增註記\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess('已新增註記')
 }
 
-// 取得角色標籤樣式
-const getRoleBadgeClass = (role: string): string => {
-  switch (role) {
-    case 'PM':
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300'
-    case 'PRODUCER':
-      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300'
-    case 'MANAGER':
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
-    default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-  }
-}
-
+// 取得角色標籤文字（此頁面專用邏輯）
 const getRoleLabel = (role: string): string => {
   switch (role) {
     case 'PM':

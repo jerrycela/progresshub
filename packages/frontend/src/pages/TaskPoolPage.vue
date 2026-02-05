@@ -8,7 +8,11 @@ import {
   type PoolTask,
 } from '@/mocks/taskPool'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
+import { getStatusLabel } from '@/composables/useStatusUtils'
+import { useToast } from '@/composables/useToast'
 import type { Department, FunctionType } from 'shared/types'
+
+const { showSuccess } = useToast()
 
 // ============================================
 // 任務池頁面 - 瀏覽和認領任務
@@ -83,23 +87,6 @@ const getStatusClass = (status: string): string => {
   }
 }
 
-const getStatusLabel = (status: string): string => {
-  switch (status) {
-    case 'UNCLAIMED':
-      return '待認領'
-    case 'CLAIMED':
-      return '已認領'
-    case 'IN_PROGRESS':
-      return '進行中'
-    case 'DONE':
-      return '已完成'
-    case 'BLOCKED':
-      return '阻塞'
-    default:
-      return status
-  }
-}
-
 // 來源類型標籤
 const getSourceLabel = (sourceType: string): string => {
   switch (sourceType) {
@@ -134,7 +121,7 @@ const viewTaskDetail = (task: PoolTask): void => {
 
 // 認領任務
 const claimTask = (task: PoolTask): void => {
-  alert(`認領任務: ${task.title}\n（此為原型展示，實際功能待後端實作）`)
+  showSuccess(`已認領任務：${task.title}`)
 }
 
 // 清除篩選

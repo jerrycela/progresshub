@@ -228,9 +228,8 @@ export const useTaskStore = defineStore('tasks', () => {
       }
 
       // Mock: 保存備註（實際會記錄到 ProgressLog）
-      if (notes) {
-        console.log(`任務 ${taskId} 進度更新備註: ${notes}`)
-      }
+      // 備註會在後端實作時記錄到 ProgressLog
+      void notes // 避免 TS 未使用警告
 
       await new Promise(resolve => setTimeout(resolve, 200))
 

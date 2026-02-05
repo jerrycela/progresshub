@@ -3,6 +3,7 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { AppHeader, AppSidebar } from '@/components/layout'
 import Toast from '@/components/common/Toast.vue'
+import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 
 // ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
@@ -54,5 +55,8 @@ watch(() => route.path, () => {
 
     <!-- 全域 Toast 通知 -->
     <Toast />
+
+    <!-- 全域確認對話框 -->
+    <ConfirmDialog />
   </div>
 </template>
