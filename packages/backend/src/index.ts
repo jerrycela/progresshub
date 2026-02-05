@@ -3,11 +3,11 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
-import { sendSuccess } from './middleware/responseFormatter'
 import authRoutes from './routes/auth'
 import taskRoutes from './routes/tasks'
 import ganttRoutes from './routes/gantt'
 import progressRoutes from './routes/progress'
+import healthRoutes from './routes/health'
 
 dotenv.config()
 
@@ -22,14 +22,8 @@ app.use(cors({
 }))
 app.use(express.json())
 
-// Health check
-app.get('/health', (_req, res) => {
-  sendSuccess(res, {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    version: '1.0.0'
-  })
-})
+// Health check routes
+app.use('/health', healthRoutes)
 
 // API Routes
 app.use('/api/auth', authRoutes)
