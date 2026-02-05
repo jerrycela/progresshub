@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import { errorHandler } from './middleware/errorHandler'
 import { sendSuccess } from './middleware/responseFormatter'
 import authRoutes from './routes/auth'
+import taskRoutes from './routes/tasks'
 
 dotenv.config()
 
@@ -30,7 +31,7 @@ app.get('/health', (_req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes)
-// app.use('/api/tasks', taskRoutes)  // TODO: Phase 3
+app.use('/api/tasks', taskRoutes)
 
 // 404 Handler
 app.use((_req, res) => {
