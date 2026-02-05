@@ -7,6 +7,7 @@ import { sendSuccess } from './middleware/responseFormatter'
 import authRoutes from './routes/auth'
 import taskRoutes from './routes/tasks'
 import ganttRoutes from './routes/gantt'
+import progressRoutes from './routes/progress'
 
 dotenv.config()
 
@@ -34,6 +35,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes)
 app.use('/api/tasks', taskRoutes)
 app.use('/api/gantt', ganttRoutes)
+app.use('/api/progress', progressRoutes)
 
 // 404 Handler
 app.use((_req, res) => {
