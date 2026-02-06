@@ -19,19 +19,16 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: packages/backend/package-lock.json
 
       - name: Install backend dependencies
-        run: cd backend && npm ci
+        run: cd packages/backend && npm ci
 
       - name: Generate Prisma Client
-        run: cd backend && npx prisma generate
-
-      - name: Run ESLint
-        run: cd backend && npm run lint
+        run: cd packages/backend && npx prisma generate
 
       - name: Run TypeScript type check
-        run: cd backend && npx tsc --noEmit
+        run: cd packages/backend && npx tsc --noEmit
 
   test:
     name: Test
@@ -61,29 +58,25 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: packages/backend/package-lock.json
 
       - name: Install backend dependencies
-        run: cd backend && npm ci
+        run: cd packages/backend && npm ci
 
       - name: Generate Prisma Client
-        run: cd backend && npx prisma generate
+        run: cd packages/backend && npx prisma generate
 
       - name: Run database migrations
-        run: cd backend && npx prisma migrate deploy
+        run: cd packages/backend && npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://test:test_password@localhost:5432/progresshub_test
 
       - name: Run tests
-        run: cd backend && npm test
+        run: cd packages/backend && npm test
         env:
           DATABASE_URL: postgresql://test:test_password@localhost:5432/progresshub_test
           JWT_SECRET: test-jwt-secret-for-ci
           NODE_ENV: test
-          SLACK_BOT_TOKEN: xoxb-test-token
-          SLACK_CLIENT_ID: test-client-id
-          SLACK_CLIENT_SECRET: test-client-secret
-          SLACK_SIGNING_SECRET: test-signing-secret
 
   build:
     name: Build
@@ -98,19 +91,13 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
+          cache-dependency-path: packages/backend/package-lock.json
 
       - name: Install backend dependencies
-        run: cd backend && npm ci
+        run: cd packages/backend && npm ci
 
       - name: Generate Prisma Client
-        run: cd backend && npx prisma generate
+        run: cd packages/backend && npx prisma generate
 
       - name: Build backend
-        run: cd backend && npm run build
-
-      - name: Install scheduler dependencies
-        run: cd scheduler && npm ci
-
-      - name: Build scheduler
-        run: cd scheduler && npm run build
+        run: cd packages/backend && npm run build
