@@ -141,7 +141,7 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
       <!-- 截止日期（改進：顯示完整日期和逾期天數） -->
       <div class="flex items-center justify-between text-sm">
         <span style="color: var(--text-tertiary);">截止日期</span>
-        <span :class="[isOverdue ? 'text-danger font-medium' : '']" :style="isOverdue ? '' : 'color: var(--text-secondary);'">
+        <span :class="[isOverdue ? 'text-danger font-medium' : '']" :style="isOverdue ? undefined : 'color: var(--text-secondary);'">
           {{ formatDate(task.dueDate) }}
           <span v-if="isOverdue" class="ml-1">(逾期 {{ overdueDays }} 天)</span>
         </span>

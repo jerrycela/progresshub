@@ -233,10 +233,10 @@ const handleCancel = (): void => {
               :class="[
                 'px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer',
                 functionTags.includes(tag.value)
-                  ? 'bg-[var(--accent-primary)] text-white'
+                  ? 'bg-[var(--accent-primary)]'
                   : 'bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80'
               ]"
-              :style="{ color: functionTags.includes(tag.value) ? '' : 'var(--text-secondary)' }"
+              :style="{ color: functionTags.includes(tag.value) ? '#FFFFFF' : 'var(--text-secondary)' }"
               @click="toggleFunctionTag(tag.value)"
             >
               {{ tag.label }}
@@ -301,7 +301,7 @@ const handleCancel = (): void => {
                   ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                   : 'bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80'
               ]"
-              :style="{ color: collaboratorIds.includes(emp.id) ? '' : 'var(--text-secondary)' }"
+              :style="{ color: collaboratorIds.includes(emp.id) ? undefined : 'var(--text-secondary)' }"
               @click="toggleCollaborator(emp.id)"
             >
               <svg v-if="collaboratorIds.includes(emp.id)" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

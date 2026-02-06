@@ -32,6 +32,7 @@
 
   /* 強調色 - 品牌靛藍 */
   --accent: #4F46E5;
+  --accent-primary: #4F46E5;
   --accent-hover: #4338CA;
   --accent-light: rgba(79, 70, 229, 0.1);
 
@@ -69,6 +70,7 @@
   --border-secondary: #525252;
 
   --accent: #818CF8;
+  --accent-primary: #818CF8;
   --accent-hover: #A5B4FC;
   --accent-light: rgba(129, 140, 248, 0.15);
 

@@ -579,7 +579,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
               ? 'bg-red-500 text-white'
               : 'bg-[var(--bg-tertiary)] hover:bg-red-100 dark:hover:bg-red-900/30'
           ]"
-          :style="{ color: showOverdueOnly ? '' : 'var(--text-secondary)' }"
+          :style="{ color: showOverdueOnly ? undefined : 'var(--text-secondary)' }"
           @click="showOverdueOnly = !showOverdueOnly"
         >
           只看逾期
@@ -591,7 +591,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
               ? 'bg-blue-500 text-white'
               : 'bg-[var(--bg-tertiary)] hover:bg-blue-100 dark:hover:bg-blue-900/30'
           ]"
-          :style="{ color: groupByProject ? '' : 'var(--text-secondary)' }"
+          :style="{ color: groupByProject ? undefined : 'var(--text-secondary)' }"
           @click="groupByProject = !groupByProject"
         >
           按專案分組
