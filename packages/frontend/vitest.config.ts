@@ -17,16 +17,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: [
-        'src/composables/**',
-        'src/stores/**',
-        'src/constants/**',
-        'src/utils/**',
-      ],
-      exclude: [
-        'src/**/__tests__/**',
-        'src/**/index.ts',
-      ],
+      include: ['src/composables/**', 'src/stores/**', 'src/constants/**', 'src/utils/**'],
+      exclude: ['src/**/__tests__/**', 'src/**/index.ts'],
       thresholds: {
         'src/composables/**': {
           statements: 60,

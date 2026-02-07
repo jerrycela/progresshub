@@ -31,11 +31,7 @@ const emit = defineEmits<{
     </div>
 
     <!-- 已關聯 Issue -->
-    <div
-      v-if="gitlabIssue"
-      class="rounded-lg p-4"
-      style="background-color: var(--bg-secondary)"
-    >
+    <div v-if="gitlabIssue" class="rounded-lg p-4" style="background-color: var(--bg-secondary)">
       <div class="flex items-start justify-between gap-3">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 mb-1">
@@ -72,11 +68,7 @@ const emit = defineEmits<{
     </div>
 
     <!-- 尚未關聯 -->
-    <div
-      v-else
-      class="rounded-lg p-4 text-center"
-      style="background-color: var(--bg-secondary)"
-    >
+    <div v-else class="rounded-lg p-4 text-center" style="background-color: var(--bg-secondary)">
       <svg
         class="w-10 h-10 mx-auto mb-2"
         style="color: var(--text-muted)"
@@ -92,9 +84,7 @@ const emit = defineEmits<{
         />
       </svg>
       <p class="text-sm mb-3" style="color: var(--text-secondary)">尚未關聯 GitLab Issue</p>
-      <button class="btn-secondary text-sm" @click="emit('link')">
-        關聯 Issue
-      </button>
+      <button class="btn-secondary text-sm" @click="emit('link')">關聯 Issue</button>
     </div>
   </div>
 </template>
