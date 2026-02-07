@@ -1,8 +1,8 @@
-import { Router, Response } from 'express';
-import { body, param, query, validationResult } from 'express-validator';
-import { projectService } from '../services/projectService';
-import { authenticate, authorize, AuthRequest } from '../middleware/auth';
-import { PermissionLevel } from '@prisma/client';
+import { Router, Response } from "express";
+import { body, param, query, validationResult } from "express-validator";
+import { projectService } from "../services/projectService";
+import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { PermissionLevel, ProjectStatus } from "@prisma/client";
 
 const router = Router();
 
@@ -14,12 +14,12 @@ router.use(authenticate);
  * 取得專案列表
  */
 router.get(
-  '/',
+  "/",
   [
-    query('page').optional().isInt({ min: 1 }).toInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
-    query('status').optional().isIn(['ACTIVE', 'COMPLETED', 'PAUSED']),
-    query('search').optional().isString().trim(),
+    query("page").optional().isInt({ min: 1 }).toInt(),
+    query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
+    query("status").optional().isIn(["ACTIVE", "COMPLETED", "PAUSED"]),
+    query("search").optional().isString().trim(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -32,7 +32,8 @@ router.get(
       const result = await projectService.getProjects({
         page: req.query.page as unknown as number,
         limit: req.query.limit as unknown as number,
-        status: req.query.status as any,
+        // express-validator 已驗證 status 為合法的 ProjectStatus 值
+        status: req.query.status as string as ProjectStatus,
         search: req.query.search as string,
       });
 
@@ -46,10 +47,10 @@ router.get(
         },
       });
     } catch (error) {
-      console.error('Get projects error:', error);
-      res.status(500).json({ error: 'Failed to get projects' });
+      console.error("Get projects error:", error);
+      res.status(500).json({ error: "Failed to get projects" });
     }
-  }
+  },
 );
 
 /**
@@ -57,8 +58,8 @@ router.get(
  * 取得單一專案
  */
 router.get(
-  '/:id',
-  [param('id').isUUID().withMessage('Invalid project ID')],
+  "/:id",
+  [param("id").isUUID().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -69,15 +70,15 @@ router.get(
     try {
       const project = await projectService.getProjectById(req.params.id);
       if (!project) {
-        res.status(404).json({ error: 'Project not found' });
+        res.status(404).json({ error: "Project not found" });
         return;
       }
       res.json(project);
     } catch (error) {
-      console.error('Get project error:', error);
-      res.status(500).json({ error: 'Failed to get project' });
+      console.error("Get project error:", error);
+      res.status(500).json({ error: "Failed to get project" });
     }
-  }
+  },
 );
 
 /**
@@ -85,8 +86,8 @@ router.get(
  * 取得專案統計資訊
  */
 router.get(
-  '/:id/stats',
-  [param('id').isUUID().withMessage('Invalid project ID')],
+  "/:id/stats",
+  [param("id").isUUID().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -98,10 +99,10 @@ router.get(
       const stats = await projectService.getProjectStats(req.params.id);
       res.json(stats);
     } catch (error) {
-      console.error('Get project stats error:', error);
-      res.status(500).json({ error: 'Failed to get project stats' });
+      console.error("Get project stats error:", error);
+      res.status(500).json({ error: "Failed to get project stats" });
     }
-  }
+  },
 );
 
 /**
@@ -109,8 +110,8 @@ router.get(
  * 取得甘特圖資料
  */
 router.get(
-  '/:id/gantt',
-  [param('id').isUUID().withMessage('Invalid project ID')],
+  "/:id/gantt",
+  [param("id").isUUID().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -122,10 +123,10 @@ router.get(
       const ganttData = await projectService.getGanttData(req.params.id);
       res.json(ganttData);
     } catch (error) {
-      console.error('Get gantt data error:', error);
-      res.status(500).json({ error: 'Failed to get gantt data' });
+      console.error("Get gantt data error:", error);
+      res.status(500).json({ error: "Failed to get gantt data" });
     }
-  }
+  },
 );
 
 /**
@@ -133,13 +134,17 @@ router.get(
  * 建立專案（PM 和 Admin）
  */
 router.post(
-  '/',
+  "/",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    body('name').isString().trim().isLength({ min: 1, max: 200 }).withMessage('Name is required (max 200 chars)'),
-    body('description').optional().isString().trim(),
-    body('startDate').isISO8601().withMessage('Valid start date is required'),
-    body('endDate').isISO8601().withMessage('Valid end date is required'),
+    body("name")
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 200 })
+      .withMessage("Name is required (max 200 chars)"),
+    body("description").optional().isString().trim(),
+    body("startDate").isISO8601().withMessage("Valid start date is required"),
+    body("endDate").isISO8601().withMessage("Valid end date is required"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -151,17 +156,17 @@ router.post(
     try {
       // 驗證結束日期必須在開始日期之後
       if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
-        res.status(400).json({ error: 'End date must be after start date' });
+        res.status(400).json({ error: "End date must be after start date" });
         return;
       }
 
       const project = await projectService.createProject(req.body);
       res.status(201).json(project);
     } catch (error) {
-      console.error('Create project error:', error);
-      res.status(500).json({ error: 'Failed to create project' });
+      console.error("Create project error:", error);
+      res.status(500).json({ error: "Failed to create project" });
     }
-  }
+  },
 );
 
 /**
@@ -169,15 +174,15 @@ router.post(
  * 更新專案（PM 和 Admin）
  */
 router.put(
-  '/:id',
+  "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    param('id').isUUID().withMessage('Invalid project ID'),
-    body('name').optional().isString().trim().isLength({ min: 1, max: 200 }),
-    body('description').optional().isString().trim(),
-    body('startDate').optional().isISO8601(),
-    body('endDate').optional().isISO8601(),
-    body('status').optional().isIn(['ACTIVE', 'COMPLETED', 'PAUSED']),
+    param("id").isUUID().withMessage("Invalid project ID"),
+    body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
+    body("description").optional().isString().trim(),
+    body("startDate").optional().isISO8601(),
+    body("endDate").optional().isISO8601(),
+    body("status").optional().isIn(["ACTIVE", "COMPLETED", "PAUSED"]),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -189,26 +194,33 @@ router.put(
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: 'Project not found' });
+        res.status(404).json({ error: "Project not found" });
         return;
       }
 
       // 驗證日期（如果有更新）
-      const startDate = req.body.startDate ? new Date(req.body.startDate) : existing.startDate;
-      const endDate = req.body.endDate ? new Date(req.body.endDate) : existing.endDate;
+      const startDate = req.body.startDate
+        ? new Date(req.body.startDate)
+        : existing.startDate;
+      const endDate = req.body.endDate
+        ? new Date(req.body.endDate)
+        : existing.endDate;
 
       if (endDate <= startDate) {
-        res.status(400).json({ error: 'End date must be after start date' });
+        res.status(400).json({ error: "End date must be after start date" });
         return;
       }
 
-      const project = await projectService.updateProject(req.params.id, req.body);
+      const project = await projectService.updateProject(
+        req.params.id,
+        req.body,
+      );
       res.json(project);
     } catch (error) {
-      console.error('Update project error:', error);
-      res.status(500).json({ error: 'Failed to update project' });
+      console.error("Update project error:", error);
+      res.status(500).json({ error: "Failed to update project" });
     }
-  }
+  },
 );
 
 /**
@@ -216,9 +228,9 @@ router.put(
  * 刪除專案（僅 Admin）
  */
 router.delete(
-  '/:id',
+  "/:id",
   authorize(PermissionLevel.ADMIN),
-  [param('id').isUUID().withMessage('Invalid project ID')],
+  [param("id").isUUID().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -229,17 +241,17 @@ router.delete(
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: 'Project not found' });
+        res.status(404).json({ error: "Project not found" });
         return;
       }
 
       await projectService.deleteProject(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error('Delete project error:', error);
-      res.status(500).json({ error: 'Failed to delete project' });
+      console.error("Delete project error:", error);
+      res.status(500).json({ error: "Failed to delete project" });
     }
-  }
+  },
 );
 
 export default router;

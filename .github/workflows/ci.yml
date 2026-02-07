@@ -26,8 +26,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm --filter frontend exec eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx
+      - name: ESLint 檢查
+        run: pnpm --filter frontend exec eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx --max-warnings 0
+
+      - name: Prettier 格式檢查
+        run: pnpm --filter frontend exec prettier --check "src/**/*.{ts,vue,css,json}"
 
       - name: Type check
         run: pnpm --filter frontend exec vue-tsc --noEmit
