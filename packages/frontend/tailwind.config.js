@@ -2,10 +2,7 @@
 // ProgressHub 設計系統
 // 核心主題：以黑、白、金屬灰為主體，靛藍為品牌色
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{vue,js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   darkMode: 'class', // 使用 class 控制 dark mode
   theme: {
     extend: {
@@ -17,7 +14,7 @@ export default {
         // 核心強調色 - 品牌靛藍
         indigo: {
           DEFAULT: '#4F46E5',
-          light: '#818CF8',   // Dark mode 用
+          light: '#818CF8', // Dark mode 用
           dark: '#4338CA',
         },
 
@@ -37,21 +34,21 @@ export default {
 
         // 基底背景色
         metal: {
-          white: '#FFFFFF',     // 明亮白 - 主體背景
-          pearl: '#F9FAFB',     // 珍珠灰 - 卡片背景、側邊欄
-          light: '#F3F4F6',     // 淺金屬灰 - 裝飾性漸層
-          silver: '#E5E7EB',    // 金屬銀灰 - 邊框線
-          mist: '#D1D5DB',      // 霧銀灰 - 細微裝飾
-          obsidian: '#1A1A1A',  // 曜石黑 - Dark mode 背景
+          white: '#FFFFFF', // 明亮白 - 主體背景
+          pearl: '#F9FAFB', // 珍珠灰 - 卡片背景、側邊欄
+          light: '#F3F4F6', // 淺金屬灰 - 裝飾性漸層
+          silver: '#E5E7EB', // 金屬銀灰 - 邊框線
+          mist: '#D1D5DB', // 霧銀灰 - 細微裝飾
+          obsidian: '#1A1A1A', // 曜石黑 - Dark mode 背景
         },
 
         // 文字色彩
         ink: {
-          deep: '#000000',      // 深黑 - 主標題
-          carbon: '#1A1A1A',    // 碳黑 - 次級標題
-          cool: '#4B5563',      // 冷灰 - 內文
-          medium: '#6B7280',    // 中灰 - 副標題
-          muted: '#9CA3AF',     // 淺灰 - 頁碼、標籤
+          deep: '#000000', // 深黑 - 主標題
+          carbon: '#1A1A1A', // 碳黑 - 次級標題
+          cool: '#4B5563', // 冷灰 - 內文
+          medium: '#6B7280', // 中灰 - 副標題
+          muted: '#9CA3AF', // 淺灰 - 頁碼、標籤
         },
 
         // 語意色彩
@@ -84,24 +81,24 @@ export default {
 
       boxShadow: {
         // 精品金屬質感 - 極淡陰影
-        'soft': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
-        'elevated': '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
+        soft: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
+        card: '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+        elevated: '0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05)',
         // Dark mode 陰影
         'dark-soft': '0 1px 3px 0 rgba(0, 0, 0, 0.3)',
         'dark-card': '0 1px 3px 0 rgba(0, 0, 0, 0.4)',
       },
 
       borderRadius: {
-        'sm': '4px',
-        'DEFAULT': '6px',
-        'md': '8px',
-        'lg': '12px',
+        sm: '4px',
+        DEFAULT: '6px',
+        md: '8px',
+        lg: '12px',
       },
 
       transitionDuration: {
-        '150': '150ms',
-        '200': '200ms',
+        150: '150ms',
+        200: '200ms',
       },
 
       animation: {
