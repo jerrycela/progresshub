@@ -287,6 +287,69 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
+// GitLab Issue
+// ============================================
+export interface GitLabIssue {
+  id: number
+  title: string
+  url: string
+  state: 'opened' | 'closed'
+}
+
+// ============================================
+// Pool Task（任務池擴展任務）
+// ============================================
+export interface PoolTask extends Task {
+  sourceType: TaskSourceType
+  createdBy: { id: string; name: string; userRole?: UserRole }
+  department?: Department
+  canEdit: boolean
+  canDelete: boolean
+  collaboratorNames?: string[]
+  gitlabIssue?: GitLabIssue
+}
+
+// ============================================
+// 任務註記
+// ============================================
+export interface TaskNote {
+  id: string
+  taskId: string
+  content: string
+  authorId: string
+  authorName: string
+  authorRole: UserRole
+  createdAt: string
+}
+
+// ============================================
+// 里程碑資料（前端擴展）
+// ============================================
+export interface MilestoneData {
+  id: string
+  projectId: string
+  name: string
+  description?: string
+  date: string
+  color?: string
+  createdById: string
+  createdByName: string
+  createdAt: string
+}
+
+// ============================================
+// Mock 員工（前端 mock 用）
+// ============================================
+export interface MockEmployee {
+  id: string
+  name: string
+  email: string
+  department: Department
+  userRole: UserRole
+  avatar?: string
+}
+
+// ============================================
 // Dashboard 統計
 // ============================================
 export interface DashboardStats {

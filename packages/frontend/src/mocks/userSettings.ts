@@ -30,15 +30,8 @@ export const mockCurrentUserSettings: UserSettings = {
   gitlabUsername: undefined,
 }
 
-// 部門名稱對照
-export const departmentLabels: Record<Department, string> = {
-  ART: '美術部',
-  PROGRAMMING: '程式部',
-  PLANNING: '企劃部',
-  QA: '品管部',
-  SOUND: '音效部',
-  MANAGEMENT: '管理部',
-}
+// 部門名稱對照（從 constants/labels.ts re-export）
+export { departmentLabels } from '@/constants/labels'
 
 // 模擬更新使用者設定
 export function updateUserSettings(updates: Partial<UserSettings>): UserSettings {
