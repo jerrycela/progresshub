@@ -74,3 +74,7 @@ openclawfortest/
 
 # Docker
 *.pid
+
+# Playwright
+playwright-report/
+test-results/

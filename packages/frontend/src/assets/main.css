@@ -15,74 +15,74 @@
    ============================================ */
 :root {
   /* 背景色 */
-  --bg-primary: #FFFFFF;
-  --bg-secondary: #F9FAFB;
-  --bg-tertiary: #F3F4F6;
-  --bg-hover: #F3F4F6;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --bg-hover: #f3f4f6;
 
   /* 文字色 */
-  --text-primary: #1A1A1A;
-  --text-secondary: #4B5563;
-  --text-tertiary: #6B7280;
-  --text-muted: #9CA3AF;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
 
   /* 邊框色 */
-  --border-primary: #E5E7EB;
-  --border-secondary: #D1D5DB;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
 
   /* 強調色 - 品牌靛藍 */
-  --accent: #4F46E5;
-  --accent-primary: #4F46E5;
-  --accent-hover: #4338CA;
+  --accent: #4f46e5;
+  --accent-primary: #4f46e5;
+  --accent-hover: #4338ca;
   --accent-light: rgba(79, 70, 229, 0.1);
 
   /* 主要色 - 藍色 */
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
   --primary-light: rgba(37, 99, 235, 0.1);
 
   /* 側邊欄 */
-  --sidebar-bg: #F9FAFB;
-  --sidebar-hover: #F3F4F6;
-  --sidebar-active: #E5E7EB;
-  --sidebar-text: #4B5563;
-  --sidebar-text-active: #1A1A1A;
+  --sidebar-bg: #f9fafb;
+  --sidebar-hover: #f3f4f6;
+  --sidebar-active: #e5e7eb;
+  --sidebar-text: #4b5563;
+  --sidebar-text-active: #1a1a1a;
 
   /* 卡片 */
-  --card-bg: #FFFFFF;
-  --card-border: #E5E7EB;
+  --card-bg: #ffffff;
+  --card-border: #e5e7eb;
   --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
 }
 
 /* Dark Mode */
 .dark {
-  --bg-primary: #1A1A1A;
+  --bg-primary: #1a1a1a;
   --bg-secondary: #262626;
   --bg-tertiary: #303030;
   --bg-hover: #363636;
 
-  --text-primary: #F9FAFB;
-  --text-secondary: #D1D5DB;
-  --text-tertiary: #9CA3AF;
-  --text-muted: #6B7280;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --text-muted: #6b7280;
 
   --border-primary: #404040;
   --border-secondary: #525252;
 
-  --accent: #818CF8;
-  --accent-primary: #818CF8;
-  --accent-hover: #A5B4FC;
+  --accent: #818cf8;
+  --accent-primary: #818cf8;
+  --accent-hover: #a5b4fc;
   --accent-light: rgba(129, 140, 248, 0.15);
 
-  --primary: #60A5FA;
-  --primary-hover: #93C5FD;
+  --primary: #60a5fa;
+  --primary-hover: #93c5fd;
   --primary-light: rgba(96, 165, 250, 0.15);
 
   --sidebar-bg: #262626;
   --sidebar-hover: #303030;
   --sidebar-active: #404040;
-  --sidebar-text: #9CA3AF;
-  --sidebar-text-active: #F9FAFB;
+  --sidebar-text: #9ca3af;
+  --sidebar-text-active: #f9fafb;
 
   --card-bg: #262626;
   --card-border: #404040;
@@ -99,10 +99,16 @@ html {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 }
 
 /* ============================================
@@ -410,7 +416,9 @@ body {
     border-radius: 8px;
     box-shadow: var(--card-shadow);
     padding: 1.5rem;
-    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    transition:
+      box-shadow 0.15s ease,
+      border-color 0.15s ease;
   }
 
   .card:hover {
@@ -539,6 +547,25 @@ body {
 
   .bg-accent {
     background-color: var(--accent);
+  }
+
+  /* 背景色 - 主要背景 */
+  .bg-page-primary {
+    background-color: var(--bg-primary);
+  }
+
+  .bg-surface-secondary {
+    background-color: var(--bg-secondary);
+  }
+
+  /* 強調色（文字） */
+  .text-accent-primary {
+    color: var(--accent-primary);
+  }
+
+  /* 邊框色 */
+  .border-theme {
+    border-color: var(--border-primary);
   }
 
   .hover-bg {

@@ -87,10 +87,8 @@ const handleUnlinkSlack = async (): Promise<void> => {
   <div class="space-y-6">
     <!-- 頁面說明 -->
     <div class="card p-6">
-      <h2 class="text-lg font-semibold mb-2" style="color: var(--text-primary)">整合設定</h2>
-      <p style="color: var(--text-secondary)">
-        連結您的第三方帳號，以便在 ProgressHub 中接收通知和同步資訊。
-      </p>
+      <h2 class="text-lg font-semibold mb-2 text-primary">整合設定</h2>
+      <p class="text-secondary">連結您的第三方帳號，以便在 ProgressHub 中接收通知和同步資訊。</p>
     </div>
 
     <!-- Slack 整合 -->
@@ -99,8 +97,7 @@ const handleUnlinkSlack = async (): Promise<void> => {
         <div class="flex items-start gap-4">
           <!-- Slack 圖示 -->
           <div
-            class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-            style="background-color: #4a154b"
+            class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#4a154b]"
           >
             <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path
@@ -110,16 +107,13 @@ const handleUnlinkSlack = async (): Promise<void> => {
           </div>
 
           <div>
-            <h3 class="text-base font-semibold" style="color: var(--text-primary)">Slack</h3>
-            <p class="text-sm mt-1" style="color: var(--text-secondary)">
-              連結 Slack 帳號以接收任務通知和進度提醒
-            </p>
+            <h3 class="text-base font-semibold text-primary">Slack</h3>
+            <p class="text-sm mt-1 text-secondary">連結 Slack 帳號以接收任務通知和進度提醒</p>
 
             <!-- 連結狀態 -->
             <div v-if="user.slackId" class="flex items-center gap-2 mt-3">
               <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                style="background-color: rgba(34, 197, 94, 0.1); color: #22c55e"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500"
               >
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -130,14 +124,13 @@ const handleUnlinkSlack = async (): Promise<void> => {
                 </svg>
                 已連結
               </span>
-              <span class="text-sm" style="color: var(--text-primary)">
+              <span class="text-sm text-primary">
                 {{ user.slackUsername }}
               </span>
             </div>
             <div v-else class="mt-3">
               <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                style="background-color: var(--bg-tertiary); color: var(--text-muted)"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-elevated text-muted"
               >
                 尚未連結
               </span>
@@ -165,8 +158,7 @@ const handleUnlinkSlack = async (): Promise<void> => {
         <div class="flex items-start gap-4">
           <!-- GitLab 圖示 -->
           <div
-            class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-            style="background-color: #fc6d26"
+            class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#fc6d26]"
           >
             <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
               <path
@@ -176,16 +168,13 @@ const handleUnlinkSlack = async (): Promise<void> => {
           </div>
 
           <div>
-            <h3 class="text-base font-semibold" style="color: var(--text-primary)">GitLab</h3>
-            <p class="text-sm mt-1" style="color: var(--text-secondary)">
-              連結 GitLab 帳號以在任務中關聯 Issue
-            </p>
+            <h3 class="text-base font-semibold text-primary">GitLab</h3>
+            <p class="text-sm mt-1 text-secondary">連結 GitLab 帳號以在任務中關聯 Issue</p>
 
             <!-- 連結狀態 -->
             <div v-if="user.gitlabId" class="flex items-center gap-2 mt-3">
               <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                style="background-color: rgba(34, 197, 94, 0.1); color: #22c55e"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-500"
               >
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path
@@ -196,14 +185,13 @@ const handleUnlinkSlack = async (): Promise<void> => {
                 </svg>
                 已連結
               </span>
-              <span class="text-sm" style="color: var(--text-primary)">
+              <span class="text-sm text-primary">
                 {{ user.gitlabUsername }}
               </span>
             </div>
             <div v-else class="mt-3">
               <span
-                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium"
-                style="background-color: var(--bg-tertiary); color: var(--text-muted)"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-elevated text-muted"
               >
                 尚未連結
               </span>
@@ -228,28 +216,19 @@ const handleUnlinkSlack = async (): Promise<void> => {
     <!-- 連結 Slack Modal -->
     <div v-if="showLinkSlackModal" class="fixed inset-0 z-50 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="showLinkSlackModal = false"></div>
-      <div
-        class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
-        style="background-color: var(--bg-primary)"
-      >
-        <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary)">
-          連結 Slack 帳號
-        </h3>
+      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4 bg-page-primary">
+        <h3 class="text-lg font-semibold mb-4 text-primary">連結 Slack 帳號</h3>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
-              Slack 使用者名稱
-            </label>
+            <label class="block text-sm font-medium mb-2 text-secondary"> Slack 使用者名稱 </label>
             <input
               v-model="slackUsername"
               type="text"
               class="input-field w-full"
               placeholder="例如：@john.doe"
             />
-            <p class="mt-2 text-xs" style="color: var(--text-muted)">
-              請輸入您在 Slack 上的使用者名稱（包含 @）
-            </p>
+            <p class="mt-2 text-xs text-muted">請輸入您在 Slack 上的使用者名稱（包含 @）</p>
           </div>
         </div>
 
@@ -263,28 +242,19 @@ const handleUnlinkSlack = async (): Promise<void> => {
     <!-- 連結 GitLab Modal -->
     <div v-if="showLinkGitLabModal" class="fixed inset-0 z-50 flex items-center justify-center">
       <div class="absolute inset-0 bg-black/50" @click="showLinkGitLabModal = false"></div>
-      <div
-        class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
-        style="background-color: var(--bg-primary)"
-      >
-        <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary)">
-          連結 GitLab 帳號
-        </h3>
+      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4 bg-page-primary">
+        <h3 class="text-lg font-semibold mb-4 text-primary">連結 GitLab 帳號</h3>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
-              GitLab 使用者名稱
-            </label>
+            <label class="block text-sm font-medium mb-2 text-secondary"> GitLab 使用者名稱 </label>
             <input
               v-model="gitlabUsername"
               type="text"
               class="input-field w-full"
               placeholder="例如：john.doe"
             />
-            <p class="mt-2 text-xs" style="color: var(--text-muted)">
-              請輸入您在 GitLab 上的使用者名稱
-            </p>
+            <p class="mt-2 text-xs text-muted">請輸入您在 GitLab 上的使用者名稱</p>
           </div>
         </div>
 
@@ -296,24 +266,3 @@ const handleUnlinkSlack = async (): Promise<void> => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.btn-danger-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 0.5rem;
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  background-color: transparent;
-  transition: all 150ms ease;
-  cursor: pointer;
-}
-
-.btn-danger-outline:hover {
-  background-color: rgba(239, 68, 68, 0.1);
-}
-</style>
