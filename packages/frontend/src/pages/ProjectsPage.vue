@@ -45,10 +45,11 @@ const getProjectOwner = (createdById: string) =>
   employeeStore.getEmployeeName(createdById) || '未知'
 
 // 專案狀態徽章樣式
+// 專案狀態徽章樣式（與 Prisma schema 一致，使用 PAUSED）
 const statusBadgeVariant = (status: string) => {
   const variants: Record<string, 'success' | 'warning' | 'default'> = {
     ACTIVE: 'success',
-    ON_HOLD: 'warning',
+    PAUSED: 'warning',
     COMPLETED: 'default',
   }
   return variants[status] || 'default'
@@ -56,14 +57,14 @@ const statusBadgeVariant = (status: string) => {
 
 const statusLabels: Record<string, string> = {
   ACTIVE: '進行中',
-  ON_HOLD: '暫停',
+  PAUSED: '暫停',
   COMPLETED: '已完成',
 }
 
-// 專案狀態選項（迭代 27）
+// 專案狀態選項（迭代 27，與 Prisma schema 一致）
 const projectStatusOptions = computed(() => [
   { value: 'ACTIVE', label: '進行中' },
-  { value: 'ON_HOLD', label: '暫停' },
+  { value: 'PAUSED', label: '暫停' },
   { value: 'COMPLETED', label: '已完成' },
 ])
 

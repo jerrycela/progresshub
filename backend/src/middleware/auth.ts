@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { env } from '../config/env';
-import prisma from '../config/database';
-import { PermissionLevel } from '@prisma/client';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { env } from "../config/env";
+import prisma from "../config/database";
+import { PermissionLevel } from "@prisma/client";
+import { sendError } from "../utils/response";
 
 export interface JwtPayload {
   userId: string;
@@ -21,13 +22,13 @@ export interface AuthRequest extends Request {
 export const authenticate = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({ error: 'No token provided' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      sendError(res, "AUTH_REQUIRED", "未提供認證 Token", 401);
       return;
     }
 
@@ -41,7 +42,7 @@ export const authenticate = async (
     });
 
     if (!user) {
-      res.status(401).json({ error: 'User not found' });
+      sendError(res, "AUTH_INVALID_TOKEN", "無效的認證 Token", 401);
       return;
     }
 
@@ -54,14 +55,14 @@ export const authenticate = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ error: 'Invalid token' });
+      sendError(res, "AUTH_INVALID_TOKEN", "無效的認證 Token", 401);
       return;
     }
     if (error instanceof jwt.TokenExpiredError) {
-      res.status(401).json({ error: 'Token expired' });
+      sendError(res, "AUTH_EXPIRED", "認證 Token 已過期", 401);
       return;
     }
-    res.status(500).json({ error: 'Authentication failed' });
+    sendError(res, "AUTH_REQUIRED", "認證失敗", 500);
   }
 };
 
@@ -72,12 +73,12 @@ export const authenticate = async (
 export const authorize = (...allowedRoles: PermissionLevel[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({ error: 'Not authenticated' });
+      sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
       return;
     }
 
     if (!allowedRoles.includes(req.user.permissionLevel)) {
-      res.status(403).json({ error: 'Insufficient permissions' });
+      sendError(res, "AUTH_FORBIDDEN", "權限不足", 403);
       return;
     }
 

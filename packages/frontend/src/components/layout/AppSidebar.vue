@@ -30,7 +30,7 @@ interface MenuItem {
   name: string
   path: string
   icon: string
-  roles?: ('MEMBER' | 'PM' | 'ADMIN')[]
+  roles?: ('EMPLOYEE' | 'PM' | 'PRODUCER' | 'MANAGER' | 'ADMIN')[]
 }
 
 const menuItems: MenuItem[] = [

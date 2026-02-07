@@ -47,6 +47,13 @@ const roles: RoleDefinition[] = [
     color: 'red',
     icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
   },
+  {
+    id: 'ADMIN',
+    label: '管理員',
+    description: '系統管理員，擁有所有權限',
+    color: 'red',
+    icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
+  },
 ]
 
 // 權限矩陣
@@ -60,77 +67,77 @@ const permissionMatrix: PermissionItem[] = [
   {
     name: '查看任務池',
     description: '瀏覽所有公開的任務池任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '認領任務',
     description: '從任務池認領待處理任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '回報進度',
     description: '更新自己負責的任務進度',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '建立自建任務',
     description: '為自己建立個人任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '建立任務池任務',
     description: '發布任務到任務池供他人認領',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '指派任務',
     description: '將任務直接指派給特定成員',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '編輯他人任務',
     description: '修改其他成員建立或負責的任務',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '刪除任務',
     description: '刪除任務（包含他人任務）',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '查看追殺清單',
     description: '檢視逾期或延遲的任務報表',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '查看職能負載',
     description: '檢視各職能的工作負載分析',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '專案管理',
     description: '建立和管理專案',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: false },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: false, ADMIN: true },
   },
   {
     name: '建立里程碑',
     description: '在專案中建立新的里程碑節點',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '編輯里程碑',
     description: '修改里程碑名稱、日期等資訊',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '刪除里程碑',
     description: '刪除專案中的里程碑',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '員工管理',
     description: '管理員工帳號和權限',
-    permissions: { EMPLOYEE: false, PM: false, PRODUCER: false, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: false, PRODUCER: false, MANAGER: true, ADMIN: true },
   },
 ]
 
@@ -179,12 +186,12 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
     <div>
       <h1 class="text-2xl font-bold" style="color: var(--text-primary)">角色權限</h1>
       <p class="text-sm mt-1" style="color: var(--text-secondary)">
-        系統中的四種角色及其對應權限說明
+        系統中的五種角色及其對應權限說明
       </p>
     </div>
 
     <!-- 角色選擇卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
       <button
         v-for="role in roles"
         :key="role.id"

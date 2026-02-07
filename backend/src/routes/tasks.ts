@@ -3,6 +3,12 @@ import { body, param, query, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel, TaskStatus } from "@prisma/client";
+import logger from "../config/logger";
+import {
+  sendSuccess,
+  sendPaginatedSuccess,
+  sendError,
+} from "../utils/response";
 
 const router = Router();
 
@@ -20,18 +26,28 @@ router.get(
     query("assignedToId").optional().isUUID(),
     query("status")
       .optional()
-      .isIn(["NOT_STARTED", "IN_PROGRESS", "COMPLETED"]),
+      .isIn([
+        "UNCLAIMED",
+        "CLAIMED",
+        "IN_PROGRESS",
+        "PAUSED",
+        "DONE",
+        "BLOCKED",
+      ]),
     query("page").optional().isInt({ min: 1 }).toInt(),
     query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 20;
+
       const result = await taskService.getTasks({
         projectId: req.query.projectId as string,
         assignedToId: req.query.assignedToId as string,
@@ -41,18 +57,14 @@ router.get(
         limit: req.query.limit as unknown as number,
       });
 
-      res.json({
-        data: result.data,
-        pagination: {
-          total: result.total,
-          page: Number(req.query.page) || 1,
-          limit: Number(req.query.limit) || 20,
-          totalPages: Math.ceil(result.total / (Number(req.query.limit) || 20)),
-        },
+      sendPaginatedSuccess(res, result.data, {
+        total: result.total,
+        page,
+        limit,
       });
     } catch (error) {
-      console.error("Get tasks error:", error);
-      res.status(500).json({ error: "Failed to get tasks" });
+      logger.error("Get tasks error:", error);
+      sendError(res, "TASKS_FETCH_FAILED", "Failed to get tasks", 500);
     }
   },
 );
@@ -66,12 +78,19 @@ router.get(
   [
     query("status")
       .optional()
-      .isIn(["NOT_STARTED", "IN_PROGRESS", "COMPLETED"]),
+      .isIn([
+        "UNCLAIMED",
+        "CLAIMED",
+        "IN_PROGRESS",
+        "PAUSED",
+        "DONE",
+        "BLOCKED",
+      ]),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {
-        res.status(401).json({ error: "Not authenticated" });
+        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
         return;
       }
 
@@ -80,10 +99,10 @@ router.get(
         req.user.userId,
         req.query.status as string as TaskStatus,
       );
-      res.json(tasks);
+      sendSuccess(res, tasks);
     } catch (error) {
-      console.error("Get my tasks error:", error);
-      res.status(500).json({ error: "Failed to get tasks" });
+      logger.error("Get my tasks error:", error);
+      sendError(res, "TASKS_FETCH_FAILED", "Failed to get tasks", 500);
     }
   },
 );
@@ -98,20 +117,20 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const task = await taskService.getTaskById(req.params.id);
       if (!task) {
-        res.status(404).json({ error: "Task not found" });
+        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
         return;
       }
-      res.json(task);
+      sendSuccess(res, task);
     } catch (error) {
-      console.error("Get task error:", error);
-      res.status(500).json({ error: "Failed to get task" });
+      logger.error("Get task error:", error);
+      sendError(res, "TASK_FETCH_FAILED", "Failed to get task", 500);
     }
   },
 );
@@ -145,7 +164,7 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
@@ -154,15 +173,20 @@ router.post(
       if (
         new Date(req.body.plannedEndDate) <= new Date(req.body.plannedStartDate)
       ) {
-        res.status(400).json({ error: "End date must be after start date" });
+        sendError(
+          res,
+          "INVALID_DATE_RANGE",
+          "End date must be after start date",
+          400,
+        );
         return;
       }
 
       const task = await taskService.createTask(req.body);
-      res.status(201).json(task);
+      sendSuccess(res, task, 201);
     } catch (error) {
-      console.error("Create task error:", error);
-      res.status(500).json({ error: "Failed to create task" });
+      logger.error("Create task error:", error);
+      sendError(res, "TASK_CREATE_FAILED", "Failed to create task", 500);
     }
   },
 );
@@ -184,29 +208,38 @@ router.put(
     body("actualStartDate").optional().isISO8601(),
     body("actualEndDate").optional().isISO8601(),
     body("progressPercentage").optional().isInt({ min: 0, max: 100 }),
-    body("status").optional().isIn(["NOT_STARTED", "IN_PROGRESS", "COMPLETED"]),
+    body("status")
+      .optional()
+      .isIn([
+        "UNCLAIMED",
+        "CLAIMED",
+        "IN_PROGRESS",
+        "PAUSED",
+        "DONE",
+        "BLOCKED",
+      ]),
     body("dependencies").optional().isArray(),
     body("milestoneId").optional().isUUID(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const existing = await taskService.getTaskById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: "Task not found" });
+        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
         return;
       }
 
       const task = await taskService.updateTask(req.params.id, req.body);
-      res.json(task);
+      sendSuccess(res, task);
     } catch (error) {
-      console.error("Update task error:", error);
-      res.status(500).json({ error: "Failed to update task" });
+      logger.error("Update task error:", error);
+      sendError(res, "TASK_UPDATE_FAILED", "Failed to update task", 500);
     }
   },
 );
@@ -222,22 +255,22 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const existing = await taskService.getTaskById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: "Task not found" });
+        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
         return;
       }
 
       await taskService.deleteTask(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Delete task error:", error);
-      res.status(500).json({ error: "Failed to delete task" });
+      logger.error("Delete task error:", error);
+      sendError(res, "TASK_DELETE_FAILED", "Failed to delete task", 500);
     }
   },
 );

@@ -33,10 +33,10 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
  * 角色標籤對照
  */
 const ROLE_LABELS: Record<string, string> = {
-  MEMBER: '成員',
+  EMPLOYEE: '一般同仁',
   PM: '專案經理',
   PRODUCER: '製作人',
-  MANAGER: '主管',
+  MANAGER: '部門主管',
   ADMIN: '管理員',
 }
 
@@ -44,11 +44,11 @@ const ROLE_LABELS: Record<string, string> = {
  * 角色徽章 CSS 類別對照
  */
 const ROLE_BADGE_CLASSES: Record<string, string> = {
+  EMPLOYEE: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
   PM: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
   PRODUCER: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
   MANAGER: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
   ADMIN: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
-  MEMBER: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
 }
 
 /**
@@ -76,7 +76,7 @@ export const getRoleLabel = (role: UserRole | string): string => {
  * 取得角色徽章 CSS 類別
  */
 export const getRoleBadgeClass = (role: UserRole | string): string => {
-  return ROLE_BADGE_CLASSES[role] || ROLE_BADGE_CLASSES.MEMBER
+  return ROLE_BADGE_CLASSES[role] || ROLE_BADGE_CLASSES.EMPLOYEE
 }
 
 /**

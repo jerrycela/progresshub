@@ -1,20 +1,19 @@
 export * from './api'
+import type { ErrorCode } from './api'
 
 // ============================================
 // ProgressHub 共用類型定義
 // ============================================
 
-// 角色與權限
-export type Role = 'MEMBER' | 'PM' | 'ADMIN'
-
-// 新增：四種使用者角色（任務分配用）
-export type UserRole = 'EMPLOYEE' | 'PM' | 'PRODUCER' | 'MANAGER'
+// 使用者角色（唯一角色型別，與 Prisma PermissionLevel 一致）
+export type UserRole = 'EMPLOYEE' | 'PM' | 'PRODUCER' | 'MANAGER' | 'ADMIN'
 
 export const UserRoleLabels: Record<UserRole, string> = {
   EMPLOYEE: '一般同仁',
   PM: 'PM',
   PRODUCER: '製作人',
   MANAGER: '部門主管',
+  ADMIN: '管理員',
 }
 
 // 任務來源類型
@@ -52,7 +51,8 @@ export type TaskStatus =
   | 'BLOCKED'     // 阻塞
 
 // 專案狀態
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD'
+// 專案狀態（與 Prisma schema 一致，使用 PAUSED 而非 ON_HOLD）
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'PAUSED'
 
 // ============================================
 // 使用者
@@ -64,7 +64,7 @@ export interface User {
   avatar?: string
   slackId?: string
   gitlabId?: string
-  role: Role
+  role: UserRole
   functionType: FunctionType
   isActive?: boolean              // Ralph Loop 迭代 2 新增
   lastActiveAt?: string           // Ralph Loop 迭代 2 新增
@@ -186,27 +186,8 @@ export interface Milestone {
   createdAt: string
 }
 
-// ============================================
-// 錯誤代碼（Ralph Loop 迭代 2 新增）
-// ============================================
-export type ErrorCode =
-  // 認證相關
-  | 'AUTH_LOGIN_FAILED'
-  | 'AUTH_LOGOUT_FAILED'
-  | 'AUTH_UNAUTHORIZED'
-  // 任務相關
-  | 'TASK_NOT_FOUND'
-  | 'TASK_NOT_UNCLAIMED'
-  | 'TASK_ALREADY_CLAIMED'
-  | 'TASK_UPDATE_FAILED'
-  | 'TASK_CREATE_FAILED'
-  // 專案相關
-  | 'PROJECT_NOT_FOUND'
-  // 驗證相關
-  | 'VALIDATION_ERROR'
-  // 通用
-  | 'NETWORK_ERROR'
-  | 'UNKNOWN_ERROR'
+// 錯誤代碼已透過 `export * from './api'` 統一匯出
+// ErrorCode 和 ErrorCodes 的定義在 api.ts
 
 // ============================================
 // 統一操作結果類型（Ralph Loop 迭代 2 新增）

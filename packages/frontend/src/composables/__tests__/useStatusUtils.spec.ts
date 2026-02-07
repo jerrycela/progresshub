@@ -65,10 +65,10 @@ describe('useStatusUtils', () => {
   // ------------------------------------------
   describe('getRoleLabel', () => {
     const expectedLabels: Record<string, string> = {
-      MEMBER: '成員',
+      EMPLOYEE: '一般同仁',
       PM: '專案經理',
       PRODUCER: '製作人',
-      MANAGER: '主管',
+      MANAGER: '部門主管',
       ADMIN: '管理員',
     }
 
@@ -89,7 +89,7 @@ describe('useStatusUtils', () => {
   // getRoleBadgeClass
   // ------------------------------------------
   describe('getRoleBadgeClass', () => {
-    const knownRoles = ['PM', 'PRODUCER', 'MANAGER', 'ADMIN', 'MEMBER']
+    const knownRoles = ['EMPLOYEE', 'PM', 'PRODUCER', 'MANAGER', 'ADMIN']
 
     it.each(knownRoles)('returns a non-empty CSS class string for "%s"', role => {
       const result = getRoleBadgeClass(role)
@@ -108,14 +108,14 @@ describe('useStatusUtils', () => {
       expect(getRoleBadgeClass('ADMIN')).toContain('text-green-700')
     })
 
-    it('falls back to MEMBER class for unknown role', () => {
-      const memberClass = getRoleBadgeClass('MEMBER')
-      expect(getRoleBadgeClass('UNKNOWN_ROLE')).toBe(memberClass)
+    it('falls back to EMPLOYEE class for unknown role', () => {
+      const employeeClass = getRoleBadgeClass('EMPLOYEE')
+      expect(getRoleBadgeClass('UNKNOWN_ROLE')).toBe(employeeClass)
     })
 
-    it('MEMBER fallback class contains gray styling', () => {
-      expect(getRoleBadgeClass('MEMBER')).toContain('bg-gray-100')
-      expect(getRoleBadgeClass('MEMBER')).toContain('text-gray-700')
+    it('EMPLOYEE fallback class contains gray styling', () => {
+      expect(getRoleBadgeClass('EMPLOYEE')).toContain('bg-gray-100')
+      expect(getRoleBadgeClass('EMPLOYEE')).toContain('text-gray-700')
     })
   })
 })

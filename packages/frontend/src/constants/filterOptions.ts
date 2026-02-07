@@ -4,7 +4,7 @@
 // 避免各頁面重複定義相同的選項陣列
 // ============================================
 
-import type { FunctionType, TaskStatus, Role, TaskPriority } from 'shared/types'
+import type { FunctionType, TaskStatus, UserRole, TaskPriority } from 'shared/types'
 
 /**
  * 職能篩選選項
@@ -49,10 +49,12 @@ export const TASK_STATUS_OPTIONS: { value: TaskStatus | 'ALL'; label: string }[]
 /**
  * 角色篩選選項
  */
-export const ROLE_OPTIONS: { value: Role | 'ALL'; label: string }[] = [
+export const ROLE_OPTIONS: { value: UserRole | 'ALL'; label: string }[] = [
   { value: 'ALL', label: '全部角色' },
-  { value: 'MEMBER', label: '成員' },
+  { value: 'EMPLOYEE', label: '一般同仁' },
   { value: 'PM', label: '專案經理' },
+  { value: 'PRODUCER', label: '製作人' },
+  { value: 'MANAGER', label: '部門主管' },
   { value: 'ADMIN', label: '管理員' },
 ]
 

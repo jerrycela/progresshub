@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { Prisma } from "@prisma/client";
 import logger from "../config/logger";
+import { sendError } from "../utils/response";
 
 export class AppError extends Error {
   constructor(
     public statusCode: number,
     public message: string,
+    public errorCode: string = "APP_ERROR",
     public isOperational = true,
   ) {
     super(message);
@@ -40,6 +42,7 @@ export const errorHandler = (
     name: err.name,
     ...(err instanceof AppError && {
       statusCode: err.statusCode,
+      errorCode: err.errorCode,
       isOperational: err.isOperational,
     }),
     ...(err instanceof Prisma.PrismaClientKnownRequestError && {
@@ -50,10 +53,7 @@ export const errorHandler = (
 
   // 處理 AppError（預期的業務錯誤，訊息由我們控制，可安全返回）
   if (err instanceof AppError) {
-    res.status(err.statusCode).json({
-      error: err.message,
-      statusCode: err.statusCode,
-    });
+    sendError(res, err.errorCode, err.message, err.statusCode);
     return;
   }
 
@@ -61,40 +61,30 @@ export const errorHandler = (
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     // 唯一約束衝突
     if (err.code === "P2002") {
-      res.status(409).json({
-        error: "資料重複，該記錄已存在",
-      });
+      sendError(res, "DUPLICATE_ENTRY", "資料重複，該記錄已存在", 409);
       return;
     }
 
     // 記錄不存在
     if (err.code === "P2025") {
-      res.status(404).json({
-        error: "找不到指定的記錄",
-      });
+      sendError(res, "NOT_FOUND", "找不到指定的記錄", 404);
       return;
     }
 
     // 外鍵約束衝突
     if (err.code === "P2003") {
-      res.status(400).json({
-        error: "關聯的記錄參照無效",
-      });
+      sendError(res, "INVALID_REFERENCE", "關聯的記錄參照無效", 400);
       return;
     }
 
     // 其他 Prisma 已知錯誤，返回通用資料庫錯誤訊息
-    res.status(500).json({
-      error: "資料庫操作失敗",
-    });
+    sendError(res, "DATABASE_ERROR", "資料庫操作失敗", 500);
     return;
   }
 
   // 處理 Prisma 驗證錯誤
   if (err instanceof Prisma.PrismaClientValidationError) {
-    res.status(400).json({
-      error: "提供的資料格式無效",
-    });
+    sendError(res, "VALIDATION_ERROR", "提供的資料格式無效", 400);
     return;
   }
 
@@ -103,18 +93,14 @@ export const errorHandler = (
     err instanceof Prisma.PrismaClientInitializationError ||
     err instanceof Prisma.PrismaClientRustPanicError
   ) {
-    res.status(500).json({
-      error: "資料庫操作失敗",
-    });
+    sendError(res, "DATABASE_ERROR", "資料庫操作失敗", 500);
     return;
   }
 
   // 未預期的錯誤：生產環境返回通用訊息，開發環境返回錯誤訊息（不含 stack trace）
   const clientMessage = isDevelopment() ? err.message : "伺服器內部錯誤";
 
-  res.status(500).json({
-    error: clientMessage,
-  });
+  sendError(res, "INTERNAL_ERROR", clientMessage, 500);
 };
 
 /**
@@ -123,7 +109,5 @@ export const errorHandler = (
  * 安全原則：不返回請求路徑，避免洩露路由結構
  */
 export const notFoundHandler = (_req: Request, res: Response): void => {
-  res.status(404).json({
-    error: "找不到請求的路由",
-  });
+  sendError(res, "ROUTE_NOT_FOUND", "找不到請求的路由", 404);
 };

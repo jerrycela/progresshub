@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 // Mock prisma
@@ -41,7 +41,8 @@ describe('Auth Middleware', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(401);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'No token provided',
+        success: false,
+        error: { code: 'AUTH_REQUIRED', message: '未提供認證 Token' },
       });
       expect(nextFunction).not.toHaveBeenCalled();
     });
@@ -116,7 +117,8 @@ describe('Auth Middleware', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(401);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'User not found',
+        success: false,
+        error: { code: 'AUTH_INVALID_TOKEN', message: '無效的認證 Token' },
       });
     });
   });
@@ -139,7 +141,8 @@ describe('Auth Middleware', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(403);
       expect(mockResponse.json).toHaveBeenCalledWith({
-        error: 'Insufficient permissions',
+        success: false,
+        error: { code: 'AUTH_FORBIDDEN', message: '權限不足' },
       });
     });
 

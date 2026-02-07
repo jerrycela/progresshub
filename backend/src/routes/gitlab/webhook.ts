@@ -1,9 +1,14 @@
-import { Router, Request, Response } from 'express';
-import prisma from '../../config/database';
-import { gitLabInstanceService } from '../../services/gitlab';
-import { verifyWebhookSignature } from '../../utils/gitlab/webhookVerifier';
-import { GitLabPushEvent, GitLabMergeRequestEvent, GitLabIssueEvent } from '../../types/gitlab';
-import { GitLabActivityType } from '@prisma/client';
+import { Router, Request, Response } from "express";
+import prisma from "../../config/database";
+import { gitLabInstanceService } from "../../services/gitlab";
+import { verifyWebhookSignature } from "../../utils/gitlab/webhookVerifier";
+import {
+  GitLabPushEvent,
+  GitLabMergeRequestEvent,
+  GitLabIssueEvent,
+} from "../../types/gitlab";
+import { GitLabActivityType } from "@prisma/client";
+import logger from "../../config/logger";
 
 const router = Router();
 
@@ -11,19 +16,24 @@ const router = Router();
  * POST /api/gitlab/webhook/:instanceId
  * 接收 GitLab Webhook 事件
  */
-router.post('/:instanceId', async (req: Request, res: Response): Promise<void> => {
-  const { instanceId } = req.params;
-  const token = req.headers['x-gitlab-token'] as string;
-  const eventType = req.headers['x-gitlab-event'] as string;
+router.post(
+  "/:instanceId",
+  async (req: Request, res: Response): Promise<void> => {
+    const { instanceId } = req.params;
+    const token = req.headers["x-gitlab-token"] as string;
+    const eventType = req.headers["x-gitlab-event"] as string;
 
-  // 快速回應，避免 timeout
-  res.status(200).json({ received: true });
+    // 快速回應，避免 timeout
+    res.status(200).json({ received: true });
 
-  // 異步處理事件
-  processWebhookEvent(instanceId, token, eventType, req.body).catch((error) => {
-    console.error('Webhook processing error:', error);
-  });
-});
+    // 異步處理事件
+    processWebhookEvent(instanceId, token, eventType, req.body).catch(
+      (error) => {
+        logger.error("Webhook processing error:", error);
+      },
+    );
+  },
+);
 
 /**
  * 處理 Webhook 事件
@@ -32,18 +42,19 @@ async function processWebhookEvent(
   instanceId: string,
   token: string,
   _eventType: string,
-  body: unknown
+  body: unknown,
 ): Promise<void> {
   // 取得實例並驗證 webhook secret
-  const instance = await gitLabInstanceService.getInstanceWithSecrets(instanceId);
+  const instance =
+    await gitLabInstanceService.getInstanceWithSecrets(instanceId);
   if (!instance) {
-    console.error(`Webhook: Instance ${instanceId} not found`);
+    logger.error(`Webhook: Instance ${instanceId} not found`);
     return;
   }
 
   if (instance.webhookSecret) {
     if (!verifyWebhookSignature(token, instance.webhookSecret)) {
-      console.error(`Webhook: Invalid signature for instance ${instanceId}`);
+      logger.error(`Webhook: Invalid signature for instance ${instanceId}`);
       return;
     }
   }
@@ -54,7 +65,7 @@ async function processWebhookEvent(
   const user = event.user as { id: number; username: string } | undefined;
 
   if (!project || !user) {
-    console.log('Webhook: Missing project or user info');
+    console.log("Webhook: Missing project or user info");
     return;
   }
 
@@ -68,7 +79,9 @@ async function processWebhookEvent(
   });
 
   if (!connection) {
-    console.log(`Webhook: No active connection for user ${user.username} on instance ${instanceId}`);
+    console.log(
+      `Webhook: No active connection for user ${user.username} on instance ${instanceId}`,
+    );
     return;
   }
 
@@ -76,14 +89,26 @@ async function processWebhookEvent(
 
   try {
     switch (objectKind) {
-      case 'push':
-        await handlePushEvent(connection.id, project.pathWithNamespace, body as GitLabPushEvent);
+      case "push":
+        await handlePushEvent(
+          connection.id,
+          project.pathWithNamespace,
+          body as GitLabPushEvent,
+        );
         break;
-      case 'merge_request':
-        await handleMergeRequestEvent(connection.id, project.pathWithNamespace, body as GitLabMergeRequestEvent);
+      case "merge_request":
+        await handleMergeRequestEvent(
+          connection.id,
+          project.pathWithNamespace,
+          body as GitLabMergeRequestEvent,
+        );
         break;
-      case 'issue':
-        await handleIssueEvent(connection.id, project.pathWithNamespace, body as GitLabIssueEvent);
+      case "issue":
+        await handleIssueEvent(
+          connection.id,
+          project.pathWithNamespace,
+          body as GitLabIssueEvent,
+        );
         break;
       default:
         console.log(`Webhook: Unhandled event type: ${objectKind}`);
@@ -99,7 +124,7 @@ async function processWebhookEvent(
 async function handlePushEvent(
   connectionId: string,
   projectPath: string,
-  event: GitLabPushEvent
+  event: GitLabPushEvent,
 ): Promise<void> {
   const connection = await prisma.gitLabConnection.findUnique({
     where: { id: connectionId },
@@ -121,12 +146,15 @@ async function handlePushEvent(
       // 計算行數變更
       const additions = commit.added.length + commit.modified.length;
       const deletions = commit.removed.length;
-      const suggestedHours = Math.min(0.25 + (additions + deletions) / 100, 2.0);
+      const suggestedHours = Math.min(
+        0.25 + (additions + deletions) / 100,
+        2.0,
+      );
 
       await prisma.gitLabActivity.create({
         data: {
           connectionId,
-          activityType: 'COMMIT',
+          activityType: "COMMIT",
           gitlabEventId: eventId,
           projectPath,
           commitSha: commit.id,
@@ -153,7 +181,7 @@ async function handlePushEvent(
 async function handleMergeRequestEvent(
   connectionId: string,
   projectPath: string,
-  event: GitLabMergeRequestEvent
+  event: GitLabMergeRequestEvent,
 ): Promise<void> {
   const connection = await prisma.gitLabConnection.findUnique({
     where: { id: connectionId },
@@ -168,20 +196,20 @@ async function handleMergeRequestEvent(
   let suggestedHours: number;
 
   switch (mr.action) {
-    case 'open':
-      activityType = 'MR_OPENED';
+    case "open":
+      activityType = "MR_OPENED";
       suggestedHours = 0.5;
       break;
-    case 'merge':
-      activityType = 'MR_MERGED';
+    case "merge":
+      activityType = "MR_MERGED";
       suggestedHours = 0.25;
       break;
-    case 'close':
-      activityType = 'MR_CLOSED';
+    case "close":
+      activityType = "MR_CLOSED";
       suggestedHours = 0.25;
       break;
-    case 'approved':
-      activityType = 'MR_APPROVED';
+    case "approved":
+      activityType = "MR_APPROVED";
       suggestedHours = 0.25;
       break;
     default:
@@ -223,7 +251,7 @@ async function handleMergeRequestEvent(
 async function handleIssueEvent(
   connectionId: string,
   projectPath: string,
-  event: GitLabIssueEvent
+  event: GitLabIssueEvent,
 ): Promise<void> {
   const connection = await prisma.gitLabConnection.findUnique({
     where: { id: connectionId },
@@ -238,15 +266,15 @@ async function handleIssueEvent(
   // 記錄活動
   let activityType: GitLabActivityType;
   switch (issue.action) {
-    case 'open':
-      activityType = 'ISSUE_CREATED';
+    case "open":
+      activityType = "ISSUE_CREATED";
       break;
-    case 'close':
-      activityType = 'ISSUE_CLOSED';
+    case "close":
+      activityType = "ISSUE_CLOSED";
       break;
-    case 'update':
-    case 'reopen':
-      activityType = 'ISSUE_UPDATED';
+    case "update":
+    case "reopen":
+      activityType = "ISSUE_UPDATED";
       break;
     default:
       return;
@@ -276,8 +304,8 @@ async function handleIssueEvent(
     },
   });
 
-  if (mapping && mapping.syncDirection !== 'TASK_TO_GITLAB') {
-    const taskStatus = issue.state === 'closed' ? 'COMPLETED' : 'IN_PROGRESS';
+  if (mapping && mapping.syncDirection !== "TASK_TO_GITLAB") {
+    const taskStatus = issue.state === "closed" ? "DONE" : "IN_PROGRESS";
     await prisma.task.update({
       where: { id: mapping.taskId },
       data: { status: taskStatus },

@@ -26,8 +26,10 @@ export const taskStatusLabels: Record<string, string> = {
 
 // 角色名稱對照
 export const roleLabels: Record<string, string> = {
-  MEMBER: '成員',
+  EMPLOYEE: '一般同仁',
   PM: '專案經理',
+  PRODUCER: '製作人',
+  MANAGER: '部門主管',
   ADMIN: '管理員',
 }
 

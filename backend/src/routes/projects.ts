@@ -3,6 +3,12 @@ import { body, param, query, validationResult } from "express-validator";
 import { projectService } from "../services/projectService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel, ProjectStatus } from "@prisma/client";
+import logger from "../config/logger";
+import {
+  sendSuccess,
+  sendPaginatedSuccess,
+  sendError,
+} from "../utils/response";
 
 const router = Router();
 
@@ -24,11 +30,14 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 20;
+
       const result = await projectService.getProjects({
         page: req.query.page as unknown as number,
         limit: req.query.limit as unknown as number,
@@ -37,18 +46,14 @@ router.get(
         search: req.query.search as string,
       });
 
-      res.json({
-        data: result.data,
-        pagination: {
-          total: result.total,
-          page: Number(req.query.page) || 1,
-          limit: Number(req.query.limit) || 20,
-          totalPages: Math.ceil(result.total / (Number(req.query.limit) || 20)),
-        },
+      sendPaginatedSuccess(res, result.data, {
+        total: result.total,
+        page,
+        limit,
       });
     } catch (error) {
-      console.error("Get projects error:", error);
-      res.status(500).json({ error: "Failed to get projects" });
+      logger.error("Get projects error:", error);
+      sendError(res, "PROJECTS_FETCH_FAILED", "Failed to get projects", 500);
     }
   },
 );
@@ -63,20 +68,20 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const project = await projectService.getProjectById(req.params.id);
       if (!project) {
-        res.status(404).json({ error: "Project not found" });
+        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
         return;
       }
-      res.json(project);
+      sendSuccess(res, project);
     } catch (error) {
-      console.error("Get project error:", error);
-      res.status(500).json({ error: "Failed to get project" });
+      logger.error("Get project error:", error);
+      sendError(res, "PROJECT_FETCH_FAILED", "Failed to get project", 500);
     }
   },
 );
@@ -91,16 +96,21 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const stats = await projectService.getProjectStats(req.params.id);
-      res.json(stats);
+      sendSuccess(res, stats);
     } catch (error) {
-      console.error("Get project stats error:", error);
-      res.status(500).json({ error: "Failed to get project stats" });
+      logger.error("Get project stats error:", error);
+      sendError(
+        res,
+        "PROJECT_STATS_FAILED",
+        "Failed to get project stats",
+        500,
+      );
     }
   },
 );
@@ -115,16 +125,16 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const ganttData = await projectService.getGanttData(req.params.id);
-      res.json(ganttData);
+      sendSuccess(res, ganttData);
     } catch (error) {
-      console.error("Get gantt data error:", error);
-      res.status(500).json({ error: "Failed to get gantt data" });
+      logger.error("Get gantt data error:", error);
+      sendError(res, "GANTT_FETCH_FAILED", "Failed to get gantt data", 500);
     }
   },
 );
@@ -149,22 +159,27 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       // 驗證結束日期必須在開始日期之後
       if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
-        res.status(400).json({ error: "End date must be after start date" });
+        sendError(
+          res,
+          "INVALID_DATE_RANGE",
+          "End date must be after start date",
+          400,
+        );
         return;
       }
 
       const project = await projectService.createProject(req.body);
-      res.status(201).json(project);
+      sendSuccess(res, project, 201);
     } catch (error) {
-      console.error("Create project error:", error);
-      res.status(500).json({ error: "Failed to create project" });
+      logger.error("Create project error:", error);
+      sendError(res, "PROJECT_CREATE_FAILED", "Failed to create project", 500);
     }
   },
 );
@@ -187,14 +202,14 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: "Project not found" });
+        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
         return;
       }
 
@@ -207,7 +222,12 @@ router.put(
         : existing.endDate;
 
       if (endDate <= startDate) {
-        res.status(400).json({ error: "End date must be after start date" });
+        sendError(
+          res,
+          "INVALID_DATE_RANGE",
+          "End date must be after start date",
+          400,
+        );
         return;
       }
 
@@ -215,10 +235,10 @@ router.put(
         req.params.id,
         req.body,
       );
-      res.json(project);
+      sendSuccess(res, project);
     } catch (error) {
-      console.error("Update project error:", error);
-      res.status(500).json({ error: "Failed to update project" });
+      logger.error("Update project error:", error);
+      sendError(res, "PROJECT_UPDATE_FAILED", "Failed to update project", 500);
     }
   },
 );
@@ -234,22 +254,22 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        res.status(404).json({ error: "Project not found" });
+        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
         return;
       }
 
       await projectService.deleteProject(req.params.id);
       res.status(204).send();
     } catch (error) {
-      console.error("Delete project error:", error);
-      res.status(500).json({ error: "Failed to delete project" });
+      logger.error("Delete project error:", error);
+      sendError(res, "PROJECT_DELETE_FAILED", "Failed to delete project", 500);
     }
   },
 );
