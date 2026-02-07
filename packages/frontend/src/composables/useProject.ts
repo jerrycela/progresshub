@@ -18,7 +18,7 @@ export function useProject() {
   }
 
   const getProjectOptions = (includeAll = true) => {
-    const options = projectStore.projects.map((p) => ({
+    const options = projectStore.projects.map(p => ({
       value: p.id,
       label: p.name,
     }))

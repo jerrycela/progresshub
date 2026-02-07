@@ -9,14 +9,14 @@ export interface ProgressServiceInterface {
 
 class MockProgressService implements ProgressServiceInterface {
   async fetchByTaskId(taskId: string): Promise<ProgressLog[]> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return mockProgressLogs
-      .filter((l) => l.taskId === taskId)
+      .filter(l => l.taskId === taskId)
       .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
   }
 
   async addLog(log: Omit<ProgressLog, 'id' | 'reportedAt'>): Promise<ActionResult<ProgressLog>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     const newLog: ProgressLog = {
       ...log,
       id: `log-${Date.now()}`,

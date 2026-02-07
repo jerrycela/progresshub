@@ -32,20 +32,14 @@ const typeStyles = {
 <template>
   <Teleport to="body">
     <Transition name="confirm">
-      <div
-        v-if="state.isOpen"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      >
+      <div v-if="state.isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <!-- 背景遮罩 -->
-        <div
-          class="absolute inset-0 bg-black/50"
-          @click="handleCancel"
-        />
+        <div class="absolute inset-0 bg-black/50" @click="handleCancel" />
 
         <!-- 對話框 -->
         <div
           class="relative w-full max-w-sm rounded-xl shadow-xl overflow-hidden"
-          style="background-color: var(--card-bg);"
+          style="background-color: var(--card-bg)"
         >
           <!-- 內容區 -->
           <div class="p-6">
@@ -106,18 +100,12 @@ const typeStyles = {
             </div>
 
             <!-- 標題 -->
-            <h3
-              class="text-lg font-semibold text-center mb-2"
-              style="color: var(--text-primary);"
-            >
+            <h3 class="text-lg font-semibold text-center mb-2" style="color: var(--text-primary)">
               {{ state.title }}
             </h3>
 
             <!-- 訊息 -->
-            <p
-              class="text-center"
-              style="color: var(--text-secondary);"
-            >
+            <p class="text-center" style="color: var(--text-secondary)">
               {{ state.message }}
             </p>
           </div>
@@ -125,11 +113,11 @@ const typeStyles = {
           <!-- 按鈕區 -->
           <div
             class="flex gap-3 p-4 border-t"
-            style="border-color: var(--border-primary); background-color: var(--bg-secondary);"
+            style="border-color: var(--border-primary); background-color: var(--bg-secondary)"
           >
             <button
               class="flex-1 px-4 py-2.5 rounded-lg font-medium transition-colors"
-              style="background-color: var(--bg-tertiary); color: var(--text-primary);"
+              style="background-color: var(--bg-tertiary); color: var(--text-primary)"
               @click="handleCancel"
             >
               {{ state.cancelText }}

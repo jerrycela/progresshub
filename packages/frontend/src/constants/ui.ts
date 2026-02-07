@@ -24,7 +24,7 @@ export const STATUS_COLORS: Record<string, string> = {
   UNCLAIMED: 'bg-ink-muted/30',
   CLAIMED: 'bg-info/20',
   IN_PROGRESS: 'bg-samurai/20',
-  PAUSED: 'bg-amber-500/30',  // 暫停：橙黃色條紋
+  PAUSED: 'bg-amber-500/30', // 暫停：橙黃色條紋
   DONE: 'bg-success/20',
   BLOCKED: 'bg-danger/20',
 }
@@ -32,7 +32,10 @@ export const STATUS_COLORS: Record<string, string> = {
 /**
  * 任務狀態徽章樣式
  */
-export const STATUS_BADGE_VARIANTS: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'paused'> = {
+export const STATUS_BADGE_VARIANTS: Record<
+  string,
+  'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'paused'
+> = {
   UNCLAIMED: 'default',
   CLAIMED: 'info',
   IN_PROGRESS: 'primary',
@@ -76,12 +79,13 @@ export const PRIORITY_COLORS: Record<string, string> = {
 /**
  * 優先級徽章樣式
  */
-export const PRIORITY_BADGE_VARIANTS: Record<string, 'default' | 'primary' | 'warning' | 'danger'> = {
-  LOW: 'default',
-  MEDIUM: 'primary',
-  HIGH: 'warning',
-  URGENT: 'danger',
-}
+export const PRIORITY_BADGE_VARIANTS: Record<string, 'default' | 'primary' | 'warning' | 'danger'> =
+  {
+    LOW: 'default',
+    MEDIUM: 'primary',
+    HIGH: 'warning',
+    URGENT: 'danger',
+  }
 
 /**
  * 側邊欄菜單項目樣式（SG-Arts 淺色風格）

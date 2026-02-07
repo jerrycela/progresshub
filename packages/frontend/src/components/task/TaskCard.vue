@@ -17,7 +17,7 @@ interface Props {
   project?: Project
   showActions?: boolean
   showQuickReport?: boolean
-  latestNote?: string  // 最近一筆備註
+  latestNote?: string // 最近一筆備註
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -38,7 +38,10 @@ const emit = defineEmits<{
 
 // 狀態徽章樣式
 const statusBadgeVariant = computed(() => {
-  const variants: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
+  const variants: Record<
+    string,
+    'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  > = {
     UNCLAIMED: 'default',
     CLAIMED: 'info',
     IN_PROGRESS: 'primary',
@@ -51,7 +54,10 @@ const statusBadgeVariant = computed(() => {
 
 // 職能標籤樣式
 const functionBadgeVariant = (funcType: string) => {
-  const variants: Record<string, 'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'> = {
+  const variants: Record<
+    string,
+    'default' | 'primary' | 'success' | 'warning' | 'danger' | 'info'
+  > = {
     PLANNING: 'info',
     PROGRAMMING: 'primary',
     ART: 'warning',
@@ -113,8 +119,10 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
       <!-- 頂部：標題與狀態 -->
       <div class="flex items-start justify-between gap-3">
         <div class="flex-1 min-w-0">
-          <h4 class="font-semibold truncate" style="color: var(--text-primary);">{{ task.title }}</h4>
-          <p v-if="project" class="text-sm mt-0.5" style="color: var(--text-tertiary);">
+          <h4 class="font-semibold truncate" style="color: var(--text-primary)">
+            {{ task.title }}
+          </h4>
+          <p v-if="project" class="text-sm mt-0.5" style="color: var(--text-tertiary)">
             {{ project.name }}
           </p>
         </div>
@@ -140,71 +148,82 @@ const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.
 
       <!-- 截止日期（改進：顯示完整日期和逾期天數） -->
       <div class="flex items-center justify-between text-sm">
-        <span style="color: var(--text-tertiary);">截止日期</span>
-        <span :class="[isOverdue ? 'text-danger font-medium' : '']" :style="isOverdue ? undefined : 'color: var(--text-secondary);'">
+        <span style="color: var(--text-tertiary)">截止日期</span>
+        <span
+          :class="[isOverdue ? 'text-danger font-medium' : '']"
+          :style="isOverdue ? undefined : 'color: var(--text-secondary);'"
+        >
           {{ formatDate(task.dueDate) }}
           <span v-if="isOverdue" class="ml-1">(逾期 {{ overdueDays }} 天)</span>
         </span>
       </div>
 
       <!-- 暫停原因（改進：在卡片上直接顯示） -->
-      <div v-if="isPaused && (pauseReasonLabel || task.pauseNote)" class="p-2 rounded-lg text-sm bg-amber-500/10 border border-amber-500/30">
+      <div
+        v-if="isPaused && (pauseReasonLabel || task.pauseNote)"
+        class="p-2 rounded-lg text-sm bg-amber-500/10 border border-amber-500/30"
+      >
         <div class="flex items-center gap-1 text-amber-600 font-medium">
           <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+            <path
+              fill-rule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
+              clip-rule="evenodd"
+            />
           </svg>
           <span>{{ pauseReasonLabel || '暫停中' }}</span>
         </div>
-        <p v-if="task.pauseNote" class="mt-1 text-xs" style="color: var(--text-secondary);">
+        <p v-if="task.pauseNote" class="mt-1 text-xs" style="color: var(--text-secondary)">
           {{ task.pauseNote }}
         </p>
       </div>
 
       <!-- 最近備註預覽（改進：直接在卡片上顯示） -->
-      <div v-if="latestNote" class="p-2 rounded-lg text-sm" style="background-color: var(--bg-tertiary);">
-        <div class="flex items-center gap-1 mb-1" style="color: var(--text-muted);">
+      <div
+        v-if="latestNote"
+        class="p-2 rounded-lg text-sm"
+        style="background-color: var(--bg-tertiary)"
+      >
+        <div class="flex items-center gap-1 mb-1" style="color: var(--text-muted)">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
+            />
           </svg>
           <span class="text-xs">最近備註</span>
         </div>
-        <p class="text-xs line-clamp-2" style="color: var(--text-secondary);">
+        <p class="text-xs line-clamp-2" style="color: var(--text-secondary)">
           {{ latestNote }}
         </p>
       </div>
 
       <!-- 快速回報按鈕（進度回報頁面使用） -->
-      <div v-if="showQuickReport && canReport" class="flex flex-wrap gap-2 pt-2 border-t" style="border-color: var(--border-primary);">
-        <Button variant="primary" size="sm" @click.stop="emit('continue', task.id)">
-          繼續
-        </Button>
+      <div
+        v-if="showQuickReport && canReport"
+        class="flex flex-wrap gap-2 pt-2 border-t"
+        style="border-color: var(--border-primary)"
+      >
+        <Button variant="primary" size="sm" @click.stop="emit('continue', task.id)"> 繼續 </Button>
         <Button variant="secondary" size="sm" @click.stop="emit('updateProgress', task.id)">
           更新
         </Button>
-        <Button variant="warning" size="sm" @click.stop="emit('blocked', task.id)">
-          卡關
-        </Button>
-        <Button variant="success" size="sm" @click.stop="emit('complete', task.id)">
-          完成
-        </Button>
+        <Button variant="warning" size="sm" @click.stop="emit('blocked', task.id)"> 卡關 </Button>
+        <Button variant="success" size="sm" @click.stop="emit('complete', task.id)"> 完成 </Button>
       </div>
 
       <!-- 一般操作按鈕 -->
-      <div v-else-if="showActions" class="flex gap-2 pt-2 border-t" style="border-color: var(--border-primary);">
-        <Button
-          v-if="canClaim"
-          variant="primary"
-          size="sm"
-          @click.stop="emit('claim', task.id)"
-        >
+      <div
+        v-else-if="showActions"
+        class="flex gap-2 pt-2 border-t"
+        style="border-color: var(--border-primary)"
+      >
+        <Button v-if="canClaim" variant="primary" size="sm" @click.stop="emit('claim', task.id)">
           認領任務
         </Button>
-        <Button
-          v-if="canUnclaim"
-          variant="ghost"
-          size="sm"
-          @click.stop="emit('unclaim', task.id)"
-        >
+        <Button v-if="canUnclaim" variant="ghost" size="sm" @click.stop="emit('unclaim', task.id)">
           放棄認領
         </Button>
       </div>

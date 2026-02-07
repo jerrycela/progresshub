@@ -52,15 +52,20 @@ const currentPageTitle = computed(() => {
     <div class="flex items-center gap-4">
       <button
         class="flex items-center gap-2 transition-colors cursor-pointer"
-        style="color: var(--text-secondary);"
+        style="color: var(--text-secondary)"
         @click="goBack"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
         <span>返回</span>
       </button>
-      <h1 class="text-2xl font-bold" style="color: var(--text-primary);">
+      <h1 class="text-2xl font-bold" style="color: var(--text-primary)">
         {{ currentPageTitle }}
       </h1>
     </div>
@@ -85,8 +90,18 @@ const currentPageTitle = computed(() => {
               }"
               @click="navigateTo(item.path)"
             >
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  :d="item.icon"
+                />
               </svg>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </button>

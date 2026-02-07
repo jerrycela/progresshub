@@ -8,9 +8,11 @@ export type { UserSettings }
 export const useUserSettingsStore = defineStore('userSettings', () => {
   const settings = ref<UserSettings>({ ...mockCurrentUserSettings })
 
-  const updateSettings = async (updates: Partial<UserSettings>): Promise<ActionResult<UserSettings>> => {
+  const updateSettings = async (
+    updates: Partial<UserSettings>,
+  ): Promise<ActionResult<UserSettings>> => {
     try {
-      await new Promise((r) => setTimeout(r, 500))
+      await new Promise(r => setTimeout(r, 500))
       const updated: UserSettings = { ...settings.value, ...updates }
       settings.value = updated
       // 同步更新 mock 源資料

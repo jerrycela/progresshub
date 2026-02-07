@@ -57,7 +57,7 @@ const inputId = props.id || `input-${Math.random().toString(36).slice(2, 9)}`
       v-if="props.label"
       :for="inputId"
       class="block text-sm font-medium"
-      style="color: var(--text-secondary);"
+      style="color: var(--text-secondary)"
     >
       {{ props.label }}
       <span v-if="props.required" class="text-samurai">*</span>
@@ -80,17 +80,13 @@ const inputId = props.id || `input-${Math.random().toString(36).slice(2, 9)}`
         backgroundColor: props.disabled ? 'var(--bg-tertiary)' : 'var(--bg-primary)',
       }"
       @input="handleInput"
-    >
+    />
 
     <!-- 錯誤訊息 -->
     <p v-if="props.error" class="text-sm text-danger">{{ props.error }}</p>
 
     <!-- 輔助文字 -->
-    <p
-      v-else-if="props.hint"
-      class="text-sm"
-      style="color: var(--text-muted);"
-    >
+    <p v-else-if="props.hint" class="text-sm" style="color: var(--text-muted)">
       {{ props.hint }}
     </p>
   </div>

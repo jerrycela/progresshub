@@ -28,19 +28,15 @@ withDefaults(defineProps<Props>(), {
     <div
       v-if="title || $slots.header"
       class="px-5 py-4"
-      style="border-bottom: 1px solid var(--border-primary);"
+      style="border-bottom: 1px solid var(--border-primary)"
     >
       <slot name="header">
         <div class="flex items-center justify-between">
           <div>
-            <h3 class="text-base font-semibold" style="color: var(--text-primary);">
+            <h3 class="text-base font-semibold" style="color: var(--text-primary)">
               {{ title }}
             </h3>
-            <p
-              v-if="subtitle"
-              class="text-sm mt-0.5"
-              style="color: var(--text-tertiary);"
-            >
+            <p v-if="subtitle" class="text-sm mt-0.5" style="color: var(--text-tertiary)">
               {{ subtitle }}
             </p>
           </div>
@@ -58,7 +54,7 @@ withDefaults(defineProps<Props>(), {
     <div
       v-if="$slots.footer"
       class="px-5 py-4 rounded-b-lg"
-      style="border-top: 1px solid var(--border-primary); background-color: var(--bg-secondary);"
+      style="border-top: 1px solid var(--border-primary); background-color: var(--bg-secondary)"
     >
       <slot name="footer" />
     </div>

@@ -7,12 +7,20 @@
 import { computed } from 'vue'
 
 interface Props {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'info' | 'ghost' | 'outline'
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'success'
+    | 'warning'
+    | 'danger'
+    | 'info'
+    | 'ghost'
+    | 'outline'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   disabled?: boolean
   loading?: boolean
   block?: boolean
-  icon?: boolean  // 純圖示按鈕（正方形）
+  icon?: boolean // 純圖示按鈕（正方形）
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -207,14 +215,7 @@ const spinnerSize = computed(() => {
       fill="none"
       viewBox="0 0 24 24"
     >
-      <circle
-        class="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        stroke-width="3"
-      />
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" />
       <path
         class="opacity-90"
         fill="currentColor"

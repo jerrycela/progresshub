@@ -8,12 +8,14 @@ export const useNoteStore = defineStore('notes', () => {
 
   const byTaskId = (taskId: string) =>
     notes.value
-      .filter((n) => n.taskId === taskId)
+      .filter(n => n.taskId === taskId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
-  const addNote = async (note: Omit<TaskNote, 'id' | 'createdAt'>): Promise<ActionResult<TaskNote>> => {
+  const addNote = async (
+    note: Omit<TaskNote, 'id' | 'createdAt'>,
+  ): Promise<ActionResult<TaskNote>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       const newNote: TaskNote = {
         ...note,
         id: `note-${Date.now()}`,

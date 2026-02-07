@@ -34,7 +34,9 @@ const backlogTasks = computed(() => {
 
   // 職能篩選
   if (selectedFunction.value !== 'ALL') {
-    tasks = tasks.filter((t: Task) => t.functionTags.includes(selectedFunction.value as FunctionType))
+    tasks = tasks.filter((t: Task) =>
+      t.functionTags.includes(selectedFunction.value as FunctionType),
+    )
   }
 
   // 專案篩選
@@ -85,34 +87,30 @@ const projectOptions = computed(() => getProjectOptions(true))
     <!-- 頁面標題 -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold" style="color: var(--text-primary);">需求池</h1>
-        <p class="mt-1" style="color: var(--text-secondary);">瀏覽並認領適合您的任務</p>
+        <h1 class="text-2xl font-bold" style="color: var(--text-primary)">需求池</h1>
+        <p class="mt-1" style="color: var(--text-secondary)">瀏覽並認領適合您的任務</p>
       </div>
-      <Badge variant="info" size="md">
-        {{ backlogTasks.length }} 個待認領任務
-      </Badge>
+      <Badge variant="info" size="md"> {{ backlogTasks.length }} 個待認領任務 </Badge>
     </div>
 
     <!-- 篩選器 -->
     <Card>
       <div class="flex flex-wrap gap-4">
         <div>
-          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">職能篩選</label>
-          <select
-            v-model="selectedFunction"
-            class="input"
+          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)"
+            >職能篩選</label
           >
+          <select v-model="selectedFunction" class="input">
             <option v-for="opt in functionOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary);">專案篩選</label>
-          <select
-            v-model="selectedProject"
-            class="input"
+          <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)"
+            >專案篩選</label
           >
+          <select v-model="selectedProject" class="input">
             <option v-for="opt in projectOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
@@ -122,7 +120,10 @@ const projectOptions = computed(() => getProjectOptions(true))
     </Card>
 
     <!-- 任務列表 -->
-    <div v-if="backlogTasks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div
+      v-if="backlogTasks.length > 0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+    >
       <TaskCard
         v-for="task in backlogTasks"
         :key="task.id"
@@ -145,17 +146,14 @@ const projectOptions = computed(() => getProjectOptions(true))
     <!-- 認領確認對話框 -->
     <Modal v-model="showClaimModal" title="確認認領任務" size="md">
       <div v-if="taskToClaim" class="space-y-4">
-        <p style="color: var(--text-secondary);">您確定要認領以下任務嗎？</p>
-        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary);">
-          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToClaim.title }}</h4>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">{{ taskToClaim.description }}</p>
+        <p style="color: var(--text-secondary)">您確定要認領以下任務嗎？</p>
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary)">
+          <h4 class="font-semibold" style="color: var(--text-primary)">{{ taskToClaim.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
+            {{ taskToClaim.description }}
+          </p>
           <div class="flex flex-wrap gap-1.5 mt-3">
-            <Badge
-              v-for="func in taskToClaim.functionTags"
-              :key="func"
-              variant="primary"
-              size="sm"
-            >
+            <Badge v-for="func in taskToClaim.functionTags" :key="func" variant="primary" size="sm">
               {{ functionTypeLabels[func] }}
             </Badge>
           </div>
@@ -163,12 +161,8 @@ const projectOptions = computed(() => getProjectOptions(true))
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showClaimModal = false">
-          取消
-        </Button>
-        <Button :loading="isClaimLoading" @click="confirmClaim">
-          確認認領
-        </Button>
+        <Button variant="secondary" @click="showClaimModal = false"> 取消 </Button>
+        <Button :loading="isClaimLoading" @click="confirmClaim"> 確認認領 </Button>
       </template>
     </Modal>
   </div>

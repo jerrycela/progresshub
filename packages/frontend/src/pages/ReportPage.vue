@@ -36,15 +36,14 @@ const myInProgressTasks = computed(() => {
   const userId = authStore.user?.id
   if (!userId) return []
   return (taskStore.tasks as Task[]).filter(
-    (t: Task) => t.assigneeId === userId && ['CLAIMED', 'IN_PROGRESS', 'PAUSED'].includes(t.status)
+    (t: Task) => t.assigneeId === userId && ['CLAIMED', 'IN_PROGRESS', 'PAUSED'].includes(t.status),
   )
 })
 
 const projectStore = useProjectStore()
 
 // 取得專案
-const getProject = (projectId: string) =>
-  projectStore.getProjectById(projectId)
+const getProject = (projectId: string) => projectStore.getProjectById(projectId)
 
 // 回報相關狀態
 const showReportModal = ref(false)
@@ -128,7 +127,7 @@ const submitPause = async () => {
 
     // 記錄暫停資訊（Mock）
     const task = selectedTask.value
-    task.pauseReason = pauseReasonOptions.find((opt) => opt.value === pauseReason.value)?.label
+    task.pauseReason = pauseReasonOptions.find(opt => opt.value === pauseReason.value)?.label
     task.pauseNote = pauseNote.value
     task.pausedAt = new Date().toISOString()
 
@@ -149,7 +148,11 @@ const submitReport = async () => {
   try {
     // 根據回報類型處理
     if (reportType.value === 'PROGRESS') {
-      const result = await taskStore.updateTaskProgress(selectedTask.value.id, newProgress.value, progressNotes.value)
+      const result = await taskStore.updateTaskProgress(
+        selectedTask.value.id,
+        newProgress.value,
+        progressNotes.value,
+      )
       if (!result.success) {
         showError(result.error?.message || '更新進度失敗')
         return
@@ -200,24 +203,36 @@ const today = new Date().toLocaleDateString('zh-TW', {
     <!-- 頁面標題 (RWD: 迭代 18) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <div>
-        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">每日進度回報</h1>
-        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">{{ today }}</p>
+        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary)">
+          每日進度回報
+        </h1>
+        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary)">{{ today }}</p>
       </div>
-      <Badge variant="primary" size="md">
-        {{ myInProgressTasks.length }} 個任務待回報
-      </Badge>
+      <Badge variant="primary" size="md"> {{ myInProgressTasks.length }} 個任務待回報 </Badge>
     </div>
 
     <!-- 使用說明 -->
     <Card class="bg-info/10 border border-info/30">
       <div class="flex gap-3">
-        <svg class="w-6 h-6 text-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <svg
+          class="w-6 h-6 text-info flex-shrink-0"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
-        <div class="text-sm" style="color: var(--text-primary);">
+        <div class="text-sm" style="color: var(--text-primary)">
           <p class="font-medium mb-1">快速回報說明</p>
-          <ul class="list-disc list-inside space-y-1" style="color: var(--text-secondary);">
-            <li><strong>繼續</strong> - 一鍵回報，延續昨天的工作（進度不變）；若任務暫停中則恢復進行</li>
+          <ul class="list-disc list-inside space-y-1" style="color: var(--text-secondary)">
+            <li>
+              <strong>繼續</strong> - 一鍵回報，延續昨天的工作（進度不變）；若任務暫停中則恢復進行
+            </li>
             <li><strong>更新</strong> - 有實際進展時，更新進度百分比</li>
             <li><strong>暫停</strong> - 被插件打斷時，暫停任務並記錄原因</li>
             <li><strong>卡關</strong> - 遇到問題需要協助時回報</li>
@@ -229,58 +244,83 @@ const today = new Date().toLocaleDateString('zh-TW', {
 
     <!-- 任務列表 -->
     <div v-if="myInProgressTasks.length > 0" class="space-y-4">
-      <Card
-        v-for="task in myInProgressTasks"
-        :key="task.id"
-        hoverable
-      >
+      <Card v-for="task in myInProgressTasks" :key="task.id" hoverable>
         <div class="space-y-4">
           <!-- 任務資訊 -->
           <div class="flex items-start justify-between gap-4">
             <div class="flex-1 min-w-0">
-              <h3 class="font-semibold" style="color: var(--text-primary);">{{ task.title }}</h3>
-              <p class="text-sm mt-0.5" style="color: var(--text-tertiary);">
+              <h3 class="font-semibold" style="color: var(--text-primary)">{{ task.title }}</h3>
+              <p class="text-sm mt-0.5" style="color: var(--text-tertiary)">
                 {{ getProject(task.projectId)?.name }}
               </p>
               <!-- 暫停資訊 -->
-              <div v-if="task.status === 'PAUSED' && task.pauseReason" class="mt-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+              <div
+                v-if="task.status === 'PAUSED' && task.pauseReason"
+                class="mt-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20"
+              >
                 <p class="text-xs text-amber-600 dark:text-amber-400">
                   <span class="font-medium">暫停原因：</span>{{ task.pauseReason }}
                 </p>
-                <p v-if="task.pauseNote" class="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                <p
+                  v-if="task.pauseNote"
+                  class="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5"
+                >
                   {{ task.pauseNote }}
                 </p>
-                <p v-if="task.pausedAt" class="text-xs text-amber-600/60 dark:text-amber-400/60 mt-0.5">
+                <p
+                  v-if="task.pausedAt"
+                  class="text-xs text-amber-600/60 dark:text-amber-400/60 mt-0.5"
+                >
                   暫停時間：{{ new Date(task.pausedAt).toLocaleString('zh-TW') }}
                 </p>
               </div>
             </div>
             <Badge
-              :variant="task.status === 'BLOCKED' ? 'danger' : task.status === 'PAUSED' ? 'paused' : 'primary'"
+              :variant="
+                task.status === 'BLOCKED'
+                  ? 'danger'
+                  : task.status === 'PAUSED'
+                    ? 'paused'
+                    : 'primary'
+              "
               size="sm"
               dot
             >
-              {{ task.status === 'BLOCKED' ? '卡關中' : task.status === 'PAUSED' ? '暫停中' : '進行中' }}
+              {{
+                task.status === 'BLOCKED'
+                  ? '卡關中'
+                  : task.status === 'PAUSED'
+                    ? '暫停中'
+                    : '進行中'
+              }}
             </Badge>
           </div>
 
           <!-- 進度條 -->
           <ProgressBar :value="task.progress" size="md">
             <template #label>
-              <span class="text-sm" style="color: var(--text-secondary);">目前進度</span>
+              <span class="text-sm" style="color: var(--text-secondary)">目前進度</span>
             </template>
           </ProgressBar>
 
           <!-- 截止日期 -->
-          <div class="flex items-center text-sm" style="color: var(--text-tertiary);">
+          <div class="flex items-center text-sm" style="color: var(--text-tertiary)">
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             截止日期：{{ task.dueDate || '未設定' }}
           </div>
 
           <!-- 快速回報按鈕 -->
-          <div class="flex flex-wrap gap-2 pt-3 border-t" style="border-color: var(--border-primary);">
+          <div
+            class="flex flex-wrap gap-2 pt-3 border-t"
+            style="border-color: var(--border-primary)"
+          >
             <Button
               variant="info"
               size="sm"
@@ -330,15 +370,24 @@ const today = new Date().toLocaleDateString('zh-TW', {
 
     <!-- 空狀態 -->
     <Card v-else class="text-center py-12">
-      <svg class="w-16 h-16 mx-auto mb-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <h3 class="text-lg font-medium mb-1" style="color: var(--text-primary);">太棒了！目前沒有待回報的任務</h3>
-      <p style="color: var(--text-tertiary);">您可以前往需求池認領新任務</p>
-      <RouterLink
-        to="/backlog"
-        class="inline-block mt-4"
+      <svg
+        class="w-16 h-16 mx-auto mb-4 text-success"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
       >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <h3 class="text-lg font-medium mb-1" style="color: var(--text-primary)">
+        太棒了！目前沒有待回報的任務
+      </h3>
+      <p style="color: var(--text-tertiary)">您可以前往需求池認領新任務</p>
+      <RouterLink to="/backlog" class="inline-block mt-4">
         <Button variant="primary">前往需求池</Button>
       </RouterLink>
     </Card>
@@ -347,15 +396,19 @@ const today = new Date().toLocaleDateString('zh-TW', {
     <Modal v-model="showReportModal" :title="reportTypeLabels[reportType]" size="md">
       <div v-if="selectedTask" class="space-y-4">
         <!-- 任務資訊 -->
-        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary);">
-          <h4 class="font-semibold" style="color: var(--text-primary);">{{ selectedTask.title }}</h4>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">目前進度：{{ selectedTask.progress }}%</p>
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary)">
+          <h4 class="font-semibold" style="color: var(--text-primary)">{{ selectedTask.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
+            目前進度：{{ selectedTask.progress }}%
+          </p>
         </div>
 
         <!-- 進度更新表單 -->
         <div v-if="reportType === 'PROGRESS'" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">新進度</label>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)"
+              >新進度</label
+            >
             <div class="flex items-center gap-4">
               <input
                 v-model.number="newProgress"
@@ -363,13 +416,17 @@ const today = new Date().toLocaleDateString('zh-TW', {
                 min="0"
                 max="100"
                 class="flex-1 h-2 rounded-lg appearance-none cursor-pointer accent-samurai"
-                style="background-color: var(--bg-tertiary);"
+                style="background-color: var(--bg-tertiary)"
+              />
+              <span class="w-16 text-center font-semibold" style="color: var(--text-primary)"
+                >{{ newProgress }}%</span
               >
-              <span class="w-16 text-center font-semibold" style="color: var(--text-primary);">{{ newProgress }}%</span>
             </div>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">備註說明</label>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)"
+              >備註說明</label
+            >
             <textarea
               v-model="progressNotes"
               rows="3"
@@ -382,7 +439,9 @@ const today = new Date().toLocaleDateString('zh-TW', {
         <!-- 卡關表單 -->
         <div v-if="reportType === 'BLOCKED'" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">卡關原因</label>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)"
+              >卡關原因</label
+            >
             <textarea
               v-model="blockerReason"
               rows="3"
@@ -394,19 +453,29 @@ const today = new Date().toLocaleDateString('zh-TW', {
 
         <!-- 完成確認 -->
         <div v-if="reportType === 'COMPLETE'" class="text-center">
-          <svg class="w-16 h-16 mx-auto mb-4 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            class="w-16 h-16 mx-auto mb-4 text-success"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
-          <p style="color: var(--text-secondary);">確定要將此任務標記為完成嗎？</p>
+          <p style="color: var(--text-secondary)">確定要將此任務標記為完成嗎？</p>
         </div>
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showReportModal = false">
-          取消
-        </Button>
+        <Button variant="secondary" @click="showReportModal = false"> 取消 </Button>
         <Button
-          :variant="reportType === 'BLOCKED' ? 'warning' : reportType === 'COMPLETE' ? 'success' : 'primary'"
+          :variant="
+            reportType === 'BLOCKED' ? 'warning' : reportType === 'COMPLETE' ? 'success' : 'primary'
+          "
           :loading="isReporting"
           @click="submitReport"
         >
@@ -419,23 +488,23 @@ const today = new Date().toLocaleDateString('zh-TW', {
     <Modal v-model="showPauseModal" title="暫停任務" size="md">
       <div v-if="selectedTask" class="space-y-4">
         <!-- 任務資訊 -->
-        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary);">
-          <h4 class="font-semibold" style="color: var(--text-primary);">{{ selectedTask.title }}</h4>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">目前進度：{{ selectedTask.progress }}%</p>
+        <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary)">
+          <h4 class="font-semibold" style="color: var(--text-primary)">{{ selectedTask.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
+            目前進度：{{ selectedTask.progress }}%
+          </p>
         </div>
 
         <!-- 暫停原因選擇 -->
         <div>
-          <Select
-            v-model="pauseReason"
-            label="暫停原因"
-            :options="pauseReasonOptions"
-          />
+          <Select v-model="pauseReason" label="暫停原因" :options="pauseReasonOptions" />
         </div>
 
         <!-- 暫停說明 -->
         <div>
-          <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">說明（選填）</label>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)"
+            >說明（選填）</label
+          >
           <textarea
             v-model="pauseNote"
             rows="3"
@@ -453,9 +522,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showPauseModal = false">
-          取消
-        </Button>
+        <Button variant="secondary" @click="showPauseModal = false"> 取消 </Button>
         <Button
           class="!bg-amber-500 hover:!bg-amber-600 !text-white"
           :loading="isReporting"

@@ -26,18 +26,18 @@ const closeSidebar = () => {
 }
 
 // 路由變更時自動關閉側邊欄（行動裝置）
-watch(() => route.path, () => {
-  closeSidebar()
-})
+watch(
+  () => route.path,
+  () => {
+    closeSidebar()
+  },
+)
 </script>
 
 <template>
-  <div class="min-h-screen flex" style="background-color: var(--bg-primary);">
+  <div class="min-h-screen flex" style="background-color: var(--bg-primary)">
     <!-- 側邊選單 -->
-    <AppSidebar
-      :is-open="isSidebarOpen"
-      @close="closeSidebar"
-    />
+    <AppSidebar :is-open="isSidebarOpen" @close="closeSidebar" />
 
     <!-- 主內容區 -->
     <div class="flex-1 flex flex-col min-w-0">
@@ -45,10 +45,7 @@ watch(() => route.path, () => {
       <AppHeader @toggle-sidebar="toggleSidebar" />
 
       <!-- 頁面內容 -->
-      <main
-        class="flex-1 p-4 md:p-6 overflow-auto"
-        style="background-color: var(--bg-secondary);"
-      >
+      <main class="flex-1 p-4 md:p-6 overflow-auto" style="background-color: var(--bg-secondary)">
         <router-view />
       </main>
     </div>

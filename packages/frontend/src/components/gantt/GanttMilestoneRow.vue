@@ -20,8 +20,13 @@ defineProps<{
         :style="{ backgroundColor: ms.color || '#F59E0B' }"
       />
       <!-- Tooltip -->
-      <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-20">
-        <div class="px-2 py-1 rounded text-xs whitespace-nowrap text-white" style="background-color: var(--bg-tooltip);">
+      <div
+        class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-20"
+      >
+        <div
+          class="px-2 py-1 rounded text-xs whitespace-nowrap text-white"
+          style="background-color: var(--bg-tooltip)"
+        >
           {{ ms.name }} - {{ ms.date }}
         </div>
       </div>

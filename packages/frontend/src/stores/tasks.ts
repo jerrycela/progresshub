@@ -1,6 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Task, TaskStatus, FunctionType, ActionResult, CreateTaskInput, PoolTask } from 'shared/types'
+import type {
+  Task,
+  TaskStatus,
+  FunctionType,
+  ActionResult,
+  CreateTaskInput,
+  PoolTask,
+} from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 
 // ============================================
@@ -27,27 +34,17 @@ export const useTaskStore = defineStore('tasks', () => {
   const isLoading = computed(() => loading.value.fetch || loading.value.create)
 
   // Getters
-  const backlogTasks = computed(() =>
-    tasks.value.filter((t: Task) => t.status === 'UNCLAIMED')
-  )
+  const backlogTasks = computed(() => tasks.value.filter((t: Task) => t.status === 'UNCLAIMED'))
 
   const myTasks = computed(() =>
-    tasks.value.filter((t: Task) =>
-      t.assigneeId && ['CLAIMED', 'IN_PROGRESS'].includes(t.status)
-    )
+    tasks.value.filter((t: Task) => t.assigneeId && ['CLAIMED', 'IN_PROGRESS'].includes(t.status)),
   )
 
-  const completedTasks = computed(() =>
-    tasks.value.filter((t: Task) => t.status === 'DONE')
-  )
+  const completedTasks = computed(() => tasks.value.filter((t: Task) => t.status === 'DONE'))
 
   const overdueTasks = computed(() => {
     const today = new Date().toISOString().split('T')[0]
-    return tasks.value.filter((t: Task) =>
-      t.dueDate &&
-      t.dueDate < today &&
-      t.status !== 'DONE'
-    )
+    return tasks.value.filter((t: Task) => t.dueDate && t.dueDate < today && t.status !== 'DONE')
   })
 
   const getTasksByProject = (projectId: string) =>
@@ -59,16 +56,12 @@ export const useTaskStore = defineStore('tasks', () => {
   const getTasksByStatus = (status: TaskStatus) =>
     computed(() => tasks.value.filter((t: Task) => t.status === status))
 
-  const getTaskById = (taskId: string) =>
-    tasks.value.find((t: Task) => t.id === taskId)
+  const getTaskById = (taskId: string) => tasks.value.find((t: Task) => t.id === taskId)
 
-  const getPoolTaskById = (taskId: string) =>
-    poolTasks.value.find((t: PoolTask) => t.id === taskId)
+  const getPoolTaskById = (taskId: string) => poolTasks.value.find((t: PoolTask) => t.id === taskId)
 
   const isTaskLoading = (taskId: string) =>
-    loading.value.claim[taskId] ||
-    loading.value.unclaim[taskId] ||
-    loading.value.update[taskId]
+    loading.value.claim[taskId] || loading.value.unclaim[taskId] || loading.value.update[taskId]
 
   // Actions
   const fetchTasks = async (): Promise<ActionResult<Task[]>> => {
@@ -194,7 +187,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const updateTaskProgress = async (
     taskId: string,
     progress: number,
-    notes?: string
+    notes?: string,
   ): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
@@ -252,7 +245,10 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   }
 
-  const updateTaskStatus = async (taskId: string, status: TaskStatus): Promise<ActionResult<Task>> => {
+  const updateTaskStatus = async (
+    taskId: string,
+    status: TaskStatus,
+  ): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
     if (!task) {

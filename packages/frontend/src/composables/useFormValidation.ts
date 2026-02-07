@@ -61,7 +61,7 @@ export function validateField(value: unknown, rules: ValidationRule[]): string |
  */
 export function useFormValidation<T extends Record<string, unknown>>(
   initialValues: T,
-  validationSchema: Partial<Record<keyof T, ValidationRule[]>>
+  validationSchema: Partial<Record<keyof T, ValidationRule[]>>,
 ) {
   const formData = ref<T>({ ...initialValues }) as { value: T }
   const errors = ref<ValidationErrors>({})
@@ -167,15 +167,27 @@ export const commonRules = {
   // 任務相關驗證
   taskTitle: (): ValidationRule[] => [
     commonRules.required('任務標題為必填'),
-    commonRules.minLength(VALIDATION.TASK_TITLE_MIN_LENGTH, `標題至少需要 ${VALIDATION.TASK_TITLE_MIN_LENGTH} 個字元`),
-    commonRules.maxLength(VALIDATION.TASK_TITLE_MAX_LENGTH, `標題不能超過 ${VALIDATION.TASK_TITLE_MAX_LENGTH} 個字元`),
+    commonRules.minLength(
+      VALIDATION.TASK_TITLE_MIN_LENGTH,
+      `標題至少需要 ${VALIDATION.TASK_TITLE_MIN_LENGTH} 個字元`,
+    ),
+    commonRules.maxLength(
+      VALIDATION.TASK_TITLE_MAX_LENGTH,
+      `標題不能超過 ${VALIDATION.TASK_TITLE_MAX_LENGTH} 個字元`,
+    ),
   ],
 
   // 專案相關驗證
   projectName: (): ValidationRule[] => [
     commonRules.required('專案名稱為必填'),
-    commonRules.minLength(VALIDATION.PROJECT_NAME_MIN_LENGTH, `名稱至少需要 ${VALIDATION.PROJECT_NAME_MIN_LENGTH} 個字元`),
-    commonRules.maxLength(VALIDATION.PROJECT_NAME_MAX_LENGTH, `名稱不能超過 ${VALIDATION.PROJECT_NAME_MAX_LENGTH} 個字元`),
+    commonRules.minLength(
+      VALIDATION.PROJECT_NAME_MIN_LENGTH,
+      `名稱至少需要 ${VALIDATION.PROJECT_NAME_MIN_LENGTH} 個字元`,
+    ),
+    commonRules.maxLength(
+      VALIDATION.PROJECT_NAME_MAX_LENGTH,
+      `名稱不能超過 ${VALIDATION.PROJECT_NAME_MAX_LENGTH} 個字元`,
+    ),
   ],
 
   // 日期範圍驗證

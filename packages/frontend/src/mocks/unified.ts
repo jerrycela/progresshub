@@ -24,18 +24,84 @@ import type {
 // emp-1~8 來自 taskPool，emp-9~12 來自 data.ts 獨有人員
 // ============================================
 export const mockEmployees: MockEmployee[] = [
-  { id: 'emp-1', name: '王小明', email: 'wang@company.com', department: 'ART', userRole: 'EMPLOYEE' },
-  { id: 'emp-2', name: '林小美', email: 'lin@company.com', department: 'ART', userRole: 'EMPLOYEE' },
-  { id: 'emp-3', name: '張大華', email: 'zhang@company.com', department: 'ART', userRole: 'MANAGER' },
-  { id: 'emp-4', name: '陳志明', email: 'chen@company.com', department: 'PROGRAMMING', userRole: 'EMPLOYEE' },
-  { id: 'emp-5', name: '李小龍', email: 'li@company.com', department: 'PROGRAMMING', userRole: 'MANAGER' },
-  { id: 'emp-6', name: '黃美玲', email: 'huang@company.com', department: 'PLANNING', userRole: 'PM' },
-  { id: 'emp-7', name: '吳建國', email: 'wu@company.com', department: 'PLANNING', userRole: 'PRODUCER' },
+  {
+    id: 'emp-1',
+    name: '王小明',
+    email: 'wang@company.com',
+    department: 'ART',
+    userRole: 'EMPLOYEE',
+  },
+  {
+    id: 'emp-2',
+    name: '林小美',
+    email: 'lin@company.com',
+    department: 'ART',
+    userRole: 'EMPLOYEE',
+  },
+  {
+    id: 'emp-3',
+    name: '張大華',
+    email: 'zhang@company.com',
+    department: 'ART',
+    userRole: 'MANAGER',
+  },
+  {
+    id: 'emp-4',
+    name: '陳志明',
+    email: 'chen@company.com',
+    department: 'PROGRAMMING',
+    userRole: 'EMPLOYEE',
+  },
+  {
+    id: 'emp-5',
+    name: '李小龍',
+    email: 'li@company.com',
+    department: 'PROGRAMMING',
+    userRole: 'MANAGER',
+  },
+  {
+    id: 'emp-6',
+    name: '黃美玲',
+    email: 'huang@company.com',
+    department: 'PLANNING',
+    userRole: 'PM',
+  },
+  {
+    id: 'emp-7',
+    name: '吳建國',
+    email: 'wu@company.com',
+    department: 'PLANNING',
+    userRole: 'PRODUCER',
+  },
   { id: 'emp-8', name: '劉小芳', email: 'liu@company.com', department: 'QA', userRole: 'EMPLOYEE' },
-  { id: 'emp-9', name: '李美玲', email: 'meiling@company.com', department: 'ART', userRole: 'EMPLOYEE' },
-  { id: 'emp-10', name: '張大偉', email: 'dawei@company.com', department: 'PLANNING', userRole: 'PM' },
-  { id: 'emp-11', name: '陳志豪', email: 'zhihao@company.com', department: 'ART', userRole: 'EMPLOYEE' },
-  { id: 'emp-12', name: '林雅婷', email: 'yating@company.com', department: 'MANAGEMENT', userRole: 'MANAGER' },
+  {
+    id: 'emp-9',
+    name: '李美玲',
+    email: 'meiling@company.com',
+    department: 'ART',
+    userRole: 'EMPLOYEE',
+  },
+  {
+    id: 'emp-10',
+    name: '張大偉',
+    email: 'dawei@company.com',
+    department: 'PLANNING',
+    userRole: 'PM',
+  },
+  {
+    id: 'emp-11',
+    name: '陳志豪',
+    email: 'zhihao@company.com',
+    department: 'ART',
+    userRole: 'EMPLOYEE',
+  },
+  {
+    id: 'emp-12',
+    name: '林雅婷',
+    email: 'yating@company.com',
+    department: 'MANAGEMENT',
+    userRole: 'MANAGER',
+  },
 ]
 
 // ============================================
@@ -65,14 +131,14 @@ const departmentToFunctionType = (dept: Department): FunctionType => {
 
 // 特殊覆蓋：某些員工的 functionType 不同於部門預設
 const functionTypeOverrides: Record<string, FunctionType> = {
-  'emp-1': 'PROGRAMMING',   // 王小明原為 PROGRAMMING
-  'emp-11': 'ANIMATION',    // 陳志豪原為 ANIMATION
+  'emp-1': 'PROGRAMMING', // 王小明原為 PROGRAMMING
+  'emp-11': 'ANIMATION', // 陳志豪原為 ANIMATION
 }
 
 // ============================================
 // 使用者資料（從員工衍生，符合 User 介面）
 // ============================================
-export const mockUsers: User[] = mockEmployees.map((emp) => ({
+export const mockUsers: User[] = mockEmployees.map(emp => ({
   id: emp.id,
   name: emp.name,
   email: emp.email,
@@ -172,15 +238,23 @@ export const mockProjects: Project[] = [
 ]
 
 // 專案快速查找
-const projectMap = new Map(mockProjects.map((p) => [p.id, p]))
+const projectMap = new Map(mockProjects.map(p => [p.id, p]))
 const getProjectRef = (id: string) => {
   const p = projectMap.get(id)
   if (!p) return undefined
-  return { id: p.id, name: p.name, status: p.status, startDate: p.startDate, createdById: p.createdById, createdAt: p.createdAt, updatedAt: p.updatedAt }
+  return {
+    id: p.id,
+    name: p.name,
+    status: p.status,
+    startDate: p.startDate,
+    createdById: p.createdById,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  }
 }
 
 // 員工 → User 快速查找
-const userMap = new Map(mockUsers.map((u) => [u.id, u]))
+const userMap = new Map(mockUsers.map(u => [u.id, u]))
 const getUserRef = (id: string) => userMap.get(id)
 
 // ============================================
@@ -515,10 +589,18 @@ export const mockPoolTasks: PoolTask[] = [
 // ============================================
 // 純 Task 檢視（供 stores/tasks.ts 使用）
 // ============================================
-export const mockTasks: Task[] = mockPoolTasks.map(({
-  sourceType: _s, createdBy: _cb, department: _d, canEdit: _ce,
-  canDelete: _cd, collaboratorNames: _cn, gitlabIssue: _gi, ...task
-}) => task as Task)
+export const mockTasks: Task[] = mockPoolTasks.map(
+  ({
+    sourceType: _s,
+    createdBy: _cb,
+    department: _d,
+    canEdit: _ce,
+    canDelete: _cd,
+    collaboratorNames: _cn,
+    gitlabIssue: _gi,
+    ...task
+  }) => task as Task,
+)
 
 // ============================================
 // 進度回報記錄（合併兩套資料）
@@ -744,10 +826,10 @@ export const mockMilestones: MilestoneData[] = [
 // ============================================
 export const mockDashboardStats: DashboardStats = {
   totalTasks: mockPoolTasks.length,
-  completedTasks: mockPoolTasks.filter((t) => t.status === 'DONE').length,
-  inProgressTasks: mockPoolTasks.filter((t) => ['IN_PROGRESS', 'CLAIMED'].includes(t.status)).length,
-  unclaimedTasks: mockPoolTasks.filter((t) => t.status === 'UNCLAIMED').length,
-  overdueTasksCount: mockPoolTasks.filter((t) => {
+  completedTasks: mockPoolTasks.filter(t => t.status === 'DONE').length,
+  inProgressTasks: mockPoolTasks.filter(t => ['IN_PROGRESS', 'CLAIMED'].includes(t.status)).length,
+  unclaimedTasks: mockPoolTasks.filter(t => t.status === 'UNCLAIMED').length,
+  overdueTasksCount: mockPoolTasks.filter(t => {
     if (!t.dueDate || t.status === 'DONE') return false
     return new Date(t.dueDate) < new Date()
   }).length,
@@ -757,18 +839,28 @@ export const mockDashboardStats: DashboardStats = {
 // 職能負載統計（反映合併後的資料）
 // ============================================
 export const mockFunctionWorkloads: FunctionWorkload[] = (() => {
-  const functionTypes: FunctionType[] = ['PROGRAMMING', 'ART', 'ANIMATION', 'VFX', 'SOUND', 'PLANNING', 'COMBAT']
-  return functionTypes.map((ft) => {
-    const tasks = mockPoolTasks.filter((t) => t.functionTags.includes(ft))
-    const members = mockEmployees.filter((e) => departmentToFunctionType(e.department) === ft)
-    return {
-      functionType: ft,
-      totalTasks: tasks.length,
-      unclaimedTasks: tasks.filter((t) => t.status === 'UNCLAIMED').length,
-      inProgressTasks: tasks.filter((t) => ['IN_PROGRESS', 'CLAIMED'].includes(t.status)).length,
-      memberCount: members.length,
-    }
-  }).filter((w) => w.totalTasks > 0 || w.memberCount > 0)
+  const functionTypes: FunctionType[] = [
+    'PROGRAMMING',
+    'ART',
+    'ANIMATION',
+    'VFX',
+    'SOUND',
+    'PLANNING',
+    'COMBAT',
+  ]
+  return functionTypes
+    .map(ft => {
+      const tasks = mockPoolTasks.filter(t => t.functionTags.includes(ft))
+      const members = mockEmployees.filter(e => departmentToFunctionType(e.department) === ft)
+      return {
+        functionType: ft,
+        totalTasks: tasks.length,
+        unclaimedTasks: tasks.filter(t => t.status === 'UNCLAIMED').length,
+        inProgressTasks: tasks.filter(t => ['IN_PROGRESS', 'CLAIMED'].includes(t.status)).length,
+        memberCount: members.length,
+      }
+    })
+    .filter(w => w.totalTasks > 0 || w.memberCount > 0)
 })()
 
 // ============================================
@@ -777,36 +869,34 @@ export const mockFunctionWorkloads: FunctionWorkload[] = (() => {
 
 export function getNotesByTaskId(taskId: string): TaskNote[] {
   return mockTaskNotes
-    .filter((note) => note.taskId === taskId)
+    .filter(note => note.taskId === taskId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 }
 
 export function getMilestonesByProjectId(projectId: string): MilestoneData[] {
   return mockMilestones
-    .filter((ms) => ms.projectId === projectId)
+    .filter(ms => ms.projectId === projectId)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
 export function getAllMilestones(): MilestoneData[] {
-  return [...mockMilestones].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
+  return [...mockMilestones].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 }
 
 export function getProgressLogsByTaskId(taskId: string): ProgressLog[] {
   return mockProgressLogs
-    .filter((log) => log.taskId === taskId)
+    .filter(log => log.taskId === taskId)
     .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
 }
 
 export function getTaskById(taskId: string): PoolTask | undefined {
-  return mockPoolTasks.find((task) => task.id === taskId)
+  return mockPoolTasks.find(task => task.id === taskId)
 }
 
 export function getProjectsForFilter(): { id: string; name: string }[] {
-  return mockProjects.map((p) => ({ id: p.id, name: p.name }))
+  return mockProjects.map(p => ({ id: p.id, name: p.name }))
 }
 
 export function getDepartmentsForFilter(): { id: Department; name: string }[] {
-  return mockDepartments.map((d) => ({ id: d.id, name: d.name }))
+  return mockDepartments.map(d => ({ id: d.id, name: d.name }))
 }

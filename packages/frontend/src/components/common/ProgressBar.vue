@@ -29,9 +29,9 @@ const barColor = computed(() => {
 
   // 自動模式：根據進度決定顏色
   if (props.value >= 100) return 'bg-success'
-  if (props.value >= 70) return 'bg-indigo'   // 使用品牌靛藍
-  if (props.value >= 30) return 'bg-info'     // 使用藍色
-  return 'bg-warning'                         // 低進度用橙色警告
+  if (props.value >= 70) return 'bg-indigo' // 使用品牌靛藍
+  if (props.value >= 30) return 'bg-info' // 使用藍色
+  return 'bg-warning' // 低進度用橙色警告
 })
 
 const sizeClasses: Record<string, { bar: string; text: string }> = {
@@ -46,21 +46,15 @@ const normalizedValue = computed(() => Math.min(100, Math.max(0, props.value)))
 
 <template>
   <div class="w-full">
-    <div
-      v-if="showLabel"
-      class="flex justify-between items-center mb-1"
-    >
+    <div v-if="showLabel" class="flex justify-between items-center mb-1">
       <slot name="label" />
-      <span :class="['font-medium', sizeClasses[size].text]" style="color: var(--text-secondary);">
+      <span :class="['font-medium', sizeClasses[size].text]" style="color: var(--text-secondary)">
         {{ normalizedValue }}%
       </span>
     </div>
     <div
-      :class="[
-        'w-full rounded-full overflow-hidden',
-        sizeClasses[size].bar,
-      ]"
-      style="background-color: var(--border-secondary);"
+      :class="['w-full rounded-full overflow-hidden', sizeClasses[size].bar]"
+      style="background-color: var(--border-secondary)"
     >
       <div
         :class="['h-full rounded-full transition-all duration-300', barColor]"

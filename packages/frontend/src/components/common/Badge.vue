@@ -29,19 +29,25 @@ withDefaults(defineProps<Props>(), {
       // Variant classes - 使用透明度實現精緻感
       {
         // Default: 金屬灰
-        'bg-metal-light text-ink-cool dark:bg-metal-obsidian/50 dark:text-ink-muted': variant === 'default',
+        'bg-metal-light text-ink-cool dark:bg-metal-obsidian/50 dark:text-ink-muted':
+          variant === 'default',
         // Primary: 品牌靛藍
-        'bg-indigo/10 text-indigo dark:bg-indigo-light/20 dark:text-indigo-light': variant === 'primary',
+        'bg-indigo/10 text-indigo dark:bg-indigo-light/20 dark:text-indigo-light':
+          variant === 'primary',
         // Success: 翡翠綠
-        'bg-success/10 text-success dark:bg-success-light/20 dark:text-success-light': variant === 'success',
+        'bg-success/10 text-success dark:bg-success-light/20 dark:text-success-light':
+          variant === 'success',
         // Warning: 琥珀橙
-        'bg-warning/10 text-warning dark:bg-warning-light/20 dark:text-warning-light': variant === 'warning',
+        'bg-warning/10 text-warning dark:bg-warning-light/20 dark:text-warning-light':
+          variant === 'warning',
         // Danger: 危險紅
-        'bg-danger/10 text-danger dark:bg-danger-light/20 dark:text-danger-light': variant === 'danger',
+        'bg-danger/10 text-danger dark:bg-danger-light/20 dark:text-danger-light':
+          variant === 'danger',
         // Info: 資訊藍
         'bg-info/10 text-info dark:bg-info-light/20 dark:text-info-light': variant === 'info',
         // Paused: 暫停橙黃色
-        'bg-amber-500/10 text-amber-600 dark:bg-amber-400/20 dark:text-amber-400': variant === 'paused',
+        'bg-amber-500/10 text-amber-600 dark:bg-amber-400/20 dark:text-amber-400':
+          variant === 'paused',
       },
     ]"
   >

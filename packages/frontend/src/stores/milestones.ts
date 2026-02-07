@@ -8,23 +8,24 @@ export const useMilestoneStore = defineStore('milestones', () => {
 
   const byProject = (projectId: string) =>
     milestones.value
-      .filter((ms) => ms.projectId === projectId)
+      .filter(ms => ms.projectId === projectId)
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const allSorted = () =>
-    [...milestones.value].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
+    [...milestones.value].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const fetchMilestones = async (): Promise<ActionResult<MilestoneData[]>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       milestones.value = [...mockMilestones]
       return { success: true, data: milestones.value }
     } catch (e) {
       return {
         success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '載入里程碑失敗' },
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '載入里程碑失敗',
+        },
       }
     }
   }
@@ -34,7 +35,7 @@ export const useMilestoneStore = defineStore('milestones', () => {
   }
 
   const removeMilestone = (id: string) => {
-    milestones.value = milestones.value.filter((ms) => ms.id !== id)
+    milestones.value = milestones.value.filter(ms => ms.id !== id)
   }
 
   return {

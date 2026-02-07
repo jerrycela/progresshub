@@ -15,39 +15,39 @@ export interface UserSettingsServiceInterface {
 
 class MockUserSettingsService implements UserSettingsServiceInterface {
   async fetchSettings(): Promise<UserSettings> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return { ...mockCurrentUserSettings }
   }
 
   async updateSettings(updates: Partial<UserSettings>): Promise<ActionResult<UserSettings>> {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, 500))
     Object.assign(mockCurrentUserSettings, updates)
     return { success: true, data: { ...mockCurrentUserSettings } }
   }
 
   async linkGitLab(username: string): Promise<ActionResult<UserSettings>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     mockCurrentUserSettings.gitlabId = `GL${Date.now()}`
     mockCurrentUserSettings.gitlabUsername = username
     return { success: true, data: { ...mockCurrentUserSettings } }
   }
 
   async unlinkGitLab(): Promise<ActionResult<UserSettings>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     mockCurrentUserSettings.gitlabId = undefined
     mockCurrentUserSettings.gitlabUsername = undefined
     return { success: true, data: { ...mockCurrentUserSettings } }
   }
 
   async linkSlack(username: string): Promise<ActionResult<UserSettings>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     mockCurrentUserSettings.slackId = `U${Date.now()}`
     mockCurrentUserSettings.slackUsername = username
     return { success: true, data: { ...mockCurrentUserSettings } }
   }
 
   async unlinkSlack(): Promise<ActionResult<UserSettings>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     mockCurrentUserSettings.slackId = undefined
     mockCurrentUserSettings.slackUsername = undefined
     return { success: true, data: { ...mockCurrentUserSettings } }
@@ -87,4 +87,6 @@ class ApiUserSettingsService implements UserSettingsServiceInterface {
 }
 
 export const createUserSettingsService = (): UserSettingsServiceInterface =>
-  import.meta.env.VITE_USE_MOCK === 'true' ? new MockUserSettingsService() : new ApiUserSettingsService()
+  import.meta.env.VITE_USE_MOCK === 'true'
+    ? new MockUserSettingsService()
+    : new ApiUserSettingsService()

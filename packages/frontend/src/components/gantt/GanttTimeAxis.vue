@@ -9,14 +9,17 @@ defineProps<{
 
 <template>
   <!-- 行動裝置時間軸 -->
-  <div class="sm:hidden flex justify-between text-xs px-2 mb-2" style="color: var(--text-tertiary);">
+  <div class="sm:hidden flex justify-between text-xs px-2 mb-2" style="color: var(--text-tertiary)">
     <span>{{ formatDate(dateRange.start) }}</span>
     <span class="text-danger font-medium">今天</span>
     <span>{{ formatDate(dateRange.end) }}</span>
   </div>
 
   <!-- 桌面時間軸 -->
-  <div class="hidden sm:block relative h-8 mb-2" style="border-bottom: 1px solid var(--border-primary);">
+  <div
+    class="hidden sm:block relative h-8 mb-2"
+    style="border-bottom: 1px solid var(--border-primary)"
+  >
     <div
       v-for="mark in timeAxisMarks"
       :key="mark.label"

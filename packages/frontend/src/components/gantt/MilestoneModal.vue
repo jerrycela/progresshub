@@ -16,7 +16,15 @@ defineProps<{
 const showModal = defineModel<boolean>({ required: true })
 
 const emit = defineEmits<{
-  submit: [milestone: { name: string; description: string; date: string; projectId: string; color: string }]
+  submit: [
+    milestone: {
+      name: string
+      description: string
+      date: string
+      projectId: string
+      color: string
+    },
+  ]
   delete: [id: string]
 }>()
 
@@ -39,19 +47,26 @@ const handleSubmit = () => {
     <div class="space-y-6">
       <!-- 已有里程碑列表 -->
       <div v-if="milestones.length > 0">
-        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">已設定的里程碑</h4>
+        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary)">
+          已設定的里程碑
+        </h4>
         <div class="space-y-2">
           <div
             v-for="ms in milestones"
             :key="ms.id"
             class="flex items-center justify-between p-3 rounded-lg"
-            style="background-color: var(--bg-tertiary);"
+            style="background-color: var(--bg-tertiary)"
           >
             <div class="flex items-center gap-3">
-              <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: ms.color || '#F59E0B' }" />
+              <div
+                class="w-3 h-3 rounded-full"
+                :style="{ backgroundColor: ms.color || '#F59E0B' }"
+              />
               <div>
-                <div class="text-sm font-medium" style="color: var(--text-primary);">{{ ms.name }}</div>
-                <div class="text-xs" style="color: var(--text-tertiary);">{{ ms.date }}</div>
+                <div class="text-sm font-medium" style="color: var(--text-primary)">
+                  {{ ms.name }}
+                </div>
+                <div class="text-xs" style="color: var(--text-tertiary)">{{ ms.date }}</div>
               </div>
             </div>
             <button
@@ -60,7 +75,12 @@ const handleSubmit = () => {
               @click="emit('delete', ms.id)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           </div>
@@ -69,39 +89,29 @@ const handleSubmit = () => {
 
       <!-- 新增里程碑表單 -->
       <div v-if="canManage">
-        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">新增里程碑</h4>
+        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary)">新增里程碑</h4>
         <div class="space-y-3">
-          <Input
-            v-model="newMilestone.name"
-            label="名稱"
-            placeholder="輸入里程碑名稱"
-          />
-          <Input
-            v-model="newMilestone.description"
-            label="說明（選填）"
-            placeholder="輸入說明"
-          />
+          <Input v-model="newMilestone.name" label="名稱" placeholder="輸入里程碑名稱" />
+          <Input v-model="newMilestone.description" label="說明（選填）" placeholder="輸入說明" />
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              v-model="newMilestone.date"
-              type="date"
-              label="日期"
-            />
-            <Select
-              v-model="newMilestone.projectId"
-              label="專案"
-              :options="projectOptions"
-            />
+            <Input v-model="newMilestone.date" type="date" label="日期" />
+            <Select v-model="newMilestone.projectId" label="專案" :options="projectOptions" />
           </div>
           <!-- 顏色選擇 -->
           <div>
-            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary);">顏色</label>
+            <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)"
+              >顏色</label
+            >
             <div class="flex gap-2">
               <button
                 v-for="color in colorOptions"
                 :key="color.value"
                 class="w-8 h-8 rounded-full border-2 transition-all cursor-pointer"
-                :class="newMilestone.color === color.value ? 'border-white ring-2 ring-offset-1' : 'border-transparent'"
+                :class="
+                  newMilestone.color === color.value
+                    ? 'border-white ring-2 ring-offset-1'
+                    : 'border-transparent'
+                "
                 :style="{ backgroundColor: color.value, '--tw-ring-color': color.value }"
                 @click="newMilestone.color = color.value"
               />

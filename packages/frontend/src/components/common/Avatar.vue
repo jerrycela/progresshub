@@ -40,10 +40,6 @@ const avatarSrc = () => {
   <img
     :src="avatarSrc()"
     :alt="props.name"
-    :class="[
-      'rounded-full bg-gray-100 object-cover',
-      sizeClasses[props.size],
-      props.class,
-    ]"
-  >
+    :class="['rounded-full bg-gray-100 object-cover', sizeClasses[props.size], props.class]"
+  />
 </template>

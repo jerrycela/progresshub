@@ -9,7 +9,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const fetchStats = async (): Promise<ActionResult<DashboardStats>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       stats.value = { ...mockDashboardStats }
       return { success: true, data: stats.value }
     } catch (e) {
@@ -22,13 +22,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const fetchWorkloads = async (): Promise<ActionResult<FunctionWorkload[]>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       functionWorkloads.value = [...mockFunctionWorkloads]
       return { success: true, data: functionWorkloads.value }
     } catch (e) {
       return {
         success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '載入負載統計失敗' },
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '載入負載統計失敗',
+        },
       }
     }
   }

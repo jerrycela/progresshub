@@ -28,9 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userName = computed(() => user.value?.name || '')
   const userFunctionType = computed(() => user.value?.functionType || null)
 
-  const isPM = computed(() =>
-    user.value?.role === 'PM' || user.value?.role === 'ADMIN'
-  )
+  const isPM = computed(() => user.value?.role === 'PM' || user.value?.role === 'ADMIN')
 
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
 

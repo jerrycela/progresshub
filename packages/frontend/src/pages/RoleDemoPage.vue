@@ -177,8 +177,8 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
   <div class="space-y-6">
     <!-- 頁面標題 -->
     <div>
-      <h1 class="text-2xl font-bold" style="color: var(--text-primary);">角色權限</h1>
-      <p class="text-sm mt-1" style="color: var(--text-secondary);">
+      <h1 class="text-2xl font-bold" style="color: var(--text-primary)">角色權限</h1>
+      <p class="text-sm mt-1" style="color: var(--text-secondary)">
         系統中的四種角色及其對應權限說明
       </p>
     </div>
@@ -198,7 +198,9 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
           <div
             :class="[
               'p-2.5 rounded-xl',
-              selectedRole === role.id ? 'bg-white/80 dark:bg-black/20' : 'bg-[var(--bg-secondary)]'
+              selectedRole === role.id
+                ? 'bg-white/80 dark:bg-black/20'
+                : 'bg-[var(--bg-secondary)]',
             ]"
           >
             <svg
@@ -207,19 +209,26 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="role.icon" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.5"
+                :d="role.icon"
+              />
             </svg>
           </div>
           <span
             :class="[
               'text-lg font-bold',
-              selectedRole === role.id ? getRoleIconColorClass(role.color, true) : 'text-[var(--text-primary)]'
+              selectedRole === role.id
+                ? getRoleIconColorClass(role.color, true)
+                : 'text-[var(--text-primary)]',
             ]"
           >
             {{ role.label }}
           </span>
         </div>
-        <p class="text-sm" style="color: var(--text-secondary);">
+        <p class="text-sm" style="color: var(--text-secondary)">
           {{ role.description }}
         </p>
       </button>
@@ -229,11 +238,14 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
     <div class="card p-6">
       <div class="flex items-center gap-3 mb-6">
         <span
-          :class="['px-3 py-1 rounded-full text-sm font-semibold', getRoleBadgeClass(currentRole()?.color || 'blue')]"
+          :class="[
+            'px-3 py-1 rounded-full text-sm font-semibold',
+            getRoleBadgeClass(currentRole()?.color || 'blue'),
+          ]"
         >
           {{ currentRole()?.label }}
         </span>
-        <span class="text-sm" style="color: var(--text-secondary);">的權限清單</span>
+        <span class="text-sm" style="color: var(--text-secondary)">的權限清單</span>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -242,7 +254,9 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
           :key="permission.name"
           :class="[
             'p-4 rounded-xl transition-all duration-200',
-            permission.permissions[selectedRole] ? 'bg-green-50 dark:bg-green-900/10' : 'bg-[var(--bg-tertiary)] opacity-60'
+            permission.permissions[selectedRole]
+              ? 'bg-green-50 dark:bg-green-900/10'
+              : 'bg-[var(--bg-tertiary)] opacity-60',
           ]"
         >
           <div class="flex items-start gap-3">
@@ -251,7 +265,7 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
                 'mt-0.5 p-1 rounded-full',
                 permission.permissions[selectedRole]
                   ? 'bg-green-500 text-white'
-                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400'
+                  : 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400',
               ]"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,11 +288,15 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
             <div>
               <h4
                 class="font-medium"
-                :style="{ color: permission.permissions[selectedRole] ? 'var(--text-primary)' : 'var(--text-muted)' }"
+                :style="{
+                  color: permission.permissions[selectedRole]
+                    ? 'var(--text-primary)'
+                    : 'var(--text-muted)',
+                }"
               >
                 {{ permission.name }}
               </h4>
-              <p class="text-sm mt-0.5" style="color: var(--text-secondary);">
+              <p class="text-sm mt-0.5" style="color: var(--text-secondary)">
                 {{ permission.description }}
               </p>
             </div>
@@ -289,22 +307,26 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
 
     <!-- 權限對照表 -->
     <div class="card overflow-hidden">
-      <div class="p-4 border-b" style="border-color: var(--border-primary);">
-        <h2 class="text-lg font-semibold" style="color: var(--text-primary);">權限對照表</h2>
+      <div class="p-4 border-b" style="border-color: var(--border-primary)">
+        <h2 class="text-lg font-semibold" style="color: var(--text-primary)">權限對照表</h2>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr style="background-color: var(--bg-tertiary);">
-              <th class="text-left px-4 py-3 text-sm font-semibold" style="color: var(--text-secondary);">
+            <tr style="background-color: var(--bg-tertiary)">
+              <th
+                class="text-left px-4 py-3 text-sm font-semibold"
+                style="color: var(--text-secondary)"
+              >
                 權限項目
               </th>
-              <th
-                v-for="role in roles"
-                :key="role.id"
-                class="text-center px-4 py-3"
-              >
-                <span :class="['px-2 py-1 rounded-full text-xs font-semibold', getRoleBadgeClass(role.color)]">
+              <th v-for="role in roles" :key="role.id" class="text-center px-4 py-3">
+                <span
+                  :class="[
+                    'px-2 py-1 rounded-full text-xs font-semibold',
+                    getRoleBadgeClass(role.color),
+                  ]"
+                >
                   {{ role.label }}
                 </span>
               </th>
@@ -318,22 +340,22 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
             >
               <td class="px-4 py-3">
                 <div>
-                  <p class="font-medium" style="color: var(--text-primary);">{{ permission.name }}</p>
-                  <p class="text-xs" style="color: var(--text-muted);">{{ permission.description }}</p>
+                  <p class="font-medium" style="color: var(--text-primary)">
+                    {{ permission.name }}
+                  </p>
+                  <p class="text-xs" style="color: var(--text-muted)">
+                    {{ permission.description }}
+                  </p>
                 </div>
               </td>
-              <td
-                v-for="role in roles"
-                :key="role.id"
-                class="text-center px-4 py-3"
-              >
+              <td v-for="role in roles" :key="role.id" class="text-center px-4 py-3">
                 <div class="flex justify-center">
                   <div
                     :class="[
                       'p-1 rounded-full',
                       permission.permissions[role.id]
                         ? 'bg-green-500 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-400',
                     ]"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,43 +385,82 @@ const currentRole = () => roles.find((r: RoleDefinition) => r.id === selectedRol
 
     <!-- 說明區塊 -->
     <div class="card p-6">
-      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">角色說明</h2>
+      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary)">角色說明</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-4">
-          <h3 class="font-medium" style="color: var(--text-primary);">任務來源類型</h3>
-          <ul class="space-y-2 text-sm" style="color: var(--text-secondary);">
+          <h3 class="font-medium" style="color: var(--text-primary)">任務來源類型</h3>
+          <ul class="space-y-2 text-sm" style="color: var(--text-secondary)">
             <li class="flex items-start gap-2">
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">任務池</span>
+              <span
+                class="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                >任務池</span
+              >
               <span>公開任務，所有人可見，待認領</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">已指派</span>
+              <span
+                class="px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                >已指派</span
+              >
               <span>直接指派給特定成員的任務</span>
             </li>
             <li class="flex items-start gap-2">
-              <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300">自建</span>
+              <span
+                class="px-2 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300"
+                >自建</span
+              >
               <span>成員自己建立的個人任務</span>
             </li>
           </ul>
         </div>
         <div class="space-y-4">
-          <h3 class="font-medium" style="color: var(--text-primary);">權限規則</h3>
-          <ul class="space-y-2 text-sm" style="color: var(--text-secondary);">
+          <h3 class="font-medium" style="color: var(--text-primary)">權限規則</h3>
+          <ul class="space-y-2 text-sm" style="color: var(--text-secondary)">
             <li class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-5 h-5 text-green-500 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>所有角色都可以認領任務和回報進度</span>
             </li>
             <li class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-5 h-5 text-green-500 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>PM、製作人、主管可編輯和刪除任務</span>
             </li>
             <li class="flex items-start gap-2">
-              <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-5 h-5 text-blue-500 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>一般同仁只能編輯自己建立的任務</span>
             </li>

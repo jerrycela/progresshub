@@ -10,17 +10,17 @@ export interface MilestoneServiceInterface {
 
 class MockMilestoneService implements MilestoneServiceInterface {
   async fetchMilestones(): Promise<MilestoneData[]> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return [...mockMilestones]
   }
 
   async addMilestone(ms: MilestoneData): Promise<ActionResult<MilestoneData>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return { success: true, data: ms }
   }
 
   async removeMilestone(): Promise<ActionResult<void>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return { success: true }
   }
 }

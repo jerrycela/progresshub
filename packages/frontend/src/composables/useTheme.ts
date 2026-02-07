@@ -115,11 +115,13 @@ export function useTheme() {
 
     // 監聽系統主題變化
     if (typeof window !== 'undefined') {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e: MediaQueryListEvent) => {
-        if (currentTheme.value === 'system') {
-          applyTheme(e.matches)
-        }
-      })
+      window
+        .matchMedia('(prefers-color-scheme: dark)')
+        .addEventListener('change', (e: MediaQueryListEvent) => {
+          if (currentTheme.value === 'system') {
+            applyTheme(e.matches)
+          }
+        })
     }
   }
 
@@ -132,7 +134,9 @@ export function useTheme() {
 
   // 當前主題的標籤
   const currentThemeLabel = computed((): string => {
-    const option = themeOptions.value.find((opt: { value: Theme; label: string }) => opt.value === currentTheme.value)
+    const option = themeOptions.value.find(
+      (opt: { value: Theme; label: string }) => opt.value === currentTheme.value,
+    )
     return option?.label || '跟隨系統'
   })
 

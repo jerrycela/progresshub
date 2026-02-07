@@ -9,14 +9,14 @@ export interface NoteServiceInterface {
 
 class MockNoteService implements NoteServiceInterface {
   async fetchByTaskId(taskId: string): Promise<TaskNote[]> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return mockTaskNotes
-      .filter((n) => n.taskId === taskId)
+      .filter(n => n.taskId === taskId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
   async addNote(note: Omit<TaskNote, 'id' | 'createdAt'>): Promise<ActionResult<TaskNote>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     const newNote: TaskNote = {
       ...note,
       id: `note-${Date.now()}`,

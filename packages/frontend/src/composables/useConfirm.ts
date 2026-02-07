@@ -45,7 +45,7 @@ export const useConfirm = () => {
    * @returns Promise<boolean> 使用者點擊確定返回 true，取消返回 false
    */
   const showConfirm = (options: ConfirmOptions | string): Promise<boolean> => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const opts = typeof options === 'string' ? { message: options } : options
 
       state.value = {

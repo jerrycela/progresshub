@@ -35,7 +35,7 @@ const handleOverlayClick = () => {
 // 監聽 ESC 鍵關閉
 watch(
   () => props.modelValue,
-  (isOpen) => {
+  isOpen => {
     if (isOpen) {
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape' && props.closable) {
@@ -53,7 +53,7 @@ watch(
     } else {
       document.body.style.overflow = ''
     }
-  }
+  },
 )
 
 const sizeClasses: Record<string, string> = {
@@ -67,41 +67,37 @@ const sizeClasses: Record<string, string> = {
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div
-        v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      >
+      <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <!-- 背景遮罩 -->
-        <div
-          class="absolute inset-0 bg-black/50"
-          @click="handleOverlayClick"
-        />
+        <div class="absolute inset-0 bg-black/50" @click="handleOverlayClick" />
 
         <!-- 對話框內容 -->
         <div
-          :class="[
-            'relative w-full rounded-xl shadow-xl',
-            sizeClasses[size],
-          ]"
-          style="background-color: var(--card-bg);"
+          :class="['relative w-full rounded-xl shadow-xl', sizeClasses[size]]"
+          style="background-color: var(--card-bg)"
         >
           <!-- 標頭 -->
           <div
             v-if="title || $slots.header"
             class="flex items-center justify-between px-6 py-4 border-b"
-            style="border-color: var(--border-primary);"
+            style="border-color: var(--border-primary)"
           >
             <slot name="header">
-              <h3 class="text-lg font-semibold" style="color: var(--text-primary);">{{ title }}</h3>
+              <h3 class="text-lg font-semibold" style="color: var(--text-primary)">{{ title }}</h3>
             </slot>
             <button
               v-if="closable"
               class="p-1 rounded-lg transition-colors hover-bg"
-              style="color: var(--text-muted);"
+              style="color: var(--text-muted)"
               @click="close"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -115,7 +111,7 @@ const sizeClasses: Record<string, string> = {
           <div
             v-if="$slots.footer"
             class="flex items-center justify-end gap-3 px-6 py-4 border-t rounded-b-xl"
-            style="border-color: var(--border-primary); background-color: var(--bg-secondary);"
+            style="border-color: var(--border-primary); background-color: var(--bg-secondary)"
           >
             <slot name="footer" />
           </div>

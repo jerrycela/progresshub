@@ -90,15 +90,29 @@ const handleCancel = (): void => {
   <div class="max-w-4xl mx-auto space-y-6">
     <!-- 載入中 -->
     <div v-if="isLoading" class="flex items-center justify-center py-12">
-      <div class="animate-spin rounded-full h-8 w-8 border-b-2" style="border-color: var(--accent-primary);"></div>
+      <div
+        class="animate-spin rounded-full h-8 w-8 border-b-2"
+        style="border-color: var(--accent-primary)"
+      ></div>
     </div>
 
     <!-- 任務不存在 -->
     <div v-else-if="!originalTask" class="card p-12 text-center">
-      <svg class="w-16 h-16 mx-auto" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg
+        class="w-16 h-16 mx-auto"
+        style="color: var(--text-muted)"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
       </svg>
-      <p class="mt-4" style="color: var(--text-secondary);">找不到此任務</p>
+      <p class="mt-4" style="color: var(--text-secondary)">找不到此任務</p>
       <button class="btn-primary mt-4" @click="router.push('/task-pool')">返回任務池</button>
     </div>
 
@@ -108,16 +122,27 @@ const handleCancel = (): void => {
       <div class="flex items-center gap-4">
         <button
           class="p-2 rounded-lg transition-colors cursor-pointer"
-          style="background-color: var(--bg-tertiary);"
+          style="background-color: var(--bg-tertiary)"
           @click="handleCancel"
         >
-          <svg class="w-5 h-5" style="color: var(--text-secondary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg
+            class="w-5 h-5"
+            style="color: var(--text-secondary)"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
         <div>
-          <h1 class="text-2xl font-bold" style="color: var(--text-primary);">編輯任務</h1>
-          <p class="text-sm mt-1" style="color: var(--text-secondary);">修改任務資訊</p>
+          <h1 class="text-2xl font-bold" style="color: var(--text-primary)">編輯任務</h1>
+          <p class="text-sm mt-1" style="color: var(--text-secondary)">修改任務資訊</p>
         </div>
       </div>
 
@@ -133,7 +158,7 @@ const handleCancel = (): void => {
       <div class="flex items-center justify-end gap-3">
         <button
           class="px-6 py-2.5 rounded-lg font-medium transition-colors cursor-pointer"
-          style="background-color: var(--bg-tertiary); color: var(--text-secondary);"
+          style="background-color: var(--bg-tertiary); color: var(--text-secondary)"
           @click="handleCancel"
         >
           取消
@@ -142,7 +167,7 @@ const handleCancel = (): void => {
           :disabled="!canSubmit"
           :class="[
             'px-6 py-2.5 rounded-lg font-medium transition-colors',
-            canSubmit ? 'btn-primary cursor-pointer' : 'opacity-50 cursor-not-allowed'
+            canSubmit ? 'btn-primary cursor-pointer' : 'opacity-50 cursor-not-allowed',
           ]"
           @click="handleSubmit"
         >

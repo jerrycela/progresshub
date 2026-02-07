@@ -9,12 +9,12 @@ export interface ProjectServiceInterface {
 
 class MockProjectService implements ProjectServiceInterface {
   async fetchProjects(): Promise<Project[]> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return [...mockProjects]
   }
 
   async getProjectById(id: string): Promise<Project | undefined> {
-    return mockProjects.find((p) => p.id === id)
+    return mockProjects.find(p => p.id === id)
   }
 }
 

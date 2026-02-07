@@ -58,7 +58,7 @@ const selectId = props.id || `select-${Math.random().toString(36).slice(2, 9)}`
       v-if="props.label"
       :for="selectId"
       class="block text-sm font-medium"
-      style="color: var(--text-secondary);"
+      style="color: var(--text-secondary)"
     >
       {{ props.label }}
       <span v-if="props.required" class="text-danger">*</span>

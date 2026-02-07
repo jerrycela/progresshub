@@ -136,7 +136,7 @@ const router = createRouter({
  */
 const requiresAuth = (to: RouteLocationNormalized): boolean => {
   // 檢查路由或其父路由是否需要認證
-  return to.matched.some((record) => record.meta.requiresAuth === true)
+  return to.matched.some(record => record.meta.requiresAuth === true)
 }
 
 /**
@@ -184,7 +184,7 @@ router.beforeEach(async (to, _from, next) => {
       if (import.meta.env.DEV) {
         console.warn(
           `[Router] 權限不足: 需要 ${requiredRoles.join(' 或 ')}，` +
-          `當前角色: ${authStore.userRole}`
+            `當前角色: ${authStore.userRole}`,
         )
       }
 

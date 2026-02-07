@@ -6,23 +6,17 @@ import { mockProjects } from '@/mocks/unified'
 export const useProjectStore = defineStore('projects', () => {
   const projects = ref<Project[]>([...mockProjects])
 
-  const activeProjects = computed(() =>
-    projects.value.filter((p) => p.status === 'ACTIVE')
-  )
+  const activeProjects = computed(() => projects.value.filter(p => p.status === 'ACTIVE'))
 
-  const projectOptions = computed(() =>
-    projects.value.map((p) => ({ value: p.id, label: p.name }))
-  )
+  const projectOptions = computed(() => projects.value.map(p => ({ value: p.id, label: p.name })))
 
-  const getProjectById = (id: string) =>
-    projects.value.find((p) => p.id === id)
+  const getProjectById = (id: string) => projects.value.find(p => p.id === id)
 
-  const getProjectName = (id: string) =>
-    getProjectById(id)?.name ?? ''
+  const getProjectName = (id: string) => getProjectById(id)?.name ?? ''
 
   const fetchProjects = async (): Promise<ActionResult<Project[]>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       projects.value = [...mockProjects]
       return { success: true, data: projects.value }
     } catch (e) {

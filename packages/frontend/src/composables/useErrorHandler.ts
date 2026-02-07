@@ -142,7 +142,9 @@ export const useErrorHandler = () => {
       message = getErrorMessage(code)
     } else if (error instanceof Error) {
       // 檢查是否有 response（axios 錯誤）
-      const axiosError = error as Error & { response?: { status: number; data?: { message?: string; code?: string } } }
+      const axiosError = error as Error & {
+        response?: { status: number; data?: { message?: string; code?: string } }
+      }
       if (axiosError.response) {
         code = axiosError.response.data?.code || getErrorCodeFromStatus(axiosError.response.status)
         message = axiosError.response.data?.message || getErrorMessage(code)
@@ -185,7 +187,7 @@ export const useErrorHandler = () => {
    */
   const withErrorHandler = <T, Args extends unknown[]>(
     fn: (...args: Args) => Promise<T>,
-    options: ErrorHandlerOptions = {}
+    options: ErrorHandlerOptions = {},
   ): ((...args: Args) => Promise<T | null>) => {
     return async (...args: Args): Promise<T | null> => {
       try {
@@ -203,10 +205,13 @@ export const useErrorHandler = () => {
    */
   const handleApiError = (
     result: { success: boolean; error?: { code?: string; message?: string } },
-    options: ErrorHandlerOptions = {}
+    options: ErrorHandlerOptions = {},
   ): boolean => {
     if (!result.success && result.error) {
-      const message = options.customMessage || result.error.message || getErrorMessage(result.error.code || 'UNKNOWN_ERROR')
+      const message =
+        options.customMessage ||
+        result.error.message ||
+        getErrorMessage(result.error.code || 'UNKNOWN_ERROR')
 
       if (options.showToast !== false) {
         showError(message)

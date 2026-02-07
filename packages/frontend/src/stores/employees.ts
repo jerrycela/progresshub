@@ -7,29 +7,27 @@ export const useEmployeeStore = defineStore('employees', () => {
   const employees = ref<MockEmployee[]>([...mockEmployees])
 
   const getByDepartment = (dept: Department) =>
-    computed(() => employees.value.filter((e) => e.department === dept))
+    computed(() => employees.value.filter(e => e.department === dept))
 
   const filteredByDepartment = (dept: Department | '') => {
     if (!dept) return employees.value
-    return employees.value.filter((e) => e.department === dept)
+    return employees.value.filter(e => e.department === dept)
   }
 
-  const getEmployeeById = (id: string) =>
-    employees.value.find((e) => e.id === id)
+  const getEmployeeById = (id: string) => employees.value.find(e => e.id === id)
 
-  const getEmployeeName = (id: string) =>
-    getEmployeeById(id)?.name ?? ''
+  const getEmployeeName = (id: string) => getEmployeeById(id)?.name ?? ''
 
   const employeeOptions = computed(() =>
-    employees.value.map((e) => ({
+    employees.value.map(e => ({
       value: e.id,
       label: `${e.name} (${e.department})`,
-    }))
+    })),
   )
 
   const fetchEmployees = async (): Promise<ActionResult<MockEmployee[]>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       employees.value = [...mockEmployees]
       return { success: true, data: employees.value }
     } catch (e) {

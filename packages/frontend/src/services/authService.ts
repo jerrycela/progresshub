@@ -9,7 +9,7 @@ export interface AuthServiceInterface {
 
 class MockAuthService implements AuthServiceInterface {
   async loginWithSlack(): Promise<ActionResult<{ user: User; token: string }>> {
-    await new Promise((r) => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, 500))
     const user: User = {
       id: 'emp-6',
       name: '黃美玲',
@@ -23,7 +23,7 @@ class MockAuthService implements AuthServiceInterface {
   }
 
   async getCurrentUser(): Promise<ActionResult<User>> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     const user: User = {
       id: 'emp-6',
       name: '黃美玲',
@@ -37,7 +37,7 @@ class MockAuthService implements AuthServiceInterface {
   }
 
   async logout(): Promise<void> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     localStorage.removeItem('auth_token')
   }
 }

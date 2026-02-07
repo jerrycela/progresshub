@@ -22,9 +22,8 @@ const workloads = computed(() => dashboardStore.functionWorkloads)
 
 // 計算負載程度
 const getLoadLevel = (workload: FunctionWorkload) => {
-  const tasksPerMember = workload.memberCount > 0
-    ? workload.inProgressTasks / workload.memberCount
-    : 0
+  const tasksPerMember =
+    workload.memberCount > 0 ? workload.inProgressTasks / workload.memberCount : 0
 
   if (workload.unclaimedTasks > 2) return { level: 'high', label: '人力不足', color: 'danger' }
   if (tasksPerMember > 3) return { level: 'high', label: '超負荷', color: 'danger' }
@@ -46,7 +45,9 @@ const functionColors: Record<string, string> = {
 // 取得該職能的成員
 const getMembersByFunction = (functionType: string) =>
   employeeStore.employees
-    .filter(e => e.department === functionType || functionType === 'PLANNING' && e.department === 'QA')
+    .filter(
+      e => e.department === functionType || (functionType === 'PLANNING' && e.department === 'QA'),
+    )
     .map(e => ({ ...e, id: e.id, name: e.name, functionType }))
 
 // 取得成員的任務數
@@ -66,34 +67,38 @@ const totalStats = computed(() => ({
   <div class="space-y-6">
     <!-- 頁面標題 (RWD: 迭代 21) -->
     <div>
-      <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">職能負載分析</h1>
-      <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">各職能的任務分配與人力狀況</p>
+      <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary)">職能負載分析</h1>
+      <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary)">
+        各職能的任務分配與人力狀況
+      </p>
     </div>
 
     <!-- 整體統計 -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
         <div class="text-center">
-          <p class="text-3xl font-bold" style="color: var(--text-primary);">{{ totalStats.totalTasks }}</p>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">總任務數</p>
+          <p class="text-3xl font-bold" style="color: var(--text-primary)">
+            {{ totalStats.totalTasks }}
+          </p>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">總任務數</p>
         </div>
       </Card>
       <Card>
         <div class="text-center">
           <p class="text-3xl font-bold text-samurai">{{ totalStats.inProgressTasks }}</p>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">進行中</p>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">進行中</p>
         </div>
       </Card>
       <Card>
         <div class="text-center">
           <p class="text-3xl font-bold text-warning">{{ totalStats.unclaimedTasks }}</p>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">待認領</p>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">待認領</p>
         </div>
       </Card>
       <Card>
         <div class="text-center">
           <p class="text-3xl font-bold text-info">{{ totalStats.totalMembers }}</p>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">總人數</p>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">總人數</p>
         </div>
       </Card>
     </div>
@@ -105,27 +110,33 @@ const totalStats = computed(() => ({
           v-for="workload in workloads"
           :key="workload.functionType"
           class="p-4 rounded-xl transition-colors duration-200 cursor-pointer hover-bg"
-          style="background-color: var(--bg-tertiary);"
+          style="background-color: var(--bg-tertiary)"
         >
           <!-- RWD: 迭代 21 - 行動裝置堆疊排列 -->
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <div class="flex items-center gap-3">
               <div :class="['w-3 h-3 rounded-full', functionColors[workload.functionType]]" />
-              <span class="font-medium" style="color: var(--text-primary);">
+              <span class="font-medium" style="color: var(--text-primary)">
                 {{ functionTypeLabels[workload.functionType] }}
               </span>
               <Badge :variant="getLoadLevel(workload).color as any" size="sm">
                 {{ getLoadLevel(workload).label }}
               </Badge>
             </div>
-            <div class="flex items-center gap-4 text-sm ml-6 sm:ml-0" style="color: var(--text-tertiary);">
+            <div
+              class="flex items-center gap-4 text-sm ml-6 sm:ml-0"
+              style="color: var(--text-tertiary)"
+            >
               <span>{{ workload.memberCount }} 人</span>
               <span>{{ workload.totalTasks }} 任務</span>
             </div>
           </div>
 
           <!-- 任務分佈條 -->
-          <div class="h-6 rounded-full overflow-hidden flex" style="background-color: var(--border-secondary);">
+          <div
+            class="h-6 rounded-full overflow-hidden flex"
+            style="background-color: var(--border-secondary)"
+          >
             <div
               v-if="workload.inProgressTasks > 0"
               class="bg-samurai flex items-center justify-center text-xs text-white font-medium"
@@ -143,25 +154,28 @@ const totalStats = computed(() => ({
           </div>
 
           <!-- 成員列表 -->
-          <div v-if="getMembersByFunction(workload.functionType).length > 0" class="mt-3 flex flex-wrap gap-2">
+          <div
+            v-if="getMembersByFunction(workload.functionType).length > 0"
+            class="mt-3 flex flex-wrap gap-2"
+          >
             <div
               v-for="member in getMembersByFunction(workload.functionType)"
               :key="member.id"
               class="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-              style="background-color: var(--bg-primary); border: 1px solid var(--border-primary);"
+              style="background-color: var(--bg-primary); border: 1px solid var(--border-primary)"
             >
               <img
-                :src="member.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`"
+                :src="
+                  member.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${member.name}`
+                "
                 :alt="member.name"
                 class="w-6 h-6 rounded-full"
-              >
-              <span class="text-sm" style="color: var(--text-secondary);">{{ member.name }}</span>
-              <Badge variant="default" size="sm">
-                {{ getMemberTaskCount(member.id) }} 任務
-              </Badge>
+              />
+              <span class="text-sm" style="color: var(--text-secondary)">{{ member.name }}</span>
+              <Badge variant="default" size="sm"> {{ getMemberTaskCount(member.id) }} 任務 </Badge>
             </div>
           </div>
-          <div v-else class="mt-3 text-sm italic" style="color: var(--text-muted);">
+          <div v-else class="mt-3 text-sm italic" style="color: var(--text-muted)">
             目前無該職能成員
           </div>
         </div>
@@ -173,29 +187,39 @@ const totalStats = computed(() => ({
       <div class="flex flex-wrap items-center gap-6">
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-samurai rounded" />
-          <span class="text-sm" style="color: var(--text-secondary);">進行中</span>
+          <span class="text-sm" style="color: var(--text-secondary)">進行中</span>
         </div>
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-warning rounded" />
-          <span class="text-sm" style="color: var(--text-secondary);">待認領</span>
+          <span class="text-sm" style="color: var(--text-secondary)">待認領</span>
         </div>
         <div class="flex items-center gap-2">
-          <div class="w-4 h-4 rounded" style="background-color: var(--border-secondary);" />
-          <span class="text-sm" style="color: var(--text-secondary);">已完成/空閒</span>
+          <div class="w-4 h-4 rounded" style="background-color: var(--border-secondary)" />
+          <span class="text-sm" style="color: var(--text-secondary)">已完成/空閒</span>
         </div>
       </div>
     </Card>
 
     <!-- 建議 -->
     <Card title="人力配置建議" class="bg-info/10 border-info/30">
-      <div class="space-y-2 text-sm" style="color: var(--text-primary);">
+      <div class="space-y-2 text-sm" style="color: var(--text-primary)">
         <div
           v-for="workload in workloads.filter(w => getLoadLevel(w).level === 'high')"
           :key="workload.functionType"
           class="flex items-start gap-2"
         >
-          <svg class="w-5 h-5 text-danger flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            class="w-5 h-5 text-danger flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           <span>
             <strong>{{ functionTypeLabels[workload.functionType] }}</strong>
@@ -207,7 +231,12 @@ const totalStats = computed(() => ({
           class="flex items-center gap-2 text-success"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           <span>目前各職能人力配置均衡，暫無需調整。</span>
         </div>

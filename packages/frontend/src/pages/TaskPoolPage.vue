@@ -55,8 +55,7 @@ const filteredTasks = computed(() => {
     if (searchQuery.value) {
       const query = searchQuery.value.toLowerCase()
       return (
-        task.title.toLowerCase().includes(query) ||
-        task.description?.toLowerCase().includes(query)
+        task.title.toLowerCase().includes(query) || task.description?.toLowerCase().includes(query)
       )
     }
     return true
@@ -152,17 +151,17 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
     <!-- 頁面標題 -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold" style="color: var(--text-primary);">任務池</h1>
-        <p class="text-sm mt-1" style="color: var(--text-secondary);">
-          瀏覽和認領可用任務
-        </p>
+        <h1 class="text-2xl font-bold" style="color: var(--text-primary)">任務池</h1>
+        <p class="text-sm mt-1" style="color: var(--text-secondary)">瀏覽和認領可用任務</p>
       </div>
-      <router-link
-        to="/task-pool/create"
-        class="btn-primary flex items-center gap-2"
-      >
+      <router-link to="/task-pool/create" class="btn-primary flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
         建立任務
       </router-link>
@@ -171,20 +170,24 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
     <!-- 統計卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="card p-4">
-        <p class="text-sm" style="color: var(--text-secondary);">全部任務</p>
-        <p class="text-2xl font-bold mt-1" style="color: var(--text-primary);">{{ taskStats.total }}</p>
+        <p class="text-sm" style="color: var(--text-secondary)">全部任務</p>
+        <p class="text-2xl font-bold mt-1" style="color: var(--text-primary)">
+          {{ taskStats.total }}
+        </p>
       </div>
       <div class="card p-4">
-        <p class="text-sm" style="color: var(--text-secondary);">可認領</p>
-        <p class="text-2xl font-bold mt-1" style="color: var(--accent-primary);">{{ taskStats.available }}</p>
+        <p class="text-sm" style="color: var(--text-secondary)">可認領</p>
+        <p class="text-2xl font-bold mt-1" style="color: var(--accent-primary)">
+          {{ taskStats.available }}
+        </p>
       </div>
       <div class="card p-4">
-        <p class="text-sm" style="color: var(--text-secondary);">進行中</p>
-        <p class="text-2xl font-bold mt-1" style="color: #3B82F6;">{{ taskStats.inProgress }}</p>
+        <p class="text-sm" style="color: var(--text-secondary)">進行中</p>
+        <p class="text-2xl font-bold mt-1" style="color: #3b82f6">{{ taskStats.inProgress }}</p>
       </div>
       <div class="card p-4">
-        <p class="text-sm" style="color: var(--text-secondary);">已完成</p>
-        <p class="text-2xl font-bold mt-1" style="color: #22C55E;">{{ taskStats.completed }}</p>
+        <p class="text-sm" style="color: var(--text-secondary)">已完成</p>
+        <p class="text-2xl font-bold mt-1" style="color: #22c55e">{{ taskStats.completed }}</p>
       </div>
     </div>
 
@@ -195,13 +198,13 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
           'px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer',
           showOnlyUnclaimed
             ? 'bg-indigo text-white'
-            : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]'
+            : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]',
         ]"
         @click="toggleUnclaimedFilter"
       >
         只看待認領
       </button>
-      <span class="text-sm" style="color: var(--text-muted);">
+      <span class="text-sm" style="color: var(--text-muted)">
         共 {{ filteredTasks.length }} 個任務
       </span>
     </div>
@@ -212,8 +215,19 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         <!-- 搜尋 -->
         <div class="flex-1 min-w-[200px]">
           <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5"
+              style="color: var(--text-muted)"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               v-model="searchQuery"
@@ -262,9 +276,16 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 
         <!-- 清除篩選 -->
         <button
-          v-if="selectedProject || selectedDepartment || selectedFunction || selectedStatus || searchQuery || showOnlyUnclaimed"
+          v-if="
+            selectedProject ||
+            selectedDepartment ||
+            selectedFunction ||
+            selectedStatus ||
+            searchQuery ||
+            showOnlyUnclaimed
+          "
           class="text-sm cursor-pointer transition-colors"
-          style="color: var(--text-muted);"
+          style="color: var(--text-muted)"
           @click="clearFilters"
         >
           清除篩選
@@ -275,10 +296,21 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
     <!-- 任務列表 -->
     <div class="space-y-4">
       <div v-if="filteredTasks.length === 0" class="card p-12 text-center">
-        <svg class="w-16 h-16 mx-auto" style="color: var(--text-muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <svg
+          class="w-16 h-16 mx-auto"
+          style="color: var(--text-muted)"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+          />
         </svg>
-        <p class="mt-4" style="color: var(--text-secondary);">沒有符合條件的任務</p>
+        <p class="mt-4" style="color: var(--text-secondary)">沒有符合條件的任務</p>
       </div>
 
       <div
@@ -291,33 +323,49 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
           <div class="flex-1 min-w-0">
             <!-- 標籤列 -->
             <div class="flex flex-wrap items-center gap-2 mb-2">
-              <span :class="['px-2 py-0.5 text-xs font-medium rounded-full', getSourceClass(task.sourceType)]">
+              <span
+                :class="[
+                  'px-2 py-0.5 text-xs font-medium rounded-full',
+                  getSourceClass(task.sourceType),
+                ]"
+              >
                 {{ getSourceLabel(task.sourceType) }}
               </span>
               <span :class="['status-badge', getStatusClass(task.status)]">
                 {{ getStatusLabel(task.status) }}
               </span>
-              <span class="text-xs" style="color: var(--text-muted);">
+              <span class="text-xs" style="color: var(--text-muted)">
                 {{ task.project?.name }}
               </span>
             </div>
 
             <!-- 任務名稱 -->
-            <h3 class="text-lg font-semibold group-hover:text-[var(--accent-primary)] transition-colors" style="color: var(--text-primary);">
+            <h3
+              class="text-lg font-semibold group-hover:text-[var(--accent-primary)] transition-colors"
+              style="color: var(--text-primary)"
+            >
               {{ task.title }}
             </h3>
 
             <!-- 描述 -->
-            <p class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary);">
+            <p class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary)">
               {{ task.description }}
             </p>
 
             <!-- 底部資訊 -->
-            <div class="flex flex-wrap items-center gap-4 mt-3 text-sm" style="color: var(--text-muted);">
+            <div
+              class="flex flex-wrap items-center gap-4 mt-3 text-sm"
+              style="color: var(--text-muted)"
+            >
               <!-- 負責人 -->
               <div v-if="task.assignee" class="flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
                 </svg>
                 <span>{{ task.assignee.name }}</span>
               </div>
@@ -325,7 +373,12 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
               <!-- 協作者 -->
               <div v-if="task.collaboratorNames?.length" class="flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                  />
                 </svg>
                 <span>+{{ task.collaboratorNames.length }} 協作</span>
               </div>
@@ -333,7 +386,12 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
               <!-- 日期 -->
               <div class="flex items-center gap-1">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 <span>{{ task.startDate }} ~ {{ task.dueDate }}</span>
               </div>
@@ -349,11 +407,13 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
           <div class="flex flex-col items-end gap-3">
             <!-- 進度 -->
             <div class="text-right">
-              <span class="text-2xl font-bold" style="color: var(--text-primary);">{{ task.progress }}%</span>
-              <div class="w-24 h-2 rounded-full mt-1" style="background-color: var(--bg-tertiary);">
+              <span class="text-2xl font-bold" style="color: var(--text-primary)"
+                >{{ task.progress }}%</span
+              >
+              <div class="w-24 h-2 rounded-full mt-1" style="background-color: var(--bg-tertiary)">
                 <div
                   class="h-full rounded-full transition-all duration-300"
-                  style="background-color: var(--accent-primary);"
+                  style="background-color: var(--accent-primary)"
                   :style="{ width: `${task.progress}%` }"
                 ></div>
               </div>
@@ -382,16 +442,16 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 
 .status-badge-in-progress {
   background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  color: #3b82f6;
 }
 
 .status-badge-done {
   background-color: rgba(34, 197, 94, 0.1);
-  color: #22C55E;
+  color: #22c55e;
 }
 
 .status-badge-blocked {
   background-color: rgba(239, 68, 68, 0.1);
-  color: #EF4444;
+  color: #ef4444;
 }
 </style>

@@ -8,12 +8,14 @@ export const useProgressLogStore = defineStore('progressLogs', () => {
 
   const byTaskId = (taskId: string) =>
     logs.value
-      .filter((l) => l.taskId === taskId)
+      .filter(l => l.taskId === taskId)
       .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
 
-  const addLog = async (log: Omit<ProgressLog, 'id' | 'reportedAt'>): Promise<ActionResult<ProgressLog>> => {
+  const addLog = async (
+    log: Omit<ProgressLog, 'id' | 'reportedAt'>,
+  ): Promise<ActionResult<ProgressLog>> => {
     try {
-      await new Promise((r) => setTimeout(r, 200))
+      await new Promise(r => setTimeout(r, 200))
       const newLog: ProgressLog = {
         ...log,
         id: `log-${Date.now()}`,
@@ -24,7 +26,10 @@ export const useProgressLogStore = defineStore('progressLogs', () => {
     } catch (e) {
       return {
         success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '新增進度記錄失敗' },
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '新增進度記錄失敗',
+        },
       }
     }
   }

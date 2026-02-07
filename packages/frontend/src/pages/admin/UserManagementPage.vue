@@ -20,15 +20,21 @@ import type { User, Role, FunctionType } from 'shared/types'
 const employeeStore = useEmployeeStore()
 
 // 將員工資料轉為 User 格式供頁面使用
-const users = ref<User[]>(employeeStore.employees.map(e => ({
-  id: e.id,
-  name: e.name,
-  email: e.email,
-  role: (e.userRole === 'PM' ? 'PM' : e.userRole === 'MANAGER' ? 'ADMIN' : 'MEMBER') as Role,
-  functionType: (e.department === 'QA' ? 'PLANNING' : e.department === 'MANAGEMENT' ? 'PLANNING' : e.department) as FunctionType,
-  createdAt: '2026-01-01T00:00:00Z',
-  updatedAt: '2026-01-01T00:00:00Z',
-})))
+const users = ref<User[]>(
+  employeeStore.employees.map(e => ({
+    id: e.id,
+    name: e.name,
+    email: e.email,
+    role: (e.userRole === 'PM' ? 'PM' : e.userRole === 'MANAGER' ? 'ADMIN' : 'MEMBER') as Role,
+    functionType: (e.department === 'QA'
+      ? 'PLANNING'
+      : e.department === 'MANAGEMENT'
+        ? 'PLANNING'
+        : e.department) as FunctionType,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
+  })),
+)
 
 // 搜尋關鍵字
 const searchQuery = ref('')
@@ -44,9 +50,8 @@ const filteredUsers = computed(() => {
   // 搜尋篩選
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    result = result.filter((u: User) =>
-      u.name.toLowerCase().includes(query) ||
-      u.email.toLowerCase().includes(query)
+    result = result.filter(
+      (u: User) => u.name.toLowerCase().includes(query) || u.email.toLowerCase().includes(query),
     )
   }
 
@@ -144,7 +149,12 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
       </div>
       <Button @click="openCreateModal">
         <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
         新增成員
       </Button>
@@ -154,23 +164,10 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <Card>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="sm:col-span-2 lg:col-span-2">
-          <Input
-            v-model="searchQuery"
-            type="search"
-            label="搜尋"
-            placeholder="搜尋姓名或信箱..."
-          />
+          <Input v-model="searchQuery" type="search" label="搜尋" placeholder="搜尋姓名或信箱..." />
         </div>
-        <Select
-          v-model="selectedRole"
-          label="角色"
-          :options="roleOptions"
-        />
-        <Select
-          v-model="selectedFunction"
-          label="職能"
-          :options="functionOptions"
-        />
+        <Select v-model="selectedRole" label="角色" :options="roleOptions" />
+        <Select v-model="selectedFunction" label="職能" :options="functionOptions" />
       </div>
     </Card>
 
@@ -197,10 +194,12 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
                   <img
-                    :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
+                    :src="
+                      user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`
+                    "
                     :alt="user.name"
                     class="w-10 h-10 rounded-full bg-gray-100"
-                  >
+                  />
                   <span class="font-medium text-gray-900">{{ user.name }}</span>
                 </div>
               </td>
@@ -216,9 +215,7 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 </Badge>
               </td>
               <td class="py-3 px-4 text-right">
-                <Button variant="ghost" size="sm" @click="openEditModal(user)">
-                  編輯
-                </Button>
+                <Button variant="ghost" size="sm" @click="openEditModal(user)"> 編輯 </Button>
               </td>
             </tr>
           </tbody>
@@ -238,15 +235,13 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
                 :alt="user.name"
                 class="w-12 h-12 rounded-full bg-gray-100"
-              >
+              />
               <div>
                 <p class="font-medium text-gray-900">{{ user.name }}</p>
                 <p class="text-sm text-gray-500">{{ user.email }}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" @click="openEditModal(user)">
-              編輯
-            </Button>
+            <Button variant="ghost" size="sm" @click="openEditModal(user)"> 編輯 </Button>
           </div>
           <div class="flex items-center gap-2">
             <Badge :variant="roleBadgeVariant(user.role)" size="sm">
@@ -271,70 +266,30 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <!-- 編輯使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showEditModal" title="編輯成員資料" size="md">
       <div class="space-y-4">
-        <Input
-          v-model="editingUser.name"
-          label="姓名"
-        />
-        <Input
-          v-model="editingUser.email"
-          type="email"
-          label="信箱"
-        />
-        <Select
-          v-model="editingUser.role"
-          label="角色"
-          :options="roleFormOptions"
-        />
-        <Select
-          v-model="editingUser.functionType"
-          label="職能"
-          :options="functionFormOptions"
-        />
+        <Input v-model="editingUser.name" label="姓名" />
+        <Input v-model="editingUser.email" type="email" label="信箱" />
+        <Select v-model="editingUser.role" label="角色" :options="roleFormOptions" />
+        <Select v-model="editingUser.functionType" label="職能" :options="functionFormOptions" />
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showEditModal = false">
-          取消
-        </Button>
-        <Button @click="saveUser">
-          儲存變更
-        </Button>
+        <Button variant="secondary" @click="showEditModal = false"> 取消 </Button>
+        <Button @click="saveUser"> 儲存變更 </Button>
       </template>
     </Modal>
 
     <!-- 新增使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showCreateModal" title="新增成員" size="md">
       <div class="space-y-4">
-        <Input
-          v-model="newUser.name"
-          label="姓名"
-          placeholder="輸入成員姓名"
-        />
-        <Input
-          v-model="newUser.email"
-          type="email"
-          label="信箱"
-          placeholder="輸入公司信箱"
-        />
-        <Select
-          v-model="newUser.role"
-          label="角色"
-          :options="roleFormOptions"
-        />
-        <Select
-          v-model="newUser.functionType"
-          label="職能"
-          :options="functionFormOptions"
-        />
+        <Input v-model="newUser.name" label="姓名" placeholder="輸入成員姓名" />
+        <Input v-model="newUser.email" type="email" label="信箱" placeholder="輸入公司信箱" />
+        <Select v-model="newUser.role" label="角色" :options="roleFormOptions" />
+        <Select v-model="newUser.functionType" label="職能" :options="functionFormOptions" />
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showCreateModal = false">
-          取消
-        </Button>
-        <Button @click="createUser">
-          新增成員
-        </Button>
+        <Button variant="secondary" @click="showCreateModal = false"> 取消 </Button>
+        <Button @click="createUser"> 新增成員 </Button>
       </template>
     </Modal>
   </div>

@@ -53,7 +53,7 @@ const myTasks = computed(() => {
   if (!userId) return []
 
   let tasks = (taskStore.tasks as Task[]).filter(
-    (t: Task) => t.assigneeId === userId && t.status !== 'DONE'
+    (t: Task) => t.assigneeId === userId && t.status !== 'DONE',
   )
 
   if (selectedStatus.value !== 'ALL') {
@@ -67,7 +67,9 @@ const myTasks = computed(() => {
 const completedTasks = computed(() => {
   const userId = authStore.user?.id
   if (!userId) return []
-  return (taskStore.tasks as Task[]).filter((t: Task) => t.assigneeId === userId && t.status === 'DONE')
+  return (taskStore.tasks as Task[]).filter(
+    (t: Task) => t.assigneeId === userId && t.status === 'DONE',
+  )
 })
 
 // 放棄認領對話框
@@ -143,7 +145,7 @@ const confirmUnclaim = async () => {
 
 // 使用常數（排除 UNCLAIMED 和 DONE）
 const statusOptions = TASK_STATUS_OPTIONS.filter(
-  opt => !['UNCLAIMED', 'DONE'].includes(opt.value as string)
+  opt => !['UNCLAIMED', 'DONE'].includes(opt.value as string),
 )
 
 // 顯示已完成
@@ -155,16 +157,14 @@ const showCompleted = ref(false)
     <!-- 頁面標題 (RWD: 迭代 26) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary);">我的任務</h1>
-        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary);">管理您已認領的所有任務</p>
+        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary)">我的任務</h1>
+        <p class="text-sm md:text-base mt-1" style="color: var(--text-secondary)">
+          管理您已認領的所有任務
+        </p>
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
-        <Badge variant="primary" size="md">
-          {{ myTasks.length }} 個進行中
-        </Badge>
-        <Badge variant="success" size="md">
-          {{ completedTasks.length }} 個已完成
-        </Badge>
+        <Badge variant="primary" size="md"> {{ myTasks.length }} 個進行中 </Badge>
+        <Badge variant="success" size="md"> {{ completedTasks.length }} 個已完成 </Badge>
       </div>
     </div>
 
@@ -172,11 +172,7 @@ const showCompleted = ref(false)
     <Card>
       <div class="flex flex-col sm:flex-row sm:items-end gap-4">
         <div class="w-full sm:w-48">
-          <Select
-            v-model="selectedStatus"
-            label="狀態篩選"
-            :options="statusOptions"
-          />
+          <Select v-model="selectedStatus" label="狀態篩選" :options="statusOptions" />
         </div>
         <div class="flex items-center sm:ml-auto">
           <label class="flex items-center gap-2 cursor-pointer">
@@ -184,9 +180,9 @@ const showCompleted = ref(false)
               v-model="showCompleted"
               type="checkbox"
               class="w-4 h-4 rounded accent-samurai"
-              style="border-color: var(--border-primary);"
-            >
-            <span class="text-sm" style="color: var(--text-secondary);">顯示已完成任務</span>
+              style="border-color: var(--border-primary)"
+            />
+            <span class="text-sm" style="color: var(--text-secondary)">顯示已完成任務</span>
           </label>
         </div>
       </div>
@@ -194,7 +190,7 @@ const showCompleted = ref(false)
 
     <!-- 進行中任務 -->
     <div>
-      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">進行中的任務</h2>
+      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary)">進行中的任務</h2>
       <div v-if="myTasks.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <TaskCard
           v-for="task in myTasks"
@@ -205,7 +201,7 @@ const showCompleted = ref(false)
           :latest-note="latestNotes[task.id]"
           @click="handleTaskClick"
           @unclaim="openUnclaimModal"
-          @updateProgress="openProgressModal"
+          @update-progress="openProgressModal"
         />
       </div>
       <!-- 空狀態 (迭代 26: 使用 EmptyState 元件) -->
@@ -226,7 +222,7 @@ const showCompleted = ref(false)
 
     <!-- 已完成任務 -->
     <div v-if="showCompleted && completedTasks.length > 0">
-      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">已完成的任務</h2>
+      <h2 class="text-lg font-semibold mb-4" style="color: var(--text-primary)">已完成的任務</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <TaskCard
           v-for="task in completedTasks"
@@ -243,20 +239,22 @@ const showCompleted = ref(false)
     <!-- 放棄認領對話框 -->
     <Modal v-model="showUnclaimModal" title="確認放棄認領" size="md">
       <div v-if="taskToUnclaim" class="space-y-4">
-        <p style="color: var(--text-secondary);">您確定要放棄認領以下任務嗎？此操作將使任務回到需求池。</p>
-        <div class="p-4 rounded-lg bg-warning/10 border border-warning/30">
-          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToUnclaim.title }}</h4>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">目前進度：{{ taskToUnclaim.progress }}%</p>
-        </div>
-        <p class="text-sm text-warning">
-          注意：放棄認領後，您的進度將被清除
+        <p style="color: var(--text-secondary)">
+          您確定要放棄認領以下任務嗎？此操作將使任務回到需求池。
         </p>
+        <div class="p-4 rounded-lg bg-warning/10 border border-warning/30">
+          <h4 class="font-semibold" style="color: var(--text-primary)">
+            {{ taskToUnclaim.title }}
+          </h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
+            目前進度：{{ taskToUnclaim.progress }}%
+          </p>
+        </div>
+        <p class="text-sm text-warning">注意：放棄認領後，您的進度將被清除</p>
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showUnclaimModal = false">
-          取消
-        </Button>
+        <Button variant="secondary" @click="showUnclaimModal = false"> 取消 </Button>
         <Button variant="danger" :loading="isUnclaimLoading" @click="confirmUnclaim">
           確認放棄
         </Button>
@@ -266,15 +264,18 @@ const showCompleted = ref(false)
     <!-- 快速進度回報對話框 -->
     <Modal v-model="showProgressModal" title="快速進度回報" size="md">
       <div v-if="taskToReport" class="space-y-4">
-        <div class="p-4 rounded-lg" style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary);">
-          <h4 class="font-semibold" style="color: var(--text-primary);">{{ taskToReport.title }}</h4>
-          <p class="text-sm mt-1" style="color: var(--text-tertiary);">
+        <div
+          class="p-4 rounded-lg"
+          style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary)"
+        >
+          <h4 class="font-semibold" style="color: var(--text-primary)">{{ taskToReport.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
             {{ getProjectById(taskToReport.projectId)?.name || '未指定專案' }}
           </p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
             目前進度：{{ progressValue }}%
           </label>
           <input
@@ -284,9 +285,9 @@ const showCompleted = ref(false)
             max="100"
             step="5"
             class="w-full h-2 rounded-lg appearance-none cursor-pointer accent-samurai"
-            style="background-color: var(--bg-tertiary);"
-          >
-          <div class="flex justify-between text-xs mt-1" style="color: var(--text-muted);">
+            style="background-color: var(--bg-tertiary)"
+          />
+          <div class="flex justify-between text-xs mt-1" style="color: var(--text-muted)">
             <span>0%</span>
             <span>50%</span>
             <span>100%</span>
@@ -294,23 +295,25 @@ const showCompleted = ref(false)
         </div>
 
         <div>
-          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary);">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
             備註（選填）
           </label>
           <textarea
             v-model="progressNote"
             rows="3"
             class="w-full px-3 py-2 rounded-lg text-sm resize-none"
-            style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary); color: var(--text-primary);"
+            style="
+              background-color: var(--bg-secondary);
+              border: 1px solid var(--border-primary);
+              color: var(--text-primary);
+            "
             placeholder="簡述目前進度或遇到的問題..."
           />
         </div>
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showProgressModal = false">
-          取消
-        </Button>
+        <Button variant="secondary" @click="showProgressModal = false"> 取消 </Button>
         <Button variant="primary" :loading="isProgressLoading" @click="submitProgress">
           更新進度
         </Button>

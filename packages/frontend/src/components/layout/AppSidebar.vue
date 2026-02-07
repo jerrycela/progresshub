@@ -95,14 +95,14 @@ const adminMenuItems: MenuItem[] = [
 const filteredPmMenuItems = computed(() => {
   if (!authStore.user) return []
   return pmMenuItems.filter(
-    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role)
+    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role),
   )
 })
 
 const filteredAdminMenuItems = computed(() => {
   if (!authStore.user) return []
   return adminMenuItems.filter(
-    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role)
+    (item: MenuItem) => !item.roles || item.roles.includes(authStore.user!.role),
   )
 })
 
@@ -141,21 +141,26 @@ const handleLogout = async (): Promise<void> => {
       'lg:relative lg:translate-x-0',
       props.isOpen ? 'translate-x-0' : '-translate-x-full',
     ]"
-    style="background-color: var(--sidebar-bg); border-right: 1px solid var(--border-primary);"
+    style="background-color: var(--sidebar-bg); border-right: 1px solid var(--border-primary)"
   >
     <!-- 行動裝置標題列 -->
     <div
       class="lg:hidden flex items-center justify-between h-14 px-4"
-      style="border-bottom: 1px solid var(--border-primary);"
+      style="border-bottom: 1px solid var(--border-primary)"
     >
-      <span class="text-sm font-semibold" style="color: var(--text-primary);">選單</span>
+      <span class="text-sm font-semibold" style="color: var(--text-primary)">選單</span>
       <button
         class="p-2 rounded-md transition-colors duration-150"
-        style="color: var(--text-tertiary);"
+        style="color: var(--text-tertiary)"
         @click="emit('close')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>
@@ -166,21 +171,28 @@ const handleLogout = async (): Promise<void> => {
       <div class="px-3 mb-6">
         <p
           class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
-          style="color: var(--text-muted);"
+          style="color: var(--text-muted)"
         >
           主選單
         </p>
         <ul class="space-y-1">
           <li v-for="item in menuItems" :key="item.path">
             <button
-              :class="[
-                'sidebar-item w-full',
-                isActive(item.path) ? 'active' : '',
-              ]"
+              :class="['sidebar-item w-full', isActive(item.path) ? 'active' : '']"
               @click="navigateTo(item.path)"
             >
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  :d="item.icon"
+                />
               </svg>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
@@ -192,21 +204,28 @@ const handleLogout = async (): Promise<void> => {
       <div v-if="filteredPmMenuItems.length > 0" class="px-3 mb-6">
         <p
           class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
-          style="color: var(--text-muted);"
+          style="color: var(--text-muted)"
         >
           PM 專區
         </p>
         <ul class="space-y-1">
           <li v-for="item in filteredPmMenuItems" :key="item.path">
             <button
-              :class="[
-                'sidebar-item w-full',
-                isActive(item.path) ? 'active' : '',
-              ]"
+              :class="['sidebar-item w-full', isActive(item.path) ? 'active' : '']"
               @click="navigateTo(item.path)"
             >
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  :d="item.icon"
+                />
               </svg>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
@@ -218,21 +237,28 @@ const handleLogout = async (): Promise<void> => {
       <div v-if="filteredAdminMenuItems.length > 0" class="px-3 mb-6">
         <p
           class="px-3 mb-2 text-xs font-medium uppercase tracking-wider"
-          style="color: var(--text-muted);"
+          style="color: var(--text-muted)"
         >
           系統管理
         </p>
         <ul class="space-y-1">
           <li v-for="item in filteredAdminMenuItems" :key="item.path">
             <button
-              :class="[
-                'sidebar-item w-full',
-                isActive(item.path) ? 'active' : '',
-              ]"
+              :class="['sidebar-item w-full', isActive(item.path) ? 'active' : '']"
               @click="navigateTo(item.path)"
             >
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="item.icon" />
+              <svg
+                class="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  :d="item.icon"
+                />
               </svg>
               <span class="text-sm font-medium">{{ item.name }}</span>
             </button>
@@ -242,29 +268,38 @@ const handleLogout = async (): Promise<void> => {
     </nav>
 
     <!-- 底部選單：個人設定 + 登出 -->
-    <div class="p-3 space-y-1" style="border-top: 1px solid var(--border-primary);">
+    <div class="p-3 space-y-1" style="border-top: 1px solid var(--border-primary)">
       <!-- 個人設定 -->
       <button
-        :class="[
-          'sidebar-item w-full',
-          isActive('/settings') ? 'active' : '',
-        ]"
+        :class="['sidebar-item w-full', isActive('/settings') ? 'active' : '']"
         @click="navigateTo('/settings/profile')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+          />
         </svg>
         <span class="text-sm font-medium">個人設定</span>
       </button>
 
       <!-- 登出 -->
-      <button
-        class="sidebar-item w-full"
-        @click="handleLogout"
-      >
+      <button class="sidebar-item w-full" @click="handleLogout">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+          />
         </svg>
         <span class="text-sm font-medium">登出</span>
       </button>

@@ -10,16 +10,16 @@ export interface EmployeeServiceInterface {
 
 class MockEmployeeService implements EmployeeServiceInterface {
   async fetchEmployees(): Promise<MockEmployee[]> {
-    await new Promise((r) => setTimeout(r, 200))
+    await new Promise(r => setTimeout(r, 200))
     return [...mockEmployees]
   }
 
   async getEmployeeById(id: string): Promise<MockEmployee | undefined> {
-    return mockEmployees.find((e) => e.id === id)
+    return mockEmployees.find(e => e.id === id)
   }
 
   async getByDepartment(dept: Department): Promise<MockEmployee[]> {
-    return mockEmployees.filter((e) => e.department === dept)
+    return mockEmployees.filter(e => e.department === dept)
   }
 }
 

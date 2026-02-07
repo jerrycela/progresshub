@@ -64,7 +64,8 @@ export function useGantt(
 
   const timeAxisMarks = computed(() => {
     const { start, end } = dateRange.value
-    const marks: Array<{ position: number; label: string; isMain: boolean; isWeekend?: boolean }> = []
+    const marks: Array<{ position: number; label: string; isMain: boolean; isWeekend?: boolean }> =
+      []
     const range = end.getTime() - start.getTime()
     if (range === 0) return marks
 
@@ -80,7 +81,7 @@ export function useGantt(
         const position = ((current.getTime() - start.getTime()) / range) * 100
         if (position >= 0 && position <= 100) {
           const isMonday = current.getDay() === 1
-          const shouldShow = dayStep === 1 || (dayCount % dayStep === 0) || isMonday
+          const shouldShow = dayStep === 1 || dayCount % dayStep === 0 || isMonday
           if (shouldShow) {
             marks.push({
               position,
@@ -95,7 +96,7 @@ export function useGantt(
       }
     } else if (timeScale.value === 'week') {
       const dayOfWeek = current.getDay()
-      const daysToMonday = dayOfWeek === 0 ? 1 : (dayOfWeek === 1 ? 0 : 8 - dayOfWeek)
+      const daysToMonday = dayOfWeek === 0 ? 1 : dayOfWeek === 1 ? 0 : 8 - dayOfWeek
       current.setDate(current.getDate() + daysToMonday)
 
       while (current <= end) {

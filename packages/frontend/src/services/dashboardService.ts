@@ -9,12 +9,12 @@ export interface DashboardServiceInterface {
 
 class MockDashboardService implements DashboardServiceInterface {
   async fetchStats(): Promise<DashboardStats> {
-    await new Promise((r) => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 300))
     return { ...mockDashboardStats }
   }
 
   async fetchWorkloads(): Promise<FunctionWorkload[]> {
-    await new Promise((r) => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 300))
     return [...mockFunctionWorkloads]
   }
 }
