@@ -41,6 +41,7 @@ export const TASK_STATUS_OPTIONS: { value: TaskStatus | 'ALL'; label: string }[]
   { value: 'UNCLAIMED', label: '待認領' },
   { value: 'CLAIMED', label: '已認領' },
   { value: 'IN_PROGRESS', label: '進行中' },
+  { value: 'PAUSED', label: '暫停中' },
   { value: 'BLOCKED', label: '卡關' },
   { value: 'DONE', label: '已完成' },
 ]

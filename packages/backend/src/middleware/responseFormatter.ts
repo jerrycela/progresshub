@@ -1,5 +1,7 @@
 import { Response } from 'express'
 
+// NOTE: These types mirror packages/shared/types/api.ts
+// TODO: Import from shared types once tsconfig paths are configured
 interface ApiError {
   code: string
   message: string

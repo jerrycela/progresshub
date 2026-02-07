@@ -18,8 +18,8 @@ defineProps<{
   <!-- 桌面時間軸 -->
   <div class="hidden sm:block relative h-8 mb-2" style="border-bottom: 1px solid var(--border-primary);">
     <div
-      v-for="(mark, i) in timeAxisMarks"
-      :key="i"
+      v-for="mark in timeAxisMarks"
+      :key="mark.label"
       class="absolute text-xs transform -translate-x-1/2"
       :style="{
         left: `${mark.position}%`,

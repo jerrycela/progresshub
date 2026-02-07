@@ -267,24 +267,9 @@ export interface UpdateTaskInput {
 }
 
 // ============================================
-// API 回應格式
+// API 回應格式（canonical definitions in api.ts）
 // ============================================
-export interface ApiResponse<T> {
-  success: boolean
-  data?: T
-  error?: {
-    code: string
-    message: string
-  }
-}
-
-export interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  page: number
-  pageSize: number
-  totalPages: number
-}
+export type { ApiResponse, ApiError, PaginationMeta } from './api'
 
 // ============================================
 // GitLab Issue
