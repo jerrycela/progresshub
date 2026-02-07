@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, Role, ActionResult } from 'shared/types'
-import { mockCurrentUser, mockUsers } from '@/mocks/data'
+import { mockCurrentUser, mockUsers } from '@/mocks/unified'
 
 // ============================================
 // Auth Store - Ralph Loop 迭代 6 重構
