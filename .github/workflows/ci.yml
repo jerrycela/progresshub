@@ -32,6 +32,9 @@ jobs:
       - name: Type check
         run: pnpm --filter frontend exec vue-tsc --noEmit
 
+      - name: Test
+        run: pnpm --filter frontend exec vitest run
+
       - name: Build
         run: pnpm --filter frontend build
 
