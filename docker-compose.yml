@@ -53,9 +53,10 @@ services:
     command: npm run dev
 
   # Frontend Service (Vue 3 + Nginx)
+  # 注意：前端已遷移至 packages/frontend/，舊的 ./frontend/ 目錄已刪除
   frontend:
     build:
-      context: ./frontend
+      context: ./packages/frontend
       dockerfile: Dockerfile
       target: ${NODE_ENV:-development}
     container_name: progresshub-frontend
@@ -63,7 +64,7 @@ services:
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:3000/api}
     volumes:
-      - ./frontend:/app
+      - ./packages/frontend:/app
       - /app/node_modules
     ports:
       - "${FRONTEND_PORT:-8080}:80"
@@ -72,28 +73,7 @@ services:
     depends_on:
       - backend
 
-  # Scheduler Service (Node.js + node-cron)
-  scheduler:
-    build:
-      context: ./scheduler
-      dockerfile: Dockerfile
-    container_name: progresshub-scheduler
-    restart: unless-stopped
-    environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
-      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
-      REMINDER_TIME: ${REMINDER_TIME:-17:00}
-      REMINDER_TIMEZONE: ${REMINDER_TIMEZONE:-Asia/Taipei}
-    volumes:
-      - ./scheduler:/app
-      - /app/node_modules
-    networks:
-      - progresshub-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: npm run dev
+  # Scheduler 服務已移除（./scheduler/ 目錄已刪除，不再需要獨立排程服務）
 
 networks:
   progresshub-network:
