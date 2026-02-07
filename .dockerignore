@@ -1,17 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Git
 .git
 .gitignore
+
+# Environment
 .env
-venv
-ENV
-env
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.log
-.DS_Store
-README.md
+.env.local
+.env.*.local
+
+# IDE
 .vscode
 .idea
+
+# OS
+.DS_Store
+*.log
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Planning files
+task_plan.md
+findings.md
+progress.md
+
+# Nested repo
+openclawfortest/
