@@ -12,6 +12,9 @@ yarn-error.log*
 # Build output
 dist/
 build/
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 
 # Python
 __pycache__/
@@ -51,6 +54,11 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+
+# Planning files
+task_plan.md
+findings.md
+progress.md
 
 # Backups
 *.backup
