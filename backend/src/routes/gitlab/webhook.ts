@@ -1,9 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { param } from 'express-validator';
 import prisma from '../../config/database';
 import { gitLabInstanceService } from '../../services/gitlab';
-import { verifyWebhookSignature, parseEventType } from '../../utils/gitlab/webhookVerifier';
-import { decrypt } from '../../utils/gitlab/encryption';
+import { verifyWebhookSignature } from '../../utils/gitlab/webhookVerifier';
 import { GitLabPushEvent, GitLabMergeRequestEvent, GitLabIssueEvent } from '../../types/gitlab';
 import { GitLabActivityType } from '@prisma/client';
 
@@ -33,7 +31,7 @@ router.post('/:instanceId', async (req: Request, res: Response): Promise<void> =
 async function processWebhookEvent(
   instanceId: string,
   token: string,
-  eventType: string,
+  _eventType: string,
   body: unknown
 ): Promise<void> {
   // 取得實例並驗證 webhook secret

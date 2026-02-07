@@ -204,7 +204,7 @@ router.delete(
 router.post(
   '/initialize',
   authorize(PermissionLevel.ADMIN),
-  async (req: AuthRequest, res: Response): Promise<void> => {
+  async (_req: AuthRequest, res: Response): Promise<void> => {
     try {
       const categories = await timeCategoryService.initializeDefaultCategories();
       res.json({ message: 'Default categories initialized', categories });

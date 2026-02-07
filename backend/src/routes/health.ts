@@ -14,7 +14,7 @@ const router = Router();
  *       200:
  *         description: Service is healthy
  */
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -35,7 +35,7 @@ router.get('/', (req, res) => {
  *       503:
  *         description: Service not ready
  */
-router.get('/ready', async (req, res) => {
+router.get('/ready', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({
@@ -63,7 +63,7 @@ router.get('/ready', async (req, res) => {
  *       200:
  *         description: Service is alive
  */
-router.get('/live', (req, res) => {
+router.get('/live', (_req, res) => {
   res.json({
     status: 'alive',
     timestamp: new Date().toISOString(),

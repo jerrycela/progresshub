@@ -62,7 +62,7 @@ router.post('/commands/time', async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    const { user_id, text, trigger_id } = req.body;
+    const { user_id, text } = req.body;
 
     // 取得員工資訊
     const employee = await getEmployeeBySlackId(user_id);
@@ -238,7 +238,7 @@ router.post('/interactions', async (req: Request, res: Response): Promise<void> 
     }
 
     const payload = JSON.parse(req.body.payload || '{}');
-    const { type, user, actions, view } = payload;
+    const { type, user } = payload;
 
     if (type === 'view_submission') {
       // 處理對話框提交
@@ -252,13 +252,13 @@ router.post('/interactions', async (req: Request, res: Response): Promise<void> 
       }
 
       // 從對話框取得資料並建立工時記錄
-      const values = view.state.values;
+      // const values = view.state.values;
       // ... 處理表單資料
 
       res.json({ response_action: 'clear' });
     } else if (type === 'block_actions') {
       // 處理按鈕點擊
-      const action = actions[0];
+      // const action = actions[0];
       // ... 處理互動
 
       res.json({});

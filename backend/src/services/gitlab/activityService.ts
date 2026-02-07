@@ -2,7 +2,6 @@ import prisma from '../../config/database';
 import { GitLabActivityType, Prisma } from '@prisma/client';
 import { createGitLabClient } from '../../utils/gitlab/apiClient';
 import { gitLabOAuthService } from './oauthService';
-import { gitLabInstanceService } from './instanceService';
 import { ActivitySummary, ConvertActivityDto, BatchConvertActivitiesDto } from '../../types/gitlab';
 
 export class GitLabActivityService {

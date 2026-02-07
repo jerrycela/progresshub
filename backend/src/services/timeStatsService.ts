@@ -1,5 +1,5 @@
 import prisma from '../config/database';
-import { Prisma, TimeEntryStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export interface DateRangeParams {
   startDate: Date;

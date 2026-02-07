@@ -1,7 +1,7 @@
 import axios from 'axios';
 import crypto from 'crypto';
 import prisma from '../../config/database';
-import { GitLabOAuthTokens, GitLabUser } from '../../types/gitlab';
+import { GitLabOAuthTokens } from '../../types/gitlab';
 import { gitLabInstanceService } from './instanceService';
 import { encrypt, decrypt } from '../../utils/gitlab/encryption';
 import { createGitLabClient } from '../../utils/gitlab/apiClient';

@@ -157,7 +157,7 @@ router.post(
 
     try {
       const result = await gitLabInstanceService.testConnection(req.params.id);
-      res.json({ success: true, ...result });
+      res.json(result);
     } catch (error) {
       console.error('Test connection error:', error);
       res.status(500).json({ error: 'Failed to test connection' });

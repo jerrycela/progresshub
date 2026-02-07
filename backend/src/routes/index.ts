@@ -25,7 +25,7 @@ router.use('/slack', slackRoutes);
 router.use('/gitlab', gitlabRoutes);
 
 // API Info
-router.get('/', (req, res) => {
+router.get('/', (_req, res) => {
   res.json({
     name: 'ProgressHub API',
     version: '1.0.0',
