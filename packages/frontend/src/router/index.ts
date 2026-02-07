@@ -71,25 +71,29 @@ const routes: RouteRecordRaw[] = [
         path: 'projects',
         name: 'Projects',
         component: () => import('@/pages/ProjectsPage.vue'),
-        meta: { requiresRole: ['PM', 'ADMIN'] },
+        // 專案管理：PM、製作人可管理，部門主管不行（依 RoleDemoPage 權限矩陣）
+        meta: { requiresRole: ['PM', 'PRODUCER', 'ADMIN'] },
       },
       {
         path: 'pm/chase',
         name: 'ChaseList',
         component: () => import('@/pages/pm/ChaseListPage.vue'),
-        meta: { requiresRole: ['PM', 'ADMIN'] },
+        // 追殺清單：PM、製作人、部門主管皆可查看
+        meta: { requiresRole: ['PM', 'PRODUCER', 'MANAGER', 'ADMIN'] },
       },
       {
         path: 'pm/workload',
         name: 'Workload',
         component: () => import('@/pages/pm/WorkloadPage.vue'),
-        meta: { requiresRole: ['PM', 'ADMIN'] },
+        // 職能負載：PM、製作人、部門主管皆可查看
+        meta: { requiresRole: ['PM', 'PRODUCER', 'MANAGER', 'ADMIN'] },
       },
       {
         path: 'admin/users',
         name: 'UserManagement',
         component: () => import('@/pages/admin/UserManagementPage.vue'),
-        meta: { requiresRole: ['ADMIN'] },
+        // 員工管理：僅部門主管和管理員
+        meta: { requiresRole: ['MANAGER', 'ADMIN'] },
       },
       // 設定頁面
       {

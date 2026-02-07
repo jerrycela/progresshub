@@ -3,7 +3,7 @@ import { body, param, query, validationResult } from "express-validator";
 import { timeCategoryService } from "../services/timeCategoryService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel } from "@prisma/client";
-import { sendSuccess, sendError } from "../utils/response";
+import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
 
 const router = Router();
 
@@ -92,9 +92,12 @@ router.post(
       const category = await timeCategoryService.createCategory(req.body);
       sendSuccess(res, category, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create category";
-      sendError(res, "CATEGORY_CREATE_FAILED", message, 400);
+      sendError(
+        res,
+        "CATEGORY_CREATE_FAILED",
+        getSafeErrorMessage(error, "Failed to create category"),
+        400,
+      );
     }
   },
 );
@@ -130,9 +133,12 @@ router.put(
       );
       sendSuccess(res, category);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update category";
-      sendError(res, "CATEGORY_UPDATE_FAILED", message, 400);
+      sendError(
+        res,
+        "CATEGORY_UPDATE_FAILED",
+        getSafeErrorMessage(error, "Failed to update category"),
+        400,
+      );
     }
   },
 );
@@ -158,11 +164,12 @@ router.post(
       );
       sendSuccess(res, category);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to deactivate category";
-      sendError(res, "CATEGORY_DEACTIVATE_FAILED", message, 400);
+      sendError(
+        res,
+        "CATEGORY_DEACTIVATE_FAILED",
+        getSafeErrorMessage(error, "Failed to deactivate category"),
+        400,
+      );
     }
   },
 );
@@ -188,9 +195,12 @@ router.post(
       );
       sendSuccess(res, category);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to activate category";
-      sendError(res, "CATEGORY_ACTIVATE_FAILED", message, 400);
+      sendError(
+        res,
+        "CATEGORY_ACTIVATE_FAILED",
+        getSafeErrorMessage(error, "Failed to activate category"),
+        400,
+      );
     }
   },
 );
@@ -214,9 +224,12 @@ router.delete(
       await timeCategoryService.deleteCategory(req.params.id);
       res.status(204).send();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete category";
-      sendError(res, "CATEGORY_DELETE_FAILED", message, 400);
+      sendError(
+        res,
+        "CATEGORY_DELETE_FAILED",
+        getSafeErrorMessage(error, "Failed to delete category"),
+        400,
+      );
     }
   },
 );

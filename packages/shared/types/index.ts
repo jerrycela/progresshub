@@ -51,7 +51,8 @@ export type TaskStatus =
   | 'BLOCKED'     // 阻塞
 
 // 專案狀態
-export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'ON_HOLD'
+// 專案狀態（與 Prisma schema 一致，使用 PAUSED 而非 ON_HOLD）
+export type ProjectStatus = 'ACTIVE' | 'COMPLETED' | 'PAUSED'
 
 // ============================================
 // 使用者

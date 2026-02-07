@@ -3,7 +3,7 @@ import { param, query, validationResult } from "express-validator";
 import { timeStatsService } from "../services/timeStatsService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel } from "@prisma/client";
-import { sendSuccess, sendError } from "../utils/response";
+import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
 
 const router = Router();
 
@@ -43,9 +43,12 @@ router.get(
       );
       sendSuccess(res, stats);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to get project stats";
-      sendError(res, "TIME_STATS_PROJECT_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_STATS_PROJECT_FAILED",
+        getSafeErrorMessage(error, "Failed to get project stats"),
+        400,
+      );
     }
   },
 );
@@ -92,9 +95,12 @@ router.get(
       );
       sendSuccess(res, stats);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to get employee stats";
-      sendError(res, "TIME_STATS_EMPLOYEE_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_STATS_EMPLOYEE_FAILED",
+        getSafeErrorMessage(error, "Failed to get employee stats"),
+        400,
+      );
     }
   },
 );
@@ -130,9 +136,12 @@ router.get(
       );
       sendSuccess(res, stats);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to get stats";
-      sendError(res, "TIME_STATS_MY_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_STATS_MY_FAILED",
+        getSafeErrorMessage(error, "Failed to get stats"),
+        400,
+      );
     }
   },
 );
@@ -167,11 +176,12 @@ router.get(
       );
       sendSuccess(res, summary);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to get monthly summary";
-      sendError(res, "TIME_STATS_MONTHLY_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_STATS_MONTHLY_FAILED",
+        getSafeErrorMessage(error, "Failed to get monthly summary"),
+        400,
+      );
     }
   },
 );
@@ -198,11 +208,12 @@ router.get(
       });
       sendSuccess(res, dashboard);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to get dashboard stats";
-      sendError(res, "TIME_STATS_DASHBOARD_FAILED", message, 500);
+      sendError(
+        res,
+        "TIME_STATS_DASHBOARD_FAILED",
+        getSafeErrorMessage(error, "Failed to get dashboard stats"),
+        500,
+      );
     }
   },
 );
@@ -226,11 +237,12 @@ router.get(
       );
       sendSuccess(res, stats);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to get pending approval stats";
-      sendError(res, "TIME_STATS_PENDING_FAILED", message, 500);
+      sendError(
+        res,
+        "TIME_STATS_PENDING_FAILED",
+        getSafeErrorMessage(error, "Failed to get pending approval stats"),
+        500,
+      );
     }
   },
 );

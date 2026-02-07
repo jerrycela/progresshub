@@ -42,6 +42,7 @@ const options: swaggerJsdoc.Options = {
             page: { type: "integer" },
             limit: { type: "integer" },
             totalPages: { type: "integer" },
+            hasMore: { type: "boolean", description: "是否還有更多資料" },
           },
         },
         Employee: {
@@ -54,7 +55,7 @@ const options: swaggerJsdoc.Options = {
             department: { type: "string" },
             permissionLevel: {
               type: "string",
-              enum: ["EMPLOYEE", "PM", "ADMIN"],
+              enum: ["EMPLOYEE", "PM", "PRODUCER", "MANAGER", "ADMIN"],
             },
           },
         },
@@ -69,6 +70,7 @@ const options: swaggerJsdoc.Options = {
             status: {
               type: "string",
               enum: ["ACTIVE", "COMPLETED", "PAUSED"],
+              description: "專案狀態（與 Prisma schema 一致）",
             },
           },
         },

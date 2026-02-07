@@ -65,7 +65,7 @@ describe('Response Utils', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
         data: [{ id: 1 }, { id: 2 }],
-        meta: { total: 50, page: 1, limit: 10 },
+        meta: { total: 50, page: 1, limit: 10, hasMore: true },
       });
     });
 

@@ -24,7 +24,9 @@ router.get(
     query("page").optional().isInt({ min: 1 }).toInt(),
     query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
     query("department").optional().isString().trim(),
-    query("permissionLevel").optional().isIn(["EMPLOYEE", "PM", "ADMIN"]),
+    query("permissionLevel")
+      .optional()
+      .isIn(["EMPLOYEE", "PM", "PRODUCER", "MANAGER", "ADMIN"]),
     query("search").optional().isString().trim(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
@@ -107,7 +109,9 @@ router.post(
       .notEmpty()
       .withMessage("Slack User ID is required"),
     body("department").optional().isString().trim(),
-    body("permissionLevel").optional().isIn(["EMPLOYEE", "PM", "ADMIN"]),
+    body("permissionLevel")
+      .optional()
+      .isIn(["EMPLOYEE", "PM", "PRODUCER", "MANAGER", "ADMIN"]),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -156,7 +160,9 @@ router.put(
     body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
     body("email").optional().isEmail().normalizeEmail(),
     body("department").optional().isString().trim(),
-    body("permissionLevel").optional().isIn(["EMPLOYEE", "PM", "ADMIN"]),
+    body("permissionLevel")
+      .optional()
+      .isIn(["EMPLOYEE", "PM", "PRODUCER", "MANAGER", "ADMIN"]),
     body("managedProjects").optional().isArray(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {

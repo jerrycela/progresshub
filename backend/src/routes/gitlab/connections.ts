@@ -7,7 +7,11 @@ import {
   gitLabActivityService,
 } from "../../services/gitlab";
 import { authenticate, AuthRequest } from "../../middleware/auth";
-import { sendSuccess, sendError } from "../../utils/response";
+import {
+  sendSuccess,
+  sendError,
+  getSafeErrorMessage,
+} from "../../utils/response";
 
 const router = Router();
 
@@ -135,9 +139,12 @@ router.get(
 
       sendSuccess(res, { authUrl, state });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to generate auth URL";
-      sendError(res, "GITLAB_OAUTH_URL_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_OAUTH_URL_FAILED",
+        getSafeErrorMessage(error, "Failed to generate auth URL"),
+        400,
+      );
     }
   },
 );
@@ -189,8 +196,7 @@ router.get(
       // 重導向到前端成功頁面
       res.redirect(`/gitlab/connect/success?connectionId=${connectionId}`);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to complete OAuth";
+      const message = getSafeErrorMessage(error, "Failed to complete OAuth");
       res.redirect(
         `/gitlab/connect/error?message=${encodeURIComponent(message)}`,
       );
@@ -385,8 +391,12 @@ router.post(
 
       sendSuccess(res, { syncedCount });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to sync";
-      sendError(res, "GITLAB_SYNC_FAILED", message, 500);
+      sendError(
+        res,
+        "GITLAB_SYNC_FAILED",
+        getSafeErrorMessage(error, "Failed to sync"),
+        500,
+      );
     }
   },
 );

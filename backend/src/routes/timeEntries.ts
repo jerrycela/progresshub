@@ -7,6 +7,7 @@ import {
   sendSuccess,
   sendPaginatedSuccess,
   sendError,
+  getSafeErrorMessage,
 } from "../utils/response";
 
 const router = Router();
@@ -224,9 +225,12 @@ router.post(
       });
       sendSuccess(res, entry, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create time entry";
-      sendError(res, "TIME_ENTRY_CREATE_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_ENTRY_CREATE_FAILED",
+        getSafeErrorMessage(error, "Failed to create time entry"),
+        400,
+      );
     }
   },
 );
@@ -265,11 +269,12 @@ router.post(
       const created = await timeEntryService.createBatchTimeEntries(entries);
       sendSuccess(res, { created: created.length, entries: created }, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Failed to create time entries";
-      sendError(res, "TIME_ENTRY_BATCH_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_ENTRY_BATCH_FAILED",
+        getSafeErrorMessage(error, "Failed to create time entries"),
+        400,
+      );
     }
   },
 );
@@ -315,9 +320,12 @@ router.put(
       );
       sendSuccess(res, updated);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update time entry";
-      sendError(res, "TIME_ENTRY_UPDATE_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_ENTRY_UPDATE_FAILED",
+        getSafeErrorMessage(error, "Failed to update time entry"),
+        400,
+      );
     }
   },
 );
@@ -351,9 +359,12 @@ router.delete(
       await timeEntryService.deleteTimeEntry(req.params.id);
       res.status(204).send();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete time entry";
-      sendError(res, "TIME_ENTRY_DELETE_FAILED", message, 400);
+      sendError(
+        res,
+        "TIME_ENTRY_DELETE_FAILED",
+        getSafeErrorMessage(error, "Failed to delete time entry"),
+        400,
+      );
     }
   },
 );

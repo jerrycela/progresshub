@@ -2,7 +2,11 @@ import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { gitLabIssueService } from "../../services/gitlab";
 import { authenticate, AuthRequest } from "../../middleware/auth";
-import { sendSuccess, sendError } from "../../utils/response";
+import {
+  sendSuccess,
+  sendError,
+  getSafeErrorMessage,
+} from "../../utils/response";
 
 const router = Router();
 
@@ -75,9 +79,12 @@ router.post(
 
       sendSuccess(res, { mappingId }, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create mapping";
-      sendError(res, "GITLAB_MAPPING_CREATE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_MAPPING_CREATE_FAILED",
+        getSafeErrorMessage(error, "Failed to create mapping"),
+        400,
+      );
     }
   },
 );
@@ -108,9 +115,12 @@ router.delete(
       );
       res.status(204).send();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete mapping";
-      sendError(res, "GITLAB_MAPPING_DELETE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_MAPPING_DELETE_FAILED",
+        getSafeErrorMessage(error, "Failed to delete mapping"),
+        400,
+      );
     }
   },
 );
@@ -141,8 +151,12 @@ router.post(
       );
       sendSuccess(res, { message: "Synced from GitLab to task" });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to sync";
-      sendError(res, "GITLAB_SYNC_FROM_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_SYNC_FROM_FAILED",
+        getSafeErrorMessage(error, "Failed to sync"),
+        400,
+      );
     }
   },
 );
@@ -173,8 +187,12 @@ router.post(
       );
       sendSuccess(res, { message: "Synced from task to GitLab" });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to sync";
-      sendError(res, "GITLAB_SYNC_TO_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_SYNC_TO_FAILED",
+        getSafeErrorMessage(error, "Failed to sync"),
+        400,
+      );
     }
   },
 );
@@ -215,9 +233,12 @@ router.get(
 
       sendSuccess(res, issues);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to search issues";
-      sendError(res, "GITLAB_ISSUE_SEARCH_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_ISSUE_SEARCH_FAILED",
+        getSafeErrorMessage(error, "Failed to search issues"),
+        400,
+      );
     }
   },
 );
@@ -258,9 +279,12 @@ router.post(
 
       sendSuccess(res, { mappingId }, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create issue";
-      sendError(res, "GITLAB_ISSUE_CREATE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_ISSUE_CREATE_FAILED",
+        getSafeErrorMessage(error, "Failed to create issue"),
+        400,
+      );
     }
   },
 );

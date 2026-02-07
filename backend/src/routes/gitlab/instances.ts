@@ -3,7 +3,11 @@ import { body, param, validationResult } from "express-validator";
 import { gitLabInstanceService } from "../../services/gitlab";
 import { authenticate, authorize, AuthRequest } from "../../middleware/auth";
 import { PermissionLevel } from "@prisma/client";
-import { sendSuccess, sendError } from "../../utils/response";
+import {
+  sendSuccess,
+  sendError,
+  getSafeErrorMessage,
+} from "../../utils/response";
 
 const router = Router();
 
@@ -97,9 +101,12 @@ router.post(
       const instance = await gitLabInstanceService.createInstance(req.body);
       sendSuccess(res, instance, 201);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create instance";
-      sendError(res, "GITLAB_INSTANCE_CREATE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_INSTANCE_CREATE_FAILED",
+        getSafeErrorMessage(error, "Failed to create instance"),
+        400,
+      );
     }
   },
 );
@@ -132,9 +139,12 @@ router.put(
       );
       sendSuccess(res, instance);
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update instance";
-      sendError(res, "GITLAB_INSTANCE_UPDATE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_INSTANCE_UPDATE_FAILED",
+        getSafeErrorMessage(error, "Failed to update instance"),
+        400,
+      );
     }
   },
 );
@@ -157,9 +167,12 @@ router.delete(
       await gitLabInstanceService.deleteInstance(req.params.id);
       res.status(204).send();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to delete instance";
-      sendError(res, "GITLAB_INSTANCE_DELETE_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_INSTANCE_DELETE_FAILED",
+        getSafeErrorMessage(error, "Failed to delete instance"),
+        400,
+      );
     }
   },
 );

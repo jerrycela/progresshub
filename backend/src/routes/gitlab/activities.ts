@@ -4,7 +4,11 @@ import prisma from "../../config/database";
 import { gitLabActivityService } from "../../services/gitlab";
 import { authenticate, AuthRequest } from "../../middleware/auth";
 import { GitLabActivityType } from "@prisma/client";
-import { sendSuccess, sendError } from "../../utils/response";
+import {
+  sendSuccess,
+  sendError,
+  getSafeErrorMessage,
+} from "../../utils/response";
 
 const router = Router();
 
@@ -203,9 +207,12 @@ router.post(
 
       sendSuccess(res, { timeEntryId });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to convert activity";
-      sendError(res, "GITLAB_CONVERT_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_CONVERT_FAILED",
+        getSafeErrorMessage(error, "Failed to convert activity"),
+        400,
+      );
     }
   },
 );
@@ -287,9 +294,12 @@ router.put(
 
       sendSuccess(res, { linked: true });
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to link task";
-      sendError(res, "GITLAB_LINK_TASK_FAILED", message, 400);
+      sendError(
+        res,
+        "GITLAB_LINK_TASK_FAILED",
+        getSafeErrorMessage(error, "Failed to link task"),
+        400,
+      );
     }
   },
 );
