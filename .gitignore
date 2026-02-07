@@ -8,6 +8,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Build output
 dist/
@@ -22,21 +23,6 @@ __pycache__/
 *$py.class
 *.so
 .Python
-develop-eggs/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
 venv/
 ENV/
 env/
@@ -55,10 +41,30 @@ env/
 .DS_Store
 Thumbs.db
 
-# Planning files
+# Claude Code (internal tooling)
+.claude/
+CLAUDE.md
+
+# Planning & session files
 task_plan.md
 findings.md
 progress.md
+
+# Internal reports & session files
+COMPREHENSIVE_EVALUATION_REPORT.md
+GIT_CLEANUP_FINAL_ASSESSMENT.md
+GIT_STRUCTURE_ANALYSIS.md
+QA_P0_REVIEW_REPORT.md
+TECH_REVIEW_ISSUES.md
+ZEABUR_DEPLOYMENT.md
+**/SESSION_REPORT_*.md
+**/PROJECT_AUDIT_REPORT_*.md
+**/MERGE_INVESTIGATION_*.md
+**/MERGE_ERROR_ANALYSIS_*.md
+**/CHANGELOG_*.md
+
+# Legacy nested repo
+openclawfortest/
 
 # Backups
 *.backup
