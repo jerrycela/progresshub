@@ -1,5 +1,5 @@
-import prisma from '../config/database';
-import { Project, ProjectStatus, Prisma } from '@prisma/client';
+import prisma from "../config/database";
+import { Project, ProjectStatus, Prisma } from "@prisma/client";
 
 export interface CreateProjectDto {
   name: string;
@@ -27,7 +27,9 @@ export class ProjectService {
   /**
    * 取得專案列表（分頁）
    */
-  async getProjects(params: ProjectListParams): Promise<{ data: Project[]; total: number }> {
+  async getProjects(
+    params: ProjectListParams,
+  ): Promise<{ data: Project[]; total: number }> {
     const { page = 1, limit = 20, status, search } = params;
     const skip = (page - 1) * limit;
 
@@ -38,8 +40,8 @@ export class ProjectService {
     }
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -48,7 +50,7 @@ export class ProjectService {
         where,
         skip,
         take: limit,
-        orderBy: { startDate: 'desc' },
+        orderBy: { startDate: "desc" },
         include: {
           _count: {
             select: { tasks: true, milestones: true },
@@ -74,10 +76,10 @@ export class ProjectService {
               select: { id: true, name: true, email: true },
             },
           },
-          orderBy: { plannedStartDate: 'asc' },
+          orderBy: { plannedStartDate: "asc" },
         },
         milestones: {
-          orderBy: { targetDate: 'asc' },
+          orderBy: { targetDate: "asc" },
         },
       },
     });
@@ -104,8 +106,10 @@ export class ProjectService {
     const updateData: Prisma.ProjectUpdateInput = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.description !== undefined) updateData.description = data.description;
-    if (data.startDate !== undefined) updateData.startDate = new Date(data.startDate);
+    if (data.description !== undefined)
+      updateData.description = data.description;
+    if (data.startDate !== undefined)
+      updateData.startDate = new Date(data.startDate);
     if (data.endDate !== undefined) updateData.endDate = new Date(data.endDate);
     if (data.status !== undefined) updateData.status = data.status;
 
@@ -139,11 +143,16 @@ export class ProjectService {
     });
 
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter((t) => t.status === 'COMPLETED').length;
-    const inProgressTasks = tasks.filter((t) => t.status === 'IN_PROGRESS').length;
+    const completedTasks = tasks.filter((t) => t.status === "DONE").length;
+    const inProgressTasks = tasks.filter(
+      (t) => t.status === "IN_PROGRESS",
+    ).length;
     const averageProgress =
       totalTasks > 0
-        ? Math.round(tasks.reduce((sum, t) => sum + t.progressPercentage, 0) / totalTasks)
+        ? Math.round(
+            tasks.reduce((sum, t) => sum + t.progressPercentage, 0) /
+              totalTasks,
+          )
         : 0;
 
     return {
@@ -178,13 +187,13 @@ export class ProjectService {
               select: { name: true },
             },
           },
-          orderBy: { plannedStartDate: 'asc' },
+          orderBy: { plannedStartDate: "asc" },
         },
       },
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error("Project not found");
     }
 
     const tasks = project.tasks.map((task) => ({

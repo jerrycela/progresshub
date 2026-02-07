@@ -1,88 +1,95 @@
-import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerJsdoc from "swagger-jsdoc";
 
 const options: swaggerJsdoc.Options = {
   definition: {
-    openapi: '3.0.0',
+    openapi: "3.0.0",
     info: {
-      title: 'ProgressHub API',
-      version: '1.0.0',
-      description: '專案進度管理系統 API 文檔',
+      title: "ProgressHub API",
+      version: "1.0.0",
+      description: "專案進度管理系統 API 文檔",
       contact: {
-        name: 'ProgressHub Team',
+        name: "ProgressHub Team",
       },
     },
     servers: [
       {
-        url: '/api',
-        description: 'API Server',
+        url: "/api",
+        description: "API Server",
       },
     ],
     components: {
       securitySchemes: {
         bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
         },
       },
       schemas: {
         Error: {
-          type: 'object',
+          type: "object",
           properties: {
             error: {
-              type: 'string',
-              description: 'Error message',
+              type: "string",
+              description: "Error message",
             },
           },
         },
         Pagination: {
-          type: 'object',
+          type: "object",
           properties: {
-            total: { type: 'integer' },
-            page: { type: 'integer' },
-            limit: { type: 'integer' },
-            totalPages: { type: 'integer' },
+            total: { type: "integer" },
+            page: { type: "integer" },
+            limit: { type: "integer" },
+            totalPages: { type: "integer" },
           },
         },
         Employee: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string', format: 'uuid' },
-            name: { type: 'string' },
-            email: { type: 'string', format: 'email' },
-            slackUserId: { type: 'string' },
-            department: { type: 'string' },
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            email: { type: "string", format: "email" },
+            slackUserId: { type: "string" },
+            department: { type: "string" },
             permissionLevel: {
-              type: 'string',
-              enum: ['EMPLOYEE', 'PM', 'ADMIN'],
+              type: "string",
+              enum: ["EMPLOYEE", "PM", "ADMIN"],
             },
           },
         },
         Project: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string', format: 'uuid' },
-            name: { type: 'string' },
-            description: { type: 'string' },
-            startDate: { type: 'string', format: 'date-time' },
-            endDate: { type: 'string', format: 'date-time' },
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            description: { type: "string" },
+            startDate: { type: "string", format: "date-time" },
+            endDate: { type: "string", format: "date-time" },
             status: {
-              type: 'string',
-              enum: ['ACTIVE', 'COMPLETED', 'PAUSED'],
+              type: "string",
+              enum: ["ACTIVE", "COMPLETED", "PAUSED"],
             },
           },
         },
         Task: {
-          type: 'object',
+          type: "object",
           properties: {
-            id: { type: 'string', format: 'uuid' },
-            name: { type: 'string' },
-            projectId: { type: 'string', format: 'uuid' },
-            assignedToId: { type: 'string', format: 'uuid' },
-            progressPercentage: { type: 'integer', minimum: 0, maximum: 100 },
+            id: { type: "string", format: "uuid" },
+            name: { type: "string" },
+            projectId: { type: "string", format: "uuid" },
+            assignedToId: { type: "string", format: "uuid" },
+            progressPercentage: { type: "integer", minimum: 0, maximum: 100 },
             status: {
-              type: 'string',
-              enum: ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED'],
+              type: "string",
+              enum: [
+                "UNCLAIMED",
+                "CLAIMED",
+                "IN_PROGRESS",
+                "PAUSED",
+                "DONE",
+                "BLOCKED",
+              ],
             },
           },
         },
@@ -90,7 +97,7 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ['./src/routes/*.ts'],
+  apis: ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

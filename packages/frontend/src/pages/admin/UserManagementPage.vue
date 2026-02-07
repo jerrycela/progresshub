@@ -10,7 +10,7 @@ import Modal from '@/components/common/Modal.vue'
 import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import type { User, Role, FunctionType } from 'shared/types'
+import type { User, UserRole, FunctionType } from 'shared/types'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -25,7 +25,7 @@ const users = ref<User[]>(
     id: e.id,
     name: e.name,
     email: e.email,
-    role: (e.userRole === 'PM' ? 'PM' : e.userRole === 'MANAGER' ? 'ADMIN' : 'MEMBER') as Role,
+    role: (e.userRole || 'EMPLOYEE') as UserRole,
     functionType: (e.department === 'QA'
       ? 'PLANNING'
       : e.department === 'MANAGEMENT'
@@ -40,7 +40,7 @@ const users = ref<User[]>(
 const searchQuery = ref('')
 
 // 篩選條件
-const selectedRole = ref<Role | 'ALL'>('ALL')
+const selectedRole = ref<UserRole | 'ALL'>('ALL')
 const selectedFunction = ref<FunctionType | 'ALL'>('ALL')
 
 // 篩選後的使用者
@@ -69,13 +69,15 @@ const filteredUsers = computed(() => {
 })
 
 // 角色徽章樣式
-const roleBadgeVariant = (role: Role) => {
-  const variants: Record<Role, 'default' | 'primary' | 'success'> = {
-    MEMBER: 'default',
+const roleBadgeVariant = (role: UserRole) => {
+  const variants: Record<UserRole, 'default' | 'primary' | 'success' | 'warning' | 'danger'> = {
+    EMPLOYEE: 'default',
     PM: 'primary',
-    ADMIN: 'success',
+    PRODUCER: 'warning',
+    MANAGER: 'success',
+    ADMIN: 'danger',
   }
-  return variants[role]
+  return variants[role] || 'default'
 }
 
 // 編輯使用者對話框
@@ -101,7 +103,7 @@ const showCreateModal = ref(false)
 const newUser = ref<Partial<User>>({
   name: '',
   email: '',
-  role: 'MEMBER',
+  role: 'EMPLOYEE',
   functionType: 'PROGRAMMING',
 })
 
@@ -109,7 +111,7 @@ const openCreateModal = () => {
   newUser.value = {
     name: '',
     email: '',
-    role: 'MEMBER',
+    role: 'EMPLOYEE',
     functionType: 'PROGRAMMING',
   }
   showCreateModal.value = true
@@ -121,7 +123,7 @@ const createUser = () => {
     id: String(Date.now()),
     name: newUser.value.name || '',
     email: newUser.value.email || '',
-    role: newUser.value.role || 'MEMBER',
+    role: newUser.value.role || 'EMPLOYEE',
     functionType: newUser.value.functionType || 'PROGRAMMING',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -1,8 +1,13 @@
-import prisma from '../../config/database';
-import { GitLabActivityType, Prisma } from '@prisma/client';
-import { createGitLabClient } from '../../utils/gitlab/apiClient';
-import { gitLabOAuthService } from './oauthService';
-import { ActivitySummary, ConvertActivityDto, BatchConvertActivitiesDto } from '../../types/gitlab';
+import prisma from "../../config/database";
+import { GitLabActivityType, Prisma } from "@prisma/client";
+import { createGitLabClient } from "../../utils/gitlab/apiClient";
+import { gitLabOAuthService } from "./oauthService";
+import {
+  ActivitySummary,
+  ConvertActivityDto,
+  BatchConvertActivitiesDto,
+} from "../../types/gitlab";
+import logger from "../../config/logger";
 
 export class GitLabActivityService {
   /**
@@ -15,20 +20,25 @@ export class GitLabActivityService {
     });
 
     if (!connection) {
-      throw new Error('Connection not found');
+      throw new Error("Connection not found");
     }
 
-    const accessToken = await gitLabOAuthService.getValidAccessToken(connectionId);
+    const accessToken =
+      await gitLabOAuthService.getValidAccessToken(connectionId);
     const client = createGitLabClient(connection.instance.baseUrl, accessToken);
 
-    const syncSince = since || connection.lastSyncAt || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const syncSince =
+      since ||
+      connection.lastSyncAt ||
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     let syncedCount = 0;
 
     // 取得使用者參與的專案
     const projects = await client.getProjects(true);
 
     for (const project of projects) {
-      const projectPath = (project as Record<string, unknown>).path_with_namespace as string;
+      const projectPath = (project as Record<string, unknown>)
+        .path_with_namespace as string;
 
       // 同步 Commits
       if (connection.syncCommits) {
@@ -36,8 +46,10 @@ export class GitLabActivityService {
           const commits = await client.getUserCommits(projectPath, syncSince);
           for (const commit of commits) {
             // 只同步自己的 commits
-            if (commit.authorEmail === connection.gitlabUsername + '@' ||
-                commit.committerEmail === connection.gitlabUsername + '@') {
+            if (
+              commit.authorEmail === connection.gitlabUsername + "@" ||
+              commit.committerEmail === connection.gitlabUsername + "@"
+            ) {
               continue; // 跳過簡單匹配失敗的情況，實際應用需更精確
             }
 
@@ -51,7 +63,10 @@ export class GitLabActivityService {
               let stats = commit.stats;
               if (!stats) {
                 try {
-                  const details = await client.getCommitDetails(projectPath, commit.id);
+                  const details = await client.getCommitDetails(
+                    projectPath,
+                    commit.id,
+                  );
                   stats = details.stats;
                 } catch {
                   // 忽略詳情取得失敗
@@ -61,7 +76,7 @@ export class GitLabActivityService {
               await prisma.gitLabActivity.create({
                 data: {
                   connectionId,
-                  activityType: 'COMMIT',
+                  activityType: "COMMIT",
                   gitlabEventId: eventId,
                   projectPath,
                   commitSha: commit.id,
@@ -70,9 +85,9 @@ export class GitLabActivityService {
                   deletions: stats?.deletions || 0,
                   activityAt: new Date(commit.committedDate),
                   suggestedHours: this.calculateSuggestedHours(
-                    'COMMIT',
+                    "COMMIT",
                     stats?.additions,
-                    stats?.deletions
+                    stats?.deletions,
                   ),
                 },
               });
@@ -80,14 +95,18 @@ export class GitLabActivityService {
             }
           }
         } catch (error) {
-          console.error(`Failed to sync commits for ${projectPath}:`, error);
+          logger.error(`Failed to sync commits for ${projectPath}:`, error);
         }
       }
 
       // 同步 MRs
       if (connection.syncMRs) {
         try {
-          const mrs = await client.getProjectMergeRequests(projectPath, 'all', syncSince);
+          const mrs = await client.getProjectMergeRequests(
+            projectPath,
+            "all",
+            syncSince,
+          );
           for (const mr of mrs) {
             // 檢查是否為自己的 MR
             if (mr.author.id !== connection.gitlabUserId) {
@@ -102,14 +121,14 @@ export class GitLabActivityService {
             if (!existing) {
               let activityType: GitLabActivityType;
               switch (mr.state) {
-                case 'opened':
-                  activityType = 'MR_OPENED';
+                case "opened":
+                  activityType = "MR_OPENED";
                   break;
-                case 'merged':
-                  activityType = 'MR_MERGED';
+                case "merged":
+                  activityType = "MR_MERGED";
                   break;
-                case 'closed':
-                  activityType = 'MR_CLOSED';
+                case "closed":
+                  activityType = "MR_CLOSED";
                   break;
                 default:
                   continue;
@@ -132,7 +151,7 @@ export class GitLabActivityService {
             }
           }
         } catch (error) {
-          console.error(`Failed to sync MRs for ${projectPath}:`, error);
+          logger.error(`Failed to sync MRs for ${projectPath}:`, error);
         }
       }
     }
@@ -152,25 +171,25 @@ export class GitLabActivityService {
   calculateSuggestedHours(
     activityType: GitLabActivityType,
     additions?: number,
-    deletions?: number
+    deletions?: number,
   ): number {
     switch (activityType) {
-      case 'COMMIT': {
+      case "COMMIT": {
         const linesChanged = (additions || 0) + (deletions || 0);
         return Math.min(0.25 + linesChanged / 100, 2.0);
       }
-      case 'MR_OPENED':
+      case "MR_OPENED":
         return 0.5;
-      case 'MR_MERGED':
-      case 'MR_COMMENT':
-      case 'MR_APPROVED':
+      case "MR_MERGED":
+      case "MR_COMMENT":
+      case "MR_APPROVED":
         return 0.25;
-      case 'MR_CLOSED':
+      case "MR_CLOSED":
         return 0.25;
-      case 'ISSUE_CREATED':
+      case "ISSUE_CREATED":
         return 0.25;
-      case 'ISSUE_CLOSED':
-      case 'ISSUE_UPDATED':
+      case "ISSUE_CLOSED":
+      case "ISSUE_UPDATED":
         return 0.25;
       default:
         return 0;
@@ -190,9 +209,17 @@ export class GitLabActivityService {
       converted?: boolean;
       page?: number;
       limit?: number;
-    } = {}
+    } = {},
   ) {
-    const { startDate, endDate, type, projectPath, converted, page = 1, limit = 50 } = options;
+    const {
+      startDate,
+      endDate,
+      type,
+      projectPath,
+      converted,
+      page = 1,
+      limit = 50,
+    } = options;
 
     const where: Prisma.GitLabActivityWhereInput = {
       connection: { employeeId },
@@ -217,7 +244,7 @@ export class GitLabActivityService {
           task: { select: { id: true, name: true } },
           timeEntry: { select: { id: true, hours: true } },
         },
-        orderBy: { activityAt: 'desc' },
+        orderBy: { activityAt: "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -241,7 +268,7 @@ export class GitLabActivityService {
   async getActivitySummary(
     employeeId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): Promise<ActivitySummary> {
     const activities = await prisma.gitLabActivity.findMany({
       where: {
@@ -267,19 +294,19 @@ export class GitLabActivityService {
       }
 
       switch (activity.activityType) {
-        case 'COMMIT':
+        case "COMMIT":
           totalCommits++;
           break;
-        case 'MR_OPENED':
-        case 'MR_MERGED':
-        case 'MR_CLOSED':
-        case 'MR_COMMENT':
-        case 'MR_APPROVED':
+        case "MR_OPENED":
+        case "MR_MERGED":
+        case "MR_CLOSED":
+        case "MR_COMMENT":
+        case "MR_APPROVED":
           totalMRs++;
           break;
-        case 'ISSUE_CREATED':
-        case 'ISSUE_CLOSED':
-        case 'ISSUE_UPDATED':
+        case "ISSUE_CREATED":
+        case "ISSUE_CLOSED":
+        case "ISSUE_UPDATED":
           totalIssues++;
           break;
       }
@@ -302,7 +329,7 @@ export class GitLabActivityService {
   async convertToTimeEntry(
     activityId: string,
     employeeId: string,
-    data: ConvertActivityDto
+    data: ConvertActivityDto,
   ): Promise<string> {
     const activity = await prisma.gitLabActivity.findUnique({
       where: { id: activityId },
@@ -310,15 +337,15 @@ export class GitLabActivityService {
     });
 
     if (!activity) {
-      throw new Error('Activity not found');
+      throw new Error("Activity not found");
     }
 
     if (activity.connection.employeeId !== employeeId) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     if (activity.timeEntryId) {
-      throw new Error('Activity already converted');
+      throw new Error("Activity already converted");
     }
 
     // 需要一個專案來建立工時記錄
@@ -327,11 +354,11 @@ export class GitLabActivityService {
     if (data.taskId) {
       const task = await prisma.task.findUnique({ where: { id: data.taskId } });
       if (!task) {
-        throw new Error('Task not found');
+        throw new Error("Task not found");
       }
       projectId = task.projectId;
     } else {
-      throw new Error('taskId is required to convert activity to time entry');
+      throw new Error("taskId is required to convert activity to time entry");
     }
 
     // 建立工時記錄
@@ -344,7 +371,7 @@ export class GitLabActivityService {
         date: activity.activityAt,
         hours: data.hours,
         description: data.description || this.generateDescription(activity),
-        status: 'PENDING',
+        status: "PENDING",
       },
     });
 
@@ -365,7 +392,7 @@ export class GitLabActivityService {
    */
   async batchConvertToTimeEntries(
     employeeId: string,
-    data: BatchConvertActivitiesDto
+    data: BatchConvertActivitiesDto,
   ): Promise<{ converted: number; failed: number }> {
     let converted = 0;
     let failed = 0;
@@ -405,7 +432,7 @@ export class GitLabActivityService {
   async linkActivityToTask(
     activityId: string,
     employeeId: string,
-    taskId: string
+    taskId: string,
   ): Promise<void> {
     const activity = await prisma.gitLabActivity.findUnique({
       where: { id: activityId },
@@ -413,16 +440,16 @@ export class GitLabActivityService {
     });
 
     if (!activity) {
-      throw new Error('Activity not found');
+      throw new Error("Activity not found");
     }
 
     if (activity.connection.employeeId !== employeeId) {
-      throw new Error('Access denied');
+      throw new Error("Access denied");
     }
 
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) {
-      throw new Error('Task not found');
+      throw new Error("Task not found");
     }
 
     await prisma.gitLabActivity.update({
@@ -442,23 +469,23 @@ export class GitLabActivityService {
     issueTitle?: string | null;
   }): string {
     switch (activity.activityType) {
-      case 'COMMIT':
-        return `[GitLab] Commit: ${activity.commitMessage?.split('\n')[0] || 'No message'}`;
-      case 'MR_OPENED':
+      case "COMMIT":
+        return `[GitLab] Commit: ${activity.commitMessage?.split("\n")[0] || "No message"}`;
+      case "MR_OPENED":
         return `[GitLab] Opened MR: ${activity.mrTitle}`;
-      case 'MR_MERGED':
+      case "MR_MERGED":
         return `[GitLab] Merged MR: ${activity.mrTitle}`;
-      case 'MR_CLOSED':
+      case "MR_CLOSED":
         return `[GitLab] Closed MR: ${activity.mrTitle}`;
-      case 'MR_COMMENT':
+      case "MR_COMMENT":
         return `[GitLab] Commented on MR: ${activity.mrTitle}`;
-      case 'MR_APPROVED':
+      case "MR_APPROVED":
         return `[GitLab] Approved MR: ${activity.mrTitle}`;
-      case 'ISSUE_CREATED':
+      case "ISSUE_CREATED":
         return `[GitLab] Created Issue: ${activity.issueTitle}`;
-      case 'ISSUE_CLOSED':
+      case "ISSUE_CLOSED":
         return `[GitLab] Closed Issue: ${activity.issueTitle}`;
-      case 'ISSUE_UPDATED':
+      case "ISSUE_UPDATED":
         return `[GitLab] Updated Issue: ${activity.issueTitle}`;
       default:
         return `[GitLab] Activity in ${activity.projectPath}`;

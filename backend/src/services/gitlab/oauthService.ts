@@ -1,23 +1,27 @@
-import axios from 'axios';
-import crypto from 'crypto';
-import prisma from '../../config/database';
-import { GitLabOAuthTokens } from '../../types/gitlab';
-import { gitLabInstanceService } from './instanceService';
-import { encrypt, decrypt } from '../../utils/gitlab/encryption';
-import { createGitLabClient } from '../../utils/gitlab/apiClient';
-import { env } from '../../config/env';
+import axios from "axios";
+import crypto from "crypto";
+import prisma from "../../config/database";
+import { GitLabOAuthTokens } from "../../types/gitlab";
+import { gitLabInstanceService } from "./instanceService";
+import { encrypt, decrypt } from "../../utils/gitlab/encryption";
+import { createGitLabClient } from "../../utils/gitlab/apiClient";
+import { env } from "../../config/env";
+import logger from "../../config/logger";
 
 // TODO: 將 OAuth state 存儲遷移到 Redis，目前使用記憶體 Map 在多進程/多節點部署時會導致驗證失敗
 // 當前為非生產就緒的實作，僅適用於單進程環境
 const OAUTH_STATE_MAX_COUNT = 1000; // 最大 state 數量限制
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // state 過期時間：10 分鐘
-const oauthStates = new Map<string, { employeeId: string; instanceId: string; expiresAt: number }>();
+const oauthStates = new Map<
+  string,
+  { employeeId: string; instanceId: string; expiresAt: number }
+>();
 
 // 啟動時警告：此為非生產就緒的 OAuth state 存儲
-console.warn(
-  '[GitLab OAuth] 警告：OAuth state 目前存儲在應用程式記憶體中，' +
-  '多進程或多節點部署時將無法正確驗證 state。' +
-  '請儘速遷移至 Redis 等共享存儲方案。'
+logger.warn(
+  "[GitLab OAuth] 警告：OAuth state 目前存儲在應用程式記憶體中，" +
+    "多進程或多節點部署時將無法正確驗證 state。" +
+    "請儘速遷移至 Redis 等共享存儲方案。",
 );
 
 export class GitLabOAuthService {
@@ -26,19 +30,20 @@ export class GitLabOAuthService {
    */
   async generateAuthUrl(
     instanceId: string,
-    employeeId: string
+    employeeId: string,
   ): Promise<{ authUrl: string; state: string }> {
-    const instance = await gitLabInstanceService.getInstanceWithSecrets(instanceId);
+    const instance =
+      await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error('GitLab instance not found');
+      throw new Error("GitLab instance not found");
     }
 
     if (!instance.isActive) {
-      throw new Error('GitLab instance is not active');
+      throw new Error("GitLab instance is not active");
     }
 
     // 生成 state token（防 CSRF）
-    const state = crypto.randomBytes(32).toString('hex');
+    const state = crypto.randomBytes(32).toString("hex");
     const expiresAt = Date.now() + OAUTH_STATE_TTL_MS;
 
     // 清理過期的 states（在新增之前先清理，確保不會超出上限）
@@ -46,20 +51,20 @@ export class GitLabOAuthService {
 
     // 檢查是否超出最大數量限制，若超出則拒絕新增
     if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
-      throw new Error('OAuth state 存儲已滿，請稍後再試');
+      throw new Error("OAuth state 存儲已滿，請稍後再試");
     }
 
     // 儲存 state
     oauthStates.set(state, { employeeId, instanceId, expiresAt });
 
-    const redirectUri = `${env.API_BASE_URL || 'http://localhost:4000'}/api/gitlab/connections/oauth/callback`;
+    const redirectUri = `${env.API_BASE_URL || "http://localhost:4000"}/api/gitlab/connections/oauth/callback`;
 
     const params = new URLSearchParams({
       client_id: instance.clientId,
       redirect_uri: redirectUri,
-      response_type: 'code',
+      response_type: "code",
       state,
-      scope: 'api read_user read_api read_repository',
+      scope: "api read_user read_api read_repository",
     });
 
     return {
@@ -71,7 +76,9 @@ export class GitLabOAuthService {
   /**
    * 驗證 OAuth state
    */
-  verifyState(state: string): { employeeId: string; instanceId: string } | null {
+  verifyState(
+    state: string,
+  ): { employeeId: string; instanceId: string } | null {
     const data = oauthStates.get(state);
     if (!data) {
       return null;
@@ -91,21 +98,22 @@ export class GitLabOAuthService {
    */
   async exchangeCodeForTokens(
     instanceId: string,
-    code: string
+    code: string,
   ): Promise<GitLabOAuthTokens> {
-    const instance = await gitLabInstanceService.getInstanceWithSecrets(instanceId);
+    const instance =
+      await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error('GitLab instance not found');
+      throw new Error("GitLab instance not found");
     }
 
-    const redirectUri = `${env.API_BASE_URL || 'http://localhost:4000'}/api/gitlab/connections/oauth/callback`;
+    const redirectUri = `${env.API_BASE_URL || "http://localhost:4000"}/api/gitlab/connections/oauth/callback`;
 
     try {
       const response = await axios.post(`${instance.baseUrl}/oauth/token`, {
         client_id: instance.clientId,
         client_secret: instance.clientSecret,
         code,
-        grant_type: 'authorization_code',
+        grant_type: "authorization_code",
         redirect_uri: redirectUri,
       });
 
@@ -119,7 +127,7 @@ export class GitLabOAuthService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
-          `Failed to exchange code for tokens: ${error.response?.data?.error_description || error.message}`
+          `Failed to exchange code for tokens: ${error.response?.data?.error_description || error.message}`,
         );
       }
       throw error;
@@ -136,16 +144,18 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error('Connection not found');
+      throw new Error("Connection not found");
     }
 
     if (!connection.refreshToken) {
-      throw new Error('No refresh token available');
+      throw new Error("No refresh token available");
     }
 
-    const instance = await gitLabInstanceService.getInstanceWithSecrets(connection.instanceId);
+    const instance = await gitLabInstanceService.getInstanceWithSecrets(
+      connection.instanceId,
+    );
     if (!instance) {
-      throw new Error('GitLab instance not found');
+      throw new Error("GitLab instance not found");
     }
 
     const decryptedRefreshToken = decrypt(connection.refreshToken);
@@ -155,7 +165,7 @@ export class GitLabOAuthService {
         client_id: instance.clientId,
         client_secret: instance.clientSecret,
         refresh_token: decryptedRefreshToken,
-        grant_type: 'refresh_token',
+        grant_type: "refresh_token",
       });
 
       const tokens: GitLabOAuthTokens = {
@@ -173,7 +183,7 @@ export class GitLabOAuthService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
-          `Failed to refresh token: ${error.response?.data?.error_description || error.message}`
+          `Failed to refresh token: ${error.response?.data?.error_description || error.message}`,
         );
       }
       throw error;
@@ -190,12 +200,14 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error('Connection not found');
+      throw new Error("Connection not found");
     }
 
-    const instance = await gitLabInstanceService.getInstanceWithSecrets(connection.instanceId);
+    const instance = await gitLabInstanceService.getInstanceWithSecrets(
+      connection.instanceId,
+    );
     if (!instance) {
-      throw new Error('GitLab instance not found');
+      throw new Error("GitLab instance not found");
     }
 
     const decryptedToken = decrypt(connection.accessToken);
@@ -208,7 +220,7 @@ export class GitLabOAuthService {
       });
     } catch {
       // 即使撤銷失敗也繼續（token 可能已過期）
-      console.warn('Failed to revoke token, it may have already expired');
+      logger.warn("Failed to revoke token, it may have already expired");
     }
   }
 
@@ -218,11 +230,12 @@ export class GitLabOAuthService {
   async createConnection(
     employeeId: string,
     instanceId: string,
-    tokens: GitLabOAuthTokens
+    tokens: GitLabOAuthTokens,
   ): Promise<string> {
-    const instance = await gitLabInstanceService.getInstanceWithSecrets(instanceId);
+    const instance =
+      await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error('GitLab instance not found');
+      throw new Error("GitLab instance not found");
     }
 
     // 取得 GitLab 使用者資訊
@@ -244,7 +257,9 @@ export class GitLabOAuthService {
           gitlabUserId: gitlabUser.id,
           gitlabUsername: gitlabUser.username,
           accessToken: encrypt(tokens.accessToken),
-          refreshToken: tokens.refreshToken ? encrypt(tokens.refreshToken) : null,
+          refreshToken: tokens.refreshToken
+            ? encrypt(tokens.refreshToken)
+            : null,
           tokenExpiresAt: tokens.expiresIn
             ? new Date(Date.now() + tokens.expiresIn * 1000)
             : null,
@@ -278,13 +293,15 @@ export class GitLabOAuthService {
    */
   private async updateConnectionTokens(
     connectionId: string,
-    tokens: GitLabOAuthTokens
+    tokens: GitLabOAuthTokens,
   ): Promise<void> {
     await prisma.gitLabConnection.update({
       where: { id: connectionId },
       data: {
         accessToken: encrypt(tokens.accessToken),
-        refreshToken: tokens.refreshToken ? encrypt(tokens.refreshToken) : undefined,
+        refreshToken: tokens.refreshToken
+          ? encrypt(tokens.refreshToken)
+          : undefined,
         tokenExpiresAt: tokens.expiresIn
           ? new Date(Date.now() + tokens.expiresIn * 1000)
           : undefined,
@@ -315,7 +332,7 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error('Connection not found');
+      throw new Error("Connection not found");
     }
 
     // 檢查 token 是否即將過期（5 分鐘內）

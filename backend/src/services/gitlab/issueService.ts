@@ -1,8 +1,8 @@
-import prisma from '../../config/database';
-import { SyncDirection, TaskStatus } from '@prisma/client';
-import { createGitLabClient } from '../../utils/gitlab/apiClient';
-import { gitLabOAuthService } from './oauthService';
-import { CreateIssueMappingDto } from '../../types/gitlab';
+import prisma from "../../config/database";
+import { SyncDirection, TaskStatus } from "@prisma/client";
+import { createGitLabClient } from "../../utils/gitlab/apiClient";
+import { gitLabOAuthService } from "./oauthService";
+import { CreateIssueMappingDto } from "../../types/gitlab";
 
 export class GitLabIssueService {
   /**
@@ -30,7 +30,7 @@ export class GitLabIssueService {
           },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -39,7 +39,7 @@ export class GitLabIssueService {
    */
   async createIssueMapping(
     employeeId: string,
-    data: CreateIssueMappingDto
+    data: CreateIssueMappingDto,
   ): Promise<string> {
     // 驗證連結所有權
     const connection = await prisma.gitLabConnection.findUnique({
@@ -48,13 +48,13 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error('Connection not found or access denied');
+      throw new Error("Connection not found or access denied");
     }
 
     // 驗證任務存在
     const task = await prisma.task.findUnique({ where: { id: data.taskId } });
     if (!task) {
-      throw new Error('Task not found');
+      throw new Error("Task not found");
     }
 
     // 檢查是否已存在對應
@@ -68,7 +68,7 @@ export class GitLabIssueService {
     });
 
     if (existingByIssue) {
-      throw new Error('This GitLab issue is already mapped to a task');
+      throw new Error("This GitLab issue is already mapped to a task");
     }
 
     const existingByTask = await prisma.gitLabIssueMapping.findUnique({
@@ -76,11 +76,13 @@ export class GitLabIssueService {
     });
 
     if (existingByTask) {
-      throw new Error('This task is already mapped to a GitLab issue');
+      throw new Error("This task is already mapped to a GitLab issue");
     }
 
     // 取得 Issue 資訊
-    const accessToken = await gitLabOAuthService.getValidAccessToken(data.connectionId);
+    const accessToken = await gitLabOAuthService.getValidAccessToken(
+      data.connectionId,
+    );
     const client = createGitLabClient(connection.instance.baseUrl, accessToken);
     const issue = await client.getIssue(data.projectPath, data.gitlabIssueIid);
 
@@ -93,7 +95,7 @@ export class GitLabIssueService {
         projectPath: data.projectPath,
         issueUrl: issue.webUrl,
         taskId: data.taskId,
-        syncDirection: (data.syncDirection as SyncDirection) || 'BIDIRECTIONAL',
+        syncDirection: (data.syncDirection as SyncDirection) || "BIDIRECTIONAL",
       },
     });
 
@@ -103,14 +105,17 @@ export class GitLabIssueService {
   /**
    * 刪除 Issue 對應
    */
-  async deleteIssueMapping(mappingId: string, employeeId: string): Promise<void> {
+  async deleteIssueMapping(
+    mappingId: string,
+    employeeId: string,
+  ): Promise<void> {
     const mapping = await prisma.gitLabIssueMapping.findUnique({
       where: { id: mappingId },
       include: { connection: true },
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error('Mapping not found or access denied');
+      throw new Error("Mapping not found or access denied");
     }
 
     await prisma.gitLabIssueMapping.delete({ where: { id: mappingId } });
@@ -129,16 +134,24 @@ export class GitLabIssueService {
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error('Mapping not found or access denied');
+      throw new Error("Mapping not found or access denied");
     }
 
-    if (mapping.syncDirection === 'TASK_TO_GITLAB') {
-      throw new Error('Sync direction does not allow GitLab to Task sync');
+    if (mapping.syncDirection === "TASK_TO_GITLAB") {
+      throw new Error("Sync direction does not allow GitLab to Task sync");
     }
 
-    const accessToken = await gitLabOAuthService.getValidAccessToken(mapping.connectionId);
-    const client = createGitLabClient(mapping.connection.instance.baseUrl, accessToken);
-    const issue = await client.getIssue(mapping.projectPath, mapping.gitlabIssueIid);
+    const accessToken = await gitLabOAuthService.getValidAccessToken(
+      mapping.connectionId,
+    );
+    const client = createGitLabClient(
+      mapping.connection.instance.baseUrl,
+      accessToken,
+    );
+    const issue = await client.getIssue(
+      mapping.projectPath,
+      mapping.gitlabIssueIid,
+    );
 
     // 更新任務狀態
     const newStatus = this.mapGitLabStateToTaskStatus(issue.state);
@@ -171,15 +184,20 @@ export class GitLabIssueService {
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error('Mapping not found or access denied');
+      throw new Error("Mapping not found or access denied");
     }
 
-    if (mapping.syncDirection === 'GITLAB_TO_TASK') {
-      throw new Error('Sync direction does not allow Task to GitLab sync');
+    if (mapping.syncDirection === "GITLAB_TO_TASK") {
+      throw new Error("Sync direction does not allow Task to GitLab sync");
     }
 
-    const accessToken = await gitLabOAuthService.getValidAccessToken(mapping.connectionId);
-    const client = createGitLabClient(mapping.connection.instance.baseUrl, accessToken);
+    const accessToken = await gitLabOAuthService.getValidAccessToken(
+      mapping.connectionId,
+    );
+    const client = createGitLabClient(
+      mapping.connection.instance.baseUrl,
+      accessToken,
+    );
 
     // 更新 GitLab Issue
     const stateEvent = this.mapTaskStatusToGitLabState(mapping.task.status);
@@ -203,7 +221,7 @@ export class GitLabIssueService {
     connectionId: string,
     projectPath: string,
     taskId: string,
-    employeeId: string
+    employeeId: string,
   ): Promise<string> {
     const connection = await prisma.gitLabConnection.findUnique({
       where: { id: connectionId },
@@ -211,7 +229,7 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error('Connection not found or access denied');
+      throw new Error("Connection not found or access denied");
     }
 
     const task = await prisma.task.findUnique({
@@ -220,7 +238,7 @@ export class GitLabIssueService {
     });
 
     if (!task) {
-      throw new Error('Task not found');
+      throw new Error("Task not found");
     }
 
     // 檢查任務是否已有對應
@@ -229,10 +247,11 @@ export class GitLabIssueService {
     });
 
     if (existing) {
-      throw new Error('Task is already mapped to a GitLab issue');
+      throw new Error("Task is already mapped to a GitLab issue");
     }
 
-    const accessToken = await gitLabOAuthService.getValidAccessToken(connectionId);
+    const accessToken =
+      await gitLabOAuthService.getValidAccessToken(connectionId);
     const client = createGitLabClient(connection.instance.baseUrl, accessToken);
 
     // 建立 GitLab Issue
@@ -248,7 +267,7 @@ export class GitLabIssueService {
         projectPath,
         issueUrl: issue.webUrl,
         taskId,
-        syncDirection: 'BIDIRECTIONAL',
+        syncDirection: "BIDIRECTIONAL",
       },
     });
 
@@ -262,7 +281,7 @@ export class GitLabIssueService {
     connectionId: string,
     projectPath: string,
     query: string,
-    employeeId: string
+    employeeId: string,
   ) {
     const connection = await prisma.gitLabConnection.findUnique({
       where: { id: connectionId },
@@ -270,10 +289,11 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error('Connection not found or access denied');
+      throw new Error("Connection not found or access denied");
     }
 
-    const accessToken = await gitLabOAuthService.getValidAccessToken(connectionId);
+    const accessToken =
+      await gitLabOAuthService.getValidAccessToken(connectionId);
     const client = createGitLabClient(connection.instance.baseUrl, accessToken);
 
     return client.searchIssues(projectPath, query);
@@ -284,24 +304,24 @@ export class GitLabIssueService {
    */
   mapGitLabStateToTaskStatus(gitlabState: string): TaskStatus {
     switch (gitlabState) {
-      case 'opened':
-        return 'IN_PROGRESS';
-      case 'closed':
-        return 'COMPLETED';
+      case "opened":
+        return "IN_PROGRESS";
+      case "closed":
+        return "DONE";
       default:
-        return 'NOT_STARTED';
+        return "UNCLAIMED";
     }
   }
 
   /**
    * 狀態對應：Task -> GitLab
    */
-  mapTaskStatusToGitLabState(taskStatus: TaskStatus): 'close' | 'reopen' {
+  mapTaskStatusToGitLabState(taskStatus: TaskStatus): "close" | "reopen" {
     switch (taskStatus) {
-      case 'COMPLETED':
-        return 'close';
+      case "DONE":
+        return "close";
       default:
-        return 'reopen';
+        return "reopen";
     }
   }
 }

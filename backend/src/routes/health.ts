@@ -1,5 +1,6 @@
-import { Router } from 'express';
-import prisma from '../config/database';
+import { Router } from "express";
+import prisma from "../config/database";
+import { sendSuccess, sendError } from "../utils/response";
 
 const router = Router();
 
@@ -14,9 +15,9 @@ const router = Router();
  *       200:
  *         description: Service is healthy
  */
-router.get('/', (_req, res) => {
-  res.json({
-    status: 'ok',
+router.get("/", (_req, res) => {
+  sendSuccess(res, {
+    status: "ok",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
@@ -35,18 +36,17 @@ router.get('/', (_req, res) => {
  *       503:
  *         description: Service not ready
  */
-router.get('/ready', async (_req, res) => {
+router.get("/ready", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({
-      status: 'ready',
-      database: 'connected',
+    sendSuccess(res, {
+      status: "ready",
+      database: "connected",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    res.status(503).json({
-      status: 'not ready',
-      database: 'disconnected',
+    sendError(res, "SERVICE_NOT_READY", "Service not ready", 503, {
+      database: "disconnected",
       timestamp: new Date().toISOString(),
     });
   }
@@ -63,9 +63,9 @@ router.get('/ready', async (_req, res) => {
  *       200:
  *         description: Service is alive
  */
-router.get('/live', (_req, res) => {
-  res.json({
-    status: 'alive',
+router.get("/live", (_req, res) => {
+  sendSuccess(res, {
+    status: "alive",
     timestamp: new Date().toISOString(),
     memory: process.memoryUsage(),
   });

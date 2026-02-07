@@ -1,8 +1,13 @@
-import { Router, Response } from 'express';
-import { body, param, query, validationResult } from 'express-validator';
-import { progressService } from '../services/progressService';
-import { taskService } from '../services/taskService';
-import { authenticate, AuthRequest } from '../middleware/auth';
+import { Router, Response } from "express";
+import { body, param, query, validationResult } from "express-validator";
+import { progressService } from "../services/progressService";
+import { taskService } from "../services/taskService";
+import { authenticate, AuthRequest } from "../middleware/auth";
+import {
+  sendSuccess,
+  sendPaginatedSuccess,
+  sendError,
+} from "../utils/response";
 
 const router = Router();
 
@@ -14,64 +19,77 @@ router.use(authenticate);
  * 取得進度記錄列表
  */
 router.get(
-  '/',
+  "/",
   [
-    query('taskId').optional().isUUID(),
-    query('employeeId').optional().isUUID(),
-    query('startDate').optional().isISO8601(),
-    query('endDate').optional().isISO8601(),
-    query('page').optional().isInt({ min: 1 }).toInt(),
-    query('limit').optional().isInt({ min: 1, max: 100 }).toInt(),
+    query("taskId").optional().isUUID(),
+    query("employeeId").optional().isUUID(),
+    query("startDate").optional().isISO8601(),
+    query("endDate").optional().isISO8601(),
+    query("page").optional().isInt({ min: 1 }).toInt(),
+    query("limit").optional().isInt({ min: 1, max: 100 }).toInt(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 20;
+
       const result = await progressService.getProgressLogs({
         taskId: req.query.taskId as string,
         employeeId: req.query.employeeId as string,
-        startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-        endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
+        startDate: req.query.startDate
+          ? new Date(req.query.startDate as string)
+          : undefined,
+        endDate: req.query.endDate
+          ? new Date(req.query.endDate as string)
+          : undefined,
         page: req.query.page as unknown as number,
         limit: req.query.limit as unknown as number,
       });
 
-      res.json({
-        data: result.data,
-        pagination: {
-          total: result.total,
-          page: Number(req.query.page) || 1,
-          limit: Number(req.query.limit) || 20,
-          totalPages: Math.ceil(result.total / (Number(req.query.limit) || 20)),
-        },
+      sendPaginatedSuccess(res, result.data, {
+        total: result.total,
+        page,
+        limit,
       });
     } catch (error) {
-      console.error('Get progress logs error:', error);
-      res.status(500).json({ error: 'Failed to get progress logs' });
+      sendError(
+        res,
+        "PROGRESS_FETCH_FAILED",
+        "Failed to get progress logs",
+        500,
+      );
     }
-  }
+  },
 );
 
 /**
  * GET /api/progress/today
  * 取得當前使用者今日進度回報狀態
  */
-router.get('/today', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get("/today", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ error: 'Not authenticated' });
+      sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
       return;
     }
 
-    const status = await progressService.getTodayProgressStatus(req.user.userId);
-    res.json(status);
+    const status = await progressService.getTodayProgressStatus(
+      req.user.userId,
+    );
+    sendSuccess(res, status);
   } catch (error) {
-    console.error('Get today progress error:', error);
-    res.status(500).json({ error: 'Failed to get today progress status' });
+    sendError(
+      res,
+      "PROGRESS_TODAY_FAILED",
+      "Failed to get today progress status",
+      500,
+    );
   }
 });
 
@@ -80,27 +98,34 @@ router.get('/today', async (req: AuthRequest, res: Response): Promise<void> => {
  * 取得專案進度統計（近 N 天）
  */
 router.get(
-  '/project/:projectId/stats',
+  "/project/:projectId/stats",
   [
-    param('projectId').isUUID().withMessage('Invalid project ID'),
-    query('days').optional().isInt({ min: 1, max: 90 }).toInt(),
+    param("projectId").isUUID().withMessage("Invalid project ID"),
+    query("days").optional().isInt({ min: 1, max: 90 }).toInt(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const days = (req.query.days as unknown as number) || 7;
-      const stats = await progressService.getProjectProgressStats(req.params.projectId, days);
-      res.json(stats);
+      const stats = await progressService.getProjectProgressStats(
+        req.params.projectId,
+        days,
+      );
+      sendSuccess(res, stats);
     } catch (error) {
-      console.error('Get project progress stats error:', error);
-      res.status(500).json({ error: 'Failed to get project progress stats' });
+      sendError(
+        res,
+        "PROGRESS_STATS_FAILED",
+        "Failed to get project progress stats",
+        500,
+      );
     }
-  }
+  },
 );
 
 /**
@@ -108,24 +133,24 @@ router.get(
  * 回報進度
  */
 router.post(
-  '/',
+  "/",
   [
-    body('taskId').isUUID().withMessage('Valid task ID is required'),
-    body('progressPercentage')
+    body("taskId").isUUID().withMessage("Valid task ID is required"),
+    body("progressPercentage")
       .isInt({ min: 0, max: 100 })
-      .withMessage('Progress must be between 0 and 100'),
-    body('notes').optional().isString().trim().isLength({ max: 1000 }),
+      .withMessage("Progress must be between 0 and 100"),
+    body("notes").optional().isString().trim().isLength({ max: 1000 }),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Not authenticated' });
+        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
         return;
       }
 
@@ -134,7 +159,7 @@ router.post(
       // 驗證任務存在
       const task = await taskService.getTaskById(taskId);
       if (!task) {
-        res.status(404).json({ error: 'Task not found' });
+        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
         return;
       }
 
@@ -143,7 +168,7 @@ router.post(
       const isCollaborator = task.collaborators.includes(req.user.userId);
 
       if (!isAssigned && !isCollaborator) {
-        res.status(403).json({ error: 'You are not assigned to this task' });
+        sendError(res, "FORBIDDEN", "You are not assigned to this task", 403);
         return;
       }
 
@@ -154,12 +179,16 @@ router.post(
         notes,
       });
 
-      res.status(201).json(progressLog);
+      sendSuccess(res, progressLog, 201);
     } catch (error) {
-      console.error('Create progress log error:', error);
-      res.status(500).json({ error: 'Failed to create progress log' });
+      sendError(
+        res,
+        "PROGRESS_CREATE_FAILED",
+        "Failed to create progress log",
+        500,
+      );
     }
-  }
+  },
 );
 
 export default router;

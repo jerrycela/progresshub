@@ -60,77 +60,77 @@ const permissionMatrix: PermissionItem[] = [
   {
     name: '查看任務池',
     description: '瀏覽所有公開的任務池任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '認領任務',
     description: '從任務池認領待處理任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '回報進度',
     description: '更新自己負責的任務進度',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '建立自建任務',
     description: '為自己建立個人任務',
-    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: true, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '建立任務池任務',
     description: '發布任務到任務池供他人認領',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '指派任務',
     description: '將任務直接指派給特定成員',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '編輯他人任務',
     description: '修改其他成員建立或負責的任務',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '刪除任務',
     description: '刪除任務（包含他人任務）',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '查看追殺清單',
     description: '檢視逾期或延遲的任務報表',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '查看職能負載',
     description: '檢視各職能的工作負載分析',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '專案管理',
     description: '建立和管理專案',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: false },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: false, ADMIN: true },
   },
   {
     name: '建立里程碑',
     description: '在專案中建立新的里程碑節點',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '編輯里程碑',
     description: '修改里程碑名稱、日期等資訊',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '刪除里程碑',
     description: '刪除專案中的里程碑',
-    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: true, PRODUCER: true, MANAGER: true, ADMIN: true },
   },
   {
     name: '員工管理',
     description: '管理員工帳號和權限',
-    permissions: { EMPLOYEE: false, PM: false, PRODUCER: false, MANAGER: true },
+    permissions: { EMPLOYEE: false, PM: false, PRODUCER: false, MANAGER: true, ADMIN: true },
   },
 ]
 

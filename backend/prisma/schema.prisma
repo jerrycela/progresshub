@@ -65,7 +65,7 @@ model Task {
   actualStartDate     DateTime? @map("actual_start_date")
   actualEndDate       DateTime? @map("actual_end_date")
   progressPercentage  Int      @default(0) @map("progress_percentage")
-  status              TaskStatus @default(NOT_STARTED)
+  status              TaskStatus @default(UNCLAIMED)
   dependencies        String[] // JSON Array of task IDs
   milestoneId         String?  @map("milestone_id")
   createdAt           DateTime @default(now()) @map("created_at")
@@ -205,9 +205,15 @@ enum TimeEntryStatus {
 }
 
 // Enums
+
+// 使用者角色（統一為 UserRole，與 shared types 一致）
+// Migration: 新增 PRODUCER, MANAGER
+// 需要執行資料遷移：無既有資料需遷移，新增值即可
 enum PermissionLevel {
   EMPLOYEE
   PM
+  PRODUCER
+  MANAGER
   ADMIN
 }
 
@@ -217,10 +223,18 @@ enum ProjectStatus {
   PAUSED
 }
 
+// 任務狀態（統一為 6 種，與 shared types 一致）
+// Migration: NOT_STARTED -> UNCLAIMED, COMPLETED -> DONE
+// 需要執行資料遷移：
+//   UPDATE "tasks" SET status = 'UNCLAIMED' WHERE status = 'NOT_STARTED';
+//   UPDATE "tasks" SET status = 'DONE' WHERE status = 'COMPLETED';
 enum TaskStatus {
-  NOT_STARTED
+  UNCLAIMED
+  CLAIMED
   IN_PROGRESS
-  COMPLETED
+  PAUSED
+  DONE
+  BLOCKED
 }
 
 enum MilestoneStatus {

@@ -34,7 +34,7 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env file}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
       SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
       SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET}

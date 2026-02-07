@@ -1,9 +1,4 @@
-import type {
-  User,
-  Department,
-  FunctionType,
-  MockEmployee,
-} from 'shared/types'
+import type { User, UserRole, Department, FunctionType, MockEmployee } from 'shared/types'
 
 // ============================================
 // 員工資料（主要人員列表）
@@ -91,16 +86,10 @@ export const mockEmployees: MockEmployee[] = [
 ]
 
 // ============================================
-// 部門 → Role 對照
+// UserRole 直接透傳（不再需要 Role 對照）
 // ============================================
-export const userRoleToRole = (userRole: string): 'MEMBER' | 'PM' | 'ADMIN' => {
-  const map: Record<string, 'MEMBER' | 'PM' | 'ADMIN'> = {
-    EMPLOYEE: 'MEMBER',
-    PM: 'PM',
-    PRODUCER: 'MEMBER',
-    MANAGER: 'ADMIN',
-  }
-  return map[userRole] || 'MEMBER'
+export const userRoleToRole = (userRole: string): string => {
+  return userRole || 'EMPLOYEE'
 }
 
 export const departmentToFunctionType = (dept: Department): FunctionType => {
@@ -129,7 +118,7 @@ export const mockUsers: User[] = mockEmployees.map(emp => ({
   name: emp.name,
   email: emp.email,
   avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${emp.name}`,
-  role: userRoleToRole(emp.userRole),
+  role: userRoleToRole(emp.userRole) as UserRole,
   functionType: functionTypeOverrides[emp.id] || departmentToFunctionType(emp.department),
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',

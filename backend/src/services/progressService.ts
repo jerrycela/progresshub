@@ -1,9 +1,12 @@
-import prisma from '../config/database';
-import { Prisma } from '@prisma/client';
+import prisma from "../config/database";
+import { Prisma } from "@prisma/client";
 
 // 使用 Prisma 生成的類型（需要先執行 prisma generate）
 type ProgressLog = Prisma.ProgressLogGetPayload<object>;
-type TransactionClient = Omit<typeof prisma, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
+type TransactionClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 export interface CreateProgressLogDto {
   taskId: string;
@@ -25,8 +28,17 @@ export class ProgressService {
   /**
    * 取得進度記錄列表
    */
-  async getProgressLogs(params: ProgressListParams): Promise<{ data: ProgressLog[]; total: number }> {
-    const { taskId, employeeId, startDate, endDate, page = 1, limit = 20 } = params;
+  async getProgressLogs(
+    params: ProgressListParams,
+  ): Promise<{ data: ProgressLog[]; total: number }> {
+    const {
+      taskId,
+      employeeId,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 20,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProgressLogWhereInput = {};
@@ -52,7 +64,7 @@ export class ProgressService {
         where,
         skip,
         take: limit,
-        orderBy: { reportedAt: 'desc' },
+        orderBy: { reportedAt: "desc" },
         include: {
           task: { select: { id: true, name: true, projectId: true } },
           employee: { select: { id: true, name: true } },
@@ -86,10 +98,10 @@ export class ProgressService {
       // 更新任務進度和狀態
       const status =
         data.progressPercentage === 100
-          ? 'COMPLETED'
+          ? "DONE"
           : data.progressPercentage > 0
-          ? 'IN_PROGRESS'
-          : 'NOT_STARTED';
+            ? "IN_PROGRESS"
+            : "UNCLAIMED";
 
       const task = await tx.task.findUnique({
         where: { id: data.taskId },
@@ -102,11 +114,11 @@ export class ProgressService {
           status,
           // 如果是第一次進入進行中狀態，設定實際開始日期
           actualStartDate:
-            status === 'IN_PROGRESS' && !task?.actualStartDate
+            status === "IN_PROGRESS" && !task?.actualStartDate
               ? new Date()
               : undefined,
           // 如果完成，設定實際結束日期
-          actualEndDate: status === 'COMPLETED' ? new Date() : undefined,
+          actualEndDate: status === "DONE" ? new Date() : undefined,
         },
       });
 
@@ -147,11 +159,12 @@ export class ProgressService {
           { assignedToId: employeeId },
           { collaborators: { has: employeeId } },
         ],
-        status: 'IN_PROGRESS',
+        status: "IN_PROGRESS",
       },
     });
 
-    const uniqueTasksReported = new Set(todayLogs.map((log) => log.taskId)).size;
+    const uniqueTasksReported = new Set(todayLogs.map((log) => log.taskId))
+      .size;
 
     return {
       hasReported: todayLogs.length > 0,
@@ -165,7 +178,7 @@ export class ProgressService {
    */
   async getProjectProgressStats(
     projectId: string,
-    days: number = 7
+    days: number = 7,
   ): Promise<
     Array<{
       date: string;
@@ -189,13 +202,13 @@ export class ProgressService {
         progressPercentage: true,
         reportedAt: true,
       },
-      orderBy: { reportedAt: 'asc' },
+      orderBy: { reportedAt: "asc" },
     });
 
     // 按日期分組
     const groupedByDate = logs.reduce(
       (acc, log) => {
-        const date = log.reportedAt.toISOString().split('T')[0];
+        const date = log.reportedAt.toISOString().split("T")[0];
         if (!acc[date]) {
           acc[date] = { total: 0, count: 0 };
         }
@@ -203,7 +216,7 @@ export class ProgressService {
         acc[date].count += 1;
         return acc;
       },
-      {} as Record<string, { total: number; count: number }>
+      {} as Record<string, { total: number; count: number }>,
     );
 
     // 轉換為陣列

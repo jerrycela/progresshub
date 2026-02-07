@@ -1,8 +1,9 @@
-import { Router, Response } from 'express';
-import { body, param, validationResult } from 'express-validator';
-import { gitLabInstanceService } from '../../services/gitlab';
-import { authenticate, authorize, AuthRequest } from '../../middleware/auth';
-import { PermissionLevel } from '@prisma/client';
+import { Router, Response } from "express";
+import { body, param, validationResult } from "express-validator";
+import { gitLabInstanceService } from "../../services/gitlab";
+import { authenticate, authorize, AuthRequest } from "../../middleware/auth";
+import { PermissionLevel } from "@prisma/client";
+import { sendSuccess, sendError } from "../../utils/response";
 
 const router = Router();
 
@@ -14,14 +15,19 @@ router.use(authorize(PermissionLevel.ADMIN));
  * GET /api/gitlab/instances
  * 取得所有 GitLab 實例列表
  */
-router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
+router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const includeInactive = req.query.includeInactive === 'true';
-    const instances = await gitLabInstanceService.getAllInstances(includeInactive);
-    res.json({ success: true, instances });
+    const includeInactive = req.query.includeInactive === "true";
+    const instances =
+      await gitLabInstanceService.getAllInstances(includeInactive);
+    sendSuccess(res, instances);
   } catch (error) {
-    console.error('Get instances error:', error);
-    res.status(500).json({ error: 'Failed to get instances' });
+    sendError(
+      res,
+      "GITLAB_INSTANCES_FETCH_FAILED",
+      "Failed to get instances",
+      500,
+    );
   }
 });
 
@@ -30,27 +36,33 @@ router.get('/', async (req: AuthRequest, res: Response): Promise<void> => {
  * 取得單一 GitLab 實例
  */
 router.get(
-  '/:id',
-  [param('id').isUUID()],
+  "/:id",
+  [param("id").isUUID()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
-      const instance = await gitLabInstanceService.getInstanceById(req.params.id);
+      const instance = await gitLabInstanceService.getInstanceById(
+        req.params.id,
+      );
       if (!instance) {
-        res.status(404).json({ error: 'Instance not found' });
+        sendError(res, "GITLAB_INSTANCE_NOT_FOUND", "Instance not found", 404);
         return;
       }
-      res.json({ success: true, instance });
+      sendSuccess(res, instance);
     } catch (error) {
-      console.error('Get instance error:', error);
-      res.status(500).json({ error: 'Failed to get instance' });
+      sendError(
+        res,
+        "GITLAB_INSTANCE_FETCH_FAILED",
+        "Failed to get instance",
+        500,
+      );
     }
-  }
+  },
 );
 
 /**
@@ -58,30 +70,38 @@ router.get(
  * 新增 GitLab 實例
  */
 router.post(
-  '/',
+  "/",
   [
-    body('name').isString().trim().notEmpty().withMessage('Name is required'),
-    body('baseUrl').isURL().withMessage('Valid URL is required'),
-    body('clientId').isString().trim().notEmpty().withMessage('Client ID is required'),
-    body('clientSecret').isString().trim().notEmpty().withMessage('Client Secret is required'),
-    body('webhookSecret').optional().isString(),
+    body("name").isString().trim().notEmpty().withMessage("Name is required"),
+    body("baseUrl").isURL().withMessage("Valid URL is required"),
+    body("clientId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Client ID is required"),
+    body("clientSecret")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Client Secret is required"),
+    body("webhookSecret").optional().isString(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const instance = await gitLabInstanceService.createInstance(req.body);
-      res.status(201).json({ success: true, instance });
+      sendSuccess(res, instance, 201);
     } catch (error: unknown) {
-      console.error('Create instance error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to create instance';
-      res.status(400).json({ error: message });
+      const message =
+        error instanceof Error ? error.message : "Failed to create instance";
+      sendError(res, "GITLAB_INSTANCE_CREATE_FAILED", message, 400);
     }
-  }
+  },
 );
 
 /**
@@ -89,31 +109,34 @@ router.post(
  * 更新 GitLab 實例
  */
 router.put(
-  '/:id',
+  "/:id",
   [
-    param('id').isUUID(),
-    body('name').optional().isString().trim().notEmpty(),
-    body('clientId').optional().isString().trim().notEmpty(),
-    body('clientSecret').optional().isString().trim().notEmpty(),
-    body('webhookSecret').optional().isString(),
-    body('isActive').optional().isBoolean(),
+    param("id").isUUID(),
+    body("name").optional().isString().trim().notEmpty(),
+    body("clientId").optional().isString().trim().notEmpty(),
+    body("clientSecret").optional().isString().trim().notEmpty(),
+    body("webhookSecret").optional().isString(),
+    body("isActive").optional().isBoolean(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
-      const instance = await gitLabInstanceService.updateInstance(req.params.id, req.body);
-      res.json({ success: true, instance });
+      const instance = await gitLabInstanceService.updateInstance(
+        req.params.id,
+        req.body,
+      );
+      sendSuccess(res, instance);
     } catch (error: unknown) {
-      console.error('Update instance error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to update instance';
-      res.status(400).json({ error: message });
+      const message =
+        error instanceof Error ? error.message : "Failed to update instance";
+      sendError(res, "GITLAB_INSTANCE_UPDATE_FAILED", message, 400);
     }
-  }
+  },
 );
 
 /**
@@ -121,12 +144,12 @@ router.put(
  * 刪除 GitLab 實例
  */
 router.delete(
-  '/:id',
-  [param('id').isUUID()],
+  "/:id",
+  [param("id").isUUID()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
@@ -134,11 +157,11 @@ router.delete(
       await gitLabInstanceService.deleteInstance(req.params.id);
       res.status(204).send();
     } catch (error: unknown) {
-      console.error('Delete instance error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to delete instance';
-      res.status(400).json({ error: message });
+      const message =
+        error instanceof Error ? error.message : "Failed to delete instance";
+      sendError(res, "GITLAB_INSTANCE_DELETE_FAILED", message, 400);
     }
-  }
+  },
 );
 
 /**
@@ -146,23 +169,22 @@ router.delete(
  * 測試 GitLab 實例連線
  */
 router.post(
-  '/:id/test',
-  [param('id').isUUID()],
+  "/:id/test",
+  [param("id").isUUID()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
       const result = await gitLabInstanceService.testConnection(req.params.id);
-      res.json(result);
+      sendSuccess(res, result);
     } catch (error) {
-      console.error('Test connection error:', error);
-      res.status(500).json({ error: 'Failed to test connection' });
+      sendError(res, "GITLAB_TEST_FAILED", "Failed to test connection", 500);
     }
-  }
+  },
 );
 
 /**
@@ -170,23 +192,29 @@ router.post(
  * 重新生成 Webhook Secret
  */
 router.post(
-  '/:id/regenerate-webhook-secret',
-  [param('id').isUUID()],
+  "/:id/regenerate-webhook-secret",
+  [param("id").isUUID()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      res.status(400).json({ errors: errors.array() });
+      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
       return;
     }
 
     try {
-      const webhookSecret = await gitLabInstanceService.regenerateWebhookSecret(req.params.id);
-      res.json({ success: true, webhookSecret });
+      const webhookSecret = await gitLabInstanceService.regenerateWebhookSecret(
+        req.params.id,
+      );
+      sendSuccess(res, { webhookSecret });
     } catch (error) {
-      console.error('Regenerate webhook secret error:', error);
-      res.status(500).json({ error: 'Failed to regenerate webhook secret' });
+      sendError(
+        res,
+        "GITLAB_WEBHOOK_REGEN_FAILED",
+        "Failed to regenerate webhook secret",
+        500,
+      );
     }
-  }
+  },
 );
 
 export default router;

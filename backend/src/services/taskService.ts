@@ -1,5 +1,5 @@
-import prisma from '../config/database';
-import { Task, TaskStatus, Prisma } from '@prisma/client';
+import prisma from "../config/database";
+import { Task, TaskStatus, Prisma } from "@prisma/client";
 
 export interface CreateTaskDto {
   projectId: string;
@@ -38,7 +38,9 @@ export class TaskService {
   /**
    * 取得任務列表（分頁）
    */
-  async getTasks(params: TaskListParams): Promise<{ data: Task[]; total: number }> {
+  async getTasks(
+    params: TaskListParams,
+  ): Promise<{ data: Task[]; total: number }> {
     const { projectId, assignedToId, status, page = 1, limit = 20 } = params;
     const skip = (page - 1) * limit;
 
@@ -59,7 +61,7 @@ export class TaskService {
         where,
         skip,
         take: limit,
-        orderBy: { plannedStartDate: 'asc' },
+        orderBy: { plannedStartDate: "asc" },
         include: {
           project: { select: { id: true, name: true } },
           assignedTo: { select: { id: true, name: true, email: true } },
@@ -83,7 +85,7 @@ export class TaskService {
         assignedTo: true,
         milestone: true,
         progressLogs: {
-          orderBy: { reportedAt: 'desc' },
+          orderBy: { reportedAt: "desc" },
           take: 10,
           include: {
             employee: { select: { id: true, name: true } },
@@ -96,7 +98,10 @@ export class TaskService {
   /**
    * 取得使用者的任務
    */
-  async getTasksByEmployee(employeeId: string, status?: TaskStatus): Promise<Task[]> {
+  async getTasksByEmployee(
+    employeeId: string,
+    status?: TaskStatus,
+  ): Promise<Task[]> {
     const where: Prisma.TaskWhereInput = {
       OR: [
         { assignedToId: employeeId },
@@ -113,7 +118,7 @@ export class TaskService {
       include: {
         project: { select: { id: true, name: true } },
       },
-      orderBy: { plannedEndDate: 'asc' },
+      orderBy: { plannedEndDate: "asc" },
     });
   }
 
@@ -149,7 +154,8 @@ export class TaskService {
     if (data.assignedToId !== undefined) {
       updateData.assignedTo = { connect: { id: data.assignedToId } };
     }
-    if (data.collaborators !== undefined) updateData.collaborators = data.collaborators;
+    if (data.collaborators !== undefined)
+      updateData.collaborators = data.collaborators;
     if (data.plannedStartDate !== undefined) {
       updateData.plannedStartDate = new Date(data.plannedStartDate);
     }
@@ -166,7 +172,8 @@ export class TaskService {
       updateData.progressPercentage = data.progressPercentage;
     }
     if (data.status !== undefined) updateData.status = data.status;
-    if (data.dependencies !== undefined) updateData.dependencies = data.dependencies;
+    if (data.dependencies !== undefined)
+      updateData.dependencies = data.dependencies;
     if (data.milestoneId !== undefined) {
       updateData.milestone = data.milestoneId
         ? { connect: { id: data.milestoneId } }
@@ -199,7 +206,7 @@ export class TaskService {
     taskId: string,
     employeeId: string,
     progressPercentage: number,
-    notes?: string
+    notes?: string,
   ): Promise<Task> {
     // 建立進度記錄
     await prisma.progressLog.create({
@@ -214,10 +221,10 @@ export class TaskService {
     // 更新任務進度和狀態
     const status: TaskStatus =
       progressPercentage === 100
-        ? 'COMPLETED'
+        ? "DONE"
         : progressPercentage > 0
-        ? 'IN_PROGRESS'
-        : 'NOT_STARTED';
+          ? "IN_PROGRESS"
+          : "UNCLAIMED";
 
     return prisma.task.update({
       where: { id: taskId },
@@ -225,13 +232,8 @@ export class TaskService {
         progressPercentage,
         status,
         actualStartDate:
-          status === 'IN_PROGRESS'
-            ? { set: new Date() }
-            : undefined,
-        actualEndDate:
-          status === 'COMPLETED'
-            ? { set: new Date() }
-            : undefined,
+          status === "IN_PROGRESS" ? { set: new Date() } : undefined,
+        actualEndDate: status === "DONE" ? { set: new Date() } : undefined,
       },
     });
   }

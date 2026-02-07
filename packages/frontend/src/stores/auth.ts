@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { User, Role, ActionResult } from 'shared/types'
+import type { User, UserRole, ActionResult } from 'shared/types'
 import { mockCurrentUser, mockUsers } from '@/mocks/unified'
 
 // ============================================
@@ -105,7 +105,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const hasRole = (roles: Role[]) => {
+  const hasRole = (roles: UserRole[]) => {
     return user.value ? roles.includes(user.value.role) : false
   }
 

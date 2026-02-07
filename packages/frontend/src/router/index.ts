@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw, RouteLocationNormalized } from 'vue-router'
-import type { Role } from 'shared/types'
+import type { UserRole } from 'shared/types'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -142,12 +142,12 @@ const requiresAuth = (to: RouteLocationNormalized): boolean => {
 /**
  * 檢查路由是否有角色限制
  */
-const getRequiredRoles = (to: RouteLocationNormalized): Role[] | null => {
+const getRequiredRoles = (to: RouteLocationNormalized): UserRole[] | null => {
   // 取得最近一個有 requiresRole 的路由記錄
   for (let i = to.matched.length - 1; i >= 0; i--) {
     const roles = to.matched[i].meta.requiresRole
     if (roles) {
-      return roles as Role[]
+      return roles as UserRole[]
     }
   }
   return null

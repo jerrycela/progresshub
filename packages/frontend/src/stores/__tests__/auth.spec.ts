@@ -1,7 +1,7 @@
 import { setActivePinia, createPinia } from 'pinia'
 import { useAuthStore } from '../auth'
 import { mockCurrentUser, mockUsers } from '@/mocks/unified'
-import type { Role } from 'shared/types'
+import type { UserRole } from 'shared/types'
 
 describe('useAuthStore', () => {
   beforeEach(() => {
@@ -232,7 +232,7 @@ describe('useAuthStore', () => {
   describe('hasRole', () => {
     it('should return true when user has a matching role', () => {
       const store = useAuthStore()
-      const currentRole = store.userRole as Role
+      const currentRole = store.userRole as UserRole
 
       expect(store.hasRole([currentRole])).toBe(true)
     })
@@ -240,13 +240,13 @@ describe('useAuthStore', () => {
     it('should return true when user role is in the provided list', () => {
       const store = useAuthStore()
 
-      expect(store.hasRole(['MEMBER', 'PM', 'ADMIN'])).toBe(true)
+      expect(store.hasRole(['EMPLOYEE', 'PM', 'ADMIN'])).toBe(true)
     })
 
     it('should return false when user role does not match', () => {
       const store = useAuthStore()
 
-      // mockCurrentUser (emp-1) has role MEMBER via userRoleToRole('EMPLOYEE')
+      // mockCurrentUser (emp-1) 的角色是 EMPLOYEE
       expect(store.hasRole(['PM', 'ADMIN'])).toBe(false)
     })
 
@@ -254,7 +254,7 @@ describe('useAuthStore', () => {
       const store = useAuthStore()
       store.user = null
 
-      expect(store.hasRole(['MEMBER', 'PM', 'ADMIN'])).toBe(false)
+      expect(store.hasRole(['EMPLOYEE', 'PM', 'ADMIN'])).toBe(false)
     })
   })
 
@@ -282,9 +282,9 @@ describe('useAuthStore', () => {
       }
     })
 
-    it('should be false for MEMBER role', () => {
+    it('should be false for EMPLOYEE role', () => {
       const store = useAuthStore()
-      const memberUser = mockUsers.find(u => u.role === 'MEMBER')
+      const memberUser = mockUsers.find(u => u.role === 'EMPLOYEE')
 
       if (memberUser) {
         store.switchUser(memberUser.id)
@@ -317,9 +317,9 @@ describe('useAuthStore', () => {
       }
     })
 
-    it('should be false for MEMBER role', () => {
+    it('should be false for EMPLOYEE role', () => {
       const store = useAuthStore()
-      const memberUser = mockUsers.find(u => u.role === 'MEMBER')
+      const memberUser = mockUsers.find(u => u.role === 'EMPLOYEE')
 
       if (memberUser) {
         store.switchUser(memberUser.id)
