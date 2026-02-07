@@ -237,12 +237,20 @@ router.post('/interactions', async (req: Request, res: Response): Promise<void> 
       return;
     }
 
-    const payload = JSON.parse(req.body.payload || '{}');
-    const { type, user } = payload;
+    // 安全地解析 Slack 互動事件的 payload
+    let payload: Record<string, unknown>;
+    try {
+      payload = JSON.parse(req.body.payload || '{}');
+    } catch {
+      res.status(400).json({ error: 'Invalid JSON payload' });
+      return;
+    }
+    const type = payload.type as string | undefined;
+    const user = payload.user as { id: string } | undefined;
 
     if (type === 'view_submission') {
       // 處理對話框提交
-      const employee = await getEmployeeBySlackId(user.id);
+      const employee = user?.id ? await getEmployeeBySlackId(user.id) : null;
       if (!employee) {
         res.json({
           response_action: 'errors',

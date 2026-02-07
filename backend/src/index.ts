@@ -18,14 +18,36 @@ const app: Application = express();
 // Middleware
 app.use(helmet()); // Security headers
 
-// Issue #2 修復：CORS 白名單配置
-const corsOptions = {
-  origin:
-    env.NODE_ENV === 'production'
-      ? env.ALLOWED_ORIGINS.length > 0
-        ? env.ALLOWED_ORIGINS
-        : ['https://your-domain.com']
-      : true,
+// CORS 白名單配置（安全強化版）
+// 生產環境必須設定 ALLOWED_ORIGINS 環境變數（逗號分隔多個 origin）
+// 開發環境允許 localhost 存取
+const getCorsOrigin = (): cors.CorsOptions['origin'] => {
+  if (env.NODE_ENV === 'production') {
+    if (env.ALLOWED_ORIGINS.length === 0) {
+      logger.error(
+        '嚴重安全警告：生產環境未設定 ALLOWED_ORIGINS 環境變數，CORS 將拒絕所有跨域請求'
+      );
+      // 生產環境未設定白名單時，拒絕所有跨域請求
+      return false;
+    }
+    return env.ALLOWED_ORIGINS;
+  }
+  // 開發環境：允許 localhost 的各種埠號
+  return (origin, callback) => {
+    if (
+      !origin ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+      /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS 不允許來自 ${origin} 的請求`));
+    }
+  };
+};
+
+const corsOptions: cors.CorsOptions = {
+  origin: getCorsOrigin(),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],

@@ -7,8 +7,18 @@ import { encrypt, decrypt } from '../../utils/gitlab/encryption';
 import { createGitLabClient } from '../../utils/gitlab/apiClient';
 import { env } from '../../config/env';
 
-// OAuth state 存儲（生產環境應使用 Redis）
+// TODO: 將 OAuth state 存儲遷移到 Redis，目前使用記憶體 Map 在多進程/多節點部署時會導致驗證失敗
+// 當前為非生產就緒的實作，僅適用於單進程環境
+const OAUTH_STATE_MAX_COUNT = 1000; // 最大 state 數量限制
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // state 過期時間：10 分鐘
 const oauthStates = new Map<string, { employeeId: string; instanceId: string; expiresAt: number }>();
+
+// 啟動時警告：此為非生產就緒的 OAuth state 存儲
+console.warn(
+  '[GitLab OAuth] 警告：OAuth state 目前存儲在應用程式記憶體中，' +
+  '多進程或多節點部署時將無法正確驗證 state。' +
+  '請儘速遷移至 Redis 等共享存儲方案。'
+);
 
 export class GitLabOAuthService {
   /**
@@ -29,13 +39,18 @@ export class GitLabOAuthService {
 
     // 生成 state token（防 CSRF）
     const state = crypto.randomBytes(32).toString('hex');
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 分鐘有效
+    const expiresAt = Date.now() + OAUTH_STATE_TTL_MS;
+
+    // 清理過期的 states（在新增之前先清理，確保不會超出上限）
+    this.cleanupExpiredStates();
+
+    // 檢查是否超出最大數量限制，若超出則拒絕新增
+    if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
+      throw new Error('OAuth state 存儲已滿，請稍後再試');
+    }
 
     // 儲存 state
     oauthStates.set(state, { employeeId, instanceId, expiresAt });
-
-    // 清理過期的 states
-    this.cleanupExpiredStates();
 
     const redirectUri = `${env.API_BASE_URL || 'http://localhost:4000'}/api/gitlab/connections/oauth/callback`;
 
@@ -279,6 +294,8 @@ export class GitLabOAuthService {
 
   /**
    * 清理過期的 states
+   * 遍歷所有 state，移除超過 TTL（10 分鐘）的條目
+   * TODO: 遷移至 Redis 後，可利用 Redis 的 TTL 機制自動過期，不需手動清理
    */
   private cleanupExpiredStates(): void {
     const now = Date.now();

@@ -1,5 +1,5 @@
 {
-  "name": "progresshub-backend",
+  "name": "backend",
   "version": "1.0.0",
   "description": "ProgressHub Backend API - Project Progress Tracking System",
   "main": "dist/index.js",

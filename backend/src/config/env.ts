@@ -17,12 +17,19 @@ interface EnvConfig {
 }
 
 // Issue #1 修復：JWT Secret 安全性檢查
+// 生產環境必須設定環境變數，否則拋出錯誤；開發環境允許預設值但記錄警告。
 const getJwtSecret = (): string => {
   const secret = process.env.JWT_SECRET;
-  if (!secret && process.env.NODE_ENV === 'production') {
-    throw new Error('JWT_SECRET must be set in production environment');
+  if (secret) {
+    return secret;
   }
-  return secret || 'dev-only-secret-key';
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET 環境變數未設定。生產環境中必須設定此變數，禁止使用預設值。');
+  }
+
+  console.warn('⚠️ [安全警告] JWT_SECRET 未設定，使用開發環境預設值。請勿在生產環境中使用。');
+  return 'dev-only-secret-key';
 };
 
 export const env: EnvConfig = {
