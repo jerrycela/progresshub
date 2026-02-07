@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  mockPoolTasks,
-  mockProjects,
-  mockDepartments,
-  type PoolTask,
-} from '@/mocks/taskPool'
+import { useTaskStore } from '@/stores/tasks'
+import { useProjectStore } from '@/stores/projects'
+import { useDepartmentStore } from '@/stores/departments'
+import type { PoolTask } from 'shared/types'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
 import { getStatusLabel } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
 import type { Department, FunctionType } from 'shared/types'
 
 const { showSuccess } = useToast()
+const taskStore = useTaskStore()
+const projectStore = useProjectStore()
+const departmentStore = useDepartmentStore()
 
 // ============================================
 // 任務池頁面 - 瀏覽和認領任務
@@ -33,7 +34,7 @@ const showOnlyUnclaimed = ref(false)
 
 // 篩選後的任務
 const filteredTasks = computed(() => {
-  return mockPoolTasks.filter((task: PoolTask) => {
+  return taskStore.poolTasks.filter((task: PoolTask) => {
     // 快速篩選：只看待認領
     if (showOnlyUnclaimed.value && task.status !== 'UNCLAIMED') {
       return false
@@ -64,10 +65,10 @@ const filteredTasks = computed(() => {
 
 // 任務統計
 const taskStats = computed(() => ({
-  total: mockPoolTasks.length,
-  available: mockPoolTasks.filter((t: PoolTask) => t.status === 'UNCLAIMED').length,
-  inProgress: mockPoolTasks.filter((t: PoolTask) => t.status === 'IN_PROGRESS').length,
-  completed: mockPoolTasks.filter((t: PoolTask) => t.status === 'DONE').length,
+  total: taskStore.poolTasks.length,
+  available: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'UNCLAIMED').length,
+  inProgress: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'IN_PROGRESS').length,
+  completed: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'DONE').length,
 }))
 
 // 狀態標籤樣式
@@ -226,7 +227,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         <!-- 專案篩選 -->
         <select v-model="selectedProject" class="input-field cursor-pointer">
           <option value="">所有專案</option>
-          <option v-for="project in mockProjects" :key="project.id" :value="project.id">
+          <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
             {{ project.name }}
           </option>
         </select>
@@ -242,7 +243,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         <!-- 部門篩選 -->
         <select v-model="selectedDepartment" class="input-field cursor-pointer">
           <option value="">所有部門</option>
-          <option v-for="dept in mockDepartments" :key="dept.id" :value="dept.id">
+          <option v-for="dept in departmentStore.departments" :key="dept.id" :value="dept.id">
             {{ dept.name }}
           </option>
         </select>

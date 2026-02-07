@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTheme } from '@/composables/useTheme'
-import { roleLabels, functionTypeLabels } from '@/mocks/data'
+import { roleLabels, functionTypeLabels } from '@/constants/labels'
 import Badge from '@/components/common/Badge.vue'
 
 // ============================================

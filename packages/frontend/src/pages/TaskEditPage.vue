@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import {
-  mockProjects,
-  mockDepartments,
-  mockEmployees,
-  getTaskById,
-  type MockEmployee,
-  type PoolTask,
-} from '@/mocks/taskPool'
+import { useTaskStore } from '@/stores/tasks'
+import { useProjectStore } from '@/stores/projects'
+import { useDepartmentStore } from '@/stores/departments'
+import { useEmployeeStore } from '@/stores/employees'
+import type { MockEmployee, PoolTask } from 'shared/types'
 import type { Department, FunctionType } from 'shared/types'
 import { useToast } from '@/composables/useToast'
 
@@ -21,6 +18,11 @@ const { showSuccess } = useToast()
 
 const router = useRouter()
 const route = useRoute()
+
+const taskStore = useTaskStore()
+const projectStore = useProjectStore()
+const departmentStore = useDepartmentStore()
+const employeeStore = useEmployeeStore()
 
 // 載入狀態
 const isLoading = ref(true)
@@ -51,7 +53,7 @@ const functionTagOptions: { value: FunctionType; label: string }[] = [
 // 載入任務資料
 onMounted(() => {
   const taskId = route.params.id as string
-  const task = getTaskById(taskId)
+  const task = taskStore.getPoolTaskById(taskId)
 
   if (task) {
     originalTask.value = task
@@ -70,8 +72,8 @@ onMounted(() => {
 
 // 根據部門篩選員工
 const filteredEmployees = computed(() => {
-  if (!department.value) return mockEmployees
-  return mockEmployees.filter((emp: MockEmployee) => emp.department === department.value)
+  if (!department.value) return employeeStore.employees
+  return employeeStore.employees.filter((emp: MockEmployee) => emp.department === department.value)
 })
 
 // 是否可提交
@@ -202,7 +204,7 @@ const handleCancel = (): void => {
           </label>
           <select v-model="projectId" class="input-field w-full cursor-pointer">
             <option value="">請選擇專案</option>
-            <option v-for="project in mockProjects" :key="project.id" :value="project.id">
+            <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
               {{ project.name }}
             </option>
           </select>
@@ -215,7 +217,7 @@ const handleCancel = (): void => {
           </label>
           <select v-model="department" class="input-field w-full cursor-pointer">
             <option value="">請選擇部門</option>
-            <option v-for="dept in mockDepartments" :key="dept.id" :value="dept.id">
+            <option v-for="dept in departmentStore.departments" :key="dept.id" :value="dept.id">
               {{ dept.name }}
             </option>
           </select>

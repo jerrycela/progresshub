@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { mockProjects, mockTasks, mockUsers } from '@/mocks/data'
+import { useProjectStore } from '@/stores/projects'
+import { useTaskStore } from '@/stores/tasks'
+import { useEmployeeStore } from '@/stores/employees'
 import { useToast } from '@/composables/useToast'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { commonRules, validateField } from '@/composables/useFormValidation'
@@ -18,13 +20,17 @@ import type { Project } from 'shared/types'
 // Ralph Loop 迭代 9: 添加表單驗證
 // Ralph Loop 迭代 27: RWD 與元件升級
 // ============================================
-const projects = ref(mockProjects)
+const projectStore = useProjectStore()
+const taskStore = useTaskStore()
+const employeeStore = useEmployeeStore()
+
+const projects = ref(projectStore.projects)
 const { showSuccess, showError } = useToast()
 const { formatFull } = useFormatDate()
 
 // 計算專案統計
 const getProjectStats = (projectId: string) => {
-  const tasks = mockTasks.filter(t => t.projectId === projectId)
+  const tasks = taskStore.tasks.filter(t => t.projectId === projectId)
   const total = tasks.length
   const completed = tasks.filter(t => t.status === 'DONE').length
   const inProgress = tasks.filter(t => ['IN_PROGRESS', 'CLAIMED'].includes(t.status)).length
@@ -36,7 +42,7 @@ const getProjectStats = (projectId: string) => {
 
 // 取得專案負責人
 const getProjectOwner = (createdById: string) =>
-  mockUsers.find(u => u.id === createdById)?.name || '未知'
+  employeeStore.getEmployeeName(createdById) || '未知'
 
 // 專案狀態徽章樣式
 const statusBadgeVariant = (status: string) => {

@@ -4,7 +4,8 @@ import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { CHASE_LIST } from '@/constants/pageSettings'
-import { mockUsers, functionTypeLabels } from '@/mocks/data'
+import { useEmployeeStore } from '@/stores/employees'
+import { functionTypeLabels } from '@/constants/labels'
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 import Button from '@/components/common/Button.vue'
@@ -61,8 +62,10 @@ const staleTasks = computed(() => {
 })
 
 // 取得負責人
+const employeeStore = useEmployeeStore()
+
 const getAssigneeName = (assigneeId?: string) =>
-  assigneeId ? mockUsers.find(u => u.id === assigneeId)?.name || '未指派' : '未認領'
+  assigneeId ? employeeStore.getEmployeeName(assigneeId) || '未指派' : '未認領'
 
 // 格式化日期
 const formatDate = (date?: string) => formatShort(date)

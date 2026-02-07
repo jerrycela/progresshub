@@ -3,7 +3,8 @@ import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import { mockProjects, reportTypeLabels } from '@/mocks/data'
+import { useProjectStore } from '@/stores/projects'
+import { reportTypeLabels } from '@/constants/labels'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
@@ -39,9 +40,11 @@ const myInProgressTasks = computed(() => {
   )
 })
 
+const projectStore = useProjectStore()
+
 // 取得專案
 const getProject = (projectId: string) =>
-  mockProjects.find(p => p.id === projectId)
+  projectStore.getProjectById(projectId)
 
 // 回報相關狀態
 const showReportModal = ref(false)

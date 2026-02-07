@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import {
-  mockProjects,
-  mockDepartments,
-  mockEmployees,
-  type MockEmployee,
-} from '@/mocks/taskPool'
+import { useProjectStore } from '@/stores/projects'
+import { useDepartmentStore } from '@/stores/departments'
+import { useEmployeeStore } from '@/stores/employees'
+import type { MockEmployee } from 'shared/types'
 import type { Department, FunctionType, UserRole } from 'shared/types'
 import { useToast } from '@/composables/useToast'
 
@@ -17,6 +15,10 @@ import { useToast } from '@/composables/useToast'
 const { showSuccess } = useToast()
 
 const router = useRouter()
+
+const projectStore = useProjectStore()
+const departmentStore = useDepartmentStore()
+const employeeStore = useEmployeeStore()
 
 // 任務來源類型
 type SourceType = 'POOL' | 'ASSIGNED' | 'SELF_CREATED'
@@ -75,8 +77,8 @@ const functionTagOptions: { value: FunctionType; label: string }[] = [
 
 // 根據部門篩選員工
 const filteredEmployees = computed(() => {
-  if (!department.value) return mockEmployees
-  return mockEmployees.filter((emp: MockEmployee) => emp.department === department.value)
+  if (!department.value) return employeeStore.employees
+  return employeeStore.employees.filter((emp: MockEmployee) => emp.department === department.value)
 })
 
 // 是否顯示指派欄位
@@ -238,7 +240,7 @@ const handleCancel = (): void => {
         </label>
         <select v-model="projectId" class="input-field w-full cursor-pointer">
           <option value="">請選擇專案</option>
-          <option v-for="project in mockProjects" :key="project.id" :value="project.id">
+          <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
             {{ project.name }}
           </option>
         </select>
@@ -251,7 +253,7 @@ const handleCancel = (): void => {
         </label>
         <select v-model="department" class="input-field w-full cursor-pointer">
           <option value="">請選擇部門</option>
-          <option v-for="dept in mockDepartments" :key="dept.id" :value="dept.id">
+          <option v-for="dept in departmentStore.departments" :key="dept.id" :value="dept.id">
             {{ dept.name }}
           </option>
         </select>

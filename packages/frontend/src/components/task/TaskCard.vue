@@ -5,7 +5,7 @@ import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 import Button from '@/components/common/Button.vue'
 import ProgressBar from '@/components/common/ProgressBar.vue'
-import { functionTypeLabels, taskStatusLabels } from '@/mocks/data'
+import { functionTypeLabels, taskStatusLabels } from '@/constants/labels'
 
 // 任務卡片元件 - 顯示任務資訊與快速操作按鈕
 // 會議改進：顯示逾期天數、暫停原因、最近備註

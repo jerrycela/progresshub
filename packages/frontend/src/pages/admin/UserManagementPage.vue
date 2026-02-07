@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { mockUsers, functionTypeLabels, roleLabels } from '@/mocks/data'
+import { useEmployeeStore } from '@/stores/employees'
+import { functionTypeLabels, roleLabels } from '@/constants/labels'
 import { FUNCTION_OPTIONS, ROLE_OPTIONS } from '@/constants/filterOptions'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
@@ -16,7 +17,18 @@ import type { User, Role, FunctionType } from 'shared/types'
 // Ralph Loop 迭代 28: RWD 與元件升級
 // ============================================
 
-const users = ref(mockUsers)
+const employeeStore = useEmployeeStore()
+
+// 將員工資料轉為 User 格式供頁面使用
+const users = ref<User[]>(employeeStore.employees.map(e => ({
+  id: e.id,
+  name: e.name,
+  email: e.email,
+  role: (e.userRole === 'PM' ? 'PM' : e.userRole === 'MANAGER' ? 'ADMIN' : 'MEMBER') as Role,
+  functionType: (e.department === 'QA' ? 'PLANNING' : e.department === 'MANAGEMENT' ? 'PLANNING' : e.department) as FunctionType,
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+})))
 
 // 搜尋關鍵字
 const searchQuery = ref('')

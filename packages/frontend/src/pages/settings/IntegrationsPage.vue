@@ -1,13 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import {
-  mockCurrentUserSettings,
-  linkGitLabAccount,
-  unlinkGitLabAccount,
-  linkSlackAccount,
-  unlinkSlackAccount,
-  type UserSettings,
-} from '@/mocks/userSettings'
+import { useUserSettingsStore, type UserSettings } from '@/stores/userSettings'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 
@@ -17,8 +10,9 @@ import { useConfirm } from '@/composables/useConfirm'
 
 const { showSuccess, showWarning } = useToast()
 const { showConfirm } = useConfirm()
+const userSettingsStore = useUserSettingsStore()
 
-const user = ref<UserSettings>({ ...mockCurrentUserSettings })
+const user = ref<UserSettings>({ ...userSettingsStore.settings })
 
 // Modal 狀態
 const showLinkGitLabModal = ref(false)
@@ -33,7 +27,7 @@ const handleLinkGitLab = (): void => {
     return
   }
 
-  const updatedUser = linkGitLabAccount(gitlabUsername.value.trim())
+  const updatedUser = userSettingsStore.linkGitLab(gitlabUsername.value.trim())
   user.value = { ...updatedUser }
   showLinkGitLabModal.value = false
   gitlabUsername.value = ''
@@ -51,7 +45,7 @@ const handleUnlinkGitLab = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const updatedUser = unlinkGitLabAccount()
+  const updatedUser = userSettingsStore.unlinkGitLab()
   user.value = { ...updatedUser }
 
   showSuccess('已解除 GitLab 帳號連結')
@@ -64,7 +58,7 @@ const handleLinkSlack = (): void => {
     return
   }
 
-  const updatedUser = linkSlackAccount(slackUsername.value.trim())
+  const updatedUser = userSettingsStore.linkSlack(slackUsername.value.trim())
   user.value = { ...updatedUser }
   showLinkSlackModal.value = false
   slackUsername.value = ''
@@ -82,7 +76,7 @@ const handleUnlinkSlack = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const updatedUser = unlinkSlackAccount()
+  const updatedUser = userSettingsStore.unlinkSlack()
   user.value = { ...updatedUser }
 
   showSuccess('已解除 Slack 帳號連結')

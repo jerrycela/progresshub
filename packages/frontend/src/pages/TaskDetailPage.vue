@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  getTaskById,
-  getProgressLogsByTaskId,
-  getNotesByTaskId,
-  mockEmployees,
-  mockTaskNotes,
-  type PoolTask,
-  type GitLabIssue,
-  type TaskNote,
-} from '@/mocks/taskPool'
+import { useTaskStore } from '@/stores/tasks'
+import { useProgressLogStore } from '@/stores/progressLogs'
+import { useNoteStore } from '@/stores/notes'
+import { useEmployeeStore } from '@/stores/employees'
+import type { PoolTask, GitLabIssue, TaskNote } from 'shared/types'
 import type { ProgressLog, UserRole } from 'shared/types'
 import { getStatusLabel, getStatusClass, getRoleBadgeClass } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
@@ -22,6 +17,11 @@ import { useConfirm } from '@/composables/useConfirm'
 
 const { showSuccess, showWarning, showInfo } = useToast()
 const { showConfirm } = useConfirm()
+
+const taskStore = useTaskStore()
+const progressLogStore = useProgressLogStore()
+const noteStore = useNoteStore()
+const employeeStore = useEmployeeStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -56,9 +56,9 @@ const newProgress = ref({
 
 onMounted(() => {
   const taskId = route.params.id as string
-  task.value = getTaskById(taskId) || null
-  progressLogs.value = getProgressLogsByTaskId(taskId)
-  taskNotes.value = getNotesByTaskId(taskId)
+  task.value = taskStore.getPoolTaskById(taskId) || null
+  progressLogs.value = progressLogStore.byTaskId(taskId)
+  taskNotes.value = noteStore.byTaskId(taskId)
   if (task.value) {
     newProgress.value.percentage = task.value.progress
   }
@@ -137,7 +137,7 @@ const submitProgress = (): void => {
 
 // 指派任務
 const assignTask = (employeeId: string): void => {
-  const employee = mockEmployees.find((e) => e.id === employeeId)
+  const employee = employeeStore.getEmployeeById(employeeId)
   showSuccess(`已指派給：${employee?.name}`)
   showAssignModal.value = false
 }
@@ -214,7 +214,6 @@ const submitNote = (): void => {
 
   // 加入到列表開頭
   taskNotes.value = [newNote, ...taskNotes.value]
-  mockTaskNotes.push(newNote)
 
   showNoteModal.value = false
   newNoteContent.value = ''
@@ -686,7 +685,7 @@ const getRoleLabel = (role: string): string => {
 
         <div class="space-y-2 max-h-64 overflow-y-auto">
           <button
-            v-for="employee in mockEmployees"
+            v-for="employee in employeeStore.employees"
             :key="employee.id"
             class="w-full flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer text-left"
             style="background-color: transparent;"

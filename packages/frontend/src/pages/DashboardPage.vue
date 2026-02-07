@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
-import { mockDashboardStats } from '@/mocks/data'
+import { useDashboardStore } from '@/stores/dashboard'
 import { DASHBOARD } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
@@ -17,10 +17,11 @@ import type { Task } from 'shared/types'
 
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
+const dashboardStore = useDashboardStore()
 const { getProjectById } = useProject()
 
 const user = computed(() => authStore.user)
-const stats = mockDashboardStats
+const stats = dashboardStore.stats
 
 // 取得使用者的進行中任務（使用常數限制數量）
 const myInProgressTasks = computed(() =>

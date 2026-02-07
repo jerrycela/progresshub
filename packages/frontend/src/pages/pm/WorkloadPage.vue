@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { mockFunctionWorkloads, functionTypeLabels, mockUsers, mockTasks } from '@/mocks/data'
+import { useDashboardStore } from '@/stores/dashboard'
+import { useEmployeeStore } from '@/stores/employees'
+import { useTaskStore } from '@/stores/tasks'
+import { functionTypeLabels } from '@/constants/labels'
+import type { FunctionWorkload } from 'shared/types'
 import Card from '@/components/common/Card.vue'
 import Badge from '@/components/common/Badge.vue'
 
@@ -9,11 +13,15 @@ import Badge from '@/components/common/Badge.vue'
 // Ralph Loop 迭代 21: RWD 響應式優化
 // ============================================
 
+const dashboardStore = useDashboardStore()
+const employeeStore = useEmployeeStore()
+const taskStore = useTaskStore()
+
 // 職能工作負載資料
-const workloads = computed(() => mockFunctionWorkloads)
+const workloads = computed(() => dashboardStore.functionWorkloads)
 
 // 計算負載程度
-const getLoadLevel = (workload: typeof mockFunctionWorkloads[0]) => {
+const getLoadLevel = (workload: FunctionWorkload) => {
   const tasksPerMember = workload.memberCount > 0
     ? workload.inProgressTasks / workload.memberCount
     : 0
@@ -37,11 +45,13 @@ const functionColors: Record<string, string> = {
 
 // 取得該職能的成員
 const getMembersByFunction = (functionType: string) =>
-  mockUsers.filter(u => u.functionType === functionType)
+  employeeStore.employees
+    .filter(e => e.department === functionType || functionType === 'PLANNING' && e.department === 'QA')
+    .map(e => ({ ...e, id: e.id, name: e.name, functionType }))
 
 // 取得成員的任務數
 const getMemberTaskCount = (userId: string) =>
-  mockTasks.filter(t => t.assigneeId === userId && t.status !== 'DONE').length
+  taskStore.tasks.filter(t => t.assigneeId === userId && t.status !== 'DONE').length
 
 // 整體統計
 const totalStats = computed(() => ({

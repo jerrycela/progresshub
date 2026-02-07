@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Task, TaskStatus, FunctionType, ActionResult, CreateTaskInput } from 'shared/types'
-import { mockTasks } from '@/mocks/data'
+import type { Task, TaskStatus, FunctionType, ActionResult, CreateTaskInput, PoolTask } from 'shared/types'
+import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 
 // ============================================
 // Tasks Store - Ralph Loop 迭代 6 重構
@@ -11,6 +11,7 @@ import { mockTasks } from '@/mocks/data'
 export const useTaskStore = defineStore('tasks', () => {
   // State
   const tasks = ref<Task[]>([...mockTasks])
+  const poolTasks = ref<PoolTask[]>([...mockPoolTasks])
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）
@@ -60,6 +61,9 @@ export const useTaskStore = defineStore('tasks', () => {
 
   const getTaskById = (taskId: string) =>
     tasks.value.find((t: Task) => t.id === taskId)
+
+  const getPoolTaskById = (taskId: string) =>
+    poolTasks.value.find((t: PoolTask) => t.id === taskId)
 
   const isTaskLoading = (taskId: string) =>
     loading.value.claim[taskId] ||
@@ -366,6 +370,7 @@ export const useTaskStore = defineStore('tasks', () => {
   return {
     // State
     tasks,
+    poolTasks,
     error,
     loading,
     isLoading,
@@ -378,6 +383,7 @@ export const useTaskStore = defineStore('tasks', () => {
     getTasksByFunction,
     getTasksByStatus,
     getTaskById,
+    getPoolTaskById,
     isTaskLoading,
     // Actions
     fetchTasks,

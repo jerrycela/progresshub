@@ -1,12 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import {
-  mockCurrentUserSettings,
-  updateUserSettings,
-  departmentLabels,
-  type UserSettings,
-} from '@/mocks/userSettings'
-import { roleLabels, functionTypeLabels } from '@/mocks/data'
+import { useUserSettingsStore, type UserSettings } from '@/stores/userSettings'
+import { roleLabels, functionTypeLabels, departmentLabels } from '@/constants/labels'
 import Badge from '@/components/common/Badge.vue'
 import { useToast } from '@/composables/useToast'
 
@@ -15,8 +10,9 @@ import { useToast } from '@/composables/useToast'
 // ============================================
 
 const { showSuccess, showInfo } = useToast()
+const userSettingsStore = useUserSettingsStore()
 
-const user = ref<UserSettings>({ ...mockCurrentUserSettings })
+const user = ref<UserSettings>({ ...userSettingsStore.settings })
 const isEditing = ref(false)
 const isSaving = ref(false)
 
@@ -61,12 +57,12 @@ const saveChanges = async (): Promise<void> => {
   // 模擬 API 延遲
   await new Promise((resolve) => setTimeout(resolve, 500))
 
-  const updatedUser = updateUserSettings({
+  await userSettingsStore.updateSettings({
     name: formData.value.name,
     email: formData.value.email,
   })
 
-  user.value = { ...updatedUser }
+  user.value = { ...userSettingsStore.settings }
   isEditing.value = false
   isSaving.value = false
 
