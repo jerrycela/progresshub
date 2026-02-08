@@ -1,118 +1,91 @@
-# ProgressHub 專案結構審查報告
+# ProgressHub 專案結構審查報告 (v2)
 
-**審查日期**: 2026-02-07
-**審查範圍**: 整體專案結構、架構設計、程式碼品質、安全性、測試、DevOps
-
----
-
-## 專案概述
-
-ProgressHub 是一個專案進度管理系統（認領制），技術棧為 Vue 3 + Express.js + PostgreSQL，採用 pnpm monorepo 架構，整合 Slack OAuth 認證與 GitLab 活動追蹤。
+**審查日期**: 2026-02-08
+**審查方法**: 完整原始碼逐行審閱（所有 route, service, store, composable, config, test, DevOps 檔案）
+**總分**: 6.23 / 10
 
 ---
 
-## 一、架構設計 (Architecture) — 7.5 / 10
-
-**優點：**
-- pnpm workspace monorepo 結構清晰，前後端分離得當
-- `packages/shared/types` 實現前後端型別共享，概念正確
-- 後端採用 Routes → Services → Prisma ORM 的分層架構，職責分離合理
-- 前端 Pages → Stores (Pinia) → Services (Axios) → API 的分層清楚
-- Composables 抽取了可複用邏輯（theme、toast、formValidation 等）
-
-**問題：**
-- docker-compose.yml 路徑與實際結構不匹配（frontend → `./frontend` vs `./packages/frontend`）
-- 缺少 API 版本控制（`/api/` 無版本前綴）
-- Scheduler 的定位模糊：既在 backend index.ts 整合，docker-compose 又定義獨立 service
-
----
-
-## 二、型別安全與一致性 (Type Safety) — 5.5 / 10
-
-**嚴重問題：**
-- Shared types `TaskStatus` 有 6 種狀態，Prisma schema 只有 3 種，完全不同步
-- `Role = 'MEMBER'` vs `PermissionLevel = EMPLOYEE`，命名不一致
-- 錯誤碼在 `index.ts` 和 `api.ts` 有兩套不同的定義
-- API 回應格式：後端 `{ error: string }` vs shared types `{ error: { code, message } }`
-
----
-
-## 三、安全性 (Security) — 7.0 / 10
-
-**優點：** Helmet、CORS 白名單、Rate limiting、JWT 驗證、Slack webhook HMAC 簽名
-**問題：** express.json() 無 body size limit、JWT 7 天偏長、localStorage 存 token 有 XSS 風險
-
----
-
-## 四、前端品質 (Frontend) — 6.5 / 10
-
-**優點：** Vue 3 Composition API、Pinia composition style、lazy loading、完整 auth guard
-**問題：** 仍使用 mock 硬編碼、前後端整合未完成、E2E 無實際測試案例
-
----
-
-## 五、後端品質 (Backend) — 7.5 / 10
-
-**優點：** Middleware stack 正確、Service layer 分離、錯誤處理完善、Graceful shutdown
-**問題：** lint-staged 不跑 ESLint、測試覆蓋率門檻 50% 偏低、只有 2 個 test 檔案
-
----
-
-## 六、資料庫設計 (Database) — 7.0 / 10
-
-**優點：** UUID 主鍵、合理 index、完整的 enum 和關聯
-**問題：** `dependencies`/`collaborators` 用 `String[]` 而非 join table、無 soft delete
-
----
-
-## 七、DevOps / CI/CD — 7.0 / 10
-
-**優點：** GitHub Actions 4 job 並行、frozen-lockfile、PostgreSQL health check
-**問題：** docker-compose 路徑錯誤、無 CD 流程、無 Docker image tag 策略
-
----
-
-## 八、程式碼品質 (Maintainability) — 7.0 / 10
-
-**優點：** 中文註解、Issue number reference、一致命名慣例
-**問題：** Ralph Loop 迭代標註不適合留在程式碼、中英文錯誤訊息混雜
-
----
-
-## 九、文檔 (Documentation) — 6.0 / 10
-
-**優點：** README 有架構說明、Swagger 自動文檔
-**缺失：** 無 Contributing Guide、無 ADR、無 Deployment 指南
-
----
-
-## 十、測試 (Testing) — 5.0 / 10
-
-**優點：** 前端 166 個 Vitest 測試、CI 有 DB integration
-**問題：** 後端只有 2 個 test 檔案、E2E 框架無測試案例、覆蓋率門檻過低
-
----
-
-## 總評分：6.71 / 10
+## 評分總表
 
 | 面向 | 分數 | 權重 | 加權分 |
 |------|------|------|--------|
-| 架構設計 | 7.5 | 15% | 1.13 |
-| 型別安全與一致性 | 5.5 | 15% | 0.83 |
-| 安全性 | 7.0 | 15% | 1.05 |
-| 前端品質 | 6.5 | 10% | 0.65 |
-| 後端品質 | 7.5 | 10% | 0.75 |
-| 資料庫設計 | 7.0 | 10% | 0.70 |
-| DevOps / CI/CD | 7.0 | 10% | 0.70 |
-| 程式碼品質與可維護性 | 7.0 | 5% | 0.35 |
-| 文檔 | 6.0 | 5% | 0.30 |
-| 測試 | 5.0 | 5% | 0.25 |
-| **總計** | | **100%** | **6.71** |
+| 架構設計 | 7.5 | 15% | 1.125 |
+| 型別安全與一致性 | 4.5 | 15% | 0.675 |
+| 安全性 | 6.5 | 12% | 0.780 |
+| 後端程式碼品質 | 7.0 | 12% | 0.840 |
+| 前端程式碼品質 | 6.0 | 12% | 0.720 |
+| 資料庫設計 | 7.0 | 8% | 0.560 |
+| 測試 | 5.0 | 10% | 0.500 |
+| DevOps / CI/CD | 6.5 | 8% | 0.520 |
+| 程式碼品質與可維護性 | 6.5 | 5% | 0.325 |
+| 文檔 | 6.0 | 3% | 0.180 |
+| **總計** | | **100%** | **6.23** |
 
 ---
 
-## 最關鍵的 3 個建議（優先處理）
+## 一、架構設計 — 7.5 / 10
 
-1. **修復前後端型別斷裂**：Prisma schema 和 shared types 的 TaskStatus、Role 必須統一
-2. **完成前後端整合**：移除 mock 硬編碼，建立正式的 API adapter 層
-3. **補齊後端測試**：核心 service 和 API routes 需要 unit + integration test
+**優點**: pnpm monorepo 清晰、後端 routes→services→Prisma 分層、GitLab 模組化、Health check 三端點（liveness/readiness/live）
+**問題**: docker-compose 路徑錯誤、Scheduler 定位模糊、無 API 版本控制、部分 route 繞過 service 層直接操作 Prisma
+
+## 二、型別安全與一致性 — 4.5 / 10
+
+**核心問題**: Prisma schema 與 shared types 是兩套完全不同的 domain model
+- TaskStatus: 3 種 vs 6 種
+- 角色: EMPLOYEE vs MEMBER
+- 欄位名: name vs title, assignedToId vs assigneeId
+- 專案狀態: PAUSED vs ON_HOLD
+- ErrorCode 重複定義兩套
+- API response 格式三種不同
+
+## 三、安全性 — 6.5 / 10
+
+**優點**: Helmet、CORS fail-secure、Rate limiting、JWT 生產環境強制驗證、AES-256-GCM 加密
+**問題**: Auth 端點可偽造身份、Slack 簽名驗證有 raw body bug、加密 salt 硬編碼、JWT 存 localStorage
+
+## 四、後端品質 — 7.0 / 10
+
+**優點**: TimeEntry 業務規則完整、ProgressService 有 transaction、express-validator 完整驗證、error handler 層次分明
+**問題**: console.error 與 Winston 混用、route catch 吞掉全域 error handler、service 功能重複（taskService vs progressService）、batch 操作無 transaction
+
+## 五、前端品質 — 6.0 / 10
+
+**優點**: API client 設計專業、樂觀更新有 rollback、細粒度 loading、Composition API 風格統一
+**問題**: 整個前端 100% mock 運行、API client 是死碼、SVG inline 難維護、computed factory 可能 memory leak
+
+## 六、資料庫設計 — 7.0 / 10
+
+**優點**: UUID 主鍵、完整 index、複合唯一約束、snake_case mapping
+**問題**: String[] 取代 join table、無 soft delete、Task 缺少 description/priority 欄位（與 shared types 不符）
+
+## 七、測試 — 5.0 / 10
+
+**後端**: 僅 11 個 test cases（2 個 test 檔案），10 個 route + 8 個 service 無測試
+**前端**: 8 個 spec 檔案但都測 mock 行為
+**E2E**: 有 Playwright config 無實際 test
+
+## 八、DevOps — 6.5 / 10
+
+**優點**: CI 4 job、frozen-lockfile、multi-stage Dockerfile、HEALTHCHECK
+**問題**: docker-compose 路徑錯、Dockerfile 用 npm 但專案用 pnpm、無 CD 流程、前端無 Dockerfile
+
+## 九、程式碼品質 — 6.5 / 10
+
+**優點**: 中文註解、Issue reference、strict TS、graceful shutdown
+**問題**: Ralph Loop 標註殘留、中英文混雜、route handler 冗余 try/catch 模式
+
+## 十、文檔 — 6.0 / 10
+
+**有**: README、Release notes、Swagger、docs/ feature specs
+**缺**: ADR、Contributing Guide、Migration 文檔、API 範例
+
+---
+
+## Top 5 優先建議
+
+1. **統一前後端資料模型** — Prisma schema 為 source of truth，同步 shared types
+2. **完成前後端整合** — Store actions 呼叫已建好的 API client 取代 mock
+3. **修復 Auth 端點** — 實作真正的 Slack OAuth code exchange
+4. **錯誤流經全域 handler** — Route handler 用 next(error) 取代自行 catch
+5. **補齊後端測試** — 核心 services 和 routes 需要 unit + integration test
