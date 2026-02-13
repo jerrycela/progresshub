@@ -104,6 +104,25 @@ const getTaskPosition = (task: { startDate?: string; dueDate?: string }) => {
 // 格式化日期（用於顯示）
 const formatDate = (date: Date) => formatShort(date.toISOString())
 
+// 計算今天在甘特圖中的位置（百分比）
+const getTodayPosition = computed(() => {
+  const today = new Date()
+  const range = dateRange.value
+
+  // 如果今天不在時間範圍內，不顯示
+  if (today < range.start || today > range.end) {
+    return null
+  }
+
+  const totalRange = range.end.getTime() - range.start.getTime()
+  if (totalRange === 0) return null
+
+  const todayOffset = today.getTime() - range.start.getTime()
+  const position = (todayOffset / totalRange) * 100
+
+  return Math.max(0, Math.min(100, position))
+})
+
 // 點擊甘特條，開啟 Modal
 const handleTaskClick = (task: Task) => {
   selectedTask.value = task
@@ -161,30 +180,52 @@ const handleTaskClick = (task: Task) => {
           <span>{{ formatDate(dateRange.end) }}</span>
         </div>
 
-        <!-- 任務列表 (RWD: 迭代 10, 25 - 行動裝置優化) -->
-        <div
-          v-for="task in filteredTasks"
-          :key="task.id"
-          class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b last:border-0"
-          style="border-color: var(--border-primary);"
-        >
-          <!-- 任務資訊 -->
-          <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
-            <p class="font-medium text-sm truncate" style="color: var(--text-primary);">{{ task.title }}</p>
-            <p class="text-xs" style="color: var(--text-tertiary);">{{ getProjectName(task.projectId) }}</p>
-            <!-- 行動裝置顯示日期範圍 (迭代 25) -->
-            <p class="text-xs sm:hidden mt-1" style="color: var(--text-muted);">
-              {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
-            </p>
+        <!-- 甘特圖容器（包含今天標記） -->
+        <div class="relative">
+          <!-- 今天標記（垂直線） -->
+          <div
+            v-if="getTodayPosition !== null"
+            class="absolute top-0 bottom-0 pointer-events-none z-10"
+            :style="{
+              left: `${getTodayPosition}%`,
+              transform: 'translateX(-50%)'
+            }"
+          >
+            <!-- 垂直線 -->
+            <div class="w-0.5 h-full bg-samurai opacity-60"></div>
+            <!-- 今天標籤（放在最下方，避免遮蓋時間軸） -->
+            <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <span class="text-xs font-medium px-2 py-1 rounded bg-samurai text-white shadow-sm">
+                今天
+              </span>
+            </div>
           </div>
 
-          <!-- 甘特條 -->
-          <div class="flex-1 h-8 rounded-lg relative" style="background-color: var(--bg-tertiary);">
-            <TaskGanttBar
-              :task="task"
-              :position="getTaskPosition(task)"
-              @click="handleTaskClick"
-            />
+          <!-- 任務列表 (RWD: 迭代 10, 25 - 行動裝置優化) -->
+          <div
+            v-for="task in filteredTasks"
+            :key="task.id"
+            class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 border-b last:border-0"
+            style="border-color: var(--border-primary);"
+          >
+            <!-- 任務資訊 -->
+            <div class="w-full sm:w-32 md:w-40 lg:w-44 sm:flex-shrink-0">
+              <p class="font-medium text-sm truncate" style="color: var(--text-primary);">{{ task.title }}</p>
+              <p class="text-xs" style="color: var(--text-tertiary);">{{ getProjectName(task.projectId) }}</p>
+              <!-- 行動裝置顯示日期範圍 (迭代 25) -->
+              <p class="text-xs sm:hidden mt-1" style="color: var(--text-muted);">
+                {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
+              </p>
+            </div>
+
+            <!-- 甘特條 -->
+            <div class="flex-1 h-8 rounded-lg relative" style="background-color: var(--bg-tertiary);">
+              <TaskGanttBar
+                :task="task"
+                :position="getTaskPosition(task)"
+                @click="handleTaskClick"
+              />
+            </div>
           </div>
         </div>
       </div>
