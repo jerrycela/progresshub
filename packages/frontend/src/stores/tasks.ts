@@ -190,7 +190,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const updateTaskProgress = async (
     taskId: string,
     progress: number,
-    notes?: string
+    _notes?: string
   ): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
@@ -228,9 +228,7 @@ export const useTaskStore = defineStore('tasks', () => {
       }
 
       // Mock: 保存備註（實際會記錄到 ProgressLog）
-      if (notes) {
-        console.log(`任務 ${taskId} 進度更新備註: ${notes}`)
-      }
+      // 備註會在後端實作時保存到 ProgressLog 資料表
 
       await new Promise(resolve => setTimeout(resolve, 200))
 
@@ -340,6 +338,7 @@ export const useTaskStore = defineStore('tasks', () => {
         startDate: input.startDate,
         dueDate: input.dueDate,
         estimatedHours: input.estimatedHours,
+        dependsOnTaskIds: input.dependsOnTaskIds,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }

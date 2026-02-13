@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   mockProjects,
@@ -8,12 +8,15 @@ import {
   type MockEmployee,
 } from '@/mocks/taskPool'
 import type { Department, FunctionType, UserRole } from 'shared/types'
+import { useTaskStore } from '@/stores/tasks'
+import TaskRelationSelector from '@/components/task/TaskRelationSelector.vue'
 
 // ============================================
 // 任務建立頁面 - 建立任務池任務、指派任務、自建任務
 // ============================================
 
 const router = useRouter()
+const taskStore = useTaskStore()
 
 // 任務來源類型
 type SourceType = 'POOL' | 'ASSIGNED' | 'SELF_CREATED'
@@ -29,6 +32,7 @@ const collaboratorIds = ref<string[]>([])
 const startDate = ref('')
 const dueDate = ref('')
 const functionTags = ref<FunctionType[]>([])
+const dependsOnTaskIds = ref<string[]>([])
 
 // 模擬當前登入者（PM 角色可建立任務池任務）
 const currentUser = {
@@ -109,22 +113,11 @@ const toggleCollaborator = (empId: string): void => {
 
 // 提交表單
 const handleSubmit = (): void => {
-  const taskData = {
-    sourceType: sourceType.value,
-    title: title.value,
-    description: description.value,
-    projectId: projectId.value,
-    department: department.value,
-    assigneeId: sourceType.value === 'ASSIGNED' ? assigneeId.value : undefined,
-    collaboratorIds: collaboratorIds.value,
-    startDate: startDate.value,
-    dueDate: dueDate.value,
-    functionTags: functionTags.value,
-    createdBy: currentUser,
-  }
-
-  console.log('建立任務:', taskData)
-  alert(`任務建立成功！\n\n類型: ${getSourceTypeLabel(sourceType.value)}\n標題: ${title.value}\n\n（此為原型展示，實際功能待後端實作）`)
+  // Mock: 實際會呼叫 API 建立任務
+  const relationInfo = dependsOnTaskIds.value.length > 0
+    ? `\n關聯任務: ${dependsOnTaskIds.value.length} 個`
+    : ''
+  alert(`任務建立成功！\n\n類型: ${getSourceTypeLabel(sourceType.value)}\n標題: ${title.value}${relationInfo}\n\n（此為原型展示，實際功能待後端實作）`)
   router.push('/task-pool')
 }
 
@@ -138,6 +131,11 @@ const getSourceTypeLabel = (type: SourceType): string => {
   const option = sourceTypeOptions.find((opt) => opt.value === type)
   return option?.label || type
 }
+
+// 初始化載入任務資料
+onMounted(() => {
+  taskStore.fetchTasks()
+})
 </script>
 
 <template>
@@ -305,6 +303,12 @@ const getSourceTypeLabel = (type: SourceType): string => {
           />
         </div>
       </div>
+
+      <!-- 關聯任務 -->
+      <TaskRelationSelector
+        v-model="dependsOnTaskIds"
+        :all-tasks="taskStore.tasks"
+      />
     </div>
 
     <!-- 指派設定（僅指派任務顯示） -->

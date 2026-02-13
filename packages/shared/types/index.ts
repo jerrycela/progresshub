@@ -192,6 +192,7 @@ export type ErrorCode =
   | 'AUTH_LOGIN_FAILED'
   | 'AUTH_LOGOUT_FAILED'
   | 'AUTH_UNAUTHORIZED'
+  | 'AUTH_FORBIDDEN'
   // 任務相關
   | 'TASK_NOT_FOUND'
   | 'TASK_NOT_UNCLAIMED'
@@ -248,6 +249,7 @@ export interface CreateTaskInput {
   startDate?: string
   dueDate?: string
   estimatedHours?: number
+  dependsOnTaskIds?: string[]
 }
 
 // ============================================

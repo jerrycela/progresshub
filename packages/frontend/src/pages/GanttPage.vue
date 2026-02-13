@@ -4,24 +4,29 @@ import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
-import { STATUS_COLORS } from '@/constants/ui'
 import { GANTT } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
+import TaskGanttBar from '@/components/task/TaskGanttBar.vue'
+import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
 import { mockEmployees } from '@/mocks/taskPool'
 import type { FunctionType, Task } from 'shared/types'
 
 // ============================================
-// 甘特圖頁面 - 專案時程視覺化 (Placeholder，待整合 Frappe Gantt)
+// 甘特圖頁面 - 專案時程視覺化
 // Ralph Loop 迭代 8: 使用 Composables 和常數
 // Ralph Loop 迭代 24: RWD 改進與新元件
 // Ralph Loop 迭代 25: 行動裝置體驗優化
-// 新增: 員工視角、暫停狀態顯示
+// Phase 1.1: 新增甘特條互動功能
 // ============================================
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { formatShort } = useFormatDate()
+
+// Modal 狀態管理
+const isModalOpen = ref<boolean>(false)
+const selectedTask = ref<Task | null>(null)
 
 // 篩選條件
 const selectedProject = ref<string>('ALL')
@@ -67,7 +72,6 @@ const filteredTasks = computed(() => {
 // 使用常數和 composable
 const projectOptions = computed(() => getProjectOptions(true))
 const functionOptions = FUNCTION_OPTIONS
-const statusColors = STATUS_COLORS
 
 // 計算甘特圖時間範圍
 const dateRange = computed(() => {
@@ -99,6 +103,12 @@ const getTaskPosition = (task: { startDate?: string; dueDate?: string }) => {
 
 // 格式化日期（用於顯示）
 const formatDate = (date: Date) => formatShort(date.toISOString())
+
+// 點擊甘特條，開啟 Modal
+const handleTaskClick = (task: Task) => {
+  selectedTask.value = task
+  isModalOpen.value = true
+}
 </script>
 
 <template>
@@ -170,28 +180,11 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
 
           <!-- 甘特條 -->
           <div class="flex-1 h-8 rounded-lg relative" style="background-color: var(--bg-tertiary);">
-            <div
-              :class="[
-                'absolute h-full rounded-lg transition-all duration-200',
-                statusColors[task.status],
-                // 暫停狀態使用條紋樣式
-                task.status === 'PAUSED' ? 'bg-gradient-to-r from-amber-500/40 via-amber-400/20 to-amber-500/40 bg-[length:10px_100%]' : ''
-              ]"
-              :style="{
-                left: `${getTaskPosition(task).left}%`,
-                width: `${getTaskPosition(task).width}%`,
-              }"
-            >
-              <div class="flex items-center justify-center h-full px-2 gap-1">
-                <!-- 暫停圖示 -->
-                <svg v-if="task.status === 'PAUSED'" class="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                </svg>
-                <span :class="['text-xs font-medium truncate', task.status === 'PAUSED' ? 'text-amber-700' : 'text-white']">
-                  {{ task.status === 'PAUSED' ? '暫停中' : `${task.progress}%` }}
-                </span>
-              </div>
-            </div>
+            <TaskGanttBar
+              :task="task"
+              :position="getTaskPosition(task)"
+              @click="handleTaskClick"
+            />
           </div>
         </div>
       </div>
@@ -242,5 +235,12 @@ const formatDate = (date: Date) => formatShort(date.toISOString())
         此為簡化版甘特圖預覽。正式版本將整合 Frappe Gantt 套件，支援拖拽調整、縮放、互動編輯等功能。
       </p>
     </div>
+
+    <!-- 任務詳情 Modal -->
+    <TaskRelationModal
+      v-model="isModalOpen"
+      :task="selectedTask"
+      :all-tasks="filteredTasks"
+    />
   </div>
 </template>

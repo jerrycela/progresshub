@@ -1,14 +1,16 @@
 import type { User, Project, Task, ProgressLog, DashboardStats, FunctionWorkload } from 'shared/types'
+import { generateAvatarDataUrl } from '@/utils/avatar'
 
 // ============================================
 // Mock 使用者資料
+// 注意：頭像改用本地生成，不依賴外部 CDN
 // ============================================
 export const mockUsers: User[] = [
   {
     id: '1',
     name: '王小明',
     email: 'xiaoming@company.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xiaoming',
+    avatar: generateAvatarDataUrl('王小明'),
     role: 'MEMBER',
     functionType: 'PROGRAMMING',
     createdAt: '2024-01-01T00:00:00Z',
@@ -18,7 +20,7 @@ export const mockUsers: User[] = [
     id: '2',
     name: '李美玲',
     email: 'meiling@company.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=meiling',
+    avatar: generateAvatarDataUrl('李美玲'),
     role: 'MEMBER',
     functionType: 'ART',
     createdAt: '2024-01-01T00:00:00Z',
@@ -28,7 +30,7 @@ export const mockUsers: User[] = [
     id: '3',
     name: '張大偉',
     email: 'dawei@company.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dawei',
+    avatar: generateAvatarDataUrl('張大偉'),
     role: 'PM',
     functionType: 'PLANNING',
     createdAt: '2024-01-01T00:00:00Z',
@@ -38,7 +40,7 @@ export const mockUsers: User[] = [
     id: '4',
     name: '陳志豪',
     email: 'zhihao@company.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhihao',
+    avatar: generateAvatarDataUrl('陳志豪'),
     role: 'MEMBER',
     functionType: 'ANIMATION',
     createdAt: '2024-01-01T00:00:00Z',
@@ -48,7 +50,7 @@ export const mockUsers: User[] = [
     id: '5',
     name: '林雅婷',
     email: 'yating@company.com',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=yating',
+    avatar: generateAvatarDataUrl('林雅婷'),
     role: 'ADMIN',
     functionType: 'PLANNING',
     createdAt: '2024-01-01T00:00:00Z',
@@ -110,6 +112,7 @@ export const mockTasks: Task[] = [
     functionTags: ['PROGRAMMING'],
     startDate: '2024-02-05',
     dueDate: '2024-02-20',
+    dependsOnTaskIds: ['8'],
     createdAt: '2024-02-01T00:00:00Z',
     updatedAt: '2024-02-10T00:00:00Z',
   },
@@ -124,6 +127,7 @@ export const mockTasks: Task[] = [
     functionTags: ['ART'],
     startDate: '2024-02-10',
     dueDate: '2024-02-25',
+    dependsOnTaskIds: ['8', '1'],
     createdAt: '2024-02-01T00:00:00Z',
     updatedAt: '2024-02-10T00:00:00Z',
   },
@@ -150,6 +154,7 @@ export const mockTasks: Task[] = [
     functionTags: ['VFX', 'ART'],
     startDate: '2024-02-20',
     dueDate: '2024-03-20',
+    dependsOnTaskIds: ['3'],
     createdAt: '2024-02-01T00:00:00Z',
     updatedAt: '2024-02-01T00:00:00Z',
   },
