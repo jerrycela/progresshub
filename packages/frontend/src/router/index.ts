@@ -157,14 +157,19 @@ const getRequiredRoles = (to: RouteLocationNormalized): UserRole[] | null => {
   return null
 }
 
+let authInitialized = false
+
 router.beforeEach(async (to, _from, next) => {
   // 動態導入 auth store（避免循環依賴）
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
-  // 若尚未認證但可能有 token，嘗試從 localStorage 恢復登入狀態
-  if (!authStore.isAuthenticated) {
-    await authStore.initAuth()
+  // 只在首次導航時嘗試恢復登入狀態
+  if (!authInitialized) {
+    authInitialized = true
+    if (!authStore.isAuthenticated) {
+      await authStore.initAuth()
+    }
   }
 
   const isAuthenticated = authStore.isAuthenticated

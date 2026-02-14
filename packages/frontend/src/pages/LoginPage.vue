@@ -1,22 +1,40 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Button from '@/components/common/Button.vue'
 
-// 登入頁面 - Slack OAuth 登入（目前為 Mock 模式）
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const isLoading = ref(false)
 
+const redirectAfterLogin = () => {
+  const redirect = route.query.redirect as string
+  router.push(redirect || '/dashboard')
+}
+
+// Slack OAuth 登入
 const handleSlackLogin = async () => {
   isLoading.value = true
   try {
     const result = await authStore.login()
     if (result.success) {
-      router.push('/dashboard')
+      redirectAfterLogin()
     }
-    // 失敗時 authStore.error 已被設定，template 會顯示
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Demo 快速登入（獨立路徑，不依賴 VITE_USE_MOCK）
+const handleDemoLogin = async () => {
+  isLoading.value = true
+  try {
+    const result = await authStore.demoLogin()
+    if (result.success) {
+      redirectAfterLogin()
+    }
   } finally {
     isLoading.value = false
   }
@@ -95,7 +113,7 @@ const handleSlackLogin = async () => {
         </div>
 
         <!-- Demo 登入按鈕 - 侍魂赤紅 -->
-        <Button variant="primary" block :loading="isLoading" @click="handleSlackLogin">
+        <Button variant="primary" block :loading="isLoading" @click="handleDemoLogin">
           Demo 模式快速登入
         </Button>
 

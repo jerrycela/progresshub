@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, UserRole, ActionResult } from 'shared/types'
 import { createAuthService } from '@/services/authService'
-import { mockUsers } from '@/mocks/unified'
+import { mockUsers, mockCurrentUser } from '@/mocks/unified'
 
 // ============================================
 // Auth Store - Service Layer 重構
@@ -10,6 +10,7 @@ import { mockUsers } from '@/mocks/unified'
 // ============================================
 
 const service = createAuthService()
+const DEMO_TOKEN = 'demo-token'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -37,6 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Actions
   const initAuth = async (): Promise<ActionResult<User>> => {
+    error.value = null
     const token = localStorage.getItem('auth_token')
     if (!token) {
       return {
@@ -45,6 +47,13 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
 
+    // Demo token: 直接從 mock 資料恢復，不呼叫 API
+    if (token === DEMO_TOKEN) {
+      user.value = { ...mockCurrentUser }
+      return { success: true, data: user.value }
+    }
+
+    // 真實 token: 透過 service 驗證
     try {
       const result = await service.getCurrentUser()
       if (result.success && result.data) {
@@ -57,6 +66,28 @@ export const useAuthStore = defineStore('auth', () => {
         success: false,
         error: { code: 'AUTH_LOGIN_FAILED', message },
       }
+    }
+  }
+
+  const demoLogin = async (): Promise<ActionResult<User>> => {
+    loading.value.login = true
+    error.value = null
+
+    try {
+      await new Promise(r => setTimeout(r, 300))
+      const demoUser = { ...mockCurrentUser }
+      user.value = demoUser
+      localStorage.setItem('auth_token', DEMO_TOKEN)
+      return { success: true, data: demoUser }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Demo 登入失敗'
+      error.value = message
+      return {
+        success: false,
+        error: { code: 'AUTH_LOGIN_FAILED', message },
+      }
+    } finally {
+      loading.value.login = false
     }
   }
 
@@ -158,6 +189,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAdmin,
     // Actions
     login,
+    demoLogin,
     logout,
     initAuth,
     switchUser,
