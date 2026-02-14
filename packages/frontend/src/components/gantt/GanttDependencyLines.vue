@@ -88,10 +88,23 @@ function getRowCenterY(taskId: string): number {
   return row.offsetTop + row.offsetHeight / 2
 }
 
+// Pre-compute same-source groups for Y-axis spreading
+const sourceGroupMap = computed(() => {
+  const map = new Map<string, DependencyEdge[]>()
+  for (const edge of edges.value) {
+    const group = map.get(edge.sourceId) ?? []
+    group.push(edge)
+    map.set(edge.sourceId, group)
+  }
+  return map
+})
+
 const paths = computed(() => {
   if (barAreaWidth.value <= 0) return []
   // Access svgHeight to create reactivity on container size changes
   if (svgHeight.value <= 0) return []
+
+  const arrowGap = 4
 
   return edges.value.map(edge => {
     const sourceTask = props.tasks[edge.sourceIndex]
@@ -109,22 +122,24 @@ const paths = computed(() => {
     const y1 = getRowCenterY(edge.sourceId)
     const y2 = getRowCenterY(edge.targetId)
 
-    // Handle path direction based on overlap
-    const offset = 15
-    const arrowGap = 4
-    let xTurn: number
+    // Same-source Y spreading: ±3px offset to prevent overlapping lines
+    const sameSourceGroup = sourceGroupMap.value.get(edge.sourceId) ?? [edge]
+    const idx = sameSourceGroup.indexOf(edge)
+    const spreadY = (idx - (sameSourceGroup.length - 1) / 2) * 3
+    const adjustedY1 = y1 + spreadY
 
-    if (sourceRight + offset < targetLeft) {
-      // Normal case: vertical segment between the two tasks
-      xTurn = (sourceRight + targetLeft) / 2
-    } else {
-      // Overlap case: route the vertical segment to the right of both tasks
-      xTurn = Math.max(sourceRight, targetLeft) + offset
-    }
-    // Clamp to container bounds
-    xTurn = Math.min(xTurn, containerWidth.value - 5)
+    // Cubic Bezier curve path
+    const dx = targetLeft - sourceRight
+    const endX = targetLeft - arrowGap
 
-    const d = `M ${sourceRight} ${y1} H ${xTurn} V ${y2} H ${targetLeft - arrowGap}`
+    // Control point distance: dynamically calculated, clamped to 30-80px
+    const controlDist = Math.max(30, Math.min(Math.abs(dx) * 0.4 + 20, 80))
+
+    // Control point X coordinates, clamped to container bounds
+    const cp1x = Math.min(sourceRight + controlDist, containerWidth.value - 5)
+    const cp2x = Math.max(endX - controlDist, INFO_PANEL_WIDTH + 5)
+
+    const d = `M ${sourceRight} ${adjustedY1} C ${cp1x} ${adjustedY1}, ${cp2x} ${y2}, ${endX} ${y2}`
 
     return { d, key: `${edge.sourceId}-${edge.targetId}` }
   })
@@ -140,8 +155,8 @@ const paths = computed(() => {
     preserveAspectRatio="xMinYMin meet"
   >
     <defs>
-      <marker id="dep-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
-        <polygon points="0,0 6,2 0,4" style="fill: var(--text-muted)" opacity="0.6" />
+      <marker id="dep-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0,0 8,3 0,6" style="fill: var(--text-muted)" opacity="0.6" />
       </marker>
     </defs>
     <path
@@ -149,8 +164,9 @@ const paths = computed(() => {
       :key="p.key"
       :d="p.d"
       fill="none"
-      :style="{ stroke: 'var(--text-muted)', strokeOpacity: 0.45 }"
+      :style="{ stroke: 'var(--text-muted)', strokeOpacity: 0.5 }"
       stroke-width="1.5"
+      stroke-linecap="round"
       marker-end="url(#dep-arrow)"
     />
   </svg>
