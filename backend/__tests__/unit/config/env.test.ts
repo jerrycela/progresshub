@@ -52,6 +52,6 @@ describe('Environment Configuration', () => {
     const { env } = require('../../../src/config/env');
 
     expect(env.PORT).toBe(3000);
-    expect(env.JWT_EXPIRES_IN).toBe('24h');
+    expect(env.JWT_EXPIRES_IN).toBe('2h');
   });
 });

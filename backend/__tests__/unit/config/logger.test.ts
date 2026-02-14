@@ -33,6 +33,8 @@ describe('Logger Configuration', () => {
 
   it('生產環境應使用 info 等級', () => {
     process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'test-secret';
+    process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
     delete process.env.LOG_LEVEL;
 
     const { logger } = require('../../../src/config/logger');
@@ -56,6 +58,8 @@ describe('Logger Configuration', () => {
 
   it('生產環境應有檔案日誌 transport', () => {
     process.env.NODE_ENV = 'production';
+    process.env.JWT_SECRET = 'test-secret';
+    process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
 
     const { logger } = require('../../../src/config/logger');
 
