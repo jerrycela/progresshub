@@ -57,8 +57,16 @@ const icons = {
       </p>
     </div>
 
+    <!-- Loading skeleton -->
+    <div v-if="taskStore.loading.fetch" class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div v-for="i in 4" :key="i" class="card p-4 animate-pulse">
+        <div class="h-4 w-20 bg-[var(--bg-tertiary)] rounded mb-2" />
+        <div class="h-8 w-12 bg-[var(--bg-tertiary)] rounded" />
+      </div>
+    </div>
+
     <!-- 統計卡片 -->
-    <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+    <div v-else class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       <StatCard title="總任務數" :value="stats.totalTasks" :icon="icons.total" color="blue" />
       <StatCard
         title="已完成"

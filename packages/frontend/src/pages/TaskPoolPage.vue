@@ -299,7 +299,19 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 
     <!-- 任務列表 -->
     <div class="space-y-4">
-      <div v-if="filteredTasks.length === 0" class="card p-12 text-center">
+      <!-- Loading skeleton -->
+      <template v-if="taskStore.loading.fetch">
+        <div v-for="i in 3" :key="i" class="card p-5 animate-pulse">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="h-5 w-16 bg-[var(--bg-tertiary)] rounded-full" />
+            <div class="h-5 w-14 bg-[var(--bg-tertiary)] rounded-full" />
+          </div>
+          <div class="h-5 w-2/3 bg-[var(--bg-tertiary)] rounded mb-2" />
+          <div class="h-4 w-full bg-[var(--bg-tertiary)] rounded" />
+        </div>
+      </template>
+
+      <div v-else-if="filteredTasks.length === 0" class="card p-12 text-center">
         <svg
           class="w-16 h-16 mx-auto text-muted"
           fill="none"
@@ -316,116 +328,118 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         <p class="mt-4 text-secondary">沒有符合條件的任務</p>
       </div>
 
-      <div
-        v-for="task in filteredTasks"
-        :key="task.id"
-        class="card p-5 hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
-        @click="viewTaskDetail(task)"
-      >
-        <div class="flex items-start justify-between gap-4">
-          <div class="flex-1 min-w-0">
-            <!-- 標籤列 -->
-            <div class="flex flex-wrap items-center gap-2 mb-2">
-              <span
-                :class="[
-                  'px-2 py-0.5 text-xs font-medium rounded-full',
-                  getSourceClass(task.sourceType),
-                ]"
+      <template v-else>
+        <div
+          v-for="task in filteredTasks"
+          :key="task.id"
+          class="card p-5 hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
+          @click="viewTaskDetail(task)"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <!-- 標籤列 -->
+              <div class="flex flex-wrap items-center gap-2 mb-2">
+                <span
+                  :class="[
+                    'px-2 py-0.5 text-xs font-medium rounded-full',
+                    getSourceClass(task.sourceType),
+                  ]"
+                >
+                  {{ getSourceLabel(task.sourceType) }}
+                </span>
+                <span :class="['status-badge', getStatusClass(task.status)]">
+                  {{ getStatusLabel(task.status) }}
+                </span>
+                <span class="text-xs text-muted">
+                  {{ task.project?.name }}
+                </span>
+              </div>
+
+              <!-- 任務名稱 -->
+              <h3
+                class="text-lg font-semibold group-hover:text-[var(--accent-primary)] transition-colors text-primary"
               >
-                {{ getSourceLabel(task.sourceType) }}
-              </span>
-              <span :class="['status-badge', getStatusClass(task.status)]">
-                {{ getStatusLabel(task.status) }}
-              </span>
-              <span class="text-xs text-muted">
-                {{ task.project?.name }}
-              </span>
-            </div>
+                {{ task.title }}
+              </h3>
 
-            <!-- 任務名稱 -->
-            <h3
-              class="text-lg font-semibold group-hover:text-[var(--accent-primary)] transition-colors text-primary"
-            >
-              {{ task.title }}
-            </h3>
+              <!-- 描述 -->
+              <p class="text-sm mt-1 line-clamp-2 text-secondary">
+                {{ task.description }}
+              </p>
 
-            <!-- 描述 -->
-            <p class="text-sm mt-1 line-clamp-2 text-secondary">
-              {{ task.description }}
-            </p>
+              <!-- 底部資訊 -->
+              <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted">
+                <!-- 負責人 -->
+                <div v-if="task.assignee" class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                  <span>{{ task.assignee.name }}</span>
+                </div>
 
-            <!-- 底部資訊 -->
-            <div class="flex flex-wrap items-center gap-4 mt-3 text-sm text-muted">
-              <!-- 負責人 -->
-              <div v-if="task.assignee" class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span>{{ task.assignee.name }}</span>
-              </div>
+                <!-- 協作者 -->
+                <div v-if="task.collaboratorNames?.length" class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
+                  </svg>
+                  <span>+{{ task.collaboratorNames.length }} 協作</span>
+                </div>
 
-              <!-- 協作者 -->
-              <div v-if="task.collaboratorNames?.length" class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <span>+{{ task.collaboratorNames.length }} 協作</span>
-              </div>
+                <!-- 日期 -->
+                <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>{{ task.startDate }} ~ {{ task.dueDate }}</span>
+                </div>
 
-              <!-- 日期 -->
-              <div class="flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span>{{ task.startDate }} ~ {{ task.dueDate }}</span>
-              </div>
-
-              <!-- 建立者 -->
-              <div class="flex items-center gap-1">
-                <span class="text-xs">建立者: {{ task.createdBy.name }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 右側：進度和動作 -->
-          <div class="flex flex-col items-end gap-3">
-            <!-- 進度 -->
-            <div class="text-right">
-              <span class="text-2xl font-bold text-primary">{{ task.progress }}%</span>
-              <div class="w-24 h-2 rounded-full mt-1 bg-elevated">
-                <div
-                  class="h-full rounded-full transition-all duration-300 bg-[var(--accent-primary)]"
-                  :style="{ width: `${task.progress}%` }"
-                ></div>
+                <!-- 建立者 -->
+                <div class="flex items-center gap-1">
+                  <span class="text-xs">建立者: {{ task.createdBy.name }}</span>
+                </div>
               </div>
             </div>
 
-            <!-- 認領按鈕 -->
-            <button
-              v-if="task.status === 'UNCLAIMED'"
-              class="btn-primary text-sm px-4 py-1.5"
-              @click.stop="claimTask(task)"
-            >
-              認領任務
-            </button>
+            <!-- 右側：進度和動作 -->
+            <div class="flex flex-col items-end gap-3">
+              <!-- 進度 -->
+              <div class="text-right">
+                <span class="text-2xl font-bold text-primary">{{ task.progress }}%</span>
+                <div class="w-24 h-2 rounded-full mt-1 bg-elevated">
+                  <div
+                    class="h-full rounded-full transition-all duration-300 bg-[var(--accent-primary)]"
+                    :style="{ width: `${task.progress}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 認領按鈕 -->
+              <button
+                v-if="task.status === 'UNCLAIMED'"
+                class="btn-primary text-sm px-4 py-1.5"
+                @click.stop="claimTask(task)"
+              >
+                認領任務
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </template>
     </div>
   </div>
 </template>

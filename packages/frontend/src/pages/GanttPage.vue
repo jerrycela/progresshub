@@ -365,6 +365,16 @@ const deleteMilestone = async (msId: string): Promise<void> => {
       </p>
     </div>
 
+    <!-- Loading 狀態 -->
+    <div v-if="taskStore.loading.fetch" class="card p-8 animate-pulse">
+      <div class="space-y-4">
+        <div class="h-6 w-1/3 bg-[var(--bg-tertiary)] rounded" />
+        <div class="h-4 w-full bg-[var(--bg-tertiary)] rounded" />
+        <div class="h-4 w-2/3 bg-[var(--bg-tertiary)] rounded" />
+        <div class="h-4 w-3/4 bg-[var(--bg-tertiary)] rounded" />
+      </div>
+    </div>
+
     <!-- 行動裝置提示 -->
     <div
       class="md:hidden p-3 rounded-lg text-sm flex items-center gap-2 bg-info/10 border border-info/30"
