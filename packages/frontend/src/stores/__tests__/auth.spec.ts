@@ -8,20 +8,27 @@ describe('useAuthStore', () => {
     setActivePinia(createPinia())
   })
 
+  // Helper: 設定已認證狀態（重構後 store 初始為 null）
+  function setupAuthenticated() {
+    const store = useAuthStore()
+    store.user = { ...mockCurrentUser }
+    return store
+  }
+
   // ------------------------------------------
   // Initial state
   // ------------------------------------------
   describe('initial state', () => {
-    it('should have mockCurrentUser as the default user', () => {
+    it('should have null user by default (requires initAuth to populate)', () => {
       const store = useAuthStore()
 
-      expect(store.user).toEqual(mockCurrentUser)
+      expect(store.user).toBeNull()
     })
 
-    it('should be authenticated by default', () => {
+    it('should not be authenticated by default', () => {
       const store = useAuthStore()
 
-      expect(store.isAuthenticated).toBe(true)
+      expect(store.isAuthenticated).toBe(false)
     })
 
     it('should have no error initially', () => {
@@ -38,16 +45,16 @@ describe('useAuthStore', () => {
       expect(store.loading.logout).toBe(false)
     })
 
-    it('should expose correct userName from mockCurrentUser', () => {
+    it('should expose empty userName when user is null', () => {
       const store = useAuthStore()
 
-      expect(store.userName).toBe(mockCurrentUser.name)
+      expect(store.userName).toBe('')
     })
 
-    it('should expose correct userRole from mockCurrentUser', () => {
+    it('should expose null userRole when user is null', () => {
       const store = useAuthStore()
 
-      expect(store.userRole).toBe(mockCurrentUser.role)
+      expect(store.userRole).toBeNull()
     })
   })
 
@@ -65,7 +72,6 @@ describe('useAuthStore', () => {
 
     it('should set loading.login to true during login', async () => {
       const store = useAuthStore()
-      store.user = null
 
       const loginPromise = store.login()
 
@@ -81,7 +87,6 @@ describe('useAuthStore', () => {
 
     it('should set user to mockCurrentUser on success', async () => {
       const store = useAuthStore()
-      store.user = null
 
       const loginPromise = store.login()
       await vi.advanceTimersByTimeAsync(500)
@@ -128,7 +133,7 @@ describe('useAuthStore', () => {
     })
 
     it('should set user to null after logout', async () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
 
       expect(store.user).not.toBeNull()
 
@@ -141,7 +146,7 @@ describe('useAuthStore', () => {
     })
 
     it('should set isAuthenticated to false after logout', async () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
 
       expect(store.isAuthenticated).toBe(true)
 
@@ -153,7 +158,7 @@ describe('useAuthStore', () => {
     })
 
     it('should set loading.logout to true during logout', async () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
 
       const logoutPromise = store.logout()
 
@@ -168,7 +173,7 @@ describe('useAuthStore', () => {
     })
 
     it('should clear error before logout attempt', async () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
       store.error = 'some error'
 
       const logoutPromise = store.logout()
@@ -206,7 +211,7 @@ describe('useAuthStore', () => {
     })
 
     it('should not change current user when switching to invalid userId', () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
       const originalUser = store.user
 
       store.switchUser('nonexistent-user-id')
@@ -231,20 +236,20 @@ describe('useAuthStore', () => {
   // ------------------------------------------
   describe('hasRole', () => {
     it('should return true when user has a matching role', () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
       const currentRole = store.userRole as UserRole
 
       expect(store.hasRole([currentRole])).toBe(true)
     })
 
     it('should return true when user role is in the provided list', () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
 
       expect(store.hasRole(['EMPLOYEE', 'PM', 'ADMIN'])).toBe(true)
     })
 
     it('should return false when user role does not match', () => {
-      const store = useAuthStore()
+      const store = setupAuthenticated()
 
       // mockCurrentUser (emp-1) 的角色是 EMPLOYEE
       expect(store.hasRole(['PM', 'ADMIN'])).toBe(false)

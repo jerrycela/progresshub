@@ -1,5 +1,6 @@
 import type { User, ActionResult } from 'shared/types'
 import { apiGetUnwrap, apiPostUnwrap } from './api'
+import { mockCurrentUser } from '@/mocks/unified'
 
 export interface AuthServiceInterface {
   loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>>
@@ -10,30 +11,12 @@ export interface AuthServiceInterface {
 class MockAuthService implements AuthServiceInterface {
   async loginWithSlack(): Promise<ActionResult<{ user: User; token: string }>> {
     await new Promise(r => setTimeout(r, 500))
-    const user: User = {
-      id: 'emp-6',
-      name: '黃美玲',
-      email: 'huang@company.com',
-      role: 'PM',
-      functionType: 'PLANNING',
-      createdAt: '2025-01-01T00:00:00Z',
-      updatedAt: '2026-02-01T00:00:00Z',
-    }
-    return { success: true, data: { user, token: 'mock-jwt-token' } }
+    return { success: true, data: { user: { ...mockCurrentUser }, token: 'mock-jwt-token' } }
   }
 
   async getCurrentUser(): Promise<ActionResult<User>> {
     await new Promise(r => setTimeout(r, 200))
-    const user: User = {
-      id: 'emp-6',
-      name: '黃美玲',
-      email: 'huang@company.com',
-      role: 'PM',
-      functionType: 'PLANNING',
-      createdAt: '2025-01-01T00:00:00Z',
-      updatedAt: '2026-02-01T00:00:00Z',
-    }
-    return { success: true, data: user }
+    return { success: true, data: { ...mockCurrentUser } }
   }
 
   async logout(): Promise<void> {

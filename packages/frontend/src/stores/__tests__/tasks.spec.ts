@@ -13,22 +13,28 @@ describe('useTaskStore', () => {
     vi.useRealTimers()
   })
 
+  // Helper: 預載 mock 資料到 store（重構後 store 初始為空）
+  function setupWithMockData() {
+    const store = useTaskStore()
+    store.tasks = mockTasks.map(t => ({ ...t }))
+    store.poolTasks = mockPoolTasks.map(t => ({ ...t }))
+    return store
+  }
+
   // ------------------------------------------
   // Initial state
   // ------------------------------------------
   describe('initial state', () => {
-    it('should populate tasks from mockTasks', () => {
+    it('should start with empty tasks (requires fetchTasks to populate)', () => {
       const store = useTaskStore()
 
-      expect(store.tasks.length).toBe(mockTasks.length)
-      expect(store.tasks[0].id).toBe(mockTasks[0].id)
+      expect(store.tasks.length).toBe(0)
     })
 
-    it('should populate poolTasks from mockPoolTasks', () => {
+    it('should start with empty poolTasks (requires fetchPoolTasks to populate)', () => {
       const store = useTaskStore()
 
-      expect(store.poolTasks.length).toBe(mockPoolTasks.length)
-      expect(store.poolTasks[0].id).toBe(mockPoolTasks[0].id)
+      expect(store.poolTasks.length).toBe(0)
     })
 
     it('should have no error initially', () => {
@@ -51,7 +57,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('backlogTasks', () => {
     it('should filter only UNCLAIMED tasks', () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const expectedCount = mockTasks.filter(t => t.status === 'UNCLAIMED').length
 
       expect(store.backlogTasks.length).toBe(expectedCount)
@@ -66,7 +72,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('getTaskById', () => {
     it('should return the task when id exists', () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const firstTask = mockTasks[0]
 
       const found = store.getTaskById(firstTask.id)
@@ -77,7 +83,7 @@ describe('useTaskStore', () => {
     })
 
     it('should return undefined when id does not exist', () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
 
       const found = store.getTaskById('nonexistent-task-id')
 
@@ -90,7 +96,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('claimTask', () => {
     it('should successfully claim an UNCLAIMED task', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
       const userId = 'emp-1'
 
@@ -104,7 +110,7 @@ describe('useTaskStore', () => {
     })
 
     it('should update the task in the store after claiming', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
       const taskId = unclaimedTask.id
       const userId = 'emp-1'
@@ -119,7 +125,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task is not UNCLAIMED', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const result = store.claimTask(inProgressTask.id, 'emp-1')
@@ -130,7 +136,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task does not exist', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
 
       const result = await store.claimTask('nonexistent-id', 'emp-1')
 
@@ -139,7 +145,7 @@ describe('useTaskStore', () => {
     })
 
     it('should set claim loading state during operation', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
       const taskId = unclaimedTask.id
 
@@ -160,7 +166,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('unclaimTask', () => {
     it('should successfully unclaim a CLAIMED task', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const claimedTask = store.tasks.find(t => t.status === 'CLAIMED')!
 
       const unclaimPromise = store.unclaimTask(claimedTask.id)
@@ -174,7 +180,7 @@ describe('useTaskStore', () => {
     })
 
     it('should successfully unclaim an IN_PROGRESS task', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const unclaimPromise = store.unclaimTask(inProgressTask.id)
@@ -186,7 +192,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task is UNCLAIMED', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
 
       const result = await store.unclaimTask(unclaimedTask.id)
@@ -196,7 +202,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task does not exist', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
 
       const result = await store.unclaimTask('nonexistent-id')
 
@@ -210,7 +216,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('updateTaskProgress', () => {
     it('should update progress within valid range', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskProgress(inProgressTask.id, 50)
@@ -222,7 +228,7 @@ describe('useTaskStore', () => {
     })
 
     it('should auto-transition CLAIMED to IN_PROGRESS when progress > 0', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const claimedTask = store.tasks.find(t => t.status === 'CLAIMED')!
 
       const updatePromise = store.updateTaskProgress(claimedTask.id, 10)
@@ -235,7 +241,7 @@ describe('useTaskStore', () => {
     })
 
     it('should set status to DONE when progress reaches 100', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskProgress(inProgressTask.id, 100)
@@ -249,7 +255,7 @@ describe('useTaskStore', () => {
     })
 
     it('should reject progress below 0', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const task = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const result = await store.updateTaskProgress(task.id, -1)
@@ -259,7 +265,7 @@ describe('useTaskStore', () => {
     })
 
     it('should reject progress above 100', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const task = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const result = await store.updateTaskProgress(task.id, 101)
@@ -269,7 +275,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task does not exist', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
 
       const result = await store.updateTaskProgress('nonexistent-id', 50)
 
@@ -278,7 +284,7 @@ describe('useTaskStore', () => {
     })
 
     it('should accept optional notes parameter', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const task = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskProgress(task.id, 75, 'Making good progress')
@@ -295,7 +301,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('createTask', () => {
     it('should create a task with valid input', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const initialCount = store.tasks.length
 
       const input: CreateTaskInput = {
@@ -425,7 +431,7 @@ describe('useTaskStore', () => {
   // ------------------------------------------
   describe('updateTaskStatus', () => {
     it('should set status to DONE with progress 100', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskStatus(inProgressTask.id, 'DONE')
@@ -439,7 +445,7 @@ describe('useTaskStore', () => {
     })
 
     it('should set pausedAt when status changes to PAUSED', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskStatus(inProgressTask.id, 'PAUSED')
@@ -452,8 +458,8 @@ describe('useTaskStore', () => {
     })
 
     it('should clear pause info when resuming from PAUSED to IN_PROGRESS', async () => {
-      const store = useTaskStore()
-      // Manually set up a PAUSED task (mock objects are shared references)
+      const store = setupWithMockData()
+      // Manually set up a PAUSED task
       const task = store.tasks[0]
       task.status = 'PAUSED'
       task.pauseReason = 'WAITING_TASK'
@@ -472,7 +478,7 @@ describe('useTaskStore', () => {
     })
 
     it('should fail when task does not exist', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
 
       const result = await store.updateTaskStatus('nonexistent-id', 'DONE')
 
@@ -481,7 +487,7 @@ describe('useTaskStore', () => {
     })
 
     it('should set update loading state during operation', async () => {
-      const store = useTaskStore()
+      const store = setupWithMockData()
       const task = store.tasks.find(t => t.status === 'IN_PROGRESS')!
 
       const updatePromise = store.updateTaskStatus(task.id, 'DONE')
