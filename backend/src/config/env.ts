@@ -6,6 +6,7 @@ interface EnvConfig {
   NODE_ENV: string;
   PORT: number;
   DATABASE_URL: string;
+  DIRECT_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
   SLACK_CLIENT_ID: string;
@@ -40,6 +41,7 @@ export const env: EnvConfig = {
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: parseInt(process.env.PORT || "3000", 10),
   DATABASE_URL: process.env.DATABASE_URL || "",
+  DIRECT_URL: process.env.DIRECT_URL || process.env.DATABASE_URL || "",
   JWT_SECRET: getJwtSecret(),
   // TODO: 實作 refresh token 機制，access token 改為更短的過期時間（如 1h）
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "24h",

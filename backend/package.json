@@ -25,6 +25,9 @@
   ],
   "author": "ProgressHub Team",
   "license": "MIT",
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.8.0",
     "@slack/bolt": "^3.17.1",

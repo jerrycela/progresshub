@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // 員工表
@@ -15,21 +16,29 @@ model Employee {
   id                String   @id @default(uuid())
   name              String
   email             String   @unique
-  slackUserId       String   @unique @map("slack_user_id")
+  slackUserId       String?  @unique @map("slack_user_id")
   department        String?
   permissionLevel   PermissionLevel @default(EMPLOYEE) @map("permission_level")
-  managedProjects   String[] @map("managed_projects") // JSON Array of project IDs for PM
-  hourlyRate        Decimal? @map("hourly_rate") @db.Decimal(10, 2) // 時薪（用於成本計算）
+  managedProjects   String[] @map("managed_projects")
+  hourlyRate        Decimal? @map("hourly_rate") @db.Decimal(10, 2)
+  avatarUrl         String?  @map("avatar_url")
+  functionType      String?  @map("function_type")
+  isActive          Boolean  @default(true) @map("is_active")
+  lastActiveAt      DateTime? @map("last_active_at")
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
   // Relations
   assignedTasks     Task[]        @relation("AssignedTasks")
+  createdTasks      Task[]        @relation("CreatedTasks")
   progressLogs      ProgressLog[]
   timeEntries       TimeEntry[]   @relation("EmployeeTimeEntries")
   approvedEntries   TimeEntry[]   @relation("ApprovedTimeEntries")
   timeEstimates     TimeEstimate[] @relation("TimeEstimates")
   gitlabConnections GitLabConnection[]
+  taskNotes         TaskNote[]
+  userSettings      UserSettings?
+  createdMilestones Milestone[]   @relation("MilestoneCreator")
 
   @@map("employees")
 }
@@ -42,6 +51,7 @@ model Project {
   startDate   DateTime @map("start_date")
   endDate     DateTime @map("end_date")
   status      ProjectStatus @default(ACTIVE)
+  createdById String?  @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -58,24 +68,37 @@ model Task {
   id                  String   @id @default(uuid())
   projectId           String   @map("project_id")
   name                String
-  assignedToId        String   @map("assigned_to")
-  collaborators       String[] // JSON Array of employee IDs
-  plannedStartDate    DateTime @map("planned_start_date")
-  plannedEndDate      DateTime @map("planned_end_date")
+  description         String?  @db.Text
+  assignedToId        String?  @map("assigned_to")
+  creatorId           String?  @map("creator_id")
+  collaborators       String[]
+  plannedStartDate    DateTime? @map("planned_start_date")
+  plannedEndDate      DateTime? @map("planned_end_date")
   actualStartDate     DateTime? @map("actual_start_date")
   actualEndDate       DateTime? @map("actual_end_date")
   progressPercentage  Int      @default(0) @map("progress_percentage")
   status              TaskStatus @default(UNCLAIMED)
-  dependencies        String[] // JSON Array of task IDs
+  priority            String?  @default("MEDIUM")
+  functionTags        String[] @map("function_tags")
+  estimatedHours      Decimal? @map("estimated_hours") @db.Decimal(6, 2)
+  actualHours         Decimal? @map("actual_hours") @db.Decimal(6, 2)
+  blockerReason       String?  @map("blocker_reason")
+  pauseReason         String?  @map("pause_reason")
+  pauseNote           String?  @map("pause_note") @db.Text
+  pausedAt            DateTime? @map("paused_at")
+  closedAt            DateTime? @map("closed_at")
+  dependencies        String[]
   milestoneId         String?  @map("milestone_id")
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   // Relations
   project             Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignedTo          Employee @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedTo          Employee? @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  creator             Employee? @relation("CreatedTasks", fields: [creatorId], references: [id])
   milestone           Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
   progressLogs        ProgressLog[]
+  taskNotes           TaskNote[]
   timeEntries         TimeEntry[]
   timeEstimate        TimeEstimate?
   gitlabActivities    GitLabActivity[]
@@ -83,7 +106,9 @@ model Task {
 
   @@index([projectId])
   @@index([assignedToId])
+  @@index([creatorId])
   @@index([milestoneId])
+  @@index([status])
   @@map("tasks")
 }
 
@@ -95,11 +120,14 @@ model Milestone {
   targetDate  DateTime @map("target_date")
   status      MilestoneStatus @default(PENDING)
   description String?  @db.Text
+  color       String?  @default("#3B82F6")
+  createdById String?  @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   Employee? @relation("MilestoneCreator", fields: [createdById], references: [id])
   tasks       Task[]
 
   @@index([projectId])
@@ -112,7 +140,10 @@ model ProgressLog {
   taskId              String   @map("task_id")
   employeeId          String   @map("employee_id")
   progressPercentage  Int      @map("progress_percentage")
+  reportType          String   @default("PROGRESS") @map("report_type")
+  progressDelta       Int?     @map("progress_delta")
   notes               String?  @db.Text
+  blockerReason       String?  @map("blocker_reason")
   reportedAt          DateTime @default(now()) @map("reported_at")
 
   // Relations
@@ -123,6 +154,38 @@ model ProgressLog {
   @@index([employeeId])
   @@index([reportedAt])
   @@map("progress_logs")
+}
+
+// 任務註記表
+model TaskNote {
+  id          String   @id @default(uuid())
+  taskId      String   @map("task_id")
+  content     String   @db.Text
+  authorId    String?  @map("author_id")
+  authorName  String   @map("author_name")
+  authorRole  String   @map("author_role")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author      Employee? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([taskId])
+  @@map("task_notes")
+}
+
+// 使用者設定表
+model UserSettings {
+  id         String @id @default(uuid())
+  employeeId String @unique @map("employee_id")
+  settings   Json   @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }
 
 // ============================================
@@ -199,16 +262,13 @@ model TimeEstimate {
 
 // 工時記錄狀態
 enum TimeEntryStatus {
-  PENDING   // 待審核
-  APPROVED  // 已核准
-  REJECTED  // 已駁回
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // Enums
 
-// 使用者角色（統一為 UserRole，與 shared types 一致）
-// Migration: 新增 PRODUCER, MANAGER
-// 需要執行資料遷移：無既有資料需遷移，新增值即可
 enum PermissionLevel {
   EMPLOYEE
   PM
@@ -223,11 +283,6 @@ enum ProjectStatus {
   PAUSED
 }
 
-// 任務狀態（統一為 6 種，與 shared types 一致）
-// Migration: NOT_STARTED -> UNCLAIMED, COMPLETED -> DONE
-// 需要執行資料遷移：
-//   UPDATE "tasks" SET status = 'UNCLAIMED' WHERE status = 'NOT_STARTED';
-//   UPDATE "tasks" SET status = 'DONE' WHERE status = 'COMPLETED';
 enum TaskStatus {
   UNCLAIMED
   CLAIMED
@@ -246,34 +301,32 @@ enum MilestoneStatus {
 // GitLab 整合功能 (GitLab Integration)
 // ============================================
 
-// GitLab 活動類型
 enum GitLabActivityType {
-  COMMIT          // Git 提交
-  MR_OPENED       // MR 開啟
-  MR_MERGED       // MR 合併
-  MR_CLOSED       // MR 關閉
-  MR_COMMENT      // MR 評論
-  MR_APPROVED     // MR 核准
-  ISSUE_CREATED   // Issue 建立
-  ISSUE_CLOSED    // Issue 關閉
-  ISSUE_UPDATED   // Issue 更新
+  COMMIT
+  MR_OPENED
+  MR_MERGED
+  MR_CLOSED
+  MR_COMMENT
+  MR_APPROVED
+  ISSUE_CREATED
+  ISSUE_CLOSED
+  ISSUE_UPDATED
 }
 
-// 同步方向
 enum SyncDirection {
-  GITLAB_TO_TASK   // GitLab -> ProgressHub
-  TASK_TO_GITLAB   // ProgressHub -> GitLab
-  BIDIRECTIONAL    // 雙向同步
+  GITLAB_TO_TASK
+  TASK_TO_GITLAB
+  BIDIRECTIONAL
 }
 
 // GitLab 實例配置表
 model GitLabInstance {
   id              String   @id @default(uuid())
-  name            String                              // 顯示名稱，如 "公司 GitLab"
-  baseUrl         String   @map("base_url")           // 實例 URL，如 "https://gitlab.company.com"
-  clientId        String   @map("client_id")          // OAuth Application ID
-  clientSecret    String   @map("client_secret")      // OAuth Secret（需加密儲存）
-  webhookSecret   String?  @map("webhook_secret")     // Webhook 驗證密鑰
+  name            String
+  baseUrl         String   @map("base_url")
+  clientId        String   @map("client_id")
+  clientSecret    String   @map("client_secret")
+  webhookSecret   String?  @map("webhook_secret")
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -290,15 +343,15 @@ model GitLabConnection {
   id              String    @id @default(uuid())
   employeeId      String    @map("employee_id")
   instanceId      String    @map("instance_id")
-  gitlabUserId    Int       @map("gitlab_user_id")       // GitLab 使用者 ID
-  gitlabUsername  String    @map("gitlab_username")      // GitLab 使用者名稱
-  accessToken     String    @map("access_token")         // OAuth Access Token（需加密）
-  refreshToken    String?   @map("refresh_token")        // OAuth Refresh Token（需加密）
-  tokenExpiresAt  DateTime? @map("token_expires_at")     // Token 過期時間
-  autoConvertTime Boolean   @default(false) @map("auto_convert_time") // 自動轉換工時
-  syncCommits     Boolean   @default(true) @map("sync_commits")       // 同步 Commits
-  syncMRs         Boolean   @default(true) @map("sync_mrs")           // 同步 MRs
-  syncIssues      Boolean   @default(true) @map("sync_issues")        // 同步 Issues
+  gitlabUserId    Int       @map("gitlab_user_id")
+  gitlabUsername  String    @map("gitlab_username")
+  accessToken     String    @map("access_token")
+  refreshToken    String?   @map("refresh_token")
+  tokenExpiresAt  DateTime? @map("token_expires_at")
+  autoConvertTime Boolean   @default(false) @map("auto_convert_time")
+  syncCommits     Boolean   @default(true) @map("sync_commits")
+  syncMRs         Boolean   @default(true) @map("sync_mrs")
+  syncIssues      Boolean   @default(true) @map("sync_issues")
   connectedAt     DateTime  @default(now()) @map("connected_at")
   lastSyncAt      DateTime? @map("last_sync_at")
   isActive        Boolean   @default(true) @map("is_active")
@@ -309,7 +362,7 @@ model GitLabConnection {
   activities      GitLabActivity[]
   issueMappings   GitLabIssueMapping[]
 
-  @@unique([employeeId, instanceId])  // 每個員工每個實例只能有一個連結
+  @@unique([employeeId, instanceId])
   @@index([employeeId])
   @@index([instanceId])
   @@map("gitlab_connections")
@@ -320,30 +373,26 @@ model GitLabActivity {
   id              String             @id @default(uuid())
   connectionId    String             @map("connection_id")
   activityType    GitLabActivityType @map("activity_type")
-  gitlabEventId   String             @unique @map("gitlab_event_id") // GitLab 事件唯一 ID
-  projectPath     String             @map("project_path")            // 專案路徑 "group/project"
+  gitlabEventId   String             @unique @map("gitlab_event_id")
+  projectPath     String             @map("project_path")
 
-  // Commit 相關欄位
   commitSha       String?            @map("commit_sha")
   commitMessage   String?            @map("commit_message") @db.Text
-  additions       Int?               @default(0)                      // 新增行數
-  deletions       Int?               @default(0)                      // 刪除行數
+  additions       Int?               @default(0)
+  deletions       Int?               @default(0)
 
-  // MR 相關欄位
-  mrIid           Int?               @map("mr_iid")                   // MR 編號
+  mrIid           Int?               @map("mr_iid")
   mrTitle         String?            @map("mr_title")
-  mrState         String?            @map("mr_state")                 // opened/merged/closed
+  mrState         String?            @map("mr_state")
 
-  // Issue 相關欄位
   issueIid        Int?               @map("issue_iid")
   issueTitle      String?            @map("issue_title")
 
-  activityAt      DateTime           @map("activity_at")              // 活動發生時間
+  activityAt      DateTime           @map("activity_at")
 
-  // 關聯到 ProgressHub
-  taskId          String?            @map("task_id")                  // 關聯的任務
-  timeEntryId     String?            @unique @map("time_entry_id")    // 轉換後的工時記錄
-  suggestedHours  Decimal?           @db.Decimal(4, 2) @map("suggested_hours") // 建議工時
+  taskId          String?            @map("task_id")
+  timeEntryId     String?            @unique @map("time_entry_id")
+  suggestedHours  Decimal?           @db.Decimal(4, 2) @map("suggested_hours")
 
   createdAt       DateTime           @default(now()) @map("created_at")
 
@@ -362,11 +411,11 @@ model GitLabActivity {
 model GitLabIssueMapping {
   id              String        @id @default(uuid())
   connectionId    String        @map("connection_id")
-  gitlabIssueId   Int           @map("gitlab_issue_id")      // GitLab Issue ID
-  gitlabIssueIid  Int           @map("gitlab_issue_iid")     // GitLab Issue 編號
+  gitlabIssueId   Int           @map("gitlab_issue_id")
+  gitlabIssueIid  Int           @map("gitlab_issue_iid")
   projectPath     String        @map("project_path")
-  issueUrl        String        @map("issue_url")            // Issue 完整 URL
-  taskId          String        @unique @map("task_id")      // 對應的任務 ID
+  issueUrl        String        @map("issue_url")
+  taskId          String        @unique @map("task_id")
   syncDirection   SyncDirection @default(BIDIRECTIONAL) @map("sync_direction")
   lastSyncAt      DateTime?     @map("last_sync_at")
   createdAt       DateTime      @default(now()) @map("created_at")

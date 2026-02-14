@@ -199,11 +199,11 @@ export class ProjectService {
     const tasks = project.tasks.map((task) => ({
       id: task.id,
       name: task.name,
-      start: task.actualStartDate || task.plannedStartDate,
-      end: task.actualEndDate || task.plannedEndDate,
+      start: task.actualStartDate || task.plannedStartDate || new Date(),
+      end: task.actualEndDate || task.plannedEndDate || new Date(),
       progress: task.progressPercentage,
       dependencies: task.dependencies,
-      assignee: task.assignedTo.name,
+      assignee: task.assignedTo?.name ?? "",
     }));
 
     return { project, tasks };
