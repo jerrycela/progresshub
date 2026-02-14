@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { Task, TaskStatus, Prisma } from "@prisma/client";
+import { AppError } from "../middleware/errorHandler";
 
 // 合法的 functionTags 值（對齊前端 FunctionType）
 const VALID_FUNCTION_TAGS = [
@@ -18,7 +19,11 @@ function validateFunctionTags(tags: string[]): void {
       !VALID_FUNCTION_TAGS.includes(t as (typeof VALID_FUNCTION_TAGS)[number]),
   );
   if (invalid.length > 0) {
-    throw new Error(`Invalid functionTags: ${invalid.join(", ")}`);
+    throw new AppError(
+      400,
+      `Invalid functionTags: ${invalid.join(", ")}`,
+      "INVALID_FUNCTION_TAGS",
+    );
   }
 }
 
@@ -194,7 +199,11 @@ export class TaskService {
         where: { id: { in: data.dependencies } },
       });
       if (existingTasks !== data.dependencies.length) {
-        throw new Error("One or more dependency task IDs do not exist");
+        throw new AppError(
+          400,
+          "One or more dependency task IDs do not exist",
+          "INVALID_DEPENDENCIES",
+        );
       }
     }
 
@@ -236,7 +245,11 @@ export class TaskService {
         where: { id: { in: data.dependencies } },
       });
       if (existingTasks !== data.dependencies.length) {
-        throw new Error("One or more dependency task IDs do not exist");
+        throw new AppError(
+          400,
+          "One or more dependency task IDs do not exist",
+          "INVALID_DEPENDENCIES",
+        );
       }
     }
 
@@ -313,7 +326,11 @@ export class TaskService {
       });
 
       if (result.count === 0) {
-        throw new Error("TASK_NOT_CLAIMABLE");
+        throw new AppError(
+          409,
+          "Task cannot be claimed — it may already be claimed or in progress",
+          "TASK_NOT_CLAIMABLE",
+        );
       }
 
       return tx.task.findUniqueOrThrow({
@@ -344,7 +361,11 @@ export class TaskService {
       });
 
       if (result.count === 0) {
-        throw new Error("TASK_NOT_UNCLAIMABLE");
+        throw new AppError(
+          409,
+          "Task cannot be unclaimed — you may not be the assignee or the task status does not allow unclaiming",
+          "TASK_NOT_UNCLAIMABLE",
+        );
       }
 
       return tx.task.findUniqueOrThrow({
@@ -368,12 +389,16 @@ export class TaskService {
   ): Promise<Task> {
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) {
-      throw new Error("TASK_NOT_FOUND");
+      throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
     }
 
     const allowed = VALID_TRANSITIONS[task.status];
     if (!allowed.includes(newStatus)) {
-      throw new Error(`INVALID_TRANSITION: ${task.status} → ${newStatus}`);
+      throw new AppError(
+        409,
+        `Cannot transition task from ${task.status} to ${newStatus}`,
+        "INVALID_TRANSITION",
+      );
     }
 
     const updateData: Prisma.TaskUpdateInput = {
@@ -383,7 +408,11 @@ export class TaskService {
     // PAUSED 需要 pauseReason
     if (newStatus === "PAUSED") {
       if (!payload?.pauseReason) {
-        throw new Error("PAUSE_REASON_REQUIRED");
+        throw new AppError(
+          400,
+          "Pause reason is required when pausing a task",
+          "PAUSE_REASON_REQUIRED",
+        );
       }
       updateData.pauseReason = payload.pauseReason;
       updateData.pauseNote = payload.pauseNote;
@@ -437,7 +466,7 @@ export class TaskService {
     return prisma.$transaction(async (tx: TransactionClient) => {
       const task = await tx.task.findUnique({ where: { id: taskId } });
       if (!task) {
-        throw new Error("TASK_NOT_FOUND");
+        throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
       }
 
       const progressDelta = progressPercentage - task.progressPercentage;
