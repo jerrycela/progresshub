@@ -65,12 +65,14 @@ describe('Auth Middleware', () => {
     it('should call next() with valid token and existing user', async () => {
       const mockUser = {
         id: 'user-123',
+        name: 'Test User',
         email: 'test@example.com',
         permissionLevel: 'EMPLOYEE',
+        isActive: true,
       };
 
       const token = jwt.sign(
-        { userId: mockUser.id, email: mockUser.email, permissionLevel: mockUser.permissionLevel },
+        { userId: mockUser.id, name: mockUser.name, email: mockUser.email, permissionLevel: mockUser.permissionLevel },
         process.env.JWT_SECRET!
       );
 
@@ -92,6 +94,7 @@ describe('Auth Middleware', () => {
       expect(nextFunction).toHaveBeenCalled();
       expect(mockRequest.user).toEqual({
         userId: mockUser.id,
+        name: mockUser.name,
         email: mockUser.email,
         permissionLevel: mockUser.permissionLevel,
       });
@@ -127,6 +130,7 @@ describe('Auth Middleware', () => {
     it('should return 403 if user permission level is insufficient', () => {
       mockRequest.user = {
         userId: 'user-123',
+        name: 'Test User',
         email: 'test@example.com',
         permissionLevel: 'EMPLOYEE',
       };
@@ -149,6 +153,7 @@ describe('Auth Middleware', () => {
     it('should call next() if user has required permission', () => {
       mockRequest.user = {
         userId: 'user-123',
+        name: 'Test User',
         email: 'test@example.com',
         permissionLevel: 'ADMIN',
       };
@@ -167,6 +172,7 @@ describe('Auth Middleware', () => {
     it('should accept multiple permission levels', () => {
       mockRequest.user = {
         userId: 'user-123',
+        name: 'Test User',
         email: 'test@example.com',
         permissionLevel: 'PM',
       };

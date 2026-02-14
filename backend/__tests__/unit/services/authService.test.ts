@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import axios from 'axios';
 
 // Mock database
 jest.mock('../../../src/config/database', () => ({
@@ -7,6 +8,7 @@ jest.mock('../../../src/config/database', () => ({
     employee: {
       findUnique: jest.fn(),
       create: jest.fn(),
+      update: jest.fn(),
     },
   },
 }));
@@ -20,6 +22,10 @@ jest.mock('../../../src/config/logger', () => ({
     info: jest.fn(),
   },
 }));
+
+// Mock axios
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 import prisma from '../../../src/config/database';
 import { AuthService } from '../../../src/services/authService';
@@ -37,8 +43,14 @@ describe('AuthService', () => {
     updatedAt: new Date(),
     department: null,
     avatarUrl: null,
+    functionType: null,
     isActive: true,
+    lastActiveAt: null,
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
   describe('generateToken', () => {
     it('應生成有效的 JWT token', () => {
@@ -74,15 +86,33 @@ describe('AuthService', () => {
     });
   });
 
-  describe('loginWithSlack', () => {
-    it('既有用戶應直接登入並回傳 token', async () => {
-      (prisma.employee.findUnique as jest.Mock).mockResolvedValue(mockEmployee);
+  describe('loginWithSlackCode', () => {
+    const mockSlackOAuthResponse = {
+      data: {
+        ok: true,
+        access_token: 'xoxb-test-token',
+        authed_user: { id: 'U12345' },
+      },
+    };
 
-      const result = await service.loginWithSlack(
-        'U12345',
-        'test@example.com',
-        '測試用戶',
-      );
+    const mockSlackUserInfoResponse = {
+      data: {
+        ok: true,
+        user: {
+          real_name: '測試用戶',
+          name: 'testuser',
+          profile: { email: 'test@example.com' },
+        },
+      },
+    };
+
+    it('既有用戶應直接登入並回傳 token', async () => {
+      mockedAxios.post.mockResolvedValue(mockSlackOAuthResponse);
+      mockedAxios.get.mockResolvedValue(mockSlackUserInfoResponse);
+      (prisma.employee.findUnique as jest.Mock).mockResolvedValue(mockEmployee);
+      (prisma.employee.update as jest.Mock).mockResolvedValue(mockEmployee);
+
+      const result = await service.loginWithSlackCode('test-oauth-code');
 
       expect(result.user.id).toBe('emp-001');
       expect(result.user.name).toBe('測試用戶');
@@ -92,25 +122,34 @@ describe('AuthService', () => {
     });
 
     it('新用戶應自動註冊並回傳 token', async () => {
+      mockedAxios.post.mockResolvedValue(mockSlackOAuthResponse);
+      mockedAxios.get.mockResolvedValue(mockSlackUserInfoResponse);
       (prisma.employee.findUnique as jest.Mock).mockResolvedValue(null);
       (prisma.employee.create as jest.Mock).mockResolvedValue(mockEmployee);
+      (prisma.employee.update as jest.Mock).mockResolvedValue(mockEmployee);
 
-      const result = await service.loginWithSlack(
-        'U12345',
-        'test@example.com',
-        '測試用戶',
-      );
+      const result = await service.loginWithSlackCode('test-oauth-code');
 
       expect(prisma.employee.create).toHaveBeenCalledWith({
-        data: {
+        data: expect.objectContaining({
           slackUserId: 'U12345',
           email: 'test@example.com',
           name: '測試用戶',
           permissionLevel: 'EMPLOYEE',
-        },
+        }),
       });
       expect(result.user.id).toBe('emp-001');
       expect(typeof result.token).toBe('string');
+    });
+
+    it('Slack OAuth 失敗應拋出錯誤', async () => {
+      mockedAxios.post.mockResolvedValue({
+        data: { ok: false, error: 'invalid_code' },
+      });
+
+      await expect(service.loginWithSlackCode('bad-code')).rejects.toThrow(
+        'Slack OAuth failed',
+      );
     });
   });
 
