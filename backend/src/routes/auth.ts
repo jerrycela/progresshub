@@ -3,6 +3,8 @@ import { body, validationResult } from "express-validator";
 import { authService } from "../services/authService";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { sendSuccess, sendError } from "../utils/response";
+import { toUserDTO } from "../mappers";
+import { env } from "../config/env";
 
 const router = Router();
 
@@ -13,20 +15,11 @@ const router = Router();
 router.post(
   "/slack",
   [
-    body("slackUserId")
+    body("code")
       .isString()
       .trim()
       .notEmpty()
-      .withMessage("Slack User ID is required"),
-    body("email")
-      .isEmail()
-      .normalizeEmail()
-      .withMessage("Valid email is required"),
-    body("name")
-      .isString()
-      .trim()
-      .isLength({ min: 1, max: 100 })
-      .withMessage("Name is required"),
+      .withMessage("OAuth code is required"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -36,18 +29,57 @@ router.post(
     }
 
     try {
-      const { slackUserId, email, name } = req.body;
-      const result = await authService.loginWithSlack(slackUserId, email, name);
+      const { code } = req.body;
+      const result = await authService.loginWithSlackCode(code);
       sendSuccess(res, result);
     } catch (error) {
-      sendError(res, "AUTH_LOGIN_FAILED", "Login failed", 500);
+      const message = error instanceof Error ? error.message : "Login failed";
+      sendError(res, "AUTH_LOGIN_FAILED", message, 500);
     }
   },
 );
 
 /**
+ * POST /api/auth/dev-login
+ * Development-only login (bypasses Slack OAuth)
+ */
+if (env.NODE_ENV === "development") {
+  router.post(
+    "/dev-login",
+    [
+      body("email")
+        .isEmail()
+        .normalizeEmail()
+        .withMessage("Valid email is required"),
+    ],
+    async (req: AuthRequest, res: Response): Promise<void> => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        sendError(
+          res,
+          "VALIDATION_ERROR",
+          "Invalid input",
+          400,
+          errors.array(),
+        );
+        return;
+      }
+
+      try {
+        const { email } = req.body;
+        const result = await authService.devLogin(email);
+        sendSuccess(res, result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Login failed";
+        sendError(res, "AUTH_LOGIN_FAILED", message, 500);
+      }
+    },
+  );
+}
+
+/**
  * GET /api/auth/me
- * 取得當前使用者資訊
+ * 取得當前使用者資訊（回傳完整 UserDTO）
  */
 router.get(
   "/me",
@@ -65,16 +97,22 @@ router.get(
         return;
       }
 
-      sendSuccess(res, {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        department: user.department,
-        permissionLevel: user.permissionLevel,
-      });
+      sendSuccess(res, toUserDTO(user));
     } catch (error) {
       sendError(res, "AUTH_GET_USER_FAILED", "Failed to get user info", 500);
     }
+  },
+);
+
+/**
+ * POST /api/auth/logout
+ * 登出（前端清除 token，後端可擴展為 token 黑名單）
+ */
+router.post(
+  "/logout",
+  authenticate,
+  (_req: AuthRequest, res: Response): void => {
+    sendSuccess(res, { message: "Logged out successfully" });
   },
 );
 

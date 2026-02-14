@@ -41,7 +41,7 @@ export const authenticate = async (
       where: { id: decoded.userId },
     });
 
-    if (!user) {
+    if (!user || !user.isActive) {
       sendError(res, "AUTH_INVALID_TOKEN", "無效的認證 Token", 401);
       return;
     }
