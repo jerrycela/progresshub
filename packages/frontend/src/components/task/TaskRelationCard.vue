@@ -60,11 +60,7 @@ const statusLabel = computed(() => {
     <!-- 職能標籤與狀態 -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex gap-2">
-        <Badge
-          v-for="(tag, index) in functionTags"
-          :key="index"
-          variant="default"
-        >
+        <Badge v-for="(tag, index) in functionTags" :key="index" variant="default">
           {{ tag }}
         </Badge>
       </div>
@@ -95,16 +91,10 @@ const statusLabel = computed(() => {
     <!-- 負責人與查看按鈕 -->
     <div class="flex items-center justify-between">
       <div v-if="assignee" class="flex items-center gap-2">
-        <Avatar
-          :src="assignee.avatar"
-          :alt="assignee.name"
-          size="sm"
-        />
+        <Avatar :src="assignee.avatar" :alt="assignee.name" size="sm" />
         <span class="text-sm text-cool-gray">{{ assignee.name }}</span>
       </div>
-      <div v-else class="text-sm text-light-gray">
-        未指派
-      </div>
+      <div v-else class="text-sm text-light-gray">未指派</div>
 
       <button
         type="button"

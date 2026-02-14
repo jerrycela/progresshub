@@ -33,18 +33,23 @@ const navigationStack = ref<NavigationItem[]>([])
 const currentTask = ref<Task | null>(null)
 
 // 當 Modal 打開時初始化導航堆疊
-watch(() => props.modelValue, (isOpen: boolean) => {
-  if (isOpen && props.task) {
-    navigationStack.value = [{
-      task: props.task,
-      title: props.task.title
-    }]
-    currentTask.value = props.task
-  } else {
-    navigationStack.value = []
-    currentTask.value = null
-  }
-})
+watch(
+  () => props.modelValue,
+  (isOpen: boolean) => {
+    if (isOpen && props.task) {
+      navigationStack.value = [
+        {
+          task: props.task,
+          title: props.task.title,
+        },
+      ]
+      currentTask.value = props.task
+    } else {
+      navigationStack.value = []
+      currentTask.value = null
+    }
+  },
+)
 
 // 計算關聯任務清單
 const relatedTasks = computed((): Task[] => {
@@ -59,7 +64,7 @@ const relatedTasks = computed((): Task[] => {
 const handleViewTask = (task: Task): void => {
   navigationStack.value.push({
     task,
-    title: task.title
+    title: task.title,
   })
   currentTask.value = task
 }
@@ -89,7 +94,11 @@ const handleBreadcrumbClick = (index: number): void => {
           :key="index"
           type="button"
           class="flex items-center gap-2 text-sm transition-colors duration-150"
-          :class="index === navigationStack.length - 1 ? 'text-carbon-black font-semibold' : 'text-cool-gray hover:text-samurai-red'"
+          :class="
+            index === navigationStack.length - 1
+              ? 'text-carbon-black font-semibold'
+              : 'text-cool-gray hover:text-samurai-red'
+          "
           @click="handleBreadcrumbClick(index)"
         >
           <span>{{ item.title }}</span>
@@ -114,10 +123,7 @@ const handleBreadcrumbClick = (index: number): void => {
       <TaskBasicInfo :task="currentTask" />
 
       <!-- 關聯任務清單 -->
-      <TaskRelationList
-        :related-tasks="relatedTasks"
-        @view-task="handleViewTask"
-      />
+      <TaskRelationList :related-tasks="relatedTasks" @view-task="handleViewTask" />
     </div>
   </Modal>
 </template>

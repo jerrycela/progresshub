@@ -27,7 +27,8 @@ const getStatusClass = (status: Task['status']) => {
     UNCLAIMED: 'bg-ink-muted/30',
     CLAIMED: 'bg-info/60',
     IN_PROGRESS: 'bg-samurai',
-    PAUSED: 'bg-gradient-to-r from-amber-500/40 via-amber-400/20 to-amber-500/40 bg-[length:10px_100%]',
+    PAUSED:
+      'bg-gradient-to-r from-amber-500/40 via-amber-400/20 to-amber-500/40 bg-[length:10px_100%]',
     DONE: 'bg-success',
     BLOCKED: 'bg-danger',
   }
@@ -67,7 +68,7 @@ const getStatusClass = (status: Task['status']) => {
       <span
         :class="[
           'text-xs font-medium truncate',
-          task.status === 'PAUSED' ? 'text-amber-700' : 'text-white'
+          task.status === 'PAUSED' ? 'text-amber-700' : 'text-white',
         ]"
       >
         {{ task.status === 'PAUSED' ? '暫停中' : `${task.progress}%` }}

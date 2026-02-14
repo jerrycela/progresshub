@@ -205,10 +205,7 @@ const handleCancel = (): void => {
     <!-- 任務關聯 -->
     <div class="card p-6 space-y-5">
       <h2 class="text-lg font-semibold" style="color: var(--text-primary)">任務關聯</h2>
-      <TaskRelationSelector
-        v-model="dependsOnTaskIds"
-        :all-tasks="taskStore.tasks"
-      />
+      <TaskRelationSelector v-model="dependsOnTaskIds" :all-tasks="taskStore.tasks" />
     </div>
 
     <!-- 操作按鈕 -->

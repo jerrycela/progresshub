@@ -10,10 +10,7 @@ import type { Task } from 'shared/types'
  * @param currentTaskId 當前任務 ID（編輯模式時傳入）
  * @returns 可選任務清單
  */
-export const getAvailableTasks = (
-  allTasks: Task[],
-  currentTaskId?: string
-): Task[] => {
+export const getAvailableTasks = (allTasks: Task[], currentTaskId?: string): Task[] => {
   return allTasks.filter((task: Task) => {
     // 排除當前任務
     if (currentTaskId && task.id === currentTaskId) {
@@ -28,9 +25,7 @@ export const getAvailableTasks = (
  * @param tasks 任務清單
  * @returns 分組後的任務清單 { projectId: Task[] }
  */
-export const groupTasksByProject = (
-  tasks: Task[]
-): Record<string, Task[]> => {
+export const groupTasksByProject = (tasks: Task[]): Record<string, Task[]> => {
   return tasks.reduce((groups: Record<string, Task[]>, task: Task) => {
     const projectId = task.projectId
     if (!groups[projectId]) {
@@ -61,7 +56,7 @@ export const getTaskDisplayLabel = (task: Task): string => {
 export const hasCircularDependency = (
   taskId: string,
   targetTaskId: string,
-  allTasks: Task[]
+  allTasks: Task[],
 ): boolean => {
   const visited = new Set<string>()
 
@@ -82,9 +77,7 @@ export const hasCircularDependency = (
     }
 
     // 遞迴檢查所有依賴任務
-    return currentTask.dependsOnTaskIds.some((depId: string) =>
-      checkCircular(depId)
-    )
+    return currentTask.dependsOnTaskIds.some((depId: string) => checkCircular(depId))
   }
 
   return checkCircular(targetTaskId)
