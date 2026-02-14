@@ -35,14 +35,27 @@ class MockTaskService implements TaskServiceInterface {
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
     await new Promise(r => setTimeout(r, 200))
+
+    // 模擬後端邏輯：依 sourceType 決定初始狀態
+    let status: TaskStatus = 'UNCLAIMED'
+    let assigneeId: string | undefined = undefined
+    if (input.sourceType === 'ASSIGNED' && input.assigneeId) {
+      status = 'CLAIMED'
+      assigneeId = input.assigneeId
+    } else if (input.sourceType === 'SELF_CREATED' && input.createdBy) {
+      status = 'CLAIMED'
+      assigneeId = input.createdBy.id
+    }
+
     const newTask: Task = {
       id: String(Date.now()),
       title: input.title.trim(),
       description: input.description,
-      status: 'UNCLAIMED',
+      status,
       priority: input.priority || 'MEDIUM',
       progress: 0,
       projectId: input.projectId,
+      assigneeId,
       functionTags: input.functionTags || [],
       startDate: input.startDate,
       dueDate: input.dueDate,

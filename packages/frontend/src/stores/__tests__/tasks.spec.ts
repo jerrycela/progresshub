@@ -358,7 +358,9 @@ describe('useTaskStore', () => {
         dueDate: '2026-03-15',
       }
 
-      const result = await store.createTask(input)
+      const promise = store.createTask(input)
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.title).toBe('New test task')
@@ -373,11 +375,13 @@ describe('useTaskStore', () => {
       const store = setupWithMockData()
       const initialPoolCount = store.poolTasks.length
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: 'Pool sync test',
         projectId: 'proj-1',
         createdBy: { id: 'emp-1', name: 'Test User' },
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(store.poolTasks.length).toBe(initialPoolCount + 1)
@@ -393,13 +397,15 @@ describe('useTaskStore', () => {
     it('should set CLAIMED status for ASSIGNED source type', async () => {
       const store = setupWithMockData()
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: 'Assigned task',
         projectId: 'proj-1',
         sourceType: 'ASSIGNED',
         assigneeId: 'emp-2',
         createdBy: { id: 'emp-1', name: 'PM' },
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.status).toBe('CLAIMED')
@@ -409,12 +415,14 @@ describe('useTaskStore', () => {
     it('should set CLAIMED status for SELF_CREATED source type', async () => {
       const store = setupWithMockData()
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: 'Self-created task',
         projectId: 'proj-1',
         sourceType: 'SELF_CREATED',
         createdBy: { id: 'emp-3', name: 'Self User' },
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.status).toBe('CLAIMED')
@@ -477,10 +485,12 @@ describe('useTaskStore', () => {
     it('should default priority to MEDIUM when not provided', async () => {
       const store = useTaskStore()
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: 'Task without priority',
         projectId: 'proj-1',
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.priority).toBe('MEDIUM')
@@ -489,12 +499,17 @@ describe('useTaskStore', () => {
     it('should set loading.create during creation', async () => {
       const store = useTaskStore()
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: 'Loading test task',
         projectId: 'proj-1',
       })
 
-      // createTask 現在是同步操作，loading 在 finally 中已重設
+      // loading 在 service 呼叫期間應為 true
+      expect(store.loading.create).toBe(true)
+
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
+
       expect(result.success).toBe(true)
       expect(store.loading.create).toBe(false)
       expect(store.isLoading).toBe(false)
@@ -503,10 +518,12 @@ describe('useTaskStore', () => {
     it('should trim the title', async () => {
       const store = useTaskStore()
 
-      const result = await store.createTask({
+      const promise = store.createTask({
         title: '  Trimmed title  ',
         projectId: 'proj-1',
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.title).toBe('Trimmed title')

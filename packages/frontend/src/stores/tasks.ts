@@ -418,40 +418,20 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.create = true
 
     try {
-      const now = new Date().toISOString()
-      const sourceType: TaskSourceType = input.sourceType || 'POOL'
+      const result = await service.createTask(input)
 
-      // 依來源類型決定狀態與 assigneeId
-      let status: Task['status'] = 'UNCLAIMED'
-      let assigneeId: string | undefined = undefined
-      if (sourceType === 'ASSIGNED' && input.assigneeId) {
-        status = 'CLAIMED'
-        assigneeId = input.assigneeId
-      } else if (sourceType === 'SELF_CREATED' && input.createdBy) {
-        status = 'CLAIMED'
-        assigneeId = input.createdBy.id
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error || { code: 'UNKNOWN_ERROR', message: '建立任務失敗' },
+        }
       }
 
-      const newTask: Task = {
-        id: `task-${Date.now()}`,
-        title: input.title.trim(),
-        description: input.description,
-        status,
-        priority: input.priority || 'MEDIUM',
-        progress: 0,
-        projectId: input.projectId,
-        assigneeId,
-        functionTags: input.functionTags || [],
-        startDate: input.startDate,
-        dueDate: input.dueDate,
-        estimatedHours: input.estimatedHours,
-        dependsOnTaskIds: input.dependsOnTaskIds,
-        createdAt: now,
-        updatedAt: now,
-      }
+      const newTask = result.data
       tasks.value = [...tasks.value, newTask]
 
       // 同時建立 PoolTask
+      const sourceType: TaskSourceType = input.sourceType || 'POOL'
       const newPoolTask: PoolTask = {
         ...newTask,
         sourceType,
