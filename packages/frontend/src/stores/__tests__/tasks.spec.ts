@@ -534,14 +534,16 @@ describe('useTaskStore', () => {
   // deleteTask
   // ------------------------------------------
   describe('deleteTask', () => {
-    it('should remove task from both tasks and poolTasks', () => {
+    it('should remove task from both tasks and poolTasks', async () => {
       const store = setupWithMockData()
       const taskToDelete = store.tasks[0]
       const initialTaskCount = store.tasks.length
       const initialPoolCount = store.poolTasks.length
       const poolTaskExists = store.poolTasks.some(t => t.id === taskToDelete.id)
 
-      const result = store.deleteTask(taskToDelete.id)
+      const promise = store.deleteTask(taskToDelete.id)
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(store.tasks.length).toBe(initialTaskCount - 1)
@@ -552,10 +554,10 @@ describe('useTaskStore', () => {
       }
     })
 
-    it('should fail when task does not exist', () => {
+    it('should fail when task does not exist', async () => {
       const store = setupWithMockData()
 
-      const result = store.deleteTask('nonexistent-id')
+      const result = await store.deleteTask('nonexistent-id')
 
       expect(result.success).toBe(false)
       expect(result.error?.code).toBe('TASK_NOT_FOUND')
@@ -566,14 +568,16 @@ describe('useTaskStore', () => {
   // updateTask
   // ------------------------------------------
   describe('updateTask', () => {
-    it('should update task fields', () => {
+    it('should update task fields', async () => {
       const store = setupWithMockData()
       const task = store.tasks[0]
 
-      const result = store.updateTask(task.id, {
+      const promise = store.updateTask(task.id, {
         title: 'Updated Title',
         description: 'Updated desc',
       })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(true)
       expect(result.data?.title).toBe('Updated Title')
@@ -581,22 +585,24 @@ describe('useTaskStore', () => {
       expect(result.data?.updatedAt).toBeDefined()
     })
 
-    it('should sync poolTasks after update', () => {
+    it('should sync poolTasks after update', async () => {
       const store = setupWithMockData()
       const task = store.tasks[0]
       const poolTaskExists = store.poolTasks.some(t => t.id === task.id)
       if (!poolTaskExists) return
 
-      store.updateTask(task.id, { title: 'Synced Title' })
+      const promise = store.updateTask(task.id, { title: 'Synced Title' })
+      await vi.advanceTimersByTimeAsync(200)
+      await promise
 
       const poolTask = store.getPoolTaskById(task.id)
       expect(poolTask?.title).toBe('Synced Title')
     })
 
-    it('should fail when task does not exist', () => {
+    it('should fail when task does not exist', async () => {
       const store = setupWithMockData()
 
-      const result = store.updateTask('nonexistent-id', { title: 'Nope' })
+      const result = await store.updateTask('nonexistent-id', { title: 'Nope' })
 
       expect(result.success).toBe(false)
       expect(result.error?.code).toBe('TASK_NOT_FOUND')

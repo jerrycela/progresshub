@@ -454,7 +454,7 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   }
 
-  const deleteTask = (taskId: string): ActionResult<void> => {
+  const deleteTask = async (taskId: string): Promise<ActionResult<void>> => {
     const idx = tasks.value.findIndex(t => t.id === taskId)
     if (idx === -1) {
       return {
@@ -462,12 +462,29 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
       }
     }
+
+    // 樂觀更新：先從 store 移除
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
     tasks.value = tasks.value.filter(t => t.id !== taskId)
     poolTasks.value = poolTasks.value.filter(t => t.id !== taskId)
-    return { success: true }
+
+    try {
+      await service.deleteTask(taskId)
+      return { success: true }
+    } catch (e) {
+      // 回滾
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
+      const message = e instanceof Error ? e.message : '刪除任務失敗'
+      return {
+        success: false,
+        error: { code: 'TASK_DELETE_FAILED', message },
+      }
+    }
   }
 
-  const updateTask = (taskId: string, input: Partial<Task>): ActionResult<Task> => {
+  const updateTask = async (taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> => {
     const idx = tasks.value.findIndex(t => t.id === taskId)
     if (idx === -1) {
       return {
@@ -475,11 +492,34 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
       }
     }
+
+    // 樂觀更新
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
     const now = new Date().toISOString()
     const updated = { ...tasks.value[idx], ...input, updatedAt: now }
     tasks.value = tasks.value.map((t, i) => (i === idx ? updated : t))
     syncPoolTask(taskId, { ...input, updatedAt: now })
-    return { success: true, data: updated }
+
+    try {
+      const result = await service.updateTask(taskId, input)
+
+      if (result.success && result.data) {
+        tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
+        syncPoolTask(taskId, result.data)
+      }
+
+      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
+    } catch (e) {
+      // 回滾
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
+      const message = e instanceof Error ? e.message : '更新任務失敗'
+      return {
+        success: false,
+        error: { code: 'TASK_UPDATE_FAILED', message },
+      }
+    }
   }
 
   const clearError = () => {

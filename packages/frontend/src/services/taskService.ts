@@ -1,6 +1,6 @@
 import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
-import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap } from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPut, apiDelete } from './api'
 
 export interface TaskServiceInterface {
   fetchTasks(): Promise<Task[]>
@@ -10,6 +10,8 @@ export interface TaskServiceInterface {
   createTask(input: CreateTaskInput): Promise<ActionResult<Task>>
   updateTaskStatus(taskId: string, status: TaskStatus): Promise<ActionResult<Task>>
   updateTaskProgress(taskId: string, progress: number, notes?: string): Promise<ActionResult<Task>>
+  deleteTask(taskId: string): Promise<ActionResult<void>>
+  updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>>
   claimTask(taskId: string, userId: string): Promise<ActionResult<Task>>
   unclaimTask(taskId: string): Promise<ActionResult<Task>>
 }
@@ -132,6 +134,25 @@ class MockTaskService implements TaskServiceInterface {
       },
     }
   }
+
+  async deleteTask(taskId: string): Promise<ActionResult<void>> {
+    await new Promise(r => setTimeout(r, 200))
+    const task = mockTasks.find(t => t.id === taskId)
+    if (!task) {
+      return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
+    }
+    return { success: true }
+  }
+
+  async updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> {
+    await new Promise(r => setTimeout(r, 200))
+    const task = mockTasks.find(t => t.id === taskId)
+    if (!task) {
+      return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
+    }
+    const now = new Date().toISOString()
+    return { success: true, data: { ...task, ...input, updatedAt: now } }
+  }
 }
 
 class ApiTaskService implements TaskServiceInterface {
@@ -178,6 +199,32 @@ class ApiTaskService implements TaskServiceInterface {
   async unclaimTask(taskId: string): Promise<ActionResult<Task>> {
     const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/unclaim`)
     return { success: true, data }
+  }
+
+  async deleteTask(taskId: string): Promise<ActionResult<void>> {
+    await apiDelete(`/tasks/${taskId}`)
+    return { success: true }
+  }
+
+  async updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> {
+    // 前端欄位名 → 後端欄位名轉換
+    const backendPayload: Record<string, unknown> = {}
+    if (input.title !== undefined) backendPayload.name = input.title
+    if (input.description !== undefined) backendPayload.description = input.description
+    if (input.priority !== undefined) backendPayload.priority = input.priority
+    if (input.assigneeId !== undefined) backendPayload.assignedToId = input.assigneeId
+    if (input.functionTags !== undefined) backendPayload.functionTags = input.functionTags
+    if (input.startDate !== undefined) backendPayload.plannedStartDate = input.startDate
+    if (input.dueDate !== undefined) backendPayload.plannedEndDate = input.dueDate
+    if (input.estimatedHours !== undefined) backendPayload.estimatedHours = input.estimatedHours
+    if (input.progress !== undefined) backendPayload.progressPercentage = input.progress
+    if (input.status !== undefined) backendPayload.status = input.status
+
+    const response = await apiPut<{ success: boolean; data: Task }>(
+      `/tasks/${taskId}`,
+      backendPayload,
+    )
+    return { success: true, data: response.data }
   }
 }
 

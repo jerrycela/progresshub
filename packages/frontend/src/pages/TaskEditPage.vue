@@ -68,9 +68,9 @@ const canSubmit = computed(() => {
 })
 
 // 提交表單
-const handleSubmit = (): void => {
+const handleSubmit = async (): Promise<void> => {
   if (!originalTask.value) return
-  const result = taskStore.updateTask(originalTask.value.id, {
+  const result = await taskStore.updateTask(originalTask.value.id, {
     title: form.title.trim(),
     description: form.description || undefined,
     projectId: form.projectId,

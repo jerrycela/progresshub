@@ -159,7 +159,7 @@ const deleteTask = async (): Promise<void> => {
     confirmText: '刪除',
   })
   if (confirmed && task.value) {
-    const result = taskStore.deleteTask(task.value.id)
+    const result = await taskStore.deleteTask(task.value.id)
     if (result.success) {
       showSuccess('已刪除任務')
       router.push('/task-pool')
