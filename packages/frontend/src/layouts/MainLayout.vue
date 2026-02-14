@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { AppHeader, AppSidebar } from '@/components/layout'
 import Toast from '@/components/common/Toast.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import { useProjectStore } from '@/stores/projects'
+import { useEmployeeStore } from '@/stores/employees'
 
 // ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
@@ -13,6 +15,13 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 // ============================================
 
 const route = useRoute()
+const projectStore = useProjectStore()
+const employeeStore = useEmployeeStore()
+
+onMounted(() => {
+  projectStore.fetchProjects()
+  employeeStore.fetchEmployees()
+})
 
 // 側邊欄展開狀態（行動裝置）
 const isSidebarOpen = ref(false)
