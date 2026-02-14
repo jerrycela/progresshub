@@ -1,21 +1,52 @@
 import prisma from "../config/database";
 import { Task, TaskStatus, Prisma } from "@prisma/client";
 
+// 狀態轉換規則（對齊前端 TaskStatusTransitions）
+const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  UNCLAIMED: ["CLAIMED"],
+  CLAIMED: ["UNCLAIMED", "IN_PROGRESS"],
+  IN_PROGRESS: ["CLAIMED", "PAUSED", "BLOCKED", "DONE"],
+  PAUSED: ["IN_PROGRESS"],
+  BLOCKED: ["IN_PROGRESS"],
+  DONE: [],
+};
+
+// 查詢時包含的關聯（用於 toTaskDTO）
+const TASK_INCLUDE = {
+  project: { select: { id: true, name: true } },
+  assignedTo: { select: { id: true, name: true, email: true } },
+  creator: { select: { id: true, name: true, email: true } },
+  milestone: { select: { id: true, name: true } },
+} as const;
+
+type TransactionClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
 export interface CreateTaskDto {
   projectId: string;
   name: string;
-  assignedToId: string;
+  description?: string;
+  priority?: string;
+  assignedToId?: string;
   collaborators?: string[];
-  plannedStartDate: Date;
-  plannedEndDate: Date;
+  functionTags?: string[];
+  plannedStartDate?: Date;
+  plannedEndDate?: Date;
   dependencies?: string[];
   milestoneId?: string;
+  estimatedHours?: number;
+  creatorId?: string;
 }
 
 export interface UpdateTaskDto {
   name?: string;
+  description?: string;
+  priority?: string;
   assignedToId?: string;
   collaborators?: string[];
+  functionTags?: string[];
   plannedStartDate?: Date;
   plannedEndDate?: Date;
   actualStartDate?: Date;
@@ -24,6 +55,7 @@ export interface UpdateTaskDto {
   status?: TaskStatus;
   dependencies?: string[];
   milestoneId?: string;
+  estimatedHours?: number;
 }
 
 export interface TaskListParams {
@@ -62,16 +94,26 @@ export class TaskService {
         skip,
         take: limit,
         orderBy: { plannedStartDate: "asc" },
-        include: {
-          project: { select: { id: true, name: true } },
-          assignedTo: { select: { id: true, name: true, email: true } },
-          milestone: { select: { id: true, name: true } },
-        },
+        include: TASK_INCLUDE,
       }),
       prisma.task.count({ where }),
     ]);
 
     return { data, total };
+  }
+
+  /**
+   * 取得任務池（UNCLAIMED 任務）
+   */
+  async getPoolTasks(): Promise<Task[]> {
+    return prisma.task.findMany({
+      where: { status: "UNCLAIMED" },
+      orderBy: { createdAt: "desc" },
+      include: {
+        ...TASK_INCLUDE,
+        taskNotes: { select: { id: true } },
+      },
+    });
   }
 
   /**
@@ -81,9 +123,7 @@ export class TaskService {
     return prisma.task.findUnique({
       where: { id },
       include: {
-        project: true,
-        assignedTo: true,
-        milestone: true,
+        ...TASK_INCLUDE,
         progressLogs: {
           orderBy: { reportedAt: "desc" },
           take: 10,
@@ -115,9 +155,7 @@ export class TaskService {
 
     return prisma.task.findMany({
       where,
-      include: {
-        project: { select: { id: true, name: true } },
-      },
+      include: TASK_INCLUDE,
       orderBy: { plannedEndDate: "asc" },
     });
   }
@@ -130,17 +168,24 @@ export class TaskService {
       data: {
         projectId: data.projectId,
         name: data.name,
+        description: data.description,
+        priority: data.priority || "MEDIUM",
         assignedToId: data.assignedToId,
         collaborators: data.collaborators || [],
-        plannedStartDate: new Date(data.plannedStartDate),
-        plannedEndDate: new Date(data.plannedEndDate),
+        functionTags: data.functionTags || [],
+        plannedStartDate: data.plannedStartDate
+          ? new Date(data.plannedStartDate)
+          : undefined,
+        plannedEndDate: data.plannedEndDate
+          ? new Date(data.plannedEndDate)
+          : undefined,
         dependencies: data.dependencies || [],
         milestoneId: data.milestoneId,
+        estimatedHours: data.estimatedHours,
+        creatorId: data.creatorId,
+        status: data.assignedToId ? "CLAIMED" : "UNCLAIMED",
       },
-      include: {
-        project: { select: { id: true, name: true } },
-        assignedTo: { select: { id: true, name: true } },
-      },
+      include: TASK_INCLUDE,
     });
   }
 
@@ -151,11 +196,18 @@ export class TaskService {
     const updateData: Prisma.TaskUpdateInput = {};
 
     if (data.name !== undefined) updateData.name = data.name;
+    if (data.description !== undefined)
+      updateData.description = data.description;
+    if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.assignedToId !== undefined) {
-      updateData.assignedTo = { connect: { id: data.assignedToId } };
+      updateData.assignedTo = data.assignedToId
+        ? { connect: { id: data.assignedToId } }
+        : { disconnect: true };
     }
     if (data.collaborators !== undefined)
       updateData.collaborators = data.collaborators;
+    if (data.functionTags !== undefined)
+      updateData.functionTags = data.functionTags;
     if (data.plannedStartDate !== undefined) {
       updateData.plannedStartDate = new Date(data.plannedStartDate);
     }
@@ -174,6 +226,8 @@ export class TaskService {
     if (data.status !== undefined) updateData.status = data.status;
     if (data.dependencies !== undefined)
       updateData.dependencies = data.dependencies;
+    if (data.estimatedHours !== undefined)
+      updateData.estimatedHours = data.estimatedHours;
     if (data.milestoneId !== undefined) {
       updateData.milestone = data.milestoneId
         ? { connect: { id: data.milestoneId } }
@@ -183,10 +237,7 @@ export class TaskService {
     return prisma.task.update({
       where: { id },
       data: updateData,
-      include: {
-        project: { select: { id: true, name: true } },
-        assignedTo: { select: { id: true, name: true } },
-      },
+      include: TASK_INCLUDE,
     });
   }
 
@@ -200,40 +251,196 @@ export class TaskService {
   }
 
   /**
-   * 更新任務進度
+   * 認領任務（原子操作，防止並發）
    */
-  async updateProgress(
+  async claimTask(taskId: string, userId: string): Promise<Task> {
+    return prisma.$transaction(async (tx: TransactionClient) => {
+      // 原子更新：只有 UNCLAIMED 才能被認領
+      const result = await tx.task.updateMany({
+        where: { id: taskId, status: "UNCLAIMED" },
+        data: {
+          status: "CLAIMED",
+          assignedToId: userId,
+          updatedAt: new Date(),
+        },
+      });
+
+      if (result.count === 0) {
+        throw new Error("TASK_NOT_CLAIMABLE");
+      }
+
+      return tx.task.findUniqueOrThrow({
+        where: { id: taskId },
+        include: TASK_INCLUDE,
+      });
+    });
+  }
+
+  /**
+   * 取消認領任務
+   */
+  async unclaimTask(taskId: string, userId: string): Promise<Task> {
+    return prisma.$transaction(async (tx: TransactionClient) => {
+      // 只有負責人可以取消認領，且狀態必須是 CLAIMED
+      const result = await tx.task.updateMany({
+        where: {
+          id: taskId,
+          assignedToId: userId,
+          status: "CLAIMED",
+        },
+        data: {
+          status: "UNCLAIMED",
+          assignedToId: null,
+          progressPercentage: 0,
+          updatedAt: new Date(),
+        },
+      });
+
+      if (result.count === 0) {
+        throw new Error("TASK_NOT_UNCLAIMABLE");
+      }
+
+      return tx.task.findUniqueOrThrow({
+        where: { id: taskId },
+        include: TASK_INCLUDE,
+      });
+    });
+  }
+
+  /**
+   * 更新任務狀態（含狀態機驗證）
+   */
+  async updateStatus(
+    taskId: string,
+    newStatus: TaskStatus,
+    payload?: {
+      pauseReason?: string;
+      pauseNote?: string;
+      blockerReason?: string;
+    },
+  ): Promise<Task> {
+    const task = await prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) {
+      throw new Error("TASK_NOT_FOUND");
+    }
+
+    const allowed = VALID_TRANSITIONS[task.status];
+    if (!allowed.includes(newStatus)) {
+      throw new Error(`INVALID_TRANSITION: ${task.status} → ${newStatus}`);
+    }
+
+    const updateData: Prisma.TaskUpdateInput = {
+      status: newStatus,
+    };
+
+    // PAUSED 需要 pauseReason
+    if (newStatus === "PAUSED") {
+      if (!payload?.pauseReason) {
+        throw new Error("PAUSE_REASON_REQUIRED");
+      }
+      updateData.pauseReason = payload.pauseReason;
+      updateData.pauseNote = payload.pauseNote;
+      updateData.pausedAt = new Date();
+    }
+
+    // BLOCKED 需要 blockerReason
+    if (newStatus === "BLOCKED") {
+      updateData.blockerReason = payload?.blockerReason;
+    }
+
+    // IN_PROGRESS 設定實際開始日期
+    if (newStatus === "IN_PROGRESS" && !task.actualStartDate) {
+      updateData.actualStartDate = new Date();
+    }
+
+    // 從 PAUSED/BLOCKED 恢復時清除原因
+    if (
+      newStatus === "IN_PROGRESS" &&
+      (task.status === "PAUSED" || task.status === "BLOCKED")
+    ) {
+      updateData.pauseReason = null;
+      updateData.pauseNote = null;
+      updateData.pausedAt = null;
+      updateData.blockerReason = null;
+    }
+
+    // DONE 設定實際結束日期和進度
+    if (newStatus === "DONE") {
+      updateData.actualEndDate = new Date();
+      updateData.closedAt = new Date();
+      updateData.progressPercentage = 100;
+    }
+
+    return prisma.task.update({
+      where: { id: taskId },
+      data: updateData,
+      include: TASK_INCLUDE,
+    });
+  }
+
+  /**
+   * 更新任務進度（自動建立 ProgressLog）
+   */
+  async updateTaskProgress(
     taskId: string,
     employeeId: string,
     progressPercentage: number,
     notes?: string,
   ): Promise<Task> {
-    // 建立進度記錄
-    await prisma.progressLog.create({
-      data: {
-        taskId,
-        employeeId,
-        progressPercentage,
-        notes,
-      },
+    return prisma.$transaction(async (tx: TransactionClient) => {
+      const task = await tx.task.findUnique({ where: { id: taskId } });
+      if (!task) {
+        throw new Error("TASK_NOT_FOUND");
+      }
+
+      const progressDelta = progressPercentage - task.progressPercentage;
+
+      // 建立進度記錄
+      await tx.progressLog.create({
+        data: {
+          taskId,
+          employeeId,
+          progressPercentage,
+          progressDelta,
+          notes,
+          reportType: progressPercentage === 100 ? "COMPLETE" : "PROGRESS",
+        },
+      });
+
+      // 更新任務
+      const newStatus: TaskStatus =
+        progressPercentage === 100
+          ? "DONE"
+          : progressPercentage > 0 && task.status === "CLAIMED"
+            ? "IN_PROGRESS"
+            : task.status;
+
+      return tx.task.update({
+        where: { id: taskId },
+        data: {
+          progressPercentage,
+          status: newStatus,
+          actualStartDate:
+            newStatus === "IN_PROGRESS" && !task.actualStartDate
+              ? new Date()
+              : undefined,
+          actualEndDate: newStatus === "DONE" ? new Date() : undefined,
+          closedAt: newStatus === "DONE" ? new Date() : undefined,
+        },
+        include: TASK_INCLUDE,
+      });
     });
+  }
 
-    // 更新任務進度和狀態
-    const status: TaskStatus =
-      progressPercentage === 100
-        ? "DONE"
-        : progressPercentage > 0
-          ? "IN_PROGRESS"
-          : "UNCLAIMED";
-
-    return prisma.task.update({
-      where: { id: taskId },
-      data: {
-        progressPercentage,
-        status,
-        actualStartDate:
-          status === "IN_PROGRESS" ? { set: new Date() } : undefined,
-        actualEndDate: status === "DONE" ? { set: new Date() } : undefined,
+  /**
+   * 取得任務的進度記錄
+   */
+  async getTaskProgressLogs(taskId: string) {
+    return prisma.progressLog.findMany({
+      where: { taskId },
+      orderBy: { reportedAt: "desc" },
+      include: {
+        employee: { select: { id: true, name: true } },
       },
     });
   }

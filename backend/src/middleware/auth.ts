@@ -7,6 +7,7 @@ import { sendError } from "../utils/response";
 
 export interface JwtPayload {
   userId: string;
+  name: string;
   email: string;
   permissionLevel: PermissionLevel;
 }
@@ -48,6 +49,7 @@ export const authenticate = async (
 
     req.user = {
       userId: user.id,
+      name: user.name,
       email: user.email,
       permissionLevel: user.permissionLevel,
     };
