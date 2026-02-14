@@ -1,4 +1,8 @@
 import prisma from "../config/database";
+import NodeCache from "node-cache";
+
+// 快取：TTL 60 秒，避免每次請求都做聚合查詢
+const cache = new NodeCache({ stdTTL: 60, checkperiod: 120 });
 
 export interface DashboardStats {
   totalTasks: number;
@@ -21,6 +25,9 @@ export class DashboardService {
    * 取得儀表板統計
    */
   async getStats(): Promise<DashboardStats> {
+    const cached = cache.get<DashboardStats>("dashboard_stats");
+    if (cached) return cached;
+
     const [
       totalTasks,
       completedTasks,
@@ -42,19 +49,24 @@ export class DashboardService {
       }),
     ]);
 
-    return {
+    const stats = {
       totalTasks,
       completedTasks,
       inProgressTasks,
       unclaimedTasks,
       overdueTasksCount,
     };
+    cache.set("dashboard_stats", stats);
+    return stats;
   }
 
   /**
    * 取得職能負載統計
    */
   async getWorkloads(): Promise<FunctionWorkload[]> {
+    const cached = cache.get<FunctionWorkload[]>("dashboard_workloads");
+    if (cached) return cached;
+
     const functionTypes = [
       "PLANNING",
       "PROGRAMMING",
@@ -99,6 +111,7 @@ export class DashboardService {
       }),
     );
 
+    cache.set("dashboard_workloads", workloads);
     return workloads;
   }
 }

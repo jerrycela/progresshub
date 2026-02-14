@@ -54,10 +54,14 @@ const corsOptions: cors.CorsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Issue #3 修復：Rate Limiting
+// Rate Limiting: 每使用者 120 req/min（支援 200 人同時在線）
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 分鐘
-  max: 100, // 每個 IP 最多 100 次請求
+  windowMs: 60 * 1000, // 1 分鐘
+  max: 120, // 每位使用者 120 次/分
+  keyGenerator: (req) => {
+    const authReq = req as { user?: { userId: string } };
+    return authReq.user?.userId || req.ip || "anonymous";
+  },
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -65,7 +69,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 分鐘
-  max: 5, // 登入嘗試限制更嚴格
+  max: 10, // 登入嘗試限制
   message: { error: "Too many login attempts, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
