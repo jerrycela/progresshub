@@ -12,9 +12,11 @@ const isLoading = ref(false)
 const handleSlackLogin = async () => {
   isLoading.value = true
   try {
-    // Mock 登入
-    await authStore.login()
-    router.push('/dashboard')
+    const result = await authStore.login()
+    if (result.success) {
+      router.push('/dashboard')
+    }
+    // 失敗時 authStore.error 已被設定，template 會顯示
   } finally {
     isLoading.value = false
   }
@@ -96,6 +98,10 @@ const handleSlackLogin = async () => {
         <Button variant="primary" block :loading="isLoading" @click="handleSlackLogin">
           Demo 模式快速登入
         </Button>
+
+        <p v-if="authStore.error" class="text-red-400 text-sm text-center mt-4">
+          {{ authStore.error }}
+        </p>
 
         <p class="text-xs text-center mt-6" style="color: var(--text-muted)">
           登入即表示您同意我們的服務條款與隱私政策

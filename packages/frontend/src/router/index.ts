@@ -162,6 +162,11 @@ router.beforeEach(async (to, _from, next) => {
   const { useAuthStore } = await import('@/stores/auth')
   const authStore = useAuthStore()
 
+  // 若尚未認證但可能有 token，嘗試從 localStorage 恢復登入狀態
+  if (!authStore.isAuthenticated) {
+    await authStore.initAuth()
+  }
+
   const isAuthenticated = authStore.isAuthenticated
   const needsAuth = requiresAuth(to)
   const requiredRoles = getRequiredRoles(to)
