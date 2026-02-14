@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import type { Task } from 'shared/types'
 
 const props = defineProps<{
@@ -14,25 +14,31 @@ const props = defineProps<{
 const containerWidth = ref(0)
 let resizeObserver: ResizeObserver | null = null
 
-onMounted(() => {
-  if (!props.containerEl) return
-  containerWidth.value = props.containerEl.offsetWidth
-  resizeObserver = new ResizeObserver(entries => {
-    for (const entry of entries) {
-      containerWidth.value = entry.contentRect.width
-    }
-  })
-  resizeObserver.observe(props.containerEl)
-})
+// Use watch instead of onMounted because the template ref is null
+// when the child component mounts (child mounts before parent ref is set)
+watch(
+  () => props.containerEl,
+  el => {
+    resizeObserver?.disconnect()
+    if (!el) return
+    containerWidth.value = el.offsetWidth
+    resizeObserver = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        containerWidth.value = entry.contentRect.width
+      }
+    })
+    resizeObserver.observe(el)
+  },
+  { immediate: true },
+)
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
 })
 
-// Info panel width: w-28 sm:w-40 + gap-2 + px-2
-// At sm+ breakpoint: w-40 = 160px, gap-2 = 8px, px-2 = 8px each side
-// The bar area starts after the info panel
-const INFO_PANEL_WIDTH = 176 // 160 + 8(gap) + 8(px)
+// Info panel width: w-40 = 160px + gap-2 = 8px = 168px
+// Note: -mx-2 and px-2 cancel each other out, so they don't add to the offset
+const INFO_PANEL_WIDTH = 168
 const ROW_HEIGHT = 40 // py-1.5 (6) + h-7 (28) + py-1.5 (6) = 40
 const ROW_CENTER_OFFSET = 20 // vertical center of each row
 
@@ -105,10 +111,10 @@ const paths = computed(() => {
 <template>
   <svg
     v-if="paths.length > 0"
-    class="absolute top-0 left-0 w-full pointer-events-none hidden sm:block"
+    class="absolute top-0 left-0 w-full pointer-events-none hidden sm:block z-10"
     :height="svgHeight"
     :viewBox="`0 0 ${containerWidth} ${svgHeight}`"
-    preserveAspectRatio="none"
+    preserveAspectRatio="xMinYMin meet"
   >
     <defs>
       <marker id="dep-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
@@ -120,8 +126,7 @@ const paths = computed(() => {
       :key="p.key"
       :d="p.d"
       fill="none"
-      stroke="var(--text-muted)"
-      stroke-opacity="0.45"
+      :style="{ stroke: 'var(--text-muted)', strokeOpacity: 0.45 }"
       stroke-width="1.5"
       marker-end="url(#dep-arrow)"
     />
