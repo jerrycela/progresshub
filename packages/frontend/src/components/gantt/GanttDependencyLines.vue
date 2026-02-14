@@ -39,8 +39,6 @@ onBeforeUnmount(() => {
 // Info panel width: w-40 = 160px + gap-2 = 8px = 168px
 // Note: -mx-2 and px-2 cancel each other out, so they don't add to the offset
 const INFO_PANEL_WIDTH = 168
-const ROW_HEIGHT = 40 // py-1.5 (6) + h-7 (28) + py-1.5 (6) = 40
-const ROW_CENTER_OFFSET = 20 // vertical center of each row
 
 interface DependencyEdge {
   sourceId: string
@@ -76,10 +74,24 @@ const barAreaWidth = computed(() => {
   return containerWidth.value - INFO_PANEL_WIDTH
 })
 
-const svgHeight = computed(() => props.tasks.length * ROW_HEIGHT)
+// Use container's actual scroll height instead of hardcoded row height
+const svgHeight = computed(() => {
+  if (!props.containerEl) return 0
+  return props.containerEl.scrollHeight
+})
+
+// Get the vertical center Y of a task row from DOM measurement
+function getRowCenterY(taskId: string): number {
+  if (!props.containerEl) return 0
+  const row = props.containerEl.querySelector(`[data-task-id="${taskId}"]`) as HTMLElement | null
+  if (!row) return 0
+  return row.offsetTop + row.offsetHeight / 2
+}
 
 const paths = computed(() => {
   if (barAreaWidth.value <= 0) return []
+  // Access svgHeight to create reactivity on container size changes
+  if (svgHeight.value <= 0) return []
 
   return edges.value.map(edge => {
     const sourceTask = props.tasks[edge.sourceIndex]
@@ -93,15 +105,26 @@ const paths = computed(() => {
       INFO_PANEL_WIDTH + (barAreaWidth.value * (sourcePos.left + sourcePos.width)) / 100
     const targetLeft = INFO_PANEL_WIDTH + (barAreaWidth.value * targetPos.left) / 100
 
-    // Y coordinates
-    const y1 = edge.sourceIndex * ROW_HEIGHT + ROW_CENTER_OFFSET
-    const y2 = edge.targetIndex * ROW_HEIGHT + ROW_CENTER_OFFSET
+    // Y coordinates from DOM measurement
+    const y1 = getRowCenterY(edge.sourceId)
+    const y2 = getRowCenterY(edge.targetId)
 
-    // Stepped path with horizontal offset
-    const xMid = (sourceRight + targetLeft) / 2
-    const arrowGap = 4 // gap before arrow tip
+    // Handle path direction based on overlap
+    const offset = 15
+    const arrowGap = 4
+    let xTurn: number
 
-    const d = `M ${sourceRight} ${y1} H ${xMid} V ${y2} H ${targetLeft - arrowGap}`
+    if (sourceRight + offset < targetLeft) {
+      // Normal case: vertical segment between the two tasks
+      xTurn = (sourceRight + targetLeft) / 2
+    } else {
+      // Overlap case: route the vertical segment to the right of both tasks
+      xTurn = Math.max(sourceRight, targetLeft) + offset
+    }
+    // Clamp to container bounds
+    xTurn = Math.min(xTurn, containerWidth.value - 5)
+
+    const d = `M ${sourceRight} ${y1} H ${xTurn} V ${y2} H ${targetLeft - arrowGap}`
 
     return { d, key: `${edge.sourceId}-${edge.targetId}` }
   })

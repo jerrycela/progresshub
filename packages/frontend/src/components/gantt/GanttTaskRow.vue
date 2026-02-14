@@ -30,6 +30,7 @@ const statusColors = STATUS_COLORS
 
 <template>
   <div
+    :data-task-id="task.id"
     class="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded cursor-pointer transition-colors duration-150 hover-bg"
     :class="index % 2 === 1 ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'bg-transparent'"
     @click="emit('click', task.id)"
