@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
@@ -18,6 +19,7 @@ import type { Task } from 'shared/types'
 // Ralph Loop 迭代 28: RWD 與元件升級
 // ============================================
 
+const router = useRouter()
 const taskStore = useTaskStore()
 const { getProjectName } = useProject()
 const { getToday, getDaysAgo, formatShort, getRelativeDays } = useFormatDate()
@@ -179,6 +181,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
           v-for="task in overdueTasks"
           :key="task.id"
           class="py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
+          @click="router.push(`/task-pool/${task.id}`)"
         >
           <div class="flex-1 min-w-0">
             <div class="flex flex-wrap items-center gap-2">
@@ -215,6 +218,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
           v-for="task in blockedTasks"
           :key="task.id"
           class="py-3 flex items-center justify-between px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
+          @click="router.push(`/task-pool/${task.id}`)"
         >
           <div class="flex-1 min-w-0">
             <h4 class="font-medium truncate" style="color: var(--text-primary)">
@@ -226,7 +230,9 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
               <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
             </div>
           </div>
-          <Button variant="ghost" size="sm"> 查看詳情 </Button>
+          <Button variant="ghost" size="sm" @click.stop="router.push(`/task-pool/${task.id}`)">
+            查看詳情
+          </Button>
         </div>
       </div>
     </Card>
@@ -241,6 +247,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
           v-for="task in longUnclaimedTasks"
           :key="task.id"
           class="py-3 flex items-center justify-between px-2 -mx-2 rounded-lg cursor-pointer transition-colors duration-200 hover-bg"
+          @click="router.push(`/task-pool/${task.id}`)"
         >
           <div class="flex-1 min-w-0">
             <h4 class="font-medium truncate" style="color: var(--text-primary)">

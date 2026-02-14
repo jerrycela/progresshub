@@ -8,12 +8,14 @@ import type { PoolTask } from 'shared/types'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
 import { getStatusLabel } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import type { Department, FunctionType } from 'shared/types'
 
-const { showSuccess } = useToast()
+const { showSuccess, showError } = useToast()
 const taskStore = useTaskStore()
 const projectStore = useProjectStore()
 const departmentStore = useDepartmentStore()
+const authStore = useAuthStore()
 
 // ============================================
 // 任務池頁面 - 瀏覽和認領任務
@@ -120,8 +122,14 @@ const viewTaskDetail = (task: PoolTask): void => {
 }
 
 // 認領任務
-const claimTask = (task: PoolTask): void => {
-  showSuccess(`已認領任務：${task.title}`)
+const claimTask = async (task: PoolTask): Promise<void> => {
+  if (!authStore.user) return
+  const result = await taskStore.claimTask(task.id, authStore.user.id)
+  if (result.success) {
+    showSuccess(`已認領任務：${task.title}`)
+  } else {
+    showError(result.error?.message || '認領任務失敗')
+  }
 }
 
 // 清除篩選

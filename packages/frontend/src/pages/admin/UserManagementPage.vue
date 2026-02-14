@@ -10,7 +10,7 @@ import Modal from '@/components/common/Modal.vue'
 import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
-import type { User, UserRole, FunctionType } from 'shared/types'
+import type { User, UserRole, FunctionType, Department } from 'shared/types'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -20,7 +20,7 @@ import type { User, UserRole, FunctionType } from 'shared/types'
 const employeeStore = useEmployeeStore()
 
 // 將員工資料轉為 User 格式供頁面使用
-const users = ref<User[]>(
+const users = computed<User[]>(() =>
   employeeStore.employees.map(e => ({
     id: e.id,
     name: e.name,
@@ -90,11 +90,12 @@ const openEditModal = (user: User) => {
 }
 
 const saveUser = () => {
-  // Mock: 實際會呼叫 API
-  const index = users.value.findIndex((u: User) => u.id === editingUser.value.id)
-  if (index !== -1) {
-    users.value[index] = { ...users.value[index], ...editingUser.value } as User
-  }
+  if (!editingUser.value.id) return
+  employeeStore.updateEmployee(editingUser.value.id, {
+    name: editingUser.value.name,
+    email: editingUser.value.email,
+    userRole: editingUser.value.role,
+  })
   showEditModal.value = false
 }
 
@@ -118,17 +119,23 @@ const openCreateModal = () => {
 }
 
 const createUser = () => {
-  // Mock: 實際會呼叫 API
-  const user: User = {
-    id: String(Date.now()),
+  const deptMap: Record<string, Department> = {
+    PROGRAMMING: 'PROGRAMMING',
+    ART: 'ART',
+    PLANNING: 'PLANNING',
+    SOUND: 'SOUND',
+    QA: 'QA',
+    VFX: 'ART',
+    ANIMATION: 'ART',
+    COMBAT: 'PROGRAMMING',
+  }
+  const functionType = newUser.value.functionType || 'PROGRAMMING'
+  employeeStore.createEmployee({
     name: newUser.value.name || '',
     email: newUser.value.email || '',
-    role: newUser.value.role || 'EMPLOYEE',
-    functionType: newUser.value.functionType || 'PROGRAMMING',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-  users.value.push(user)
+    department: deptMap[functionType] || 'PROGRAMMING',
+    userRole: newUser.value.role || 'EMPLOYEE',
+  })
   showCreateModal.value = false
 }
 

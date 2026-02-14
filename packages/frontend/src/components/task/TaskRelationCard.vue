@@ -99,6 +99,7 @@ const statusLabel = computed(() => {
       <button
         type="button"
         class="text-sm text-samurai-red hover:text-samurai-red-dark font-medium transition-colors duration-150"
+        @click.stop="emit('viewDetail', task)"
       >
         查看詳細 →
       </button>

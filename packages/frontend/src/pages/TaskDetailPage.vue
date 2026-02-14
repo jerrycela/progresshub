@@ -5,6 +5,7 @@ import { useTaskStore } from '@/stores/tasks'
 import { useProgressLogStore } from '@/stores/progressLogs'
 import { useNoteStore } from '@/stores/notes'
 import { useEmployeeStore } from '@/stores/employees'
+import { useAuthStore } from '@/stores/auth'
 import type { PoolTask, GitLabIssue, TaskNote } from 'shared/types'
 import type { ProgressLog, UserRole } from 'shared/types'
 import { getStatusLabel, getStatusClass } from '@/composables/useStatusUtils'
@@ -26,6 +27,7 @@ const taskStore = useTaskStore()
 const progressLogStore = useProgressLogStore()
 const noteStore = useNoteStore()
 const employeeStore = useEmployeeStore()
+const authStore = useAuthStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -40,17 +42,17 @@ const showNoteModal = ref(false)
 const gitlabIssueUrl = ref('')
 const newNoteContent = ref('')
 
-// 模擬當前登入者（用於權限判斷）
-const currentUser = {
-  id: 'emp-7',
-  name: '吳建國',
-  userRole: 'PRODUCER' as UserRole,
-}
-
 // 檢查是否有新增註記權限（PM、製作人、部門主管）
 const canAddNote = computed(() => {
-  return ['PM', 'PRODUCER', 'MANAGER'].includes(currentUser.userRole)
+  return authStore.user ? ['PM', 'PRODUCER', 'MANAGER'].includes(authStore.user.role) : false
 })
+
+// 格式化當前使用者（供 modal 使用）
+const currentUserForModal = computed(() => ({
+  id: authStore.user?.id || '',
+  name: authStore.user?.name || '',
+  userRole: (authStore.user?.role || 'EMPLOYEE') as UserRole,
+}))
 
 // 新進度回報表單
 const newProgress = ref({ percentage: 0, notes: '' })
@@ -95,8 +97,13 @@ const getSourceLabel = (sourceType: string): string => {
 const goBack = (): void => {
   router.push('/task-pool')
 }
-const claimTask = (): void => {
-  showSuccess('認領任務成功！')
+const claimTask = async (): Promise<void> => {
+  if (!authStore.user || !task.value) return
+  const result = await taskStore.claimTask(task.value.id, authStore.user.id)
+  if (result.success) {
+    task.value = taskStore.getPoolTaskById(task.value.id) || null
+    showSuccess('認領任務成功！')
+  }
 }
 const editTask = (): void => {
   router.push(`/task-pool/${task.value?.id}/edit`)
@@ -109,18 +116,38 @@ const returnTask = async (): Promise<void> => {
     type: 'warning',
     confirmText: '退回',
   })
-  if (confirmed) showSuccess('已退回任務')
+  if (confirmed && task.value) {
+    const result = await taskStore.unclaimTask(task.value.id)
+    if (result.success) {
+      task.value = taskStore.getPoolTaskById(task.value.id) || null
+      showSuccess('已退回任務')
+    }
+  }
 }
 
-const submitProgress = (): void => {
-  showSuccess(`已提交進度：${newProgress.value.percentage}%`)
+const submitProgress = async (): Promise<void> => {
+  if (!task.value) return
+  const result = await taskStore.updateTaskProgress(
+    task.value.id,
+    newProgress.value.percentage,
+    newProgress.value.notes,
+  )
+  if (result.success) {
+    task.value = taskStore.getPoolTaskById(task.value.id) || null
+    showSuccess(`已提交進度：${newProgress.value.percentage}%`)
+  }
   showProgressModal.value = false
   newProgress.value = { percentage: task.value?.progress || 0, notes: '' }
 }
 
-const assignTask = (employeeId: string): void => {
-  const employee = employeeStore.getEmployeeById(employeeId)
-  showSuccess(`已指派給：${employee?.name}`)
+const assignTask = async (employeeId: string): Promise<void> => {
+  if (!task.value) return
+  const result = await taskStore.claimTask(task.value.id, employeeId)
+  if (result.success) {
+    const employee = employeeStore.getEmployeeById(employeeId)
+    task.value = taskStore.getPoolTaskById(task.value.id) || null
+    showSuccess(`已指派給：${employee?.name}`)
+  }
   showAssignModal.value = false
 }
 
@@ -131,9 +158,12 @@ const deleteTask = async (): Promise<void> => {
     type: 'danger',
     confirmText: '刪除',
   })
-  if (confirmed) {
-    showSuccess('已刪除任務')
-    router.push('/task-pool')
+  if (confirmed && task.value) {
+    const result = taskStore.deleteTask(task.value.id)
+    if (result.success) {
+      showSuccess('已刪除任務')
+      router.push('/task-pool')
+    }
   }
 }
 
@@ -163,21 +193,22 @@ const linkGitLabIssue = (): void => {
   showSuccess('已關聯 GitLab Issue')
 }
 
-const submitNote = (): void => {
+const submitNote = async (): Promise<void> => {
   if (!newNoteContent.value.trim()) {
     showWarning('請輸入註記內容')
     return
   }
-  const newNote: TaskNote = {
-    id: `note-${Date.now()}`,
-    taskId: task.value?.id || '',
+  if (!authStore.user || !task.value) return
+  const result = await noteStore.addNote({
+    taskId: task.value.id,
     content: newNoteContent.value.trim(),
-    authorId: currentUser.id,
-    authorName: currentUser.name,
-    authorRole: currentUser.userRole,
-    createdAt: new Date().toISOString(),
+    authorId: authStore.user.id,
+    authorName: authStore.user.name,
+    authorRole: authStore.user.role,
+  })
+  if (result.success && result.data) {
+    taskNotes.value = [result.data, ...taskNotes.value]
   }
-  taskNotes.value = [newNote, ...taskNotes.value]
   showNoteModal.value = false
   newNoteContent.value = ''
   showSuccess('已新增註記')
@@ -385,7 +416,7 @@ const submitNote = (): void => {
       v-model:gitlab-url="gitlabIssueUrl"
       v-model:new-note-content="newNoteContent"
       :employees="employeeStore.employees"
-      :current-user="currentUser"
+      :current-user="currentUserForModal"
       @submit-progress="submitProgress"
       @assign-task="assignTask"
       @link-git-lab="linkGitLabIssue"

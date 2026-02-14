@@ -41,6 +41,30 @@ export const useEmployeeStore = defineStore('employees', () => {
     }
   }
 
+  const createEmployee = (input: Omit<MockEmployee, 'id'>): MockEmployee => {
+    const newEmployee: MockEmployee = {
+      id: `emp-${Date.now()}`,
+      ...input,
+    }
+    employees.value = [...employees.value, newEmployee]
+    return newEmployee
+  }
+
+  const updateEmployee = (id: string, input: Partial<MockEmployee>): MockEmployee | null => {
+    const idx = employees.value.findIndex(e => e.id === id)
+    if (idx === -1) return null
+    const updated = { ...employees.value[idx], ...input }
+    employees.value = employees.value.map((e, i) => (i === idx ? updated : e))
+    return updated
+  }
+
+  const deleteEmployee = (id: string): boolean => {
+    const idx = employees.value.findIndex(e => e.id === id)
+    if (idx === -1) return false
+    employees.value = employees.value.filter(e => e.id !== id)
+    return true
+  }
+
   return {
     employees,
     getByDepartment,
@@ -49,5 +73,8 @@ export const useEmployeeStore = defineStore('employees', () => {
     getEmployeeName,
     employeeOptions,
     fetchEmployees,
+    createEmployee,
+    updateEmployee,
+    deleteEmployee,
   }
 })

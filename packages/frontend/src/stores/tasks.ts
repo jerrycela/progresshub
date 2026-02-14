@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type {
   Task,
   TaskStatus,
+  TaskSourceType,
   FunctionType,
   ActionResult,
   CreateTaskInput,
@@ -65,6 +66,14 @@ export const useTaskStore = defineStore('tasks', () => {
 
   const isTaskLoading = (taskId: string) =>
     loading.value.claim[taskId] || loading.value.unclaim[taskId] || loading.value.update[taskId]
+
+  // 輔助函式：同步 poolTasks 陣列
+  const syncPoolTask = (taskId: string, updates: Partial<PoolTask>) => {
+    const idx = poolTasks.value.findIndex(t => t.id === taskId)
+    if (idx !== -1) {
+      poolTasks.value = poolTasks.value.map((t, i) => (i === idx ? { ...t, ...updates } : t))
+    }
+  }
 
   // Actions
   const fetchTasks = async (): Promise<ActionResult<Task[]>> => {
@@ -138,9 +147,13 @@ export const useTaskStore = defineStore('tasks', () => {
 
     try {
       // 樂觀更新
+      const now = new Date().toISOString()
       task.status = 'CLAIMED'
       task.assigneeId = userId
-      task.updatedAt = new Date().toISOString()
+      task.updatedAt = now
+
+      // 同步 poolTasks
+      syncPoolTask(taskId, { status: 'CLAIMED', assigneeId: userId, updatedAt: now })
 
       // 呼叫 service
       const result = await service.claimTask(taskId, userId)
@@ -158,6 +171,7 @@ export const useTaskStore = defineStore('tasks', () => {
       // 回滾
       task.status = originalStatus
       task.assigneeId = originalAssigneeId
+      syncPoolTask(taskId, { status: originalStatus, assigneeId: originalAssigneeId })
 
       const message = e instanceof Error ? e.message : '認領任務失敗'
       return {
@@ -194,10 +208,19 @@ export const useTaskStore = defineStore('tasks', () => {
 
     try {
       // 樂觀更新
+      const now = new Date().toISOString()
       task.status = 'UNCLAIMED'
       task.assigneeId = undefined
       task.progress = 0
-      task.updatedAt = new Date().toISOString()
+      task.updatedAt = now
+
+      // 同步 poolTasks
+      syncPoolTask(taskId, {
+        status: 'UNCLAIMED',
+        assigneeId: undefined,
+        progress: 0,
+        updatedAt: now,
+      })
 
       const result = await service.unclaimTask(taskId)
 
@@ -214,6 +237,11 @@ export const useTaskStore = defineStore('tasks', () => {
       task.status = originalStatus
       task.assigneeId = originalAssigneeId
       task.progress = originalProgress
+      syncPoolTask(taskId, {
+        status: originalStatus,
+        assigneeId: originalAssigneeId,
+        progress: originalProgress,
+      })
 
       const message = e instanceof Error ? e.message : '放棄認領失敗'
       return {
@@ -254,8 +282,9 @@ export const useTaskStore = defineStore('tasks', () => {
 
     try {
       // 樂觀更新
+      const now = new Date().toISOString()
       task.progress = progress
-      task.updatedAt = new Date().toISOString()
+      task.updatedAt = now
 
       // 自動更新狀態
       if (progress > 0 && task.status === 'CLAIMED') {
@@ -263,8 +292,13 @@ export const useTaskStore = defineStore('tasks', () => {
       }
       if (progress >= 100) {
         task.status = 'DONE'
-        task.closedAt = new Date().toISOString()
+        task.closedAt = now
       }
+
+      // 同步 poolTasks
+      const poolUpdates: Partial<PoolTask> = { progress, status: task.status, updatedAt: now }
+      if (task.closedAt) poolUpdates.closedAt = task.closedAt
+      syncPoolTask(taskId, poolUpdates)
 
       const result = await service.updateTaskProgress(taskId, progress, notes)
 
@@ -280,6 +314,7 @@ export const useTaskStore = defineStore('tasks', () => {
       // 回滾
       task.progress = originalProgress
       task.status = originalStatus
+      syncPoolTask(taskId, { progress: originalProgress, status: originalStatus })
 
       const message = e instanceof Error ? e.message : '更新進度失敗'
       return {
@@ -309,17 +344,18 @@ export const useTaskStore = defineStore('tasks', () => {
 
     try {
       // 樂觀更新
+      const now = new Date().toISOString()
       task.status = status
-      task.updatedAt = new Date().toISOString()
+      task.updatedAt = now
 
       if (status === 'DONE') {
         task.progress = 100
-        task.closedAt = new Date().toISOString()
+        task.closedAt = now
       }
 
       // 暫停時記錄時間
       if (status === 'PAUSED') {
-        task.pausedAt = new Date().toISOString()
+        task.pausedAt = now
       }
 
       // 從暫停恢復時清除暫停資訊
@@ -328,6 +364,22 @@ export const useTaskStore = defineStore('tasks', () => {
         task.pauseNote = undefined
         task.pausedAt = undefined
       }
+
+      // 同步 poolTasks
+      const poolUpdates: Partial<PoolTask> = { status, updatedAt: now }
+      if (status === 'DONE') {
+        poolUpdates.progress = 100
+        poolUpdates.closedAt = now
+      }
+      if (status === 'PAUSED') {
+        poolUpdates.pausedAt = now
+      }
+      if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
+        poolUpdates.pauseReason = undefined
+        poolUpdates.pauseNote = undefined
+        poolUpdates.pausedAt = undefined
+      }
+      syncPoolTask(taskId, poolUpdates)
 
       const result = await service.updateTaskStatus(taskId, status)
 
@@ -342,6 +394,7 @@ export const useTaskStore = defineStore('tasks', () => {
     } catch (e) {
       // 回滾
       task.status = originalStatus
+      syncPoolTask(taskId, { status: originalStatus })
 
       const message = e instanceof Error ? e.message : '更新狀態失敗'
       return {
@@ -382,26 +435,88 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.create = true
 
     try {
+      const now = new Date().toISOString()
+      const sourceType: TaskSourceType = input.sourceType || 'POOL'
+
+      // 依來源類型決定狀態與 assigneeId
+      let status: Task['status'] = 'UNCLAIMED'
+      let assigneeId: string | undefined = undefined
+      if (sourceType === 'ASSIGNED' && input.assigneeId) {
+        status = 'CLAIMED'
+        assigneeId = input.assigneeId
+      } else if (sourceType === 'SELF_CREATED' && input.createdBy) {
+        status = 'CLAIMED'
+        assigneeId = input.createdBy.id
+      }
+
       const newTask: Task = {
         id: `task-${Date.now()}`,
         title: input.title.trim(),
         description: input.description,
-        status: 'UNCLAIMED',
+        status,
         priority: input.priority || 'MEDIUM',
         progress: 0,
         projectId: input.projectId,
+        assigneeId,
         functionTags: input.functionTags || [],
         startDate: input.startDate,
         dueDate: input.dueDate,
         estimatedHours: input.estimatedHours,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        dependsOnTaskIds: input.dependsOnTaskIds,
+        createdAt: now,
+        updatedAt: now,
       }
       tasks.value = [...tasks.value, newTask]
+
+      // 同時建立 PoolTask
+      const newPoolTask: PoolTask = {
+        ...newTask,
+        sourceType,
+        createdBy: input.createdBy || { id: 'unknown', name: '未知' },
+        department: input.department as PoolTask['department'],
+        canEdit: true,
+        canDelete: true,
+      }
+      poolTasks.value = [...poolTasks.value, newPoolTask]
+
       return { success: true, data: newTask }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '建立任務失敗'
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR' as const, message },
+      }
     } finally {
       loading.value.create = false
     }
+  }
+
+  const deleteTask = (taskId: string): ActionResult<void> => {
+    const idx = tasks.value.findIndex(t => t.id === taskId)
+    if (idx === -1) {
+      return {
+        success: false,
+        error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
+      }
+    }
+    tasks.value = tasks.value.filter(t => t.id !== taskId)
+    poolTasks.value = poolTasks.value.filter(t => t.id !== taskId)
+    return { success: true }
+  }
+
+  const updateTask = (taskId: string, input: Partial<Task>): ActionResult<Task> => {
+    const idx = tasks.value.findIndex(t => t.id === taskId)
+    if (idx === -1) {
+      return {
+        success: false,
+        error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
+      }
+    }
+    const now = new Date().toISOString()
+    const updated = { ...tasks.value[idx], ...input, updatedAt: now }
+    tasks.value = tasks.value.map((t, i) => (i === idx ? updated : t))
+    syncPoolTask(taskId, { ...input, updatedAt: now })
+    return { success: true, data: updated }
   }
 
   const clearError = () => {
@@ -434,6 +549,8 @@ export const useTaskStore = defineStore('tasks', () => {
     updateTaskProgress,
     updateTaskStatus,
     createTask,
+    deleteTask,
+    updateTask,
     clearError,
   }
 })

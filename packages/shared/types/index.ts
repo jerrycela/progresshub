@@ -232,6 +232,10 @@ export interface CreateTaskInput {
   dueDate?: string
   estimatedHours?: number
   dependsOnTaskIds?: string[]  // 任務關聯 - Phase 1
+  sourceType?: TaskSourceType
+  assigneeId?: string
+  department?: string
+  createdBy?: { id: string; name: string; userRole?: UserRole }
 }
 
 // ============================================

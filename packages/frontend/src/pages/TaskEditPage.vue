@@ -69,15 +69,20 @@ const canSubmit = computed(() => {
 
 // 提交表單
 const handleSubmit = (): void => {
-  const _taskData = {
-    id: originalTask.value?.id,
-    ...form,
+  if (!originalTask.value) return
+  const result = taskStore.updateTask(originalTask.value.id, {
+    title: form.title.trim(),
+    description: form.description || undefined,
+    projectId: form.projectId,
     assigneeId: form.assigneeId || undefined,
+    functionTags: [...form.functionTags],
+    startDate: form.startDate || undefined,
+    dueDate: form.dueDate || undefined,
+  })
+  if (result.success) {
+    showSuccess(`任務「${form.title}」已更新`)
+    router.push(`/task-pool/${originalTask.value.id}`)
   }
-  void _taskData
-
-  showSuccess(`任務「${form.title}」已更新`)
-  router.push(`/task-pool/${originalTask.value?.id}`)
 }
 
 // 取消編輯

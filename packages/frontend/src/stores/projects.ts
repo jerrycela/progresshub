@@ -60,6 +60,13 @@ export const useProjectStore = defineStore('projects', () => {
     return updated
   }
 
+  const deleteProject = (id: string): boolean => {
+    const idx = projects.value.findIndex(p => p.id === id)
+    if (idx === -1) return false
+    projects.value = projects.value.filter(p => p.id !== id)
+    return true
+  }
+
   return {
     projects,
     activeProjects,
@@ -69,5 +76,6 @@ export const useProjectStore = defineStore('projects', () => {
     fetchProjects,
     createProject,
     updateProject,
+    deleteProject,
   }
 })

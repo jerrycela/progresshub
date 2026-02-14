@@ -5,7 +5,8 @@ import { useProjectStore } from '@/stores/projects'
 import { useDepartmentStore } from '@/stores/departments'
 import { useEmployeeStore } from '@/stores/employees'
 import { useTaskStore } from '@/stores/tasks'
-import type { UserRole } from 'shared/types'
+import { useAuthStore } from '@/stores/auth'
+import type { TaskSourceType } from 'shared/types'
 import { useToast } from '@/composables/useToast'
 import TaskForm from '@/components/task/TaskForm.vue'
 import type { TaskFormData } from '@/components/task/TaskForm.vue'
@@ -22,41 +23,36 @@ const projectStore = useProjectStore()
 const departmentStore = useDepartmentStore()
 const employeeStore = useEmployeeStore()
 const taskStore = useTaskStore()
+const authStore = useAuthStore()
 
-// 任務來源類型
-type SourceType = 'POOL' | 'ASSIGNED' | 'SELF_CREATED'
-
-const sourceType = ref<SourceType>('POOL')
-
-// 模擬當前登入者（PM 角色可建立任務池任務）
-const currentUser = {
-  id: 'emp-6',
-  name: '黃美玲',
-  userRole: 'PM' as UserRole,
-}
+const sourceType = ref<TaskSourceType>('POOL')
 
 // 來源類型選項
-const sourceTypeOptions: { value: SourceType; label: string; description: string; icon: string }[] =
-  [
-    {
-      value: 'POOL',
-      label: '任務池任務',
-      description: '發布到任務池，讓成員自行認領',
-      icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
-    },
-    {
-      value: 'ASSIGNED',
-      label: '指派任務',
-      description: '直接指派給特定成員',
-      icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
-    },
-    {
-      value: 'SELF_CREATED',
-      label: '自建任務',
-      description: '為自己建立的個人任務',
-      icon: 'M12 4v16m8-8H4',
-    },
-  ]
+const sourceTypeOptions: {
+  value: TaskSourceType
+  label: string
+  description: string
+  icon: string
+}[] = [
+  {
+    value: 'POOL',
+    label: '任務池任務',
+    description: '發布到任務池，讓成員自行認領',
+    icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+  },
+  {
+    value: 'ASSIGNED',
+    label: '指派任務',
+    description: '直接指派給特定成員',
+    icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+  },
+  {
+    value: 'SELF_CREATED',
+    label: '自建任務',
+    description: '為自己建立的個人任務',
+    icon: 'M12 4v16m8-8H4',
+  },
+]
 
 // 表單狀態（reactive 物件傳給 TaskForm）
 const form = reactive<TaskFormData>({
@@ -94,6 +90,17 @@ const handleSubmit = async (): Promise<void> => {
     functionTags: form.functionTags,
     startDate: form.startDate,
     dueDate: form.dueDate,
+    sourceType: sourceType.value,
+    assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
+    department: form.department || undefined,
+    createdBy: authStore.user
+      ? {
+          id: authStore.user.id,
+          name: authStore.user.name,
+          userRole: authStore.user.role,
+        }
+      : undefined,
+    dependsOnTaskIds: dependsOnTaskIds.value.length > 0 ? dependsOnTaskIds.value : undefined,
   })
 
   if (result.success) {
@@ -137,7 +144,7 @@ const handleCancel = (): void => {
       <div>
         <h1 class="text-2xl font-bold" style="color: var(--text-primary)">建立任務</h1>
         <p class="text-sm mt-1" style="color: var(--text-secondary)">
-          建立者: {{ currentUser.name }} ({{ currentUser.userRole }})
+          建立者: {{ authStore.user?.name }} ({{ authStore.user?.role }})
         </p>
       </div>
     </div>

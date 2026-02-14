@@ -124,6 +124,21 @@ describe('useTaskStore', () => {
       expect(updatedTask?.assigneeId).toBe(userId)
     })
 
+    it('should sync poolTasks after claiming', async () => {
+      const store = setupWithMockData()
+      const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
+      const poolTaskExists = store.poolTasks.some(t => t.id === unclaimedTask.id)
+      if (!poolTaskExists) return // skip if no matching pool task
+
+      const claimPromise = store.claimTask(unclaimedTask.id, 'emp-1')
+      await vi.advanceTimersByTimeAsync(200)
+      await claimPromise
+
+      const poolTask = store.getPoolTaskById(unclaimedTask.id)
+      expect(poolTask?.status).toBe('CLAIMED')
+      expect(poolTask?.assigneeId).toBe('emp-1')
+    })
+
     it('should fail when task is not UNCLAIMED', async () => {
       const store = setupWithMockData()
       const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
@@ -191,6 +206,22 @@ describe('useTaskStore', () => {
       expect(result.data?.status).toBe('UNCLAIMED')
     })
 
+    it('should sync poolTasks after unclaiming', async () => {
+      const store = setupWithMockData()
+      const claimedTask = store.tasks.find(t => t.status === 'CLAIMED')!
+      const poolTaskExists = store.poolTasks.some(t => t.id === claimedTask.id)
+      if (!poolTaskExists) return
+
+      const unclaimPromise = store.unclaimTask(claimedTask.id)
+      await vi.advanceTimersByTimeAsync(200)
+      await unclaimPromise
+
+      const poolTask = store.getPoolTaskById(claimedTask.id)
+      expect(poolTask?.status).toBe('UNCLAIMED')
+      expect(poolTask?.assigneeId).toBeUndefined()
+      expect(poolTask?.progress).toBe(0)
+    })
+
     it('should fail when task is UNCLAIMED', async () => {
       const store = setupWithMockData()
       const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
@@ -252,6 +283,20 @@ describe('useTaskStore', () => {
       expect(result.data?.status).toBe('DONE')
       expect(result.data?.progress).toBe(100)
       expect(result.data?.closedAt).toBeDefined()
+    })
+
+    it('should sync poolTasks after progress update', async () => {
+      const store = setupWithMockData()
+      const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
+      const poolTaskExists = store.poolTasks.some(t => t.id === inProgressTask.id)
+      if (!poolTaskExists) return
+
+      const updatePromise = store.updateTaskProgress(inProgressTask.id, 75)
+      await vi.advanceTimersByTimeAsync(200)
+      await updatePromise
+
+      const poolTask = store.getPoolTaskById(inProgressTask.id)
+      expect(poolTask?.progress).toBe(75)
     })
 
     it('should reject progress below 0', async () => {
@@ -322,6 +367,58 @@ describe('useTaskStore', () => {
       expect(result.data?.projectId).toBe('proj-1')
       expect(result.data?.functionTags).toEqual(['PROGRAMMING'])
       expect(store.tasks.length).toBe(initialCount + 1)
+    })
+
+    it('should also create a PoolTask in poolTasks', async () => {
+      const store = setupWithMockData()
+      const initialPoolCount = store.poolTasks.length
+
+      const result = await store.createTask({
+        title: 'Pool sync test',
+        projectId: 'proj-1',
+        createdBy: { id: 'emp-1', name: 'Test User' },
+      })
+
+      expect(result.success).toBe(true)
+      expect(store.poolTasks.length).toBe(initialPoolCount + 1)
+
+      const poolTask = store.poolTasks.find(t => t.id === result.data?.id)
+      expect(poolTask).toBeDefined()
+      expect(poolTask?.sourceType).toBe('POOL')
+      expect(poolTask?.createdBy.name).toBe('Test User')
+      expect(poolTask?.canEdit).toBe(true)
+      expect(poolTask?.canDelete).toBe(true)
+    })
+
+    it('should set CLAIMED status for ASSIGNED source type', async () => {
+      const store = setupWithMockData()
+
+      const result = await store.createTask({
+        title: 'Assigned task',
+        projectId: 'proj-1',
+        sourceType: 'ASSIGNED',
+        assigneeId: 'emp-2',
+        createdBy: { id: 'emp-1', name: 'PM' },
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.status).toBe('CLAIMED')
+      expect(result.data?.assigneeId).toBe('emp-2')
+    })
+
+    it('should set CLAIMED status for SELF_CREATED source type', async () => {
+      const store = setupWithMockData()
+
+      const result = await store.createTask({
+        title: 'Self-created task',
+        projectId: 'proj-1',
+        sourceType: 'SELF_CREATED',
+        createdBy: { id: 'emp-3', name: 'Self User' },
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.status).toBe('CLAIMED')
+      expect(result.data?.assigneeId).toBe('emp-3')
     })
 
     it('should fail without a title', async () => {
@@ -417,6 +514,79 @@ describe('useTaskStore', () => {
   })
 
   // ------------------------------------------
+  // deleteTask
+  // ------------------------------------------
+  describe('deleteTask', () => {
+    it('should remove task from both tasks and poolTasks', () => {
+      const store = setupWithMockData()
+      const taskToDelete = store.tasks[0]
+      const initialTaskCount = store.tasks.length
+      const initialPoolCount = store.poolTasks.length
+      const poolTaskExists = store.poolTasks.some(t => t.id === taskToDelete.id)
+
+      const result = store.deleteTask(taskToDelete.id)
+
+      expect(result.success).toBe(true)
+      expect(store.tasks.length).toBe(initialTaskCount - 1)
+      expect(store.getTaskById(taskToDelete.id)).toBeUndefined()
+      if (poolTaskExists) {
+        expect(store.poolTasks.length).toBe(initialPoolCount - 1)
+        expect(store.getPoolTaskById(taskToDelete.id)).toBeUndefined()
+      }
+    })
+
+    it('should fail when task does not exist', () => {
+      const store = setupWithMockData()
+
+      const result = store.deleteTask('nonexistent-id')
+
+      expect(result.success).toBe(false)
+      expect(result.error?.code).toBe('TASK_NOT_FOUND')
+    })
+  })
+
+  // ------------------------------------------
+  // updateTask
+  // ------------------------------------------
+  describe('updateTask', () => {
+    it('should update task fields', () => {
+      const store = setupWithMockData()
+      const task = store.tasks[0]
+
+      const result = store.updateTask(task.id, {
+        title: 'Updated Title',
+        description: 'Updated desc',
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.data?.title).toBe('Updated Title')
+      expect(result.data?.description).toBe('Updated desc')
+      expect(result.data?.updatedAt).toBeDefined()
+    })
+
+    it('should sync poolTasks after update', () => {
+      const store = setupWithMockData()
+      const task = store.tasks[0]
+      const poolTaskExists = store.poolTasks.some(t => t.id === task.id)
+      if (!poolTaskExists) return
+
+      store.updateTask(task.id, { title: 'Synced Title' })
+
+      const poolTask = store.getPoolTaskById(task.id)
+      expect(poolTask?.title).toBe('Synced Title')
+    })
+
+    it('should fail when task does not exist', () => {
+      const store = setupWithMockData()
+
+      const result = store.updateTask('nonexistent-id', { title: 'Nope' })
+
+      expect(result.success).toBe(false)
+      expect(result.error?.code).toBe('TASK_NOT_FOUND')
+    })
+  })
+
+  // ------------------------------------------
   // updateTaskStatus
   // ------------------------------------------
   describe('updateTaskStatus', () => {
@@ -432,6 +602,21 @@ describe('useTaskStore', () => {
       expect(result.data?.status).toBe('DONE')
       expect(result.data?.progress).toBe(100)
       expect(result.data?.closedAt).toBeDefined()
+    })
+
+    it('should sync poolTasks after status update', async () => {
+      const store = setupWithMockData()
+      const inProgressTask = store.tasks.find(t => t.status === 'IN_PROGRESS')!
+      const poolTaskExists = store.poolTasks.some(t => t.id === inProgressTask.id)
+      if (!poolTaskExists) return
+
+      const updatePromise = store.updateTaskStatus(inProgressTask.id, 'DONE')
+      await vi.advanceTimersByTimeAsync(200)
+      await updatePromise
+
+      const poolTask = store.getPoolTaskById(inProgressTask.id)
+      expect(poolTask?.status).toBe('DONE')
+      expect(poolTask?.progress).toBe(100)
     })
 
     it('should set pausedAt when status changes to PAUSED', async () => {
