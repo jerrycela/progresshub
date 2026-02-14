@@ -10,9 +10,14 @@ import type { Task } from 'shared/types'
 
 interface Props {
   relatedTasks: Task[]
+  label?: string
+  emptyDescription?: string
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  label: '關聯任務',
+  emptyDescription: '此任務目前沒有前置任務依賴',
+})
 
 const emit = defineEmits<{
   viewTask: [task: Task]
@@ -30,7 +35,9 @@ const linkIcon =
       <svg class="w-5 h-5 text-samurai-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="linkIcon" />
       </svg>
-      <h3 class="text-lg font-semibold text-carbon-black">關聯任務 ({{ relatedTasks.length }})</h3>
+      <h3 class="text-lg font-semibold text-carbon-black">
+        {{ props.label }} ({{ relatedTasks.length }})
+      </h3>
     </div>
 
     <!-- 關聯任務清單 -->
@@ -47,8 +54,8 @@ const linkIcon =
     <EmptyState
       v-else
       :icon="linkIcon"
-      title="無關聯任務"
-      description="此任務目前沒有前置任務依賴"
+      :title="`無${props.label}`"
+      :description="props.emptyDescription"
     />
   </div>
 </template>

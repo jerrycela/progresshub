@@ -51,13 +51,23 @@ watch(
   },
 )
 
-// 計算關聯任務清單
-const relatedTasks = computed((): Task[] => {
+// 計算前置任務（此任務依賴的任務）
+const dependsOnTasks = computed((): Task[] => {
   if (!currentTask.value?.dependsOnTaskIds) return []
 
   return currentTask.value.dependsOnTaskIds
     .map((taskId: string) => props.allTasks.find((t: Task) => t.id === taskId))
     .filter((t: Task | undefined): t is Task => t !== undefined)
+})
+
+// 計算後續任務（依賴此任務的任務）
+const dependedByTasks = computed((): Task[] => {
+  if (!currentTask.value) return []
+  const currentId = currentTask.value.id
+
+  return props.allTasks.filter(
+    (t: Task) => t.dependsOnTaskIds && t.dependsOnTaskIds.includes(currentId),
+  )
 })
 
 // 處理任務跳轉
@@ -122,8 +132,21 @@ const handleBreadcrumbClick = (index: number): void => {
       <!-- 任務基本資訊 -->
       <TaskBasicInfo :task="currentTask" />
 
-      <!-- 關聯任務清單 -->
-      <TaskRelationList :related-tasks="relatedTasks" @view-task="handleViewTask" />
+      <!-- 前置任務清單（此任務依賴的） -->
+      <TaskRelationList
+        :related-tasks="dependsOnTasks"
+        label="前置任務"
+        empty-description="此任務沒有前置依賴"
+        @view-task="handleViewTask"
+      />
+
+      <!-- 後續任務清單（依賴此任務的） -->
+      <TaskRelationList
+        :related-tasks="dependedByTasks"
+        label="後續任務"
+        empty-description="沒有任務依賴此任務"
+        @view-task="handleViewTask"
+      />
     </div>
   </Modal>
 </template>

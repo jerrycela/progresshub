@@ -47,7 +47,10 @@ defineProps<{
       class="absolute top-0 bottom-0 w-0.5 bg-danger z-10"
       :style="{ left: `${todayPosition}%` }"
     >
-      <div class="absolute -top-0 left-1 text-xs text-danger font-semibold whitespace-nowrap">
+      <div
+        class="absolute left-1/2 -translate-x-1/2 text-xs text-danger font-semibold whitespace-nowrap"
+        style="top: calc(100% + 2px)"
+      >
         今天
       </div>
     </div>
