@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Department } from 'shared/types'
 import { mockDepartments } from '@/mocks/unified'
 
@@ -10,10 +10,12 @@ export const useDepartmentStore = defineStore('departments', () => {
 
   const getDepartmentName = (id: Department) => departments.value.find(d => d.id === id)?.name ?? ''
 
-  const departmentOptions = departments.value.map(d => ({
-    value: d.id,
-    label: d.name,
-  }))
+  const departmentOptions = computed(() =>
+    departments.value.map(d => ({
+      value: d.id,
+      label: d.name,
+    })),
+  )
 
   return {
     departments,

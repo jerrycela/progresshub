@@ -1,4 +1,4 @@
-import { PrismaClient, PermissionLevel, TaskStatus } from "@prisma/client";
+import { PrismaClient, PermissionLevel, TaskStatus, TimeEntryStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -643,6 +643,188 @@ async function main() {
     });
   }
   console.log(`  Created ${progressLogs.length} progress logs`);
+
+  // ============================================
+  // Time Categories
+  // ============================================
+  const timeCategories = [
+    {
+      id: "tc-1",
+      name: "程式開發",
+      color: "#3B82F6",
+      billable: true,
+      sortOrder: 1,
+    },
+    {
+      id: "tc-2",
+      name: "美術設計",
+      color: "#8B5CF6",
+      billable: true,
+      sortOrder: 2,
+    },
+    {
+      id: "tc-3",
+      name: "企劃撰寫",
+      color: "#10B981",
+      billable: true,
+      sortOrder: 3,
+    },
+    {
+      id: "tc-4",
+      name: "會議",
+      color: "#F59E0B",
+      billable: false,
+      sortOrder: 4,
+    },
+    {
+      id: "tc-5",
+      name: "測試 / QA",
+      color: "#EF4444",
+      billable: true,
+      sortOrder: 5,
+    },
+  ];
+
+  for (const tc of timeCategories) {
+    await prisma.timeCategory.upsert({
+      where: { id: tc.id },
+      update: {},
+      create: tc,
+    });
+  }
+  console.log(`  Created ${timeCategories.length} time categories`);
+
+  // ============================================
+  // Time Entries
+  // ============================================
+  const timeEntries = [
+    {
+      id: "te-1",
+      employeeId: "emp-4",
+      projectId: "proj-2",
+      taskId: "task-3",
+      categoryId: "tc-1",
+      date: new Date("2026-02-03"),
+      hours: 6.5,
+      description: "戰鬥系統核心架構開發",
+      status: TimeEntryStatus.APPROVED,
+      approvedBy: "emp-5",
+      approvedAt: new Date("2026-02-04T09:00:00Z"),
+    },
+    {
+      id: "te-2",
+      employeeId: "emp-4",
+      projectId: "proj-2",
+      taskId: "task-3",
+      categoryId: "tc-1",
+      date: new Date("2026-02-07"),
+      hours: 7.0,
+      description: "基礎攻擊邏輯實作",
+      status: TimeEntryStatus.APPROVED,
+      approvedBy: "emp-5",
+      approvedAt: new Date("2026-02-08T09:00:00Z"),
+    },
+    {
+      id: "te-3",
+      employeeId: "emp-1",
+      projectId: "proj-1",
+      taskId: "task-4",
+      categoryId: "tc-2",
+      date: new Date("2026-02-12"),
+      hours: 4.0,
+      description: "戰鬥音效素材收集與篩選",
+      status: TimeEntryStatus.APPROVED,
+      approvedBy: "emp-3",
+      approvedAt: new Date("2026-02-13T09:00:00Z"),
+    },
+    {
+      id: "te-4",
+      employeeId: "emp-2",
+      projectId: "proj-3",
+      taskId: "task-5",
+      categoryId: "tc-2",
+      date: new Date("2026-02-10"),
+      hours: 8.0,
+      description: "賽車模型建模（第 7-8 款）",
+      status: TimeEntryStatus.PENDING,
+    },
+    {
+      id: "te-5",
+      employeeId: "emp-6",
+      projectId: "proj-1",
+      taskId: null,
+      categoryId: "tc-4",
+      date: new Date("2026-02-05"),
+      hours: 2.0,
+      description: "專案進度會議",
+      status: TimeEntryStatus.APPROVED,
+      approvedBy: "emp-7",
+      approvedAt: new Date("2026-02-05T17:00:00Z"),
+    },
+  ];
+
+  for (const te of timeEntries) {
+    await prisma.timeEntry.upsert({
+      where: { id: te.id },
+      update: {},
+      create: {
+        id: te.id,
+        employeeId: te.employeeId,
+        projectId: te.projectId,
+        taskId: te.taskId,
+        categoryId: te.categoryId,
+        date: te.date,
+        hours: te.hours,
+        description: te.description,
+        status: te.status,
+        approvedBy: te.approvedBy,
+        approvedAt: te.approvedAt,
+      },
+    });
+  }
+  console.log(`  Created ${timeEntries.length} time entries`);
+
+  // ============================================
+  // Time Estimates
+  // ============================================
+  const timeEstimates = [
+    {
+      id: "test-1",
+      taskId: "task-3",
+      estimatedHours: 40.0,
+      estimatedBy: "emp-5",
+      notes: "包含核心戰鬥邏輯、技能系統、傷害計算",
+    },
+    {
+      id: "test-2",
+      taskId: "task-7",
+      estimatedHours: 24.0,
+      estimatedBy: "emp-10",
+      notes: "新手教學流程 + 觸發條件",
+    },
+    {
+      id: "test-3",
+      taskId: "task-9",
+      estimatedHours: 60.0,
+      estimatedBy: "emp-10",
+      notes: "匹配演算法 + API + 壓力測試",
+    },
+  ];
+
+  for (const te of timeEstimates) {
+    await prisma.timeEstimate.upsert({
+      where: { id: te.id },
+      update: {},
+      create: {
+        id: te.id,
+        taskId: te.taskId,
+        estimatedHours: te.estimatedHours,
+        estimatedBy: te.estimatedBy,
+        notes: te.notes,
+      },
+    });
+  }
+  console.log(`  Created ${timeEstimates.length} time estimates`);
 
   console.log("Seed completed successfully!");
 }

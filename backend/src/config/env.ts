@@ -9,6 +9,8 @@ interface EnvConfig {
   DIRECT_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: string;
   SLACK_CLIENT_ID: string;
   SLACK_CLIENT_SECRET: string;
   SLACK_SIGNING_SECRET: string;
@@ -31,10 +33,29 @@ const getJwtSecret = (): string => {
     );
   }
 
+  // Using console.warn here to avoid circular dependency with logger (logger imports env)
   console.warn(
-    "⚠️ [安全警告] JWT_SECRET 未設定，使用開發環境預設值。請勿在生產環境中使用。",
+    "[安全警告] JWT_SECRET 未設定，使用開發環境預設值。請勿在生產環境中使用。",
   );
   return "dev-only-secret-key";
+};
+
+const getJwtRefreshSecret = (): string => {
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "JWT_REFRESH_SECRET 環境變數未設定。生產環境中必須設定此變數，禁止使用預設值。",
+    );
+  }
+
+  console.warn(
+    "[安全警告] JWT_REFRESH_SECRET 未設定，使用開發環境預設值。請勿在生產環境中使用。",
+  );
+  return "dev-only-refresh-secret-key";
 };
 
 export const env: EnvConfig = {
@@ -43,8 +64,9 @@ export const env: EnvConfig = {
   DATABASE_URL: process.env.DATABASE_URL || "",
   DIRECT_URL: process.env.DIRECT_URL || process.env.DATABASE_URL || "",
   JWT_SECRET: getJwtSecret(),
-  // TODO: 實作 refresh token 機制，access token 改為更短的過期時間（如 1h）
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "24h",
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "2h",
+  JWT_REFRESH_SECRET: getJwtRefreshSecret(),
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "7d",
   SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID || "",
   SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET || "",
   SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || "",
@@ -72,8 +94,9 @@ if (missingVars.length > 0 && process.env.NODE_ENV === "production") {
 }
 
 if (missingVars.length > 0) {
+  // Using console.warn here to avoid circular dependency with logger (logger imports env)
   console.warn(
-    `⚠️ Missing environment variables (dev mode): ${missingVars.join(", ")}`,
+    `Missing environment variables (dev mode): ${missingVars.join(", ")}`,
   );
 }
 

@@ -1,19 +1,27 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { employeeService } from "../services/employeeService";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import {
+  authenticate,
+  authorize,
+  AuthRequest,
+  authorizeSelfOrAdmin,
+} from "../middleware/auth";
+import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel } from "@prisma/client";
 import {
   sendSuccess,
   sendPaginatedSuccess,
   sendError,
 } from "../utils/response";
+import { sanitizeBody } from "../middleware/sanitize";
 import { toUserDTO } from "../mappers";
 
 const router = Router();
 
 // 所有員工路由都需要認證
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/employees
@@ -154,7 +162,8 @@ router.post(
  */
 router.put(
   "/:id",
-  authorize(PermissionLevel.ADMIN),
+  authorizeSelfOrAdmin,
+  auditLog("UPDATE_EMPLOYEE"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid employee ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
@@ -211,6 +220,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
+  auditLog("DELETE_EMPLOYEE"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid employee ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);

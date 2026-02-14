@@ -153,8 +153,10 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <!-- 頁面標題 (RWD: 迭代 28) -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div>
-        <h1 class="text-xl md:text-2xl font-bold text-gray-900">員工管理</h1>
-        <p class="text-sm md:text-base text-gray-500 mt-1">管理團隊成員帳號與權限</p>
+        <h1 class="text-xl md:text-2xl font-bold" style="color: var(--text-primary)">員工管理</h1>
+        <p class="text-sm md:text-base mt-1" style="color: var(--text-tertiary)">
+          管理團隊成員帳號與權限
+        </p>
       </div>
       <Button @click="openCreateModal">
         <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,19 +188,30 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
       <div class="hidden md:block overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-gray-200">
-              <th class="text-left py-3 px-4 font-medium text-gray-700">成員</th>
-              <th class="text-left py-3 px-4 font-medium text-gray-700">信箱</th>
-              <th class="text-left py-3 px-4 font-medium text-gray-700">角色</th>
-              <th class="text-left py-3 px-4 font-medium text-gray-700">職能</th>
-              <th class="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+            <tr style="border-bottom: 1px solid var(--border-primary)">
+              <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary)">
+                成員
+              </th>
+              <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary)">
+                信箱
+              </th>
+              <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary)">
+                角色
+              </th>
+              <th class="text-left py-3 px-4 font-medium" style="color: var(--text-secondary)">
+                職能
+              </th>
+              <th class="text-right py-3 px-4 font-medium" style="color: var(--text-secondary)">
+                操作
+              </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
+          <tbody>
             <tr
               v-for="user in filteredUsers"
               :key="user.id"
-              class="hover:bg-gray-50 transition-colors duration-200"
+              class="hover-bg transition-colors duration-200"
+              style="border-top: 1px solid var(--border-primary)"
             >
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
@@ -207,12 +220,15 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                       user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`
                     "
                     :alt="user.name"
-                    class="w-10 h-10 rounded-full bg-gray-100"
+                    class="w-10 h-10 rounded-full"
+                    style="background-color: var(--bg-tertiary)"
                   />
-                  <span class="font-medium text-gray-900">{{ user.name }}</span>
+                  <span class="font-medium" style="color: var(--text-primary)">{{
+                    user.name
+                  }}</span>
                 </div>
               </td>
-              <td class="py-3 px-4 text-gray-600">{{ user.email }}</td>
+              <td class="py-3 px-4" style="color: var(--text-secondary)">{{ user.email }}</td>
               <td class="py-3 px-4">
                 <Badge :variant="roleBadgeVariant(user.role)" size="sm">
                   {{ roleLabels[user.role] }}
@@ -236,18 +252,20 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
         <div
           v-for="user in filteredUsers"
           :key="user.id"
-          class="p-4 bg-gray-50 rounded-lg space-y-3"
+          class="p-4 rounded-lg space-y-3"
+          style="background-color: var(--bg-secondary)"
         >
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <img
                 :src="user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`"
                 :alt="user.name"
-                class="w-12 h-12 rounded-full bg-gray-100"
+                class="w-12 h-12 rounded-full"
+                style="background-color: var(--bg-tertiary)"
               />
               <div>
-                <p class="font-medium text-gray-900">{{ user.name }}</p>
-                <p class="text-sm text-gray-500">{{ user.email }}</p>
+                <p class="font-medium" style="color: var(--text-primary)">{{ user.name }}</p>
+                <p class="text-sm" style="color: var(--text-tertiary)">{{ user.email }}</p>
               </div>
             </div>
             <Button variant="ghost" size="sm" @click="openEditModal(user)"> 編輯 </Button>

@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { projectService } from "../services/projectService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel, ProjectStatus } from "@prisma/client";
 import logger from "../config/logger";
 import {
@@ -9,12 +10,14 @@ import {
   sendPaginatedSuccess,
   sendError,
 } from "../utils/response";
+import { sanitizeBody } from "../middleware/sanitize";
 import { toProjectDTO } from "../mappers";
 
 const router = Router();
 
 // 所有專案路由都需要認證
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/projects
@@ -192,6 +195,7 @@ router.post(
 router.put(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  auditLog("UPDATE_PROJECT"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid project ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
@@ -251,6 +255,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
+  auditLog("DELETE_PROJECT"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);

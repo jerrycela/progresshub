@@ -2,6 +2,7 @@ import cron from "node-cron";
 import { WebClient } from "@slack/web-api";
 import prisma from "../config/database";
 import { env } from "../config/env";
+import logger from "../config/logger";
 
 const slackClient = new WebClient(env.SLACK_BOT_TOKEN);
 
@@ -13,7 +14,7 @@ const REMINDER_TIMEZONE = process.env.REMINDER_TIMEZONE || "Asia/Taipei";
  */
 async function checkUnreportedEmployees(): Promise<void> {
   try {
-    console.log(
+    logger.info(
       `[Scheduler] ${new Date().toISOString()} - Checking unreported employees...`,
     );
 
@@ -51,11 +52,11 @@ async function checkUnreportedEmployees(): Promise<void> {
       }
     }
 
-    console.log(
+    logger.info(
       `[Scheduler] ${new Date().toISOString()} - Reminder check completed`,
     );
   } catch (error) {
-    console.error("[Scheduler] Error checking unreported employees:", error);
+    logger.error("[Scheduler] Error checking unreported employees:", error);
   }
 }
 
@@ -68,7 +69,7 @@ async function sendReminder(
 ): Promise<void> {
   try {
     if (!env.SLACK_BOT_TOKEN) {
-      console.warn(
+      logger.warn(
         "[Scheduler] SLACK_BOT_TOKEN not configured, skipping reminder",
       );
       return;
@@ -95,11 +96,11 @@ async function sendReminder(
       ],
     });
 
-    console.log(
-      `[Scheduler] ✅ Reminder sent to ${employeeName} (${slackUserId})`,
+    logger.info(
+      `[Scheduler] Reminder sent to ${employeeName} (${slackUserId})`,
     );
   } catch (error) {
-    console.error(
+    logger.error(
       `[Scheduler] Error sending reminder to ${employeeName}:`,
       error,
     );
@@ -120,16 +121,16 @@ function timeToCron(time: string): string {
 export function startScheduler(): void {
   const cronExpression = timeToCron(REMINDER_TIME);
 
-  console.log(
-    `[Scheduler] 📅 Configured for: ${REMINDER_TIME} (${REMINDER_TIMEZONE})`,
+  logger.info(
+    `[Scheduler] Configured for: ${REMINDER_TIME} (${REMINDER_TIMEZONE})`,
   );
-  console.log(`[Scheduler] 📅 Cron expression: ${cronExpression}`);
+  logger.info(`[Scheduler] Cron expression: ${cronExpression}`);
 
   cron.schedule(
     cronExpression,
     async () => {
-      console.log(
-        `[Scheduler] 🔔 Running daily reminder check at ${new Date().toISOString()}`,
+      logger.info(
+        `[Scheduler] Running daily reminder check at ${new Date().toISOString()}`,
       );
       await checkUnreportedEmployees();
     },
@@ -138,11 +139,11 @@ export function startScheduler(): void {
     },
   );
 
-  console.log("[Scheduler] 🚀 Scheduler started successfully");
+  logger.info("[Scheduler] Scheduler started successfully");
 
   // Run immediately on startup in development mode (for testing)
   if (env.NODE_ENV === "development") {
-    console.log("[Scheduler] 🧪 Running initial check (development mode)...");
+    logger.info("[Scheduler] Running initial check (development mode)...");
     checkUnreportedEmployees();
   }
 }

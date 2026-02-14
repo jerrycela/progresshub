@@ -1,6 +1,27 @@
 import prisma from "../config/database";
 import { Task, TaskStatus, Prisma } from "@prisma/client";
 
+// 合法的 functionTags 值（對齊前端 FunctionType）
+const VALID_FUNCTION_TAGS = [
+  "PLANNING",
+  "PROGRAMMING",
+  "ART",
+  "ANIMATION",
+  "SOUND",
+  "VFX",
+  "COMBAT",
+] as const;
+
+function validateFunctionTags(tags: string[]): void {
+  const invalid = tags.filter(
+    (t) =>
+      !VALID_FUNCTION_TAGS.includes(t as (typeof VALID_FUNCTION_TAGS)[number]),
+  );
+  if (invalid.length > 0) {
+    throw new Error(`Invalid functionTags: ${invalid.join(", ")}`);
+  }
+}
+
 // 狀態轉換規則（對齊前端 TaskStatusTransitions）
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   UNCLAIMED: ["CLAIMED"],
@@ -164,6 +185,19 @@ export class TaskService {
    * 建立任務
    */
   async createTask(data: CreateTaskDto): Promise<Task> {
+    if (data.functionTags && data.functionTags.length > 0) {
+      validateFunctionTags(data.functionTags);
+    }
+
+    if (data.dependencies && data.dependencies.length > 0) {
+      const existingTasks = await prisma.task.count({
+        where: { id: { in: data.dependencies } },
+      });
+      if (existingTasks !== data.dependencies.length) {
+        throw new Error("One or more dependency task IDs do not exist");
+      }
+    }
+
     return prisma.task.create({
       data: {
         projectId: data.projectId,
@@ -193,6 +227,19 @@ export class TaskService {
    * 更新任務
    */
   async updateTask(id: string, data: UpdateTaskDto): Promise<Task> {
+    if (data.functionTags && data.functionTags.length > 0) {
+      validateFunctionTags(data.functionTags);
+    }
+
+    if (data.dependencies && data.dependencies.length > 0) {
+      const existingTasks = await prisma.task.count({
+        where: { id: { in: data.dependencies } },
+      });
+      if (existingTasks !== data.dependencies.length) {
+        throw new Error("One or more dependency task IDs do not exist");
+      }
+    }
+
     const updateData: Prisma.TaskUpdateInput = {};
 
     if (data.name !== undefined) updateData.name = data.name;

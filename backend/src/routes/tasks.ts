@@ -2,7 +2,13 @@ import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
 import { taskNoteService } from "../services/taskNoteService";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import {
+  authenticate,
+  authorize,
+  AuthRequest,
+  authorizeTaskAccess,
+} from "../middleware/auth";
+import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel, TaskStatus } from "@prisma/client";
 import logger from "../config/logger";
 import {
@@ -10,6 +16,7 @@ import {
   sendPaginatedSuccess,
   sendError,
 } from "../utils/response";
+import { sanitizeBody } from "../middleware/sanitize";
 import { toTaskDTO } from "../mappers";
 import { toProgressLogDTO } from "../mappers/progressLogMapper";
 
@@ -17,6 +24,7 @@ const router = Router();
 
 // 所有任務路由都需要認證
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/tasks/pool
@@ -246,7 +254,8 @@ router.post(
  */
 router.put(
   "/:id",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  authorizeTaskAccess,
+  auditLog("UPDATE_TASK"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
@@ -304,6 +313,8 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  authorizeTaskAccess,
+  auditLog("DELETE_TASK"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -334,6 +345,7 @@ router.delete(
  */
 router.patch(
   "/:id/status",
+  auditLog("UPDATE_TASK_STATUS"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("status")

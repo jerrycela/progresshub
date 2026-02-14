@@ -21,7 +21,11 @@ const taskStore = useTaskStore()
 const workloads = computed(() => dashboardStore.functionWorkloads)
 
 // 計算負載程度
-const getLoadLevel = (workload: FunctionWorkload) => {
+type BadgeVariant = 'success' | 'warning' | 'danger'
+
+const getLoadLevel = (
+  workload: FunctionWorkload,
+): { level: string; label: string; color: BadgeVariant } => {
   const tasksPerMember =
     workload.memberCount > 0 ? workload.inProgressTasks / workload.memberCount : 0
 
@@ -119,7 +123,7 @@ const totalStats = computed(() => ({
               <span class="font-medium" style="color: var(--text-primary)">
                 {{ functionTypeLabels[workload.functionType] }}
               </span>
-              <Badge :variant="getLoadLevel(workload).color as any" size="sm">
+              <Badge :variant="getLoadLevel(workload).color" size="sm">
                 {{ getLoadLevel(workload).label }}
               </Badge>
             </div>

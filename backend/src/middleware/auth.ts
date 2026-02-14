@@ -87,3 +87,81 @@ export const authorize = (...allowedRoles: PermissionLevel[]) => {
     next();
   };
 };
+
+/**
+ * Task Resource-Level Authorization Middleware
+ * Checks if user has access to modify a specific task
+ * ADMIN always has access; PM has access; task creator and assignee have access
+ */
+export const authorizeTaskAccess = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  if (!req.user) {
+    sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
+    return;
+  }
+
+  // ADMIN always has access
+  if (req.user.permissionLevel === PermissionLevel.ADMIN) {
+    next();
+    return;
+  }
+
+  const taskId = req.params.id;
+  if (!taskId) {
+    sendError(res, "VALIDATION_ERROR", "Missing task ID", 400);
+    return;
+  }
+
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { assignedToId: true, creatorId: true, collaborators: true },
+  });
+
+  if (!task) {
+    sendError(res, "TASK_NOT_FOUND", "任務不存在", 404);
+    return;
+  }
+
+  const userId = req.user.userId;
+  const isCreator = task.creatorId === userId;
+  const isAssignee = task.assignedToId === userId;
+  const isCollaborator = task.collaborators.includes(userId);
+  const isPM = req.user.permissionLevel === PermissionLevel.PM;
+
+  if (isCreator || isAssignee || isCollaborator || isPM) {
+    next();
+    return;
+  }
+
+  sendError(res, "AUTH_FORBIDDEN", "您沒有權限修改此任務", 403);
+};
+
+/**
+ * Employee Self-Edit Authorization Middleware
+ * Allows ADMIN to edit anyone, or employee to edit their own profile
+ */
+export const authorizeSelfOrAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
+  if (!req.user) {
+    sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
+    return;
+  }
+
+  if (req.user.permissionLevel === PermissionLevel.ADMIN) {
+    next();
+    return;
+  }
+
+  if (req.user.userId === req.params.id) {
+    next();
+    return;
+  }
+
+  sendError(res, "AUTH_FORBIDDEN", "您只能編輯自己的資料", 403);
+};

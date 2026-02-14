@@ -120,9 +120,22 @@ export class ProjectService {
   }
 
   /**
-   * 刪除專案
+   * 刪除專案（檢查是否有進行中的任務）
    */
   async deleteProject(id: string): Promise<void> {
+    const activeTasks = await prisma.task.count({
+      where: {
+        projectId: id,
+        status: { in: ["IN_PROGRESS", "CLAIMED", "BLOCKED", "PAUSED"] },
+      },
+    });
+
+    if (activeTasks > 0) {
+      throw new Error(
+        `無法刪除專案：仍有 ${activeTasks} 個進行中的任務。請先完成或取消這些任務。`,
+      );
+    }
+
     await prisma.project.delete({
       where: { id },
     });

@@ -65,7 +65,7 @@ async function processWebhookEvent(
   const user = event.user as { id: number; username: string } | undefined;
 
   if (!project || !user) {
-    console.log("Webhook: Missing project or user info");
+    logger.warn("Webhook: Missing project or user info");
     return;
   }
 
@@ -79,13 +79,13 @@ async function processWebhookEvent(
   });
 
   if (!connection) {
-    console.log(
+    logger.info(
       `Webhook: No active connection for user ${user.username} on instance ${instanceId}`,
     );
     return;
   }
 
-  console.log(`Webhook: Processing ${objectKind} event for ${user.username}`);
+  logger.info(`Webhook: Processing ${objectKind} event for ${user.username}`);
 
   try {
     switch (objectKind) {
@@ -111,10 +111,10 @@ async function processWebhookEvent(
         );
         break;
       default:
-        console.log(`Webhook: Unhandled event type: ${objectKind}`);
+        logger.warn(`Webhook: Unhandled event type: ${objectKind}`);
     }
   } catch (error) {
-    console.error(`Webhook: Error processing ${objectKind} event:`, error);
+    logger.error(`Webhook: Error processing ${objectKind} event:`, error);
   }
 }
 

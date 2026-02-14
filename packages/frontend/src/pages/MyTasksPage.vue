@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
+import { useProgressLogStore } from '@/stores/progressLogs'
 import { useProject } from '@/composables/useProject'
 import { useToast } from '@/composables/useToast'
 import { TASK_STATUS_OPTIONS } from '@/constants/filterOptions'
@@ -24,17 +25,19 @@ import type { TaskStatus, Task } from 'shared/types'
 const router = useRouter()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const progressLogStore = useProgressLogStore()
 const { getProjectById } = useProject()
 const { showSuccess, showError } = useToast()
 
-// Mock 最近備註（實際應從 ProgressLog 獲取）
+// 從 progressLogStore 動態取得每個任務的最新備註
 const latestNotes = computed(() => {
-  // 這裡模擬每個任務的最近備註，實際應該從 API 獲取
-  const notes: Record<string, string> = {
-    '1': '完成新手教學前三關的程式邏輯',
-    '2': '已完成基礎 UI 框架，下週繼續細節調整',
-    '6': '繼續處理攻擊動畫',
-    '9': '等待後端 API 完成，預計下週可繼續',
+  const notes: Record<string, string> = {}
+  const allTasks = [...myTasks.value, ...completedTasks.value]
+  for (const task of allTasks) {
+    const logs = progressLogStore.byTaskId(task.id)
+    if (logs.length > 0 && logs[0].notes) {
+      notes[task.id] = logs[0].notes
+    }
   }
   return notes
 })
@@ -71,6 +74,29 @@ const completedTasks = computed(() => {
     (t: Task) => t.assigneeId === userId && t.status === 'DONE',
   )
 })
+
+// 載入任務的進度記錄
+const fetchTaskLogs = async (taskIds: string[]) => {
+  for (const id of taskIds) {
+    await progressLogStore.fetchByTaskId(id)
+  }
+}
+
+onMounted(() => {
+  const allTaskIds = [...myTasks.value, ...completedTasks.value].map(t => t.id)
+  if (allTaskIds.length > 0) {
+    fetchTaskLogs(allTaskIds)
+  }
+})
+
+watch(
+  () => [...myTasks.value, ...completedTasks.value].map(t => t.id).join(','),
+  newIds => {
+    if (newIds) {
+      fetchTaskLogs(newIds.split(','))
+    }
+  },
+)
 
 // 放棄認領對話框
 const showUnclaimModal = ref(false)
