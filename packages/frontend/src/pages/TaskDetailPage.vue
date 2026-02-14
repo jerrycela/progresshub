@@ -6,7 +6,7 @@ import { useProgressLogStore } from '@/stores/progressLogs'
 import { useNoteStore } from '@/stores/notes'
 import { useEmployeeStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
-import type { PoolTask, GitLabIssue, TaskNote } from 'shared/types'
+import type { PoolTask, TaskNote } from 'shared/types'
 import type { ProgressLog, UserRole } from 'shared/types'
 import { getStatusLabel, getStatusClass } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
@@ -103,6 +103,8 @@ const claimTask = async (): Promise<void> => {
   if (result.success) {
     task.value = taskStore.getPoolTaskById(task.value.id) || null
     showSuccess('認領任務成功！')
+  } else {
+    showWarning(result.error?.message || '認領失敗，請稍後再試')
   }
 }
 const editTask = (): void => {
@@ -175,22 +177,7 @@ const editGitLabIssue = (): void => {
 }
 
 const linkGitLabIssue = (): void => {
-  if (!gitlabIssueUrl.value.trim()) {
-    showWarning('請輸入 GitLab Issue URL')
-    return
-  }
-  const mockIssue: GitLabIssue = {
-    id: Math.floor(Math.random() * 1000),
-    title: '新關聯的 GitLab Issue',
-    url: gitlabIssueUrl.value.trim(),
-    state: 'opened',
-  }
-  if (task.value) {
-    task.value = { ...task.value, gitlabIssue: mockIssue }
-  }
-  showLinkGitLabModal.value = false
-  gitlabIssueUrl.value = ''
-  showSuccess('已關聯 GitLab Issue')
+  showInfo('GitLab 整合尚未啟用')
 }
 
 const submitNote = async (): Promise<void> => {

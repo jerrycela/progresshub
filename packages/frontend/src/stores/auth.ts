@@ -151,6 +151,13 @@ export const useAuthStore = defineStore('auth', () => {
 
   const switchUser = (userId: string): ActionResult<User> => {
     // Dev-only: 切換使用者（方便測試不同角色）
+    if (!import.meta.env.DEV) {
+      return {
+        success: false,
+        error: { code: 'AUTH_UNAUTHORIZED', message: '僅限開發環境使用' },
+      }
+    }
+
     const newUser = mockUsers.find((u: User) => u.id === userId)
     if (newUser) {
       user.value = newUser

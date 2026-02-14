@@ -84,7 +84,13 @@ const emit = defineEmits<{
         />
       </svg>
       <p class="text-sm mb-3" style="color: var(--text-secondary)">尚未關聯 GitLab Issue</p>
-      <button class="btn-secondary text-sm" @click="emit('link')">關聯 Issue</button>
+      <button
+        class="btn-secondary text-sm opacity-50 cursor-not-allowed"
+        disabled
+        title="GitLab 整合尚未啟用"
+      >
+        關聯 Issue
+      </button>
     </div>
   </div>
 </template>
