@@ -8,6 +8,7 @@ import type { Task } from 'shared/types'
 defineProps<{
   task: Task
   index: number
+  treeConnectors?: string[]
   getTaskPosition: (task: { startDate?: string; dueDate?: string }) => {
     left: number
     width: number
@@ -31,31 +32,49 @@ const statusColors = STATUS_COLORS
 <template>
   <div
     :data-task-id="task.id"
-    class="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded cursor-pointer transition-colors duration-150 hover-bg"
+    class="flex items-center gap-2 py-1.5 px-2 -mx-2 rounded cursor-pointer transition-colors duration-150 hover-bg relative"
     :class="index % 2 === 1 ? 'bg-black/[0.02] dark:bg-white/[0.02]' : 'bg-transparent'"
     @click="emit('click', task.id)"
   >
+    <!-- 樹狀連接線 (絕對定位，跨越整行高度) -->
+    <div
+      v-if="treeConnectors && treeConnectors.length > 0"
+      class="absolute top-0 bottom-0 flex pointer-events-none"
+      style="left: 8px"
+    >
+      <div
+        v-for="(type, i) in treeConnectors"
+        :key="i"
+        class="w-4 relative"
+        :class="`tree-${type}`"
+      />
+    </div>
+
     <!-- 任務資訊 -->
     <div class="w-28 sm:w-40 flex-shrink-0 pr-2">
-      <div class="text-xs sm:text-sm font-medium truncate" style="color: var(--text-primary)">
-        {{ task.title }}
-      </div>
-      <div class="flex items-center gap-1 mt-0.5">
-        <Badge v-if="isTaskOverdue(task)" variant="danger" size="sm">逾期</Badge>
-        <span class="text-xs truncate" style="color: var(--text-tertiary)">
-          {{ getAssigneeName(task) }}
-        </span>
-      </div>
       <div
-        v-if="showProject && getProjectName"
-        class="text-xs truncate mt-0.5"
-        style="color: var(--text-muted)"
+        :style="treeConnectors?.length ? { paddingLeft: `${treeConnectors.length * 16}px` } : {}"
       >
-        {{ getProjectName(task.projectId) }}
-      </div>
-      <!-- 行動裝置日期 -->
-      <div class="sm:hidden text-xs mt-0.5" style="color: var(--text-muted)">
-        {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
+        <div class="text-xs sm:text-sm font-medium truncate" style="color: var(--text-primary)">
+          {{ task.title }}
+        </div>
+        <div class="flex items-center gap-1 mt-0.5">
+          <Badge v-if="isTaskOverdue(task)" variant="danger" size="sm">逾期</Badge>
+          <span class="text-xs truncate" style="color: var(--text-tertiary)">
+            {{ getAssigneeName(task) }}
+          </span>
+        </div>
+        <div
+          v-if="showProject && getProjectName"
+          class="text-xs truncate mt-0.5"
+          style="color: var(--text-muted)"
+        >
+          {{ getProjectName(task.projectId) }}
+        </div>
+        <!-- 行動裝置日期 -->
+        <div class="sm:hidden text-xs mt-0.5" style="color: var(--text-muted)">
+          {{ formatShort(task.startDate) }} - {{ formatShort(task.dueDate) }}
+        </div>
       </div>
     </div>
 
@@ -144,5 +163,63 @@ const statusColors = STATUS_COLORS
     rgba(255, 255, 255, 0.15) 4px,
     rgba(255, 255, 255, 0.15) 8px
   );
+}
+
+/* Tree connector: vertical pass-through line */
+.tree-line::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background-color: var(--text-muted);
+  opacity: 0.35;
+}
+
+/* Tree connector: branch (has more siblings below) */
+.tree-branch::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background-color: var(--text-muted);
+  opacity: 0.35;
+}
+
+.tree-branch::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  width: 8px;
+  height: 1.5px;
+  background-color: var(--text-muted);
+  opacity: 0.35;
+}
+
+/* Tree connector: last child branch */
+.tree-last::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  height: 50%;
+  width: 1.5px;
+  background-color: var(--text-muted);
+  opacity: 0.35;
+}
+
+.tree-last::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 50%;
+  width: 8px;
+  height: 1.5px;
+  background-color: var(--text-muted);
+  opacity: 0.35;
 }
 </style>

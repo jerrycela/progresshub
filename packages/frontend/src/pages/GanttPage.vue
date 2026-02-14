@@ -12,7 +12,6 @@ import GanttFilters from '@/components/gantt/GanttFilters.vue'
 import GanttTimeAxis from '@/components/gantt/GanttTimeAxis.vue'
 import GanttMilestoneRow from '@/components/gantt/GanttMilestoneRow.vue'
 import GanttTaskRow from '@/components/gantt/GanttTaskRow.vue'
-import GanttDependencyLines from '@/components/gantt/GanttDependencyLines.vue'
 import MilestoneModal from '@/components/gantt/MilestoneModal.vue'
 import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
 import { topologicalSort } from '@/utils/topologicalSort'
@@ -41,9 +40,6 @@ const showMilestoneModal = ref(false)
 // 任務關聯 Modal 狀態
 const showTaskRelationModal = ref(false)
 const selectedTask = ref<Task | null>(null)
-
-// 依賴線容器 ref
-const taskListContainer = ref<HTMLElement | null>(null)
 
 // 里程碑資料
 const milestones = ref<MilestoneData[]>(milestoneStore.allSorted())
@@ -123,6 +119,72 @@ const filteredTasks = computed(() => {
   }
 
   return topologicalSort(tasks.filter((t: Task) => t.startDate && t.dueDate))
+})
+
+// 樹狀依賴結構
+type TreeConnector = 'line' | 'branch' | 'last' | 'empty'
+
+const treeInfoMap = computed(() => {
+  const tasks = filteredTasks.value
+  const taskIdxMap = new Map<string, number>()
+  tasks.forEach((t, i) => taskIdxMap.set(t.id, i))
+
+  // Build parent-child: primary parent = dependency with highest index (most immediate)
+  const parentMap = new Map<string, string>()
+  const childrenMap = new Map<string, string[]>()
+
+  for (const task of tasks) {
+    if (!task.dependsOnTaskIds?.length) continue
+    let primaryParent = ''
+    let highestIdx = -1
+    for (const depId of task.dependsOnTaskIds) {
+      const idx = taskIdxMap.get(depId)
+      if (idx !== undefined && idx > highestIdx) {
+        highestIdx = idx
+        primaryParent = depId
+      }
+    }
+    if (primaryParent) {
+      parentMap.set(task.id, primaryParent)
+      const children = childrenMap.get(primaryParent) ?? []
+      children.push(task.id)
+      childrenMap.set(primaryParent, children)
+    }
+  }
+
+  // Walk ancestor chain from task to root
+  function getAncestorChain(taskId: string): string[] {
+    const chain: string[] = []
+    let current = taskId
+    while (parentMap.has(current)) {
+      chain.unshift(current)
+      current = parentMap.get(current)!
+    }
+    return chain
+  }
+
+  const result = new Map<string, TreeConnector[]>()
+  for (const task of tasks) {
+    const chain = getAncestorChain(task.id)
+    if (chain.length === 0) {
+      result.set(task.id, [])
+      continue
+    }
+    const connectors: TreeConnector[] = []
+    for (let i = 0; i < chain.length; i++) {
+      const node = chain[i]
+      const parent = parentMap.get(node)!
+      const siblings = childrenMap.get(parent) ?? []
+      const isLast = siblings[siblings.length - 1] === node
+      if (i === chain.length - 1) {
+        connectors.push(isLast ? 'last' : 'branch')
+      } else {
+        connectors.push(isLast ? 'empty' : 'line')
+      }
+    }
+    result.set(task.id, connectors)
+  }
+  return result
 })
 
 // 篩選後的里程碑
@@ -471,12 +533,13 @@ const deleteMilestone = async (msId: string): Promise<void> => {
           </template>
 
           <!-- 非分組模式 -->
-          <div v-if="!groupByProject" ref="taskListContainer" class="relative">
+          <div v-if="!groupByProject">
             <GanttTaskRow
               v-for="(task, index) in filteredTasks"
               :key="task.id"
               :task="task"
               :index="index"
+              :tree-connectors="treeInfoMap.get(task.id) ?? []"
               :get-task-position="getTaskPosition"
               :is-task-overdue="isTaskOverdue"
               :get-task-duration="getTaskDuration"
@@ -485,11 +548,6 @@ const deleteMilestone = async (msId: string): Promise<void> => {
               :get-project-name="getProjectName"
               :show-project="true"
               @click="navigateToTask"
-            />
-            <GanttDependencyLines
-              :tasks="filteredTasks"
-              :get-task-position="getTaskPosition"
-              :container-el="taskListContainer"
             />
           </div>
         </div>
