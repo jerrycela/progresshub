@@ -231,6 +231,7 @@ export interface CreateTaskInput {
   startDate?: string
   dueDate?: string
   estimatedHours?: number
+  dependsOnTaskIds?: string[]  // 任務關聯 - Phase 1
 }
 
 // ============================================
