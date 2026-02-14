@@ -14,7 +14,7 @@ import GanttMilestoneRow from '@/components/gantt/GanttMilestoneRow.vue'
 import GanttTaskRow from '@/components/gantt/GanttTaskRow.vue'
 import MilestoneModal from '@/components/gantt/MilestoneModal.vue'
 import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
-import { topologicalSort } from '@/utils/topologicalSort'
+import { useGanttData } from '@/composables/useGanttData'
 import { useAuthStore } from '@/stores/auth'
 import { useEmployeeStore } from '@/stores/employees'
 import { useMilestoneStore } from '@/stores/milestones'
@@ -83,112 +83,26 @@ const employeeOptions = computed(() => [
   ...employeeStore.employees.map(emp => ({ value: emp.id, label: emp.name })),
 ])
 
-// 檢查任務是否逾期（用於 filteredTasks 篩選）
-const isTaskOverdue = (task: Task): boolean => {
-  if (!task.dueDate || task.status === 'DONE') return false
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const dueDate = new Date(task.dueDate)
-  dueDate.setHours(0, 0, 0, 0)
-  return dueDate < today
-}
-
-// 篩選後的任務
-const filteredTasks = computed(() => {
-  let tasks = taskStore.tasks as Task[]
-
-  if (selectedProject.value !== 'ALL') {
-    tasks = tasks.filter((t: Task) => t.projectId === selectedProject.value)
-  }
-  if (selectedFunction.value !== 'ALL') {
-    tasks = tasks.filter((t: Task) =>
-      t.functionTags.includes(selectedFunction.value as FunctionType),
-    )
-  }
-  if (selectedEmployee.value) {
-    tasks = tasks.filter((t: Task) => t.assigneeId === selectedEmployee.value)
-  }
-  if (selectedStatus.value !== 'ALL') {
-    tasks = tasks.filter((t: Task) => t.status === selectedStatus.value)
-  }
-  if (showOverdueOnly.value) {
-    tasks = tasks.filter((t: Task) => isTaskOverdue(t))
-  }
-
-  return topologicalSort(tasks.filter((t: Task) => t.startDate && t.dueDate))
-})
-
-// 樹狀依賴結構
-type TreeConnector = 'line' | 'branch' | 'last' | 'empty'
-
-const treeInfoMap = computed(() => {
-  const tasks = filteredTasks.value
-  const taskIdxMap = new Map<string, number>()
-  tasks.forEach((t, i) => taskIdxMap.set(t.id, i))
-
-  // Build parent-child: primary parent = dependency with highest index (most immediate)
-  const parentMap = new Map<string, string>()
-  const childrenMap = new Map<string, string[]>()
-
-  for (const task of tasks) {
-    if (!task.dependsOnTaskIds?.length) continue
-    let primaryParent = ''
-    let highestIdx = -1
-    for (const depId of task.dependsOnTaskIds) {
-      const idx = taskIdxMap.get(depId)
-      if (idx !== undefined && idx > highestIdx) {
-        highestIdx = idx
-        primaryParent = depId
-      }
-    }
-    if (primaryParent) {
-      parentMap.set(task.id, primaryParent)
-      const children = childrenMap.get(primaryParent) ?? []
-      children.push(task.id)
-      childrenMap.set(primaryParent, children)
-    }
-  }
-
-  // Walk ancestor chain from task to root
-  function getAncestorChain(taskId: string): string[] {
-    const chain: string[] = []
-    let current = taskId
-    while (parentMap.has(current)) {
-      chain.unshift(current)
-      current = parentMap.get(current)!
-    }
-    return chain
-  }
-
-  const result = new Map<string, TreeConnector[]>()
-  for (const task of tasks) {
-    const chain = getAncestorChain(task.id)
-    if (chain.length === 0) {
-      result.set(task.id, [])
-      continue
-    }
-    const connectors: TreeConnector[] = []
-    for (let i = 0; i < chain.length; i++) {
-      const node = chain[i]
-      const parent = parentMap.get(node)!
-      const siblings = childrenMap.get(parent) ?? []
-      const isLast = siblings[siblings.length - 1] === node
-      if (i === chain.length - 1) {
-        connectors.push(isLast ? 'last' : 'branch')
-      } else {
-        connectors.push(isLast ? 'empty' : 'line')
-      }
-    }
-    result.set(task.id, connectors)
-  }
-  return result
-})
-
-// 篩選後的里程碑
-const filteredMilestones = computed(() => {
-  if (selectedProject.value === 'ALL') return milestones.value
-  return milestones.value.filter((ms: MilestoneData) => ms.projectId === selectedProject.value)
-})
+// 資料邏輯抽取至 composable
+const {
+  filteredTasks,
+  filteredMilestones,
+  treeInfoMap,
+  taskStats,
+  hasFilters,
+  groupedTasks,
+  isTaskOverdue,
+  clearFilters,
+} = useGanttData(
+  selectedProject,
+  selectedFunction,
+  selectedEmployee,
+  selectedStatus,
+  showOverdueOnly,
+  groupByProject,
+  milestones,
+  getProjectName,
+)
 
 // 使用 Gantt composable
 const {
@@ -203,61 +117,11 @@ const {
   formatDate,
 } = useGantt(filteredTasks, filteredMilestones, timeScale)
 
-// 快速統計
-const taskStats = computed(() => {
-  const tasks = filteredTasks.value
-  return {
-    total: tasks.length,
-    overdue: tasks.filter((t: Task) => isTaskOverdue(t)).length,
-    inProgress: tasks.filter((t: Task) => t.status === 'IN_PROGRESS').length,
-    completed: tasks.filter((t: Task) => t.status === 'DONE').length,
-    paused: tasks.filter((t: Task) => t.status === 'PAUSED').length,
-  }
-})
-
-const hasFilters = computed(
-  () =>
-    selectedProject.value !== 'ALL' ||
-    selectedFunction.value !== 'ALL' ||
-    selectedEmployee.value !== '' ||
-    selectedStatus.value !== 'ALL' ||
-    showOverdueOnly.value,
-)
-
-const clearFilters = (): void => {
-  selectedProject.value = 'ALL'
-  selectedFunction.value = 'ALL'
-  selectedEmployee.value = ''
-  selectedStatus.value = 'ALL'
-  showOverdueOnly.value = false
-}
-
 // 負責人名稱
 const getAssigneeName = (task: Task): string => {
   if (!task.assigneeId) return '未指派'
   return employeeStore.getEmployeeById(task.assigneeId)?.name || '未知'
 }
-
-// 分組邏輯
-const groupedTasks = computed(() => {
-  if (!groupByProject.value) return null
-
-  const groups: Record<string, { projectId: string; projectName: string; tasks: Task[] }> = {}
-
-  filteredTasks.value.forEach((task: Task) => {
-    const projectId = task.projectId || 'unassigned'
-    if (!groups[projectId]) {
-      groups[projectId] = {
-        projectId,
-        projectName: getProjectName(projectId) || '未指定專案',
-        tasks: [],
-      }
-    }
-    groups[projectId].tasks.push(task)
-  })
-
-  return Object.values(groups).sort((a, b) => a.projectName.localeCompare(b.projectName))
-})
 
 const toggleProjectCollapse = (projectId: string): void => {
   const newSet = new Set(collapsedProjects.value)
