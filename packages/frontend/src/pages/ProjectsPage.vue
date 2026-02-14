@@ -24,7 +24,7 @@ const projectStore = useProjectStore()
 const taskStore = useTaskStore()
 const employeeStore = useEmployeeStore()
 
-const projects = ref(projectStore.projects)
+const projects = computed(() => projectStore.projects)
 const { showSuccess, showError } = useToast()
 const { formatFull } = useFormatDate()
 

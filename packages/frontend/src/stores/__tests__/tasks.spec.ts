@@ -25,16 +25,16 @@ describe('useTaskStore', () => {
   // Initial state
   // ------------------------------------------
   describe('initial state', () => {
-    it('should start with empty tasks (requires fetchTasks to populate)', () => {
+    it('should start with mock data in mock mode', () => {
       const store = useTaskStore()
 
-      expect(store.tasks.length).toBe(0)
+      expect(store.tasks.length).toBe(mockTasks.length)
     })
 
-    it('should start with empty poolTasks (requires fetchPoolTasks to populate)', () => {
+    it('should start with mock pool tasks in mock mode', () => {
       const store = useTaskStore()
 
-      expect(store.poolTasks.length).toBe(0)
+      expect(store.poolTasks.length).toBe(mockPoolTasks.length)
     })
 
     it('should have no error initially', () => {

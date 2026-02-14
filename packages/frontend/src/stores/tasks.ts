@@ -9,6 +9,7 @@ import type {
   PoolTask,
 } from 'shared/types'
 import { createTaskService } from '@/services/taskService'
+import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 
 // ============================================
 // Tasks Store - Service Layer 重構
@@ -17,11 +18,12 @@ import { createTaskService } from '@/services/taskService'
 // ============================================
 
 const service = createTaskService()
+const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useTaskStore = defineStore('tasks', () => {
-  // State - 初始為空，透過 fetchTasks() 載入
-  const tasks = ref<Task[]>([])
-  const poolTasks = ref<PoolTask[]>([])
+  // State - mock 模式同步初始化，API 模式保持空陣列等 fetch
+  const tasks = ref<Task[]>(isMock ? [...mockTasks] : [])
+  const poolTasks = ref<PoolTask[]>(isMock ? [...mockPoolTasks] : [])
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）

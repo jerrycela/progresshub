@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Project, ActionResult } from 'shared/types'
 import { createProjectService } from '@/services/projectService'
+import { mockProjects } from '@/mocks/unified'
 
 const service = createProjectService()
+const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useProjectStore = defineStore('projects', () => {
-  const projects = ref<Project[]>([])
+  const projects = ref<Project[]>(isMock ? [...mockProjects] : [])
 
   const activeProjects = computed(() => projects.value.filter(p => p.status === 'ACTIVE'))
 

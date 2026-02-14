@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MockEmployee, Department, ActionResult } from 'shared/types'
 import { createEmployeeService } from '@/services/employeeService'
+import { mockEmployees } from '@/mocks/unified'
 
 const service = createEmployeeService()
+const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useEmployeeStore = defineStore('employees', () => {
-  const employees = ref<MockEmployee[]>([])
+  const employees = ref<MockEmployee[]>(isMock ? [...mockEmployees] : [])
 
   const getByDepartment = (dept: Department) =>
     computed(() => employees.value.filter(e => e.department === dept))
