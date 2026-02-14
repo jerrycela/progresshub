@@ -21,8 +21,8 @@ router.use(authenticate);
 router.get(
   "/",
   [
-    query("taskId").optional().isUUID(),
-    query("employeeId").optional().isUUID(),
+    query("taskId").optional().isString().trim().notEmpty(),
+    query("employeeId").optional().isString().trim().notEmpty(),
     query("startDate").optional().isISO8601(),
     query("endDate").optional().isISO8601(),
     query("page").optional().isInt({ min: 1 }).toInt(),
@@ -100,7 +100,11 @@ router.get("/today", async (req: AuthRequest, res: Response): Promise<void> => {
 router.get(
   "/project/:projectId/stats",
   [
-    param("projectId").isUUID().withMessage("Invalid project ID"),
+    param("projectId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Invalid project ID"),
     query("days").optional().isInt({ min: 1, max: 90 }).toInt(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
@@ -135,7 +139,11 @@ router.get(
 router.post(
   "/",
   [
-    body("taskId").isUUID().withMessage("Valid task ID is required"),
+    body("taskId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Valid task ID is required"),
     body("progressPercentage")
       .isInt({ min: 0, max: 100 })
       .withMessage("Progress must be between 0 and 100"),

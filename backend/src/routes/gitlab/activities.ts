@@ -119,7 +119,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -178,13 +178,21 @@ router.get(
 router.post(
   "/:id/convert",
   [
-    param("id").isUUID(),
+    param("id").isString().trim().notEmpty(),
     body("hours")
       .isFloat({ min: 0.25, max: 12 })
       .withMessage("Hours must be between 0.25 and 12"),
-    body("categoryId").isUUID().withMessage("Category ID is required"),
+    body("categoryId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Category ID is required"),
     body("description").optional().isString(),
-    body("taskId").isUUID().withMessage("Task ID is required"),
+    body("taskId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Task ID is required"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -227,8 +235,12 @@ router.post(
     body("activityIds")
       .isArray({ min: 1 })
       .withMessage("At least one activity ID is required"),
-    body("activityIds.*").isUUID(),
-    body("categoryId").isUUID().withMessage("Category ID is required"),
+    body("activityIds.*").isString().trim().notEmpty(),
+    body("categoryId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Category ID is required"),
     body("useSuggestedHours")
       .isBoolean()
       .withMessage("useSuggestedHours is required"),
@@ -270,8 +282,12 @@ router.post(
 router.put(
   "/:id/link-task",
   [
-    param("id").isUUID(),
-    body("taskId").isUUID().withMessage("Task ID is required"),
+    param("id").isString().trim().notEmpty(),
+    body("taskId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Task ID is required"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);

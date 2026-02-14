@@ -118,7 +118,7 @@ router.get(
 router.get(
   "/oauth/:instanceId",
   authenticate,
-  [param("instanceId").isUUID()],
+  [param("instanceId").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -212,7 +212,7 @@ router.put(
   "/:id/settings",
   authenticate,
   [
-    param("id").isUUID(),
+    param("id").isString().trim().notEmpty(),
     body("autoConvertTime").optional().isBoolean(),
     body("syncCommits").optional().isBoolean(),
     body("syncMRs").optional().isBoolean(),
@@ -282,7 +282,7 @@ router.put(
 router.delete(
   "/:id",
   authenticate,
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -343,7 +343,7 @@ router.delete(
 router.post(
   "/:id/sync",
   authenticate,
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

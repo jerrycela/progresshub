@@ -9,6 +9,7 @@ import {
   sendPaginatedSuccess,
   sendError,
 } from "../utils/response";
+import { toProjectDTO } from "../mappers";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get(
         search: req.query.search as string,
       });
 
-      sendPaginatedSuccess(res, result.data, {
+      sendPaginatedSuccess(res, result.data.map(toProjectDTO), {
         total: result.total,
         page,
         limit,
@@ -64,7 +65,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID().withMessage("Invalid project ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -78,7 +79,7 @@ router.get(
         sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
         return;
       }
-      sendSuccess(res, project);
+      sendSuccess(res, toProjectDTO(project));
     } catch (error) {
       logger.error("Get project error:", error);
       sendError(res, "PROJECT_FETCH_FAILED", "Failed to get project", 500);
@@ -92,7 +93,7 @@ router.get(
  */
 router.get(
   "/:id/stats",
-  [param("id").isUUID().withMessage("Invalid project ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -121,7 +122,7 @@ router.get(
  */
 router.get(
   "/:id/gantt",
-  [param("id").isUUID().withMessage("Invalid project ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -192,7 +193,7 @@ router.put(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    param("id").isUUID().withMessage("Invalid project ID"),
+    param("id").isString().trim().notEmpty().withMessage("Invalid project ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
     body("description").optional().isString().trim(),
     body("startDate").optional().isISO8601(),
@@ -250,7 +251,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
-  [param("id").isUUID().withMessage("Invalid project ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

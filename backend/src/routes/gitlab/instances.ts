@@ -41,7 +41,7 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
  */
 router.get(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -118,7 +118,7 @@ router.post(
 router.put(
   "/:id",
   [
-    param("id").isUUID(),
+    param("id").isString().trim().notEmpty(),
     body("name").optional().isString().trim().notEmpty(),
     body("clientId").optional().isString().trim().notEmpty(),
     body("clientSecret").optional().isString().trim().notEmpty(),
@@ -155,7 +155,7 @@ router.put(
  */
 router.delete(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -183,7 +183,7 @@ router.delete(
  */
 router.post(
   "/:id/test",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -206,7 +206,7 @@ router.post(
  */
 router.post(
   "/:id/regenerate-webhook-secret",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

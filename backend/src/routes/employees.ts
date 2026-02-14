@@ -8,6 +8,7 @@ import {
   sendPaginatedSuccess,
   sendError,
 } from "../utils/response";
+import { toUserDTO } from "../mappers";
 
 const router = Router();
 
@@ -48,7 +49,7 @@ router.get(
         search: req.query.search as string,
       });
 
-      sendPaginatedSuccess(res, result.data, {
+      sendPaginatedSuccess(res, result.data.map(toUserDTO), {
         total: result.total,
         page,
         limit,
@@ -65,7 +66,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID().withMessage("Invalid employee ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid employee ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -79,7 +80,7 @@ router.get(
         sendError(res, "EMPLOYEE_NOT_FOUND", "Employee not found", 404);
         return;
       }
-      sendSuccess(res, employee);
+      sendSuccess(res, toUserDTO(employee));
     } catch (error) {
       sendError(res, "EMPLOYEE_FETCH_FAILED", "Failed to get employee", 500);
     }
@@ -103,11 +104,7 @@ router.post(
       .isEmail()
       .normalizeEmail()
       .withMessage("Valid email is required"),
-    body("slackUserId")
-      .isString()
-      .trim()
-      .notEmpty()
-      .withMessage("Slack User ID is required"),
+    body("slackUserId").optional().isString().trim(),
     body("department").optional().isString().trim(),
     body("permissionLevel")
       .optional()
@@ -130,13 +127,16 @@ router.post(
       }
 
       // 檢查 Slack User ID 是否已存在
-      if (await employeeService.slackUserIdExists(slackUserId)) {
+      if (
+        slackUserId &&
+        (await employeeService.slackUserIdExists(slackUserId))
+      ) {
         sendError(res, "SLACK_ID_EXISTS", "Slack User ID already exists", 409);
         return;
       }
 
       const employee = await employeeService.createEmployee(req.body);
-      sendSuccess(res, employee, 201);
+      sendSuccess(res, toUserDTO(employee), 201);
     } catch (error) {
       sendError(
         res,
@@ -156,7 +156,7 @@ router.put(
   "/:id",
   authorize(PermissionLevel.ADMIN),
   [
-    param("id").isUUID().withMessage("Invalid employee ID"),
+    param("id").isString().trim().notEmpty().withMessage("Invalid employee ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
     body("email").optional().isEmail().normalizeEmail(),
     body("department").optional().isString().trim(),
@@ -192,7 +192,7 @@ router.put(
       }
 
       const employee = await employeeService.updateEmployee(id, req.body);
-      sendSuccess(res, employee);
+      sendSuccess(res, toUserDTO(employee));
     } catch (error) {
       sendError(
         res,
@@ -211,7 +211,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
-  [param("id").isUUID().withMessage("Invalid employee ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid employee ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -226,7 +226,7 @@ router.delete(
         return;
       }
 
-      await employeeService.deleteEmployee(req.params.id);
+      await employeeService.softDeleteEmployee(req.params.id);
       res.status(204).send();
     } catch (error) {
       sendError(

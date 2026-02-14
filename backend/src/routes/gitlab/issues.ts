@@ -47,14 +47,22 @@ router.get(
 router.post(
   "/mappings",
   [
-    body("connectionId").isUUID().withMessage("Connection ID is required"),
+    body("connectionId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Connection ID is required"),
     body("gitlabIssueId").isInt().withMessage("GitLab Issue ID is required"),
     body("gitlabIssueIid").isInt().withMessage("GitLab Issue IID is required"),
     body("projectPath")
       .isString()
       .notEmpty()
       .withMessage("Project path is required"),
-    body("taskId").isUUID().withMessage("Task ID is required"),
+    body("taskId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Task ID is required"),
     body("syncDirection")
       .optional()
       .isIn(["GITLAB_TO_TASK", "TASK_TO_GITLAB", "BIDIRECTIONAL"]),
@@ -95,7 +103,7 @@ router.post(
  */
 router.delete(
   "/mappings/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -131,7 +139,7 @@ router.delete(
  */
 router.post(
   "/sync-from-gitlab/:mappingId",
-  [param("mappingId").isUUID()],
+  [param("mappingId").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -167,7 +175,7 @@ router.post(
  */
 router.post(
   "/sync-to-gitlab/:mappingId",
-  [param("mappingId").isUUID()],
+  [param("mappingId").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -204,7 +212,11 @@ router.post(
 router.get(
   "/search",
   [
-    query("connectionId").isUUID().withMessage("Connection ID is required"),
+    query("connectionId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Connection ID is required"),
     query("projectPath")
       .isString()
       .notEmpty()
@@ -250,12 +262,20 @@ router.get(
 router.post(
   "/create-from-task",
   [
-    body("connectionId").isUUID().withMessage("Connection ID is required"),
+    body("connectionId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Connection ID is required"),
     body("projectPath")
       .isString()
       .notEmpty()
       .withMessage("Project path is required"),
-    body("taskId").isUUID().withMessage("Task ID is required"),
+    body("taskId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Task ID is required"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);

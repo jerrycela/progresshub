@@ -7,6 +7,7 @@ import progressRoutes from "./progress";
 import timeEntryRoutes from "./timeEntries";
 import timeCategoryRoutes from "./timeCategories";
 import timeStatsRoutes from "./timeStats";
+import milestoneRoutes from "./milestones";
 import slackRoutes from "./slack";
 import gitlabRoutes from "./gitlab";
 import { sendSuccess } from "../utils/response";
@@ -19,6 +20,7 @@ router.use("/employees", employeeRoutes);
 router.use("/projects", projectRoutes);
 router.use("/tasks", taskRoutes);
 router.use("/progress", progressRoutes);
+router.use("/milestones", milestoneRoutes);
 router.use("/time-entries", timeEntryRoutes);
 router.use("/time-categories", timeCategoryRoutes);
 router.use("/time-stats", timeStatsRoutes);
@@ -36,6 +38,7 @@ router.get("/", (_req, res) => {
       projects: "/api/projects",
       tasks: "/api/tasks",
       progress: "/api/progress",
+      milestones: "/api/milestones",
       timeEntries: "/api/time-entries",
       timeCategories: "/api/time-categories",
       timeStats: "/api/time-stats",

@@ -44,7 +44,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -110,7 +110,7 @@ router.put(
   "/:id",
   authorize(PermissionLevel.ADMIN),
   [
-    param("id").isUUID(),
+    param("id").isString().trim().notEmpty(),
     body("name").optional().isString().trim().notEmpty(),
     body("color")
       .optional()
@@ -150,7 +150,7 @@ router.put(
 router.post(
   "/:id/deactivate",
   authorize(PermissionLevel.ADMIN),
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -181,7 +181,7 @@ router.post(
 router.post(
   "/:id/activate",
   authorize(PermissionLevel.ADMIN),
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -212,7 +212,7 @@ router.post(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

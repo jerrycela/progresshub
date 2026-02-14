@@ -17,7 +17,7 @@ router.get(
   "/project/:projectId",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    param("projectId").isUUID(),
+    param("projectId").isString().trim().notEmpty(),
     query("startDate").optional().isISO8601(),
     query("endDate").optional().isISO8601(),
   ],
@@ -60,7 +60,7 @@ router.get(
 router.get(
   "/employee/:employeeId",
   [
-    param("employeeId").isUUID(),
+    param("employeeId").isString().trim().notEmpty(),
     query("startDate").optional().isISO8601(),
     query("endDate").optional().isISO8601(),
   ],

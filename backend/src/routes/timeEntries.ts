@@ -21,10 +21,10 @@ router.use(authenticate);
 router.get(
   "/",
   [
-    query("employeeId").optional().isUUID(),
-    query("projectId").optional().isUUID(),
-    query("taskId").optional().isUUID(),
-    query("categoryId").optional().isUUID(),
+    query("employeeId").optional().isString().trim().notEmpty(),
+    query("projectId").optional().isString().trim().notEmpty(),
+    query("taskId").optional().isString().trim().notEmpty(),
+    query("categoryId").optional().isString().trim().notEmpty(),
     query("status").optional().isIn(["PENDING", "APPROVED", "REJECTED"]),
     query("startDate").optional().isISO8601(),
     query("endDate").optional().isISO8601(),
@@ -154,7 +154,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -197,9 +197,17 @@ router.get(
 router.post(
   "/",
   [
-    body("projectId").isUUID().withMessage("Valid project ID required"),
-    body("taskId").optional().isUUID(),
-    body("categoryId").isUUID().withMessage("Valid category ID required"),
+    body("projectId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Valid project ID required"),
+    body("taskId").optional().isString().trim().notEmpty(),
+    body("categoryId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Valid category ID required"),
     body("date").isISO8601().withMessage("Valid date required"),
     body("hours")
       .isFloat({ min: 0.25, max: 12 })
@@ -243,8 +251,8 @@ router.post(
   "/batch",
   [
     body("entries").isArray({ min: 1 }).withMessage("Entries array required"),
-    body("entries.*.projectId").isUUID(),
-    body("entries.*.categoryId").isUUID(),
+    body("entries.*.projectId").isString().trim().notEmpty(),
+    body("entries.*.categoryId").isString().trim().notEmpty(),
     body("entries.*.date").isISO8601(),
     body("entries.*.hours").isFloat({ min: 0.25, max: 12 }),
   ],
@@ -286,10 +294,10 @@ router.post(
 router.put(
   "/:id",
   [
-    param("id").isUUID(),
-    body("projectId").optional().isUUID(),
-    body("taskId").optional().isUUID(),
-    body("categoryId").optional().isUUID(),
+    param("id").isString().trim().notEmpty(),
+    body("projectId").optional().isString().trim().notEmpty(),
+    body("taskId").optional().isString().trim().notEmpty(),
+    body("categoryId").optional().isString().trim().notEmpty(),
     body("date").optional().isISO8601(),
     body("hours").optional().isFloat({ min: 0.25, max: 12 }),
     body("description").optional().isString().trim().isLength({ max: 1000 }),
@@ -336,7 +344,7 @@ router.put(
  */
 router.delete(
   "/:id",
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -376,7 +384,7 @@ router.delete(
 router.post(
   "/:id/approve",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  [param("id").isUUID()],
+  [param("id").isString().trim().notEmpty()],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -409,7 +417,7 @@ router.post(
   "/:id/reject",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    param("id").isUUID(),
+    param("id").isString().trim().notEmpty(),
     body("reason")
       .isString()
       .trim()

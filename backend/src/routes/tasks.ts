@@ -22,8 +22,8 @@ router.use(authenticate);
 router.get(
   "/",
   [
-    query("projectId").optional().isUUID(),
-    query("assignedToId").optional().isUUID(),
+    query("projectId").optional().isString().trim().notEmpty(),
+    query("assignedToId").optional().isString().trim().notEmpty(),
     query("status")
       .optional()
       .isIn([
@@ -113,7 +113,7 @@ router.get(
  */
 router.get(
   "/:id",
-  [param("id").isUUID().withMessage("Invalid task ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -142,15 +142,23 @@ router.get(
 router.post(
   "/",
   [
-    body("projectId").isUUID().withMessage("Valid project ID is required"),
+    body("projectId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Valid project ID is required"),
     body("name")
       .isString()
       .trim()
       .isLength({ min: 1, max: 200 })
       .withMessage("Name is required"),
-    body("assignedToId").isUUID().withMessage("Valid assignee ID is required"),
+    body("assignedToId")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Valid assignee ID is required"),
     body("collaborators").optional().isArray(),
-    body("collaborators.*").optional().isUUID(),
+    body("collaborators.*").optional().isString().trim().notEmpty(),
     body("plannedStartDate")
       .isISO8601()
       .withMessage("Valid start date is required"),
@@ -158,8 +166,8 @@ router.post(
       .isISO8601()
       .withMessage("Valid end date is required"),
     body("dependencies").optional().isArray(),
-    body("dependencies.*").optional().isUUID(),
-    body("milestoneId").optional().isUUID(),
+    body("dependencies.*").optional().isString().trim().notEmpty(),
+    body("milestoneId").optional().isString().trim().notEmpty(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -199,9 +207,9 @@ router.put(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   [
-    param("id").isUUID().withMessage("Invalid task ID"),
+    param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
-    body("assignedToId").optional().isUUID(),
+    body("assignedToId").optional().isString().trim().notEmpty(),
     body("collaborators").optional().isArray(),
     body("plannedStartDate").optional().isISO8601(),
     body("plannedEndDate").optional().isISO8601(),
@@ -219,7 +227,7 @@ router.put(
         "BLOCKED",
       ]),
     body("dependencies").optional().isArray(),
-    body("milestoneId").optional().isUUID(),
+    body("milestoneId").optional().isString().trim().notEmpty(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -251,7 +259,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  [param("id").isUUID().withMessage("Invalid task ID")],
+  [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
