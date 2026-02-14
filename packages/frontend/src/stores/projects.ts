@@ -5,10 +5,9 @@ import { createProjectService } from '@/services/projectService'
 import { mockProjects } from '@/mocks/unified'
 
 const service = createProjectService()
-const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useProjectStore = defineStore('projects', () => {
-  const projects = ref<Project[]>(isMock ? [...mockProjects] : [])
+  const projects = ref<Project[]>([...mockProjects])
 
   const activeProjects = computed(() => projects.value.filter(p => p.status === 'ACTIVE'))
 
@@ -31,6 +30,36 @@ export const useProjectStore = defineStore('projects', () => {
     }
   }
 
+  const createProject = (input: {
+    name: string
+    description?: string
+    status?: string
+    startDate?: string
+    endDate?: string
+  }): Project => {
+    const newProject: Project = {
+      id: `proj-${Date.now()}`,
+      name: input.name,
+      description: input.description || '',
+      status: (input.status as Project['status']) || 'ACTIVE',
+      startDate: input.startDate || new Date().toISOString().split('T')[0],
+      endDate: input.endDate || '',
+      createdById: 'user-001',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    projects.value = [...projects.value, newProject]
+    return newProject
+  }
+
+  const updateProject = (id: string, input: Partial<Project>): Project | null => {
+    const idx = projects.value.findIndex(p => p.id === id)
+    if (idx === -1) return null
+    const updated = { ...projects.value[idx], ...input, updatedAt: new Date().toISOString() }
+    projects.value = projects.value.map((p, i) => (i === idx ? updated : p))
+    return updated
+  }
+
   return {
     projects,
     activeProjects,
@@ -38,5 +67,7 @@ export const useProjectStore = defineStore('projects', () => {
     getProjectById,
     getProjectName,
     fetchProjects,
+    createProject,
+    updateProject,
   }
 })

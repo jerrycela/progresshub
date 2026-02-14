@@ -18,12 +18,10 @@ import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 // ============================================
 
 const service = createTaskService()
-const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useTaskStore = defineStore('tasks', () => {
-  // State - mock 模式同步初始化，API 模式保持空陣列等 fetch
-  const tasks = ref<Task[]>(isMock ? [...mockTasks] : [])
-  const poolTasks = ref<PoolTask[]>(isMock ? [...mockPoolTasks] : [])
+  const tasks = ref<Task[]>([...mockTasks])
+  const poolTasks = ref<PoolTask[]>([...mockPoolTasks])
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）

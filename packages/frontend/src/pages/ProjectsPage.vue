@@ -147,8 +147,19 @@ const saveProject = () => {
     return
   }
 
-  // Mock: 實際會呼叫 API
-  showSuccess(isEditing.value ? '專案已更新' : '專案已建立')
+  if (isEditing.value && editingProject.value.id) {
+    projectStore.updateProject(editingProject.value.id, editingProject.value)
+    showSuccess('專案已更新')
+  } else {
+    projectStore.createProject({
+      name: editingProject.value.name || '',
+      description: editingProject.value.description,
+      status: editingProject.value.status,
+      startDate: editingProject.value.startDate,
+      endDate: editingProject.value.endDate,
+    })
+    showSuccess('專案已建立')
+  }
   showProjectModal.value = false
 }
 

@@ -13,7 +13,7 @@ describe('useTaskStore', () => {
     vi.useRealTimers()
   })
 
-  // Helper: 預載 mock 資料到 store（重構後 store 初始為空）
+  // Helper: 重置 store 為乾淨的 mock 資料副本
   function setupWithMockData() {
     const store = useTaskStore()
     store.tasks = mockTasks.map(t => ({ ...t }))

@@ -5,10 +5,9 @@ import { createEmployeeService } from '@/services/employeeService'
 import { mockEmployees } from '@/mocks/unified'
 
 const service = createEmployeeService()
-const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const useEmployeeStore = defineStore('employees', () => {
-  const employees = ref<MockEmployee[]>(isMock ? [...mockEmployees] : [])
+  const employees = ref<MockEmployee[]>([...mockEmployees])
 
   const getByDepartment = (dept: Department) =>
     computed(() => employees.value.filter(e => e.department === dept))

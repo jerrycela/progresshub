@@ -15,7 +15,7 @@ import TaskRelationSelector from '@/components/task/TaskRelationSelector.vue'
 // 任務建立頁面 - 建立任務池任務、指派任務、自建任務
 // ============================================
 
-const { showSuccess } = useToast()
+const { showSuccess, showError } = useToast()
 const router = useRouter()
 
 const projectStore = useProjectStore()
@@ -86,18 +86,22 @@ const canSubmit = computed(() => {
 })
 
 // 提交表單
-const handleSubmit = (): void => {
-  const _taskData = {
-    sourceType: sourceType.value,
-    ...form,
-    assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
-    dependsOnTaskIds: dependsOnTaskIds.value.length > 0 ? dependsOnTaskIds.value : undefined,
-    createdBy: currentUser,
-  }
-  void _taskData
+const handleSubmit = async (): Promise<void> => {
+  const result = await taskStore.createTask({
+    title: form.title,
+    projectId: form.projectId,
+    description: form.description,
+    functionTags: form.functionTags,
+    startDate: form.startDate,
+    dueDate: form.dueDate,
+  })
 
-  showSuccess(`任務「${form.title}」已建立`)
-  router.push('/task-pool')
+  if (result.success) {
+    showSuccess(`任務「${form.title}」已建立`)
+    router.push('/task-pool')
+  } else {
+    showError(result.error?.message || '建立任務失敗')
+  }
 }
 
 // 取消建立
