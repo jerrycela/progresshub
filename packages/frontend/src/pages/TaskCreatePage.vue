@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/projects'
 import { useDepartmentStore } from '@/stores/departments'
 import { useEmployeeStore } from '@/stores/employees'
+import { useTaskStore } from '@/stores/tasks'
 import type { UserRole } from 'shared/types'
 import { useToast } from '@/composables/useToast'
 import TaskForm from '@/components/task/TaskForm.vue'
 import type { TaskFormData } from '@/components/task/TaskForm.vue'
+import TaskRelationSelector from '@/components/task/TaskRelationSelector.vue'
 
 // ============================================
 // 任務建立頁面 - 建立任務池任務、指派任務、自建任務
@@ -19,6 +21,7 @@ const router = useRouter()
 const projectStore = useProjectStore()
 const departmentStore = useDepartmentStore()
 const employeeStore = useEmployeeStore()
+const taskStore = useTaskStore()
 
 // 任務來源類型
 type SourceType = 'POOL' | 'ASSIGNED' | 'SELF_CREATED'
@@ -68,6 +71,9 @@ const form = reactive<TaskFormData>({
   functionTags: [],
 })
 
+// 關聯任務（獨立管理，不在 TaskForm 中）
+const dependsOnTaskIds = ref<string[]>([])
+
 // 是否顯示指派欄位
 const showAssignee = computed(() => sourceType.value === 'ASSIGNED')
 
@@ -85,6 +91,7 @@ const handleSubmit = (): void => {
     sourceType: sourceType.value,
     ...form,
     assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
+    dependsOnTaskIds: dependsOnTaskIds.value.length > 0 ? dependsOnTaskIds.value : undefined,
     createdBy: currentUser,
   }
   void _taskData
@@ -194,6 +201,12 @@ const handleCancel = (): void => {
       assignee-label="指派給"
       :assignee-required="true"
     />
+
+    <!-- 任務關聯 -->
+    <div class="card p-6 space-y-5">
+      <h2 class="text-lg font-semibold" style="color: var(--text-primary)">任務關聯</h2>
+      <TaskRelationSelector v-model="dependsOnTaskIds" :all-tasks="taskStore.tasks" />
+    </div>
 
     <!-- 操作按鈕 -->
     <div class="flex items-center justify-end gap-3">

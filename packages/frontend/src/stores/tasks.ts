@@ -339,6 +339,7 @@ export const useTaskStore = defineStore('tasks', () => {
         startDate: input.startDate,
         dueDate: input.dueDate,
         estimatedHours: input.estimatedHours,
+        dependsOnTaskIds: input.dependsOnTaskIds, // 任務關聯 - Phase 1
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useGantt, type TimeScale } from '@/composables/useGantt'
@@ -14,11 +13,11 @@ import GanttTimeAxis from '@/components/gantt/GanttTimeAxis.vue'
 import GanttMilestoneRow from '@/components/gantt/GanttMilestoneRow.vue'
 import GanttTaskRow from '@/components/gantt/GanttTaskRow.vue'
 import MilestoneModal from '@/components/gantt/MilestoneModal.vue'
+import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
 import { useEmployeeStore } from '@/stores/employees'
 import { useMilestoneStore } from '@/stores/milestones'
 import type { MilestoneData, FunctionType, Task, UserRole } from 'shared/types'
 
-const router = useRouter()
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { showSuccess, showWarning } = useToast()
@@ -36,6 +35,10 @@ const groupByProject = ref(false)
 const collapsedProjects = ref<Set<string>>(new Set())
 const timeScale = ref<TimeScale>('week')
 const showMilestoneModal = ref(false)
+
+// 任務關聯 Modal 狀態
+const showTaskRelationModal = ref(false)
+const selectedTask = ref<Task | null>(null)
 
 // 里程碑資料
 const milestones = ref<MilestoneData[]>(milestoneStore.allSorted())
@@ -222,7 +225,11 @@ const allProjectsCollapsed = computed(() => {
 
 // 導航
 const navigateToTask = (taskId: string) => {
-  router.push(`/task-pool/${taskId}`)
+  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  if (task) {
+    selectedTask.value = task
+    showTaskRelationModal.value = true
+  }
 }
 
 // 里程碑 CRUD
@@ -538,6 +545,14 @@ const deleteMilestone = async (msId: string): Promise<void> => {
       :can-manage="canManageMilestones"
       @submit="submitMilestone"
       @delete="deleteMilestone"
+    />
+
+    <!-- 任務關聯 Modal -->
+    <TaskRelationModal
+      v-if="selectedTask"
+      v-model="showTaskRelationModal"
+      :task="selectedTask"
+      :all-tasks="taskStore.tasks as Task[]"
     />
   </div>
 </template>
