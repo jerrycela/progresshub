@@ -8,17 +8,20 @@ import type {
   CreateTaskInput,
   PoolTask,
 } from 'shared/types'
-import { mockTasks, mockPoolTasks } from '@/mocks/unified'
+import { createTaskService } from '@/services/taskService'
 
 // ============================================
-// Tasks Store - Ralph Loop 迭代 6 重構
-// 新增完整錯誤處理、細粒度 Loading 狀態、樂觀更新
+// Tasks Store - Service Layer 重構
+// 透過 TaskService 抽象層處理任務邏輯
+// 保留樂觀更新與回滾機制
 // ============================================
+
+const service = createTaskService()
 
 export const useTaskStore = defineStore('tasks', () => {
-  // State
-  const tasks = ref<Task[]>([...mockTasks])
-  const poolTasks = ref<PoolTask[]>([...mockPoolTasks])
+  // State - 初始為空，透過 fetchTasks() 載入
+  const tasks = ref<Task[]>([])
+  const poolTasks = ref<PoolTask[]>([])
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）
@@ -69,13 +72,34 @@ export const useTaskStore = defineStore('tasks', () => {
     error.value = null
 
     try {
-      // Mock: 模擬 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 300))
-      tasks.value = [...mockTasks]
+      const data = await service.fetchTasks()
+      tasks.value = data
 
       return { success: true, data: tasks.value }
     } catch (e) {
       const message = e instanceof Error ? e.message : '載入任務失敗'
+      error.value = message
+
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message },
+      }
+    } finally {
+      loading.value.fetch = false
+    }
+  }
+
+  const fetchPoolTasks = async (): Promise<ActionResult<PoolTask[]>> => {
+    loading.value.fetch = true
+    error.value = null
+
+    try {
+      const data = await service.fetchPoolTasks()
+      poolTasks.value = data
+
+      return { success: true, data: poolTasks.value }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '載入任務池失敗'
       error.value = message
 
       return {
@@ -118,8 +142,16 @@ export const useTaskStore = defineStore('tasks', () => {
       task.assigneeId = userId
       task.updatedAt = new Date().toISOString()
 
-      // Mock: 模擬 API 呼叫
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // 呼叫 service
+      const result = await service.claimTask(taskId, userId)
+
+      if (result.success && result.data) {
+        // 以伺服器回應更新本地狀態
+        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
+        if (idx !== -1) {
+          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
+        }
+      }
 
       return { success: true, data: task }
     } catch (e) {
@@ -161,15 +193,24 @@ export const useTaskStore = defineStore('tasks', () => {
     const originalProgress = task.progress
 
     try {
+      // 樂觀更新
       task.status = 'UNCLAIMED'
       task.assigneeId = undefined
       task.progress = 0
       task.updatedAt = new Date().toISOString()
 
-      await new Promise(resolve => setTimeout(resolve, 200))
+      const result = await service.unclaimTask(taskId)
+
+      if (result.success && result.data) {
+        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
+        if (idx !== -1) {
+          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
+        }
+      }
 
       return { success: true, data: task }
     } catch (e) {
+      // 回滾
       task.status = originalStatus
       task.assigneeId = originalAssigneeId
       task.progress = originalProgress
@@ -212,6 +253,7 @@ export const useTaskStore = defineStore('tasks', () => {
     const originalStatus = task.status
 
     try {
+      // 樂觀更新
       task.progress = progress
       task.updatedAt = new Date().toISOString()
 
@@ -224,14 +266,18 @@ export const useTaskStore = defineStore('tasks', () => {
         task.closedAt = new Date().toISOString()
       }
 
-      // Mock: 保存備註（實際會記錄到 ProgressLog）
-      // 備註會在後端實作時記錄到 ProgressLog
-      void notes // 避免 TS 未使用警告
+      const result = await service.updateTaskProgress(taskId, progress, notes)
 
-      await new Promise(resolve => setTimeout(resolve, 200))
+      if (result.success && result.data) {
+        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
+        if (idx !== -1) {
+          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
+        }
+      }
 
       return { success: true, data: task }
     } catch (e) {
+      // 回滾
       task.progress = originalProgress
       task.status = originalStatus
 
@@ -262,6 +308,7 @@ export const useTaskStore = defineStore('tasks', () => {
     const originalStatus = task.status
 
     try {
+      // 樂觀更新
       task.status = status
       task.updatedAt = new Date().toISOString()
 
@@ -282,10 +329,18 @@ export const useTaskStore = defineStore('tasks', () => {
         task.pausedAt = undefined
       }
 
-      await new Promise(resolve => setTimeout(resolve, 200))
+      const result = await service.updateTaskStatus(taskId, status)
+
+      if (result.success && result.data) {
+        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
+        if (idx !== -1) {
+          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
+        }
+      }
 
       return { success: true, data: task }
     } catch (e) {
+      // 回滾
       task.status = originalStatus
 
       const message = e instanceof Error ? e.message : '更新狀態失敗'
@@ -327,28 +382,17 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.create = true
 
     try {
-      const newTask: Task = {
-        id: String(Date.now()),
-        title: input.title.trim(),
-        description: input.description,
-        status: 'UNCLAIMED',
-        priority: input.priority || 'MEDIUM',
-        progress: 0,
-        projectId: input.projectId,
-        functionTags: input.functionTags || [],
-        startDate: input.startDate,
-        dueDate: input.dueDate,
-        estimatedHours: input.estimatedHours,
-        dependsOnTaskIds: input.dependsOnTaskIds, // 任務關聯 - Phase 1
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      const result = await service.createTask(input)
+
+      if (result.success && result.data) {
+        tasks.value = [...tasks.value, result.data]
+        return { success: true, data: result.data }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 200))
-
-      tasks.value.push(newTask)
-
-      return { success: true, data: newTask }
+      return {
+        success: false,
+        error: result.error || { code: 'TASK_CREATE_FAILED', message: '建立任務失敗' },
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : '建立任務失敗'
       return {
@@ -384,6 +428,7 @@ export const useTaskStore = defineStore('tasks', () => {
     isTaskLoading,
     // Actions
     fetchTasks,
+    fetchPoolTasks,
     claimTask,
     unclaimTask,
     updateTaskProgress,

@@ -1,6 +1,6 @@
 import type { Project } from 'shared/types'
 import { mockProjects } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap } from './api'
 
 export interface ProjectServiceInterface {
   fetchProjects(): Promise<Project[]>
@@ -20,13 +20,11 @@ class MockProjectService implements ProjectServiceInterface {
 
 class ApiProjectService implements ProjectServiceInterface {
   async fetchProjects(): Promise<Project[]> {
-    const { data } = await api.get<Project[]>('/projects')
-    return data
+    return apiGetUnwrap<Project[]>('/projects')
   }
 
   async getProjectById(id: string): Promise<Project | undefined> {
-    const { data } = await api.get<Project>(`/projects/${id}`)
-    return data
+    return apiGetUnwrap<Project>(`/projects/${id}`)
   }
 }
 

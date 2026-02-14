@@ -1,16 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, UserRole, ActionResult } from 'shared/types'
-import { mockCurrentUser, mockUsers } from '@/mocks/unified'
+import { createAuthService } from '@/services/authService'
+import { mockUsers } from '@/mocks/unified'
 
 // ============================================
-// Auth Store - Ralph Loop 迭代 6 重構
-// 新增錯誤處理與細粒度 Loading 狀態
+// Auth Store - Service Layer 重構
+// 透過 AuthService 抽象層處理認證邏輯
 // ============================================
+
+const service = createAuthService()
 
 export const useAuthStore = defineStore('auth', () => {
   // State
-  const user = ref<User | null>(mockCurrentUser) // Mock: 預設已登入
+  const user = ref<User | null>(null) // 初始為 null，透過 initAuth() 載入
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）
@@ -33,19 +36,45 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => user.value?.role === 'ADMIN')
 
   // Actions
-  const login = async (_slackCode?: string): Promise<ActionResult<User>> => {
-    // Mock login - 實際會呼叫 Slack OAuth API
+  const initAuth = async (): Promise<ActionResult<User>> => {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      return {
+        success: false,
+        error: { code: 'AUTH_REQUIRED', message: '未找到認證 token' },
+      }
+    }
+
+    try {
+      const result = await service.getCurrentUser()
+      if (result.success && result.data) {
+        user.value = result.data
+      }
+      return result
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '初始化認證失敗'
+      return {
+        success: false,
+        error: { code: 'AUTH_LOGIN_FAILED', message },
+      }
+    }
+  }
+
+  const login = async (slackCode?: string): Promise<ActionResult<User>> => {
     loading.value.login = true
     error.value = null
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      user.value = mockCurrentUser
+      const result = await service.loginWithSlack(slackCode || '')
+      if (result.success && result.data) {
+        user.value = result.data.user
+        localStorage.setItem('auth_token', result.data.token)
+        return { success: true, data: result.data.user }
+      }
 
       return {
-        success: true,
-        data: mockCurrentUser,
+        success: false,
+        error: result.error || { code: 'AUTH_LOGIN_FAILED', message: '登入失敗' },
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : '登入失敗，請稍後再試'
@@ -68,8 +97,9 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await service.logout()
       user.value = null
+      localStorage.removeItem('auth_token')
 
       return { success: true }
     } catch (e) {
@@ -89,7 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const switchUser = (userId: string): ActionResult<User> => {
-    // Mock: 切換使用者（方便測試不同角色）
+    // Dev-only: 切換使用者（方便測試不同角色）
     const newUser = mockUsers.find((u: User) => u.id === userId)
     if (newUser) {
       user.value = newUser
@@ -129,6 +159,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Actions
     login,
     logout,
+    initAuth,
     switchUser,
     hasRole,
     clearError,

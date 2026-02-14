@@ -1,10 +1,18 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { MilestoneData, ActionResult } from 'shared/types'
-import { mockMilestones } from '@/mocks/unified'
+import { createMilestoneService } from '@/services/milestoneService'
+
+// ============================================
+// Milestones Store - Service Layer 重構
+// 透過 MilestoneService 抽象層處理里程碑邏輯
+// ============================================
+
+const service = createMilestoneService()
 
 export const useMilestoneStore = defineStore('milestones', () => {
-  const milestones = ref<MilestoneData[]>([...mockMilestones])
+  // State - 初始為空，透過 fetchMilestones() 載入
+  const milestones = ref<MilestoneData[]>([])
 
   const byProject = (projectId: string) =>
     milestones.value
@@ -16,8 +24,8 @@ export const useMilestoneStore = defineStore('milestones', () => {
 
   const fetchMilestones = async (): Promise<ActionResult<MilestoneData[]>> => {
     try {
-      await new Promise(r => setTimeout(r, 200))
-      milestones.value = [...mockMilestones]
+      const data = await service.fetchMilestones()
+      milestones.value = data
       return { success: true, data: milestones.value }
     } catch (e) {
       return {
@@ -30,12 +38,44 @@ export const useMilestoneStore = defineStore('milestones', () => {
     }
   }
 
-  const addMilestone = (ms: MilestoneData) => {
-    milestones.value = [...milestones.value, ms]
+  const addMilestone = async (ms: MilestoneData): Promise<ActionResult<MilestoneData>> => {
+    try {
+      const result = await service.addMilestone(ms)
+      if (result.success && result.data) {
+        milestones.value = [...milestones.value, result.data]
+        return { success: true, data: result.data }
+      }
+      return {
+        success: false,
+        error: result.error || { code: 'UNKNOWN_ERROR', message: '新增里程碑失敗' },
+      }
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '新增里程碑失敗',
+        },
+      }
+    }
   }
 
-  const removeMilestone = (id: string) => {
-    milestones.value = milestones.value.filter(ms => ms.id !== id)
+  const removeMilestone = async (id: string): Promise<ActionResult<void>> => {
+    try {
+      const result = await service.removeMilestone(id)
+      if (result.success) {
+        milestones.value = milestones.value.filter(ms => ms.id !== id)
+      }
+      return result
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '刪除里程碑失敗',
+        },
+      }
+    }
   }
 
   return {

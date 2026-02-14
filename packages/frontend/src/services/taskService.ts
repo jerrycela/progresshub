@@ -1,6 +1,6 @@
 import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap } from './api'
 
 export interface TaskServiceInterface {
   fetchTasks(): Promise<Task[]>
@@ -109,32 +109,28 @@ class MockTaskService implements TaskServiceInterface {
 
 class ApiTaskService implements TaskServiceInterface {
   async fetchTasks(): Promise<Task[]> {
-    const { data } = await api.get<Task[]>('/tasks')
-    return data
+    return apiGetUnwrap<Task[]>('/tasks')
   }
 
   async fetchPoolTasks(): Promise<PoolTask[]> {
-    const { data } = await api.get<PoolTask[]>('/tasks/pool')
-    return data
+    return apiGetUnwrap<PoolTask[]>('/tasks/pool')
   }
 
   async getTaskById(id: string): Promise<Task | undefined> {
-    const { data } = await api.get<Task>(`/tasks/${id}`)
-    return data
+    return apiGetUnwrap<Task>(`/tasks/${id}`)
   }
 
   async getPoolTaskById(id: string): Promise<PoolTask | undefined> {
-    const { data } = await api.get<PoolTask>(`/tasks/pool/${id}`)
-    return data
+    return apiGetUnwrap<PoolTask>(`/tasks/pool/${id}`)
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
-    const { data } = await api.post<Task>('/tasks', input)
+    const data = await apiPostUnwrap<Task>('/tasks', input)
     return { success: true, data }
   }
 
   async updateTaskStatus(taskId: string, status: TaskStatus): Promise<ActionResult<Task>> {
-    const { data } = await api.patch<Task>(`/tasks/${taskId}/status`, { status })
+    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/status`, { status })
     return { success: true, data }
   }
 
@@ -143,17 +139,17 @@ class ApiTaskService implements TaskServiceInterface {
     progress: number,
     notes?: string,
   ): Promise<ActionResult<Task>> {
-    const { data } = await api.patch<Task>(`/tasks/${taskId}/progress`, { progress, notes })
+    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/progress`, { progress, notes })
     return { success: true, data }
   }
 
   async claimTask(taskId: string, userId: string): Promise<ActionResult<Task>> {
-    const { data } = await api.post<Task>(`/tasks/${taskId}/claim`, { userId })
+    const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/claim`, { userId })
     return { success: true, data }
   }
 
   async unclaimTask(taskId: string): Promise<ActionResult<Task>> {
-    const { data } = await api.post<Task>(`/tasks/${taskId}/unclaim`)
+    const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/unclaim`)
     return { success: true, data }
   }
 }

@@ -1,6 +1,6 @@
 import type { ActionResult } from 'shared/types'
 import { mockCurrentUserSettings, type UserSettings } from '@/mocks/userSettings'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiDeleteUnwrap } from './api'
 
 export type { UserSettings }
 
@@ -56,32 +56,31 @@ class MockUserSettingsService implements UserSettingsServiceInterface {
 
 class ApiUserSettingsService implements UserSettingsServiceInterface {
   async fetchSettings(): Promise<UserSettings> {
-    const { data } = await api.get<UserSettings>('/user/settings')
-    return data
+    return apiGetUnwrap<UserSettings>('/user/settings')
   }
 
   async updateSettings(updates: Partial<UserSettings>): Promise<ActionResult<UserSettings>> {
-    const { data } = await api.patch<UserSettings>('/user/settings', updates)
+    const data = await apiPatchUnwrap<UserSettings>('/user/settings', updates)
     return { success: true, data }
   }
 
   async linkGitLab(username: string): Promise<ActionResult<UserSettings>> {
-    const { data } = await api.post<UserSettings>('/user/integrations/gitlab', { username })
+    const data = await apiPostUnwrap<UserSettings>('/user/integrations/gitlab', { username })
     return { success: true, data }
   }
 
   async unlinkGitLab(): Promise<ActionResult<UserSettings>> {
-    const { data } = await api.delete<UserSettings>('/user/integrations/gitlab')
+    const data = await apiDeleteUnwrap<UserSettings>('/user/integrations/gitlab')
     return { success: true, data }
   }
 
   async linkSlack(username: string): Promise<ActionResult<UserSettings>> {
-    const { data } = await api.post<UserSettings>('/user/integrations/slack', { username })
+    const data = await apiPostUnwrap<UserSettings>('/user/integrations/slack', { username })
     return { success: true, data }
   }
 
   async unlinkSlack(): Promise<ActionResult<UserSettings>> {
-    const { data } = await api.delete<UserSettings>('/user/integrations/slack')
+    const data = await apiDeleteUnwrap<UserSettings>('/user/integrations/slack')
     return { success: true, data }
   }
 }

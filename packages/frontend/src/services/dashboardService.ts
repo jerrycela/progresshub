@@ -1,6 +1,6 @@
 import type { DashboardStats, FunctionWorkload } from 'shared/types'
 import { mockDashboardStats, mockFunctionWorkloads } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap } from './api'
 
 export interface DashboardServiceInterface {
   fetchStats(): Promise<DashboardStats>
@@ -21,13 +21,11 @@ class MockDashboardService implements DashboardServiceInterface {
 
 class ApiDashboardService implements DashboardServiceInterface {
   async fetchStats(): Promise<DashboardStats> {
-    const { data } = await api.get<DashboardStats>('/dashboard/stats')
-    return data
+    return apiGetUnwrap<DashboardStats>('/dashboard/stats')
   }
 
   async fetchWorkloads(): Promise<FunctionWorkload[]> {
-    const { data } = await api.get<FunctionWorkload[]>('/dashboard/workloads')
-    return data
+    return apiGetUnwrap<FunctionWorkload[]>('/dashboard/workloads')
   }
 }
 

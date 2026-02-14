@@ -1,28 +1,44 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { ProgressLog, ActionResult } from 'shared/types'
-import { mockProgressLogs } from '@/mocks/unified'
+import { createProgressService } from '@/services/progressService'
+
+const service = createProgressService()
 
 export const useProgressLogStore = defineStore('progressLogs', () => {
-  const logs = ref<ProgressLog[]>([...mockProgressLogs])
+  const logs = ref<ProgressLog[]>([])
 
   const byTaskId = (taskId: string) =>
     logs.value
       .filter(l => l.taskId === taskId)
       .sort((a, b) => new Date(b.reportedAt).getTime() - new Date(a.reportedAt).getTime())
 
+  const fetchByTaskId = async (taskId: string): Promise<ActionResult<ProgressLog[]>> => {
+    try {
+      const data = await service.fetchByTaskId(taskId)
+      const existingOtherLogs = logs.value.filter(l => l.taskId !== taskId)
+      logs.value = [...existingOtherLogs, ...data]
+      return { success: true, data }
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'UNKNOWN_ERROR',
+          message: e instanceof Error ? e.message : '載入進度記錄失敗',
+        },
+      }
+    }
+  }
+
   const addLog = async (
     log: Omit<ProgressLog, 'id' | 'reportedAt'>,
   ): Promise<ActionResult<ProgressLog>> => {
     try {
-      await new Promise(r => setTimeout(r, 200))
-      const newLog: ProgressLog = {
-        ...log,
-        id: `log-${Date.now()}`,
-        reportedAt: new Date().toISOString(),
+      const result = await service.addLog(log)
+      if (result.success && result.data) {
+        logs.value = [...logs.value, result.data]
       }
-      logs.value = [...logs.value, newLog]
-      return { success: true, data: newLog }
+      return result
     } catch (e) {
       return {
         success: false,
@@ -37,6 +53,7 @@ export const useProgressLogStore = defineStore('progressLogs', () => {
   return {
     logs,
     byTaskId,
+    fetchByTaskId,
     addLog,
   }
 })

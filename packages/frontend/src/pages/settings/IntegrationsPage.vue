@@ -21,18 +21,19 @@ const gitlabUsername = ref('')
 const slackUsername = ref('')
 
 // 連結 GitLab
-const handleLinkGitLab = (): void => {
+const handleLinkGitLab = async (): Promise<void> => {
   if (!gitlabUsername.value.trim()) {
     showWarning('請輸入 GitLab 使用者名稱')
     return
   }
 
-  const updatedUser = userSettingsStore.linkGitLab(gitlabUsername.value.trim())
-  user.value = { ...updatedUser }
-  showLinkGitLabModal.value = false
-  gitlabUsername.value = ''
-
-  showSuccess(`已連結 GitLab 帳號：${user.value.gitlabUsername}`)
+  const result = await userSettingsStore.linkGitLab(gitlabUsername.value.trim())
+  if (result.success && result.data) {
+    user.value = { ...result.data }
+    showLinkGitLabModal.value = false
+    gitlabUsername.value = ''
+    showSuccess(`已連結 GitLab 帳號：${user.value.gitlabUsername}`)
+  }
 }
 
 // 解除 GitLab 連結
@@ -45,25 +46,27 @@ const handleUnlinkGitLab = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const updatedUser = userSettingsStore.unlinkGitLab()
-  user.value = { ...updatedUser }
-
-  showSuccess('已解除 GitLab 帳號連結')
+  const result = await userSettingsStore.unlinkGitLab()
+  if (result.success && result.data) {
+    user.value = { ...result.data }
+    showSuccess('已解除 GitLab 帳號連結')
+  }
 }
 
 // 連結 Slack
-const handleLinkSlack = (): void => {
+const handleLinkSlack = async (): Promise<void> => {
   if (!slackUsername.value.trim()) {
     showWarning('請輸入 Slack 使用者名稱')
     return
   }
 
-  const updatedUser = userSettingsStore.linkSlack(slackUsername.value.trim())
-  user.value = { ...updatedUser }
-  showLinkSlackModal.value = false
-  slackUsername.value = ''
-
-  showSuccess(`已連結 Slack 帳號：${user.value.slackUsername}`)
+  const result = await userSettingsStore.linkSlack(slackUsername.value.trim())
+  if (result.success && result.data) {
+    user.value = { ...result.data }
+    showLinkSlackModal.value = false
+    slackUsername.value = ''
+    showSuccess(`已連結 Slack 帳號：${user.value.slackUsername}`)
+  }
 }
 
 // 解除 Slack 連結
@@ -76,10 +79,11 @@ const handleUnlinkSlack = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const updatedUser = userSettingsStore.unlinkSlack()
-  user.value = { ...updatedUser }
-
-  showSuccess('已解除 Slack 帳號連結')
+  const result = await userSettingsStore.unlinkSlack()
+  if (result.success && result.data) {
+    user.value = { ...result.data }
+    showSuccess('已解除 Slack 帳號連結')
+  }
 }
 </script>
 

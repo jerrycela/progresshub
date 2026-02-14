@@ -1,16 +1,24 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { DashboardStats, FunctionWorkload, ActionResult } from 'shared/types'
-import { mockDashboardStats, mockFunctionWorkloads } from '@/mocks/unified'
+import { createDashboardService } from '@/services/dashboardService'
+
+const service = createDashboardService()
 
 export const useDashboardStore = defineStore('dashboard', () => {
-  const stats = ref<DashboardStats>({ ...mockDashboardStats })
-  const functionWorkloads = ref<FunctionWorkload[]>([...mockFunctionWorkloads])
+  const stats = ref<DashboardStats>({
+    totalTasks: 0,
+    completedTasks: 0,
+    inProgressTasks: 0,
+    unclaimedTasks: 0,
+    overdueTasksCount: 0,
+  })
+  const functionWorkloads = ref<FunctionWorkload[]>([])
 
   const fetchStats = async (): Promise<ActionResult<DashboardStats>> => {
     try {
-      await new Promise(r => setTimeout(r, 200))
-      stats.value = { ...mockDashboardStats }
+      const data = await service.fetchStats()
+      stats.value = data
       return { success: true, data: stats.value }
     } catch (e) {
       return {
@@ -22,8 +30,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   const fetchWorkloads = async (): Promise<ActionResult<FunctionWorkload[]>> => {
     try {
-      await new Promise(r => setTimeout(r, 200))
-      functionWorkloads.value = [...mockFunctionWorkloads]
+      const data = await service.fetchWorkloads()
+      functionWorkloads.value = data
       return { success: true, data: functionWorkloads.value }
     } catch (e) {
       return {

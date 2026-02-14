@@ -1,6 +1,6 @@
 import type { ProgressLog, ActionResult } from 'shared/types'
 import { mockProgressLogs } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap } from './api'
 
 export interface ProgressServiceInterface {
   fetchByTaskId(taskId: string): Promise<ProgressLog[]>
@@ -28,12 +28,11 @@ class MockProgressService implements ProgressServiceInterface {
 
 class ApiProgressService implements ProgressServiceInterface {
   async fetchByTaskId(taskId: string): Promise<ProgressLog[]> {
-    const { data } = await api.get<ProgressLog[]>(`/tasks/${taskId}/progress`)
-    return data
+    return apiGetUnwrap<ProgressLog[]>(`/tasks/${taskId}/progress`)
   }
 
   async addLog(log: Omit<ProgressLog, 'id' | 'reportedAt'>): Promise<ActionResult<ProgressLog>> {
-    const { data } = await api.post<ProgressLog>(`/tasks/${log.taskId}/progress`, log)
+    const data = await apiPostUnwrap<ProgressLog>(`/tasks/${log.taskId}/progress`, log)
     return { success: true, data }
   }
 }

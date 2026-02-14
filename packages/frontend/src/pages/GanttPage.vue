@@ -298,13 +298,13 @@ const navigateToTask = (taskId: string) => {
 }
 
 // 里程碑 CRUD
-const submitMilestone = (data: {
+const submitMilestone = async (data: {
   name: string
   description: string
   date: string
   projectId: string
   color: string
-}): void => {
+}): Promise<void> => {
   if (!data.name.trim()) {
     showWarning('請輸入里程碑名稱')
     return
@@ -333,7 +333,7 @@ const submitMilestone = (data: {
   milestones.value = [...milestones.value, milestone].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   )
-  milestoneStore.addMilestone(milestone)
+  await milestoneStore.addMilestone(milestone)
   showMilestoneModal.value = false
   showSuccess(`已新增里程碑：${milestone.name}`)
 }
@@ -348,7 +348,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
   if (!confirmed) return
 
   milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
-  milestoneStore.removeMilestone(msId)
+  await milestoneStore.removeMilestone(msId)
   showSuccess('已刪除里程碑')
 }
 </script>

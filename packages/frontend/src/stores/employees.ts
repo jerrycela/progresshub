@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MockEmployee, Department, ActionResult } from 'shared/types'
-import { mockEmployees } from '@/mocks/unified'
+import { createEmployeeService } from '@/services/employeeService'
+
+const service = createEmployeeService()
 
 export const useEmployeeStore = defineStore('employees', () => {
-  const employees = ref<MockEmployee[]>([...mockEmployees])
+  const employees = ref<MockEmployee[]>([])
 
   const getByDepartment = (dept: Department) =>
     computed(() => employees.value.filter(e => e.department === dept))
@@ -27,8 +29,8 @@ export const useEmployeeStore = defineStore('employees', () => {
 
   const fetchEmployees = async (): Promise<ActionResult<MockEmployee[]>> => {
     try {
-      await new Promise(r => setTimeout(r, 200))
-      employees.value = [...mockEmployees]
+      const data = await service.fetchEmployees()
+      employees.value = data
       return { success: true, data: employees.value }
     } catch (e) {
       return {

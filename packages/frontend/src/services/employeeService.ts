@@ -1,6 +1,6 @@
 import type { MockEmployee, Department } from 'shared/types'
 import { mockEmployees } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap } from './api'
 
 export interface EmployeeServiceInterface {
   fetchEmployees(): Promise<MockEmployee[]>
@@ -25,18 +25,15 @@ class MockEmployeeService implements EmployeeServiceInterface {
 
 class ApiEmployeeService implements EmployeeServiceInterface {
   async fetchEmployees(): Promise<MockEmployee[]> {
-    const { data } = await api.get<MockEmployee[]>('/employees')
-    return data
+    return apiGetUnwrap<MockEmployee[]>('/employees')
   }
 
   async getEmployeeById(id: string): Promise<MockEmployee | undefined> {
-    const { data } = await api.get<MockEmployee>(`/employees/${id}`)
-    return data
+    return apiGetUnwrap<MockEmployee>(`/employees/${id}`)
   }
 
   async getByDepartment(dept: Department): Promise<MockEmployee[]> {
-    const { data } = await api.get<MockEmployee[]>(`/employees?department=${dept}`)
-    return data
+    return apiGetUnwrap<MockEmployee[]>(`/employees?department=${dept}`)
   }
 }
 

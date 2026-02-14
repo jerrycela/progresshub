@@ -1,5 +1,5 @@
 import type { User, ActionResult } from 'shared/types'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap } from './api'
 
 export interface AuthServiceInterface {
   loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>>
@@ -44,17 +44,17 @@ class MockAuthService implements AuthServiceInterface {
 
 class ApiAuthService implements AuthServiceInterface {
   async loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>> {
-    const { data } = await api.post<{ user: User; token: string }>('/auth/slack', { code })
+    const data = await apiPostUnwrap<{ user: User; token: string }>('/auth/slack', { code })
     return { success: true, data }
   }
 
   async getCurrentUser(): Promise<ActionResult<User>> {
-    const { data } = await api.get<User>('/auth/me')
+    const data = await apiGetUnwrap<User>('/auth/me')
     return { success: true, data }
   }
 
   async logout(): Promise<void> {
-    await api.post('/auth/logout')
+    await apiPostUnwrap('/auth/logout')
     localStorage.removeItem('auth_token')
   }
 }

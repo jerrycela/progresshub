@@ -1,6 +1,6 @@
 import type { MilestoneData, ActionResult } from 'shared/types'
 import { mockMilestones } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiDelete } from './api'
 
 export interface MilestoneServiceInterface {
   fetchMilestones(): Promise<MilestoneData[]>
@@ -27,17 +27,16 @@ class MockMilestoneService implements MilestoneServiceInterface {
 
 class ApiMilestoneService implements MilestoneServiceInterface {
   async fetchMilestones(): Promise<MilestoneData[]> {
-    const { data } = await api.get<MilestoneData[]>('/milestones')
-    return data
+    return apiGetUnwrap<MilestoneData[]>('/milestones')
   }
 
   async addMilestone(ms: MilestoneData): Promise<ActionResult<MilestoneData>> {
-    const { data } = await api.post<MilestoneData>('/milestones', ms)
+    const data = await apiPostUnwrap<MilestoneData>('/milestones', ms)
     return { success: true, data }
   }
 
   async removeMilestone(id: string): Promise<ActionResult<void>> {
-    await api.delete(`/milestones/${id}`)
+    await apiDelete(`/milestones/${id}`)
     return { success: true }
   }
 }

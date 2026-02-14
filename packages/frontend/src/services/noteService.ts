@@ -1,6 +1,6 @@
 import type { TaskNote, ActionResult } from 'shared/types'
 import { mockTaskNotes } from '@/mocks/unified'
-import api from './api'
+import { apiGetUnwrap, apiPostUnwrap } from './api'
 
 export interface NoteServiceInterface {
   fetchByTaskId(taskId: string): Promise<TaskNote[]>
@@ -28,12 +28,11 @@ class MockNoteService implements NoteServiceInterface {
 
 class ApiNoteService implements NoteServiceInterface {
   async fetchByTaskId(taskId: string): Promise<TaskNote[]> {
-    const { data } = await api.get<TaskNote[]>(`/tasks/${taskId}/notes`)
-    return data
+    return apiGetUnwrap<TaskNote[]>(`/tasks/${taskId}/notes`)
   }
 
   async addNote(note: Omit<TaskNote, 'id' | 'createdAt'>): Promise<ActionResult<TaskNote>> {
-    const { data } = await api.post<TaskNote>(`/tasks/${note.taskId}/notes`, note)
+    const data = await apiPostUnwrap<TaskNote>(`/tasks/${note.taskId}/notes`, note)
     return { success: true, data }
   }
 }
