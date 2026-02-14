@@ -10,6 +10,8 @@ import timeStatsRoutes from "./timeStats";
 import milestoneRoutes from "./milestones";
 import slackRoutes from "./slack";
 import gitlabRoutes from "./gitlab";
+import dashboardRoutes from "./dashboard";
+import userSettingsRoutes from "./userSettings";
 import { sendSuccess } from "../utils/response";
 
 const router = Router();
@@ -26,6 +28,8 @@ router.use("/time-categories", timeCategoryRoutes);
 router.use("/time-stats", timeStatsRoutes);
 router.use("/slack", slackRoutes);
 router.use("/gitlab", gitlabRoutes);
+router.use("/dashboard", dashboardRoutes);
+router.use("/user", userSettingsRoutes);
 
 // API Info
 router.get("/", (_req, res) => {
@@ -44,6 +48,8 @@ router.get("/", (_req, res) => {
       timeStats: "/api/time-stats",
       slack: "/api/slack",
       gitlab: "/api/gitlab",
+      dashboard: "/api/dashboard",
+      user: "/api/user",
     },
   });
 });
