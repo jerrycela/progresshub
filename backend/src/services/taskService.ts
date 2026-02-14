@@ -345,12 +345,12 @@ export class TaskService {
    */
   async unclaimTask(taskId: string, userId: string): Promise<Task> {
     return prisma.$transaction(async (tx: TransactionClient) => {
-      // 只有負責人可以取消認領，且狀態必須是 CLAIMED
+      // 只有負責人可以取消認領，且狀態必須是 CLAIMED 或 IN_PROGRESS
       const result = await tx.task.updateMany({
         where: {
           id: taskId,
           assignedToId: userId,
-          status: "CLAIMED",
+          status: { in: ["CLAIMED", "IN_PROGRESS"] },
         },
         data: {
           status: "UNCLAIMED",
