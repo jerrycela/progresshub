@@ -15,10 +15,12 @@ import GanttTaskRow from '@/components/gantt/GanttTaskRow.vue'
 import MilestoneModal from '@/components/gantt/MilestoneModal.vue'
 import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
 import { topologicalSort } from '@/utils/topologicalSort'
+import { useAuthStore } from '@/stores/auth'
 import { useEmployeeStore } from '@/stores/employees'
 import { useMilestoneStore } from '@/stores/milestones'
-import type { MilestoneData, FunctionType, Task, UserRole } from 'shared/types'
+import type { MilestoneData, FunctionType, Task } from 'shared/types'
 
+const authStore = useAuthStore()
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
 const { showSuccess, showWarning } = useToast()
@@ -44,14 +46,9 @@ const selectedTask = ref<Task | null>(null)
 // 里程碑資料
 const milestones = ref<MilestoneData[]>(milestoneStore.allSorted())
 
-// 模擬當前登入者
-const currentUser = {
-  id: 'emp-7',
-  name: '吳建國',
-  userRole: 'PRODUCER' as UserRole,
-}
-
-const canManageMilestones = computed(() => ['PRODUCER', 'MANAGER'].includes(currentUser.userRole))
+const canManageMilestones = computed(() =>
+  authStore.user ? ['PM', 'ADMIN'].includes(authStore.user.role) : false,
+)
 
 // 篩選選項
 const statusOptions = [
@@ -318,6 +315,11 @@ const submitMilestone = async (data: {
     return
   }
 
+  if (!authStore.user) {
+    showWarning('請先登入')
+    return
+  }
+
   const milestone: MilestoneData = {
     id: `ms-${Date.now()}`,
     projectId: data.projectId,
@@ -325,8 +327,8 @@ const submitMilestone = async (data: {
     description: data.description.trim() || undefined,
     date: data.date,
     color: data.color,
-    createdById: currentUser.id,
-    createdByName: currentUser.name,
+    createdById: authStore.user.id,
+    createdByName: authStore.user.name,
     createdAt: new Date().toISOString(),
   }
 
