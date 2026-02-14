@@ -12,8 +12,10 @@ import GanttFilters from '@/components/gantt/GanttFilters.vue'
 import GanttTimeAxis from '@/components/gantt/GanttTimeAxis.vue'
 import GanttMilestoneRow from '@/components/gantt/GanttMilestoneRow.vue'
 import GanttTaskRow from '@/components/gantt/GanttTaskRow.vue'
+import GanttDependencyLines from '@/components/gantt/GanttDependencyLines.vue'
 import MilestoneModal from '@/components/gantt/MilestoneModal.vue'
 import TaskRelationModal from '@/components/task/TaskRelationModal.vue'
+import { topologicalSort } from '@/utils/topologicalSort'
 import { useEmployeeStore } from '@/stores/employees'
 import { useMilestoneStore } from '@/stores/milestones'
 import type { MilestoneData, FunctionType, Task, UserRole } from 'shared/types'
@@ -39,6 +41,9 @@ const showMilestoneModal = ref(false)
 // 任務關聯 Modal 狀態
 const showTaskRelationModal = ref(false)
 const selectedTask = ref<Task | null>(null)
+
+// 依賴線容器 ref
+const taskListContainer = ref<HTMLElement | null>(null)
 
 // 里程碑資料
 const milestones = ref<MilestoneData[]>(milestoneStore.allSorted())
@@ -117,9 +122,7 @@ const filteredTasks = computed(() => {
     tasks = tasks.filter((t: Task) => isTaskOverdue(t))
   }
 
-  return tasks
-    .filter((t: Task) => t.startDate && t.dueDate)
-    .sort((a: Task, b: Task) => new Date(a.startDate!).getTime() - new Date(b.startDate!).getTime())
+  return topologicalSort(tasks.filter((t: Task) => t.startDate && t.dueDate))
 })
 
 // 篩選後的里程碑
@@ -468,7 +471,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
           </template>
 
           <!-- 非分組模式 -->
-          <template v-else>
+          <div v-if="!groupByProject" ref="taskListContainer" class="relative">
             <GanttTaskRow
               v-for="(task, index) in filteredTasks"
               :key="task.id"
@@ -483,7 +486,12 @@ const deleteMilestone = async (msId: string): Promise<void> => {
               :show-project="true"
               @click="navigateToTask"
             />
-          </template>
+            <GanttDependencyLines
+              :tasks="filteredTasks"
+              :get-task-position="getTaskPosition"
+              :container-el="taskListContainer"
+            />
+          </div>
         </div>
       </div>
 
