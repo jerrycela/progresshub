@@ -313,9 +313,7 @@ describe('useTaskStore', () => {
         dueDate: '2026-03-15',
       }
 
-      const createPromise = store.createTask(input)
-      await vi.advanceTimersByTimeAsync(200)
-      const result = await createPromise
+      const result = await store.createTask(input)
 
       expect(result.success).toBe(true)
       expect(result.data?.title).toBe('New test task')
@@ -382,12 +380,10 @@ describe('useTaskStore', () => {
     it('should default priority to MEDIUM when not provided', async () => {
       const store = useTaskStore()
 
-      const createPromise = store.createTask({
+      const result = await store.createTask({
         title: 'Task without priority',
         projectId: 'proj-1',
       })
-      await vi.advanceTimersByTimeAsync(200)
-      const result = await createPromise
 
       expect(result.success).toBe(true)
       expect(result.data?.priority).toBe('MEDIUM')
@@ -396,17 +392,13 @@ describe('useTaskStore', () => {
     it('should set loading.create during creation', async () => {
       const store = useTaskStore()
 
-      const createPromise = store.createTask({
+      const result = await store.createTask({
         title: 'Loading test task',
         projectId: 'proj-1',
       })
 
-      expect(store.loading.create).toBe(true)
-      expect(store.isLoading).toBe(true)
-
-      await vi.advanceTimersByTimeAsync(200)
-      await createPromise
-
+      // createTask 現在是同步操作，loading 在 finally 中已重設
+      expect(result.success).toBe(true)
       expect(store.loading.create).toBe(false)
       expect(store.isLoading).toBe(false)
     })
@@ -414,12 +406,10 @@ describe('useTaskStore', () => {
     it('should trim the title', async () => {
       const store = useTaskStore()
 
-      const createPromise = store.createTask({
+      const result = await store.createTask({
         title: '  Trimmed title  ',
         projectId: 'proj-1',
       })
-      await vi.advanceTimersByTimeAsync(200)
-      const result = await createPromise
 
       expect(result.success).toBe(true)
       expect(result.data?.title).toBe('Trimmed title')

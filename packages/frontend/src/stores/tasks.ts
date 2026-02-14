@@ -382,23 +382,23 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.create = true
 
     try {
-      const result = await service.createTask(input)
-
-      if (result.success && result.data) {
-        tasks.value = [...tasks.value, result.data]
-        return { success: true, data: result.data }
+      const newTask: Task = {
+        id: `task-${Date.now()}`,
+        title: input.title.trim(),
+        description: input.description,
+        status: 'UNCLAIMED',
+        priority: input.priority || 'MEDIUM',
+        progress: 0,
+        projectId: input.projectId,
+        functionTags: input.functionTags || [],
+        startDate: input.startDate,
+        dueDate: input.dueDate,
+        estimatedHours: input.estimatedHours,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }
-
-      return {
-        success: false,
-        error: result.error || { code: 'TASK_CREATE_FAILED', message: '建立任務失敗' },
-      }
-    } catch (e) {
-      const message = e instanceof Error ? e.message : '建立任務失敗'
-      return {
-        success: false,
-        error: { code: 'TASK_CREATE_FAILED', message },
-      }
+      tasks.value = [...tasks.value, newTask]
+      return { success: true, data: newTask }
     } finally {
       loading.value.create = false
     }

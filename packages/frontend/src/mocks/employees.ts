@@ -124,8 +124,8 @@ export const mockUsers: User[] = mockEmployees.map(emp => ({
   updatedAt: '2026-01-01T00:00:00Z',
 }))
 
-// 當前登入使用者
-export const mockCurrentUser: User = mockUsers[0]
+// 當前登入使用者（使用 PM 角色，讓 demo 登入能看到所有管理功能）
+export const mockCurrentUser: User = mockUsers.find(u => u.id === 'emp-6')!
 
 // 員工 → User 快速查找
 const userMap = new Map(mockUsers.map(u => [u.id, u]))

@@ -251,8 +251,8 @@ describe('useAuthStore', () => {
     it('should return false when user role does not match', () => {
       const store = setupAuthenticated()
 
-      // mockCurrentUser (emp-1) 的角色是 EMPLOYEE
-      expect(store.hasRole(['PM', 'ADMIN'])).toBe(false)
+      // mockCurrentUser (emp-6) 的角色是 PM
+      expect(store.hasRole(['PRODUCER', 'ADMIN'])).toBe(false)
     })
 
     it('should return false when user is null', () => {
