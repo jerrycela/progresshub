@@ -59,7 +59,13 @@ class MockTaskService implements TaskServiceInterface {
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
     }
-    return { success: true, data: { ...task, status, updatedAt: new Date().toISOString() } }
+    const now = new Date().toISOString()
+    const updates: Partial<Task> = { status, updatedAt: now }
+    if (status === 'DONE') {
+      updates.progress = 100
+      updates.closedAt = now
+    }
+    return { success: true, data: { ...task, ...updates } }
   }
 
   async updateTaskProgress(taskId: string, progress: number): Promise<ActionResult<Task>> {
@@ -68,7 +74,15 @@ class MockTaskService implements TaskServiceInterface {
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
     }
-    return { success: true, data: { ...task, progress, updatedAt: new Date().toISOString() } }
+    const now = new Date().toISOString()
+    let status = task.status
+    if (progress > 0 && task.status === 'CLAIMED') {
+      status = 'IN_PROGRESS'
+    }
+    if (progress >= 100) {
+      status = 'DONE'
+    }
+    return { success: true, data: { ...task, progress, status, updatedAt: now } }
   }
 
   async claimTask(taskId: string, userId: string): Promise<ActionResult<Task>> {

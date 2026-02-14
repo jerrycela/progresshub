@@ -634,14 +634,21 @@ describe('useTaskStore', () => {
 
     it('should clear pause info when resuming from PAUSED to IN_PROGRESS', async () => {
       const store = setupWithMockData()
-      // Manually set up a PAUSED task
-      const task = store.tasks[0]
-      task.status = 'PAUSED'
-      task.pauseReason = 'WAITING_TASK'
-      task.pauseNote = '等待其他任務'
-      task.pausedAt = '2026-02-28T10:00:00Z'
+      // Manually set up a PAUSED task (immutable)
+      const taskId = store.tasks[0].id
+      store.tasks = store.tasks.map((t, i) =>
+        i === 0
+          ? {
+              ...t,
+              status: 'PAUSED' as const,
+              pauseReason: 'WAITING_TASK' as const,
+              pauseNote: '等待其他任務',
+              pausedAt: '2026-02-28T10:00:00Z',
+            }
+          : t,
+      )
 
-      const updatePromise = store.updateTaskStatus(task.id, 'IN_PROGRESS')
+      const updatePromise = store.updateTaskStatus(taskId, 'IN_PROGRESS')
       await vi.advanceTimersByTimeAsync(200)
       const result = await updatePromise
 

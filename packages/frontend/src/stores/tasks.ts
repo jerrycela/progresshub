@@ -141,16 +141,18 @@ export const useTaskStore = defineStore('tasks', () => {
 
     loading.value.claim[taskId] = true
 
-    // 保存原始狀態（用於回滾）
-    const originalStatus = task.status
-    const originalAssigneeId = task.assigneeId
+    // 保存快照（用於回滾）
+    const tasksSnapshot = tasks.value
+    const poolSnapshot = poolTasks.value
 
     try {
-      // 樂觀更新
+      // 樂觀更新（不可變）
       const now = new Date().toISOString()
-      task.status = 'CLAIMED'
-      task.assigneeId = userId
-      task.updatedAt = now
+      tasks.value = tasks.value.map(t =>
+        t.id === taskId
+          ? { ...t, status: 'CLAIMED' as const, assigneeId: userId, updatedAt: now }
+          : t,
+      )
 
       // 同步 poolTasks
       syncPoolTask(taskId, { status: 'CLAIMED', assigneeId: userId, updatedAt: now })
@@ -159,19 +161,14 @@ export const useTaskStore = defineStore('tasks', () => {
       const result = await service.claimTask(taskId, userId)
 
       if (result.success && result.data) {
-        // 以伺服器回應更新本地狀態
-        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
-        if (idx !== -1) {
-          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
-        }
+        tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
-      return { success: true, data: task }
+      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
     } catch (e) {
-      // 回滾
-      task.status = originalStatus
-      task.assigneeId = originalAssigneeId
-      syncPoolTask(taskId, { status: originalStatus, assigneeId: originalAssigneeId })
+      // 回滾：還原快照
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
 
       const message = e instanceof Error ? e.message : '認領任務失敗'
       return {
@@ -202,17 +199,24 @@ export const useTaskStore = defineStore('tasks', () => {
 
     loading.value.unclaim[taskId] = true
 
-    const originalStatus = task.status
-    const originalAssigneeId = task.assigneeId
-    const originalProgress = task.progress
+    // 保存快照（用於回滾）
+    const tasksSnapshot = tasks.value
+    const poolSnapshot = poolTasks.value
 
     try {
-      // 樂觀更新
+      // 樂觀更新（不可變）
       const now = new Date().toISOString()
-      task.status = 'UNCLAIMED'
-      task.assigneeId = undefined
-      task.progress = 0
-      task.updatedAt = now
+      tasks.value = tasks.value.map(t =>
+        t.id === taskId
+          ? {
+              ...t,
+              status: 'UNCLAIMED' as const,
+              assigneeId: undefined,
+              progress: 0,
+              updatedAt: now,
+            }
+          : t,
+      )
 
       // 同步 poolTasks
       syncPoolTask(taskId, {
@@ -225,23 +229,14 @@ export const useTaskStore = defineStore('tasks', () => {
       const result = await service.unclaimTask(taskId)
 
       if (result.success && result.data) {
-        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
-        if (idx !== -1) {
-          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
-        }
+        tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
-      return { success: true, data: task }
+      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
     } catch (e) {
-      // 回滾
-      task.status = originalStatus
-      task.assigneeId = originalAssigneeId
-      task.progress = originalProgress
-      syncPoolTask(taskId, {
-        status: originalStatus,
-        assigneeId: originalAssigneeId,
-        progress: originalProgress,
-      })
+      // 回滾：還原快照
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
 
       const message = e instanceof Error ? e.message : '放棄認領失敗'
       return {
@@ -277,44 +272,45 @@ export const useTaskStore = defineStore('tasks', () => {
 
     loading.value.update[taskId] = true
 
-    const originalProgress = task.progress
-    const originalStatus = task.status
+    // 保存快照（用於回滾）
+    const tasksSnapshot = tasks.value
+    const poolSnapshot = poolTasks.value
 
     try {
-      // 樂觀更新
+      // 計算新狀態（不可變）
       const now = new Date().toISOString()
-      task.progress = progress
-      task.updatedAt = now
+      let newStatus = task.status
+      let closedAt = task.closedAt
 
-      // 自動更新狀態
       if (progress > 0 && task.status === 'CLAIMED') {
-        task.status = 'IN_PROGRESS'
+        newStatus = 'IN_PROGRESS'
       }
       if (progress >= 100) {
-        task.status = 'DONE'
-        task.closedAt = now
+        newStatus = 'DONE'
+        closedAt = now
       }
 
+      // 樂觀更新（不可變）
+      tasks.value = tasks.value.map(t =>
+        t.id === taskId ? { ...t, progress, status: newStatus, updatedAt: now, closedAt } : t,
+      )
+
       // 同步 poolTasks
-      const poolUpdates: Partial<PoolTask> = { progress, status: task.status, updatedAt: now }
-      if (task.closedAt) poolUpdates.closedAt = task.closedAt
+      const poolUpdates: Partial<PoolTask> = { progress, status: newStatus, updatedAt: now }
+      if (closedAt) poolUpdates.closedAt = closedAt
       syncPoolTask(taskId, poolUpdates)
 
       const result = await service.updateTaskProgress(taskId, progress, notes)
 
       if (result.success && result.data) {
-        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
-        if (idx !== -1) {
-          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
-        }
+        tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
-      return { success: true, data: task }
+      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
     } catch (e) {
-      // 回滾
-      task.progress = originalProgress
-      task.status = originalStatus
-      syncPoolTask(taskId, { progress: originalProgress, status: originalStatus })
+      // 回滾：還原快照
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
 
       const message = e instanceof Error ? e.message : '更新進度失敗'
       return {
@@ -340,61 +336,48 @@ export const useTaskStore = defineStore('tasks', () => {
     }
 
     loading.value.update[taskId] = true
+
+    // 保存快照（用於回滾）
+    const tasksSnapshot = tasks.value
+    const poolSnapshot = poolTasks.value
     const originalStatus = task.status
 
     try {
-      // 樂觀更新
+      // 計算新欄位（不可變）
       const now = new Date().toISOString()
-      task.status = status
-      task.updatedAt = now
+      const extraFields: Partial<Task> = { updatedAt: now }
 
       if (status === 'DONE') {
-        task.progress = 100
-        task.closedAt = now
+        extraFields.progress = 100
+        extraFields.closedAt = now
       }
-
-      // 暫停時記錄時間
       if (status === 'PAUSED') {
-        task.pausedAt = now
+        extraFields.pausedAt = now
+      }
+      if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
+        extraFields.pauseReason = undefined
+        extraFields.pauseNote = undefined
+        extraFields.pausedAt = undefined
       }
 
-      // 從暫停恢復時清除暫停資訊
-      if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
-        task.pauseReason = undefined
-        task.pauseNote = undefined
-        task.pausedAt = undefined
-      }
+      // 樂觀更新（不可變）
+      tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, status, ...extraFields } : t))
 
       // 同步 poolTasks
-      const poolUpdates: Partial<PoolTask> = { status, updatedAt: now }
-      if (status === 'DONE') {
-        poolUpdates.progress = 100
-        poolUpdates.closedAt = now
-      }
-      if (status === 'PAUSED') {
-        poolUpdates.pausedAt = now
-      }
-      if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
-        poolUpdates.pauseReason = undefined
-        poolUpdates.pauseNote = undefined
-        poolUpdates.pausedAt = undefined
-      }
+      const poolUpdates: Partial<PoolTask> = { status, ...extraFields }
       syncPoolTask(taskId, poolUpdates)
 
       const result = await service.updateTaskStatus(taskId, status)
 
       if (result.success && result.data) {
-        const idx = tasks.value.findIndex((t: Task) => t.id === taskId)
-        if (idx !== -1) {
-          tasks.value[idx] = { ...tasks.value[idx], ...result.data }
-        }
+        tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
-      return { success: true, data: task }
+      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
     } catch (e) {
-      // 回滾
-      task.status = originalStatus
-      syncPoolTask(taskId, { status: originalStatus })
+      // 回滾：還原快照
+      tasks.value = tasksSnapshot
+      poolTasks.value = poolSnapshot
 
       const message = e instanceof Error ? e.message : '更新狀態失敗'
       return {
