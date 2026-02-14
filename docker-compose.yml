@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: progresshub-postgres
     restart: unless-stopped
     # Issue #5 修復：移除不安全的預設密碼
@@ -33,6 +33,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       DATABASE_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
+      DIRECT_URL: postgresql://${POSTGRES_USER:-progresshub}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-progresshub}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env file}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
       SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
