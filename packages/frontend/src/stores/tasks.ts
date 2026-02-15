@@ -325,6 +325,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const updateTaskStatus = async (
     taskId: string,
     status: TaskStatus,
+    payload?: import('@/services/taskService').StatusUpdatePayload,
   ): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
@@ -367,7 +368,7 @@ export const useTaskStore = defineStore('tasks', () => {
       const poolUpdates: Partial<PoolTask> = { status, ...extraFields }
       syncPoolTask(taskId, poolUpdates)
 
-      const result = await service.updateTaskStatus(taskId, status)
+      const result = await service.updateTaskStatus(taskId, status, payload)
 
       if (result.success && result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))

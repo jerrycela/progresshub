@@ -2,13 +2,23 @@ import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from '
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPut, apiDelete } from './api'
 
+export interface StatusUpdatePayload {
+  pauseReason?: string
+  pauseNote?: string
+  blockerReason?: string
+}
+
 export interface TaskServiceInterface {
   fetchTasks(): Promise<Task[]>
   fetchPoolTasks(): Promise<PoolTask[]>
   getTaskById(id: string): Promise<Task | undefined>
   getPoolTaskById(id: string): Promise<PoolTask | undefined>
   createTask(input: CreateTaskInput): Promise<ActionResult<Task>>
-  updateTaskStatus(taskId: string, status: TaskStatus): Promise<ActionResult<Task>>
+  updateTaskStatus(
+    taskId: string,
+    status: TaskStatus,
+    payload?: StatusUpdatePayload,
+  ): Promise<ActionResult<Task>>
   updateTaskProgress(taskId: string, progress: number, notes?: string): Promise<ActionResult<Task>>
   deleteTask(taskId: string): Promise<ActionResult<void>>
   updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>>
@@ -68,7 +78,11 @@ class MockTaskService implements TaskServiceInterface {
     return { success: true, data: newTask }
   }
 
-  async updateTaskStatus(taskId: string, status: TaskStatus): Promise<ActionResult<Task>> {
+  async updateTaskStatus(
+    taskId: string,
+    status: TaskStatus,
+    _payload?: StatusUpdatePayload,
+  ): Promise<ActionResult<Task>> {
     await new Promise(r => setTimeout(r, 200))
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
@@ -193,8 +207,12 @@ class ApiTaskService implements TaskServiceInterface {
     return { success: true, data }
   }
 
-  async updateTaskStatus(taskId: string, status: TaskStatus): Promise<ActionResult<Task>> {
-    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/status`, { status })
+  async updateTaskStatus(
+    taskId: string,
+    status: TaskStatus,
+    payload?: StatusUpdatePayload,
+  ): Promise<ActionResult<Task>> {
+    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/status`, { status, ...payload })
     return { success: true, data }
   }
 

@@ -117,7 +117,10 @@ const submitPause = async () => {
   isReporting.value = true
   try {
     // 更新任務狀態為暫停
-    const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'PAUSED')
+    const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'PAUSED', {
+      pauseReason: pauseReason.value,
+      pauseNote: pauseNote.value || undefined,
+    })
     if (!result.success) {
       showError(result.error?.message || '暫停任務失敗')
       return
@@ -162,7 +165,9 @@ const submitReport = async () => {
         return
       }
     } else if (reportType.value === 'BLOCKED') {
-      const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'BLOCKED')
+      const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'BLOCKED', {
+        blockerReason: blockerReason.value || undefined,
+      })
       if (!result.success) {
         showError(result.error?.message || '回報卡關失敗')
         return

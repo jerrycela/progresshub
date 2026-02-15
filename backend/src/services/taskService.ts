@@ -30,7 +30,7 @@ function validateFunctionTags(tags: string[]): void {
 // 狀態轉換規則（對齊前端 TaskStatusTransitions）
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   UNCLAIMED: ["CLAIMED"],
-  CLAIMED: ["UNCLAIMED", "IN_PROGRESS"],
+  CLAIMED: ["UNCLAIMED", "IN_PROGRESS", "BLOCKED", "PAUSED"],
   IN_PROGRESS: ["CLAIMED", "PAUSED", "BLOCKED", "DONE"],
   PAUSED: ["IN_PROGRESS"],
   BLOCKED: ["IN_PROGRESS"],
