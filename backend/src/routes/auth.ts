@@ -87,9 +87,16 @@ if (env.NODE_ENV === "development" || process.env.ENABLE_DEV_LOGIN === "true") {
     "/dev-login",
     [
       body("email")
+        .optional()
         .isEmail()
         .normalizeEmail()
         .withMessage("Valid email is required"),
+      body("employeeId")
+        .optional()
+        .isString()
+        .trim()
+        .notEmpty()
+        .withMessage("Valid employee ID is required"),
     ],
     async (req: AuthRequest, res: Response): Promise<void> => {
       const errors = validationResult(req);
@@ -98,9 +105,21 @@ if (env.NODE_ENV === "development" || process.env.ENABLE_DEV_LOGIN === "true") {
         return;
       }
 
+      const { email, employeeId } = req.body;
+      if (!email && !employeeId) {
+        sendError(
+          res,
+          "VALIDATION_ERROR",
+          "Either email or employeeId is required",
+          400,
+        );
+        return;
+      }
+
       try {
-        const { email } = req.body;
-        const result = await authService.devLogin(email);
+        const result = employeeId
+          ? await authService.devLoginById(employeeId)
+          : await authService.devLogin(email);
         sendSuccess(res, result);
       } catch (error) {
         sendError(res, "AUTH_LOGIN_FAILED", "Invalid credentials", 401);

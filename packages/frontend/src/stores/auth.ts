@@ -79,7 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (import.meta.env.VITE_USE_MOCK !== 'true') {
         const data = await apiPostUnwrap<{ user: User; token: string; refreshToken: string }>(
           '/auth/dev-login',
-          { email: mockCurrentUser.email },
+          { employeeId: mockCurrentUser.id },
         )
         user.value = data.user
         localStorage.setItem('auth_token', data.token)

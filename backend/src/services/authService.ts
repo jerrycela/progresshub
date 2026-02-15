@@ -154,6 +154,25 @@ export class AuthService {
       throw new Error(`Employee with email ${email} not found`);
     }
 
+    return this.completeDevLogin(employee);
+  }
+
+  /**
+   * Development-only login by employee ID (no Slack required)
+   */
+  async devLoginById(employeeId: string): Promise<LoginResult> {
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee) {
+      throw new Error(`Employee with ID ${employeeId} not found`);
+    }
+
+    return this.completeDevLogin(employee);
+  }
+
+  private async completeDevLogin(employee: Employee): Promise<LoginResult> {
     if (!employee.isActive) {
       throw new Error("Account is disabled");
     }
