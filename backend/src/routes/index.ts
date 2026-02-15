@@ -8,11 +8,11 @@ import timeEntryRoutes from "./timeEntries";
 import timeCategoryRoutes from "./timeCategories";
 import timeStatsRoutes from "./timeStats";
 import milestoneRoutes from "./milestones";
-import slackRoutes from "./slack";
 import gitlabRoutes from "./gitlab";
 import dashboardRoutes from "./dashboard";
 import userSettingsRoutes from "./userSettings";
 import { sendSuccess } from "../utils/response";
+import { env } from "../config/env";
 
 const router = Router();
 
@@ -26,10 +26,16 @@ router.use("/milestones", milestoneRoutes);
 router.use("/time-entries", timeEntryRoutes);
 router.use("/time-categories", timeCategoryRoutes);
 router.use("/time-stats", timeStatsRoutes);
-router.use("/slack", slackRoutes);
 router.use("/gitlab", gitlabRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/user", userSettingsRoutes);
+
+// Conditionally mount Slack routes only when configured
+if (env.SLACK_BOT_TOKEN) {
+  import("./slack").then((slackRoutes) => {
+    router.use("/slack", slackRoutes.default);
+  });
+}
 
 // API Info
 router.get("/", (_req, res) => {

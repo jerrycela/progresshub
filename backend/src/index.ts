@@ -15,6 +15,9 @@ import healthRoutes from "./routes/health";
 
 const app: Application = express();
 
+// Trust proxy (required for rate limiter behind Zeabur/reverse proxy)
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(helmet()); // Security headers
 
@@ -83,6 +86,7 @@ const authLimiter = rateLimit({
 
 app.use("/api/", apiLimiter);
 app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/dev-login", authLimiter);
 
 app.use(express.json({ limit: "1mb" })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true, limit: "1mb" })); // Parse URL-encoded bodies

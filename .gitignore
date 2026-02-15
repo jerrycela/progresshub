@@ -71,7 +71,7 @@ openclawfortest/
 *.backup
 
 # Prisma
-**/prisma/migrations/
+# migrations are tracked in git for deployment
 
 # Docker
 *.pid

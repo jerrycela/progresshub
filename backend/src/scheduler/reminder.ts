@@ -4,7 +4,15 @@ import prisma from "../config/database";
 import { env } from "../config/env";
 import logger from "../config/logger";
 
-const slackClient = new WebClient(env.SLACK_BOT_TOKEN);
+let slackClient: WebClient | null = null;
+
+function getSlackClient(): WebClient | null {
+  if (!env.SLACK_BOT_TOKEN) return null;
+  if (!slackClient) {
+    slackClient = new WebClient(env.SLACK_BOT_TOKEN);
+  }
+  return slackClient;
+}
 
 const REMINDER_TIME = process.env.REMINDER_TIME || "17:00";
 const REMINDER_TIMEZONE = process.env.REMINDER_TIMEZONE || "Asia/Taipei";
@@ -68,14 +76,15 @@ async function sendReminder(
   employeeName: string,
 ): Promise<void> {
   try {
-    if (!env.SLACK_BOT_TOKEN) {
+    const client = getSlackClient();
+    if (!client) {
       logger.warn(
         "[Scheduler] SLACK_BOT_TOKEN not configured, skipping reminder",
       );
       return;
     }
 
-    await slackClient.chat.postMessage({
+    await client.chat.postMessage({
       channel: slackUserId,
       text: `嗨 ${employeeName}! 👋\n今天還沒看到你的進度回報喔~\n請用 \`/report\` 指令回報你的工作進度`,
       blocks: [

@@ -76,9 +76,9 @@ export const env: EnvConfig = {
 };
 
 // Issue #4 修復：完整的環境變數驗證
-const requiredEnvVars = [
-  "DATABASE_URL",
-  "JWT_SECRET",
+const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET"];
+
+const optionalSlackVars = [
   "SLACK_BOT_TOKEN",
   "SLACK_CLIENT_ID",
   "SLACK_CLIENT_SECRET",
@@ -97,6 +97,13 @@ if (missingVars.length > 0) {
   // Using console.warn here to avoid circular dependency with logger (logger imports env)
   console.warn(
     `Missing environment variables (dev mode): ${missingVars.join(", ")}`,
+  );
+}
+
+const missingSlackVars = optionalSlackVars.filter((v) => !process.env[v]);
+if (missingSlackVars.length > 0) {
+  console.warn(
+    `[Slack] Optional Slack variables not set: ${missingSlackVars.join(", ")}. Slack features will be disabled.`,
   );
 }
 

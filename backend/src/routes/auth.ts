@@ -80,9 +80,9 @@ router.post(
 
 /**
  * POST /api/auth/dev-login
- * Development-only login (bypasses Slack OAuth)
+ * Dev login (bypasses Slack OAuth). Controlled by ENABLE_DEV_LOGIN env var.
  */
-if (env.NODE_ENV === "development") {
+if (env.NODE_ENV === "development" || process.env.ENABLE_DEV_LOGIN === "true") {
   router.post(
     "/dev-login",
     [
@@ -94,13 +94,7 @@ if (env.NODE_ENV === "development") {
     async (req: AuthRequest, res: Response): Promise<void> => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        sendError(
-          res,
-          "VALIDATION_ERROR",
-          "Invalid input",
-          400,
-          errors.array(),
-        );
+        sendError(res, "VALIDATION_ERROR", "Invalid credentials", 400);
         return;
       }
 
@@ -109,8 +103,7 @@ if (env.NODE_ENV === "development") {
         const result = await authService.devLogin(email);
         sendSuccess(res, result);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Login failed";
-        sendError(res, "AUTH_LOGIN_FAILED", message, 500);
+        sendError(res, "AUTH_LOGIN_FAILED", "Invalid credentials", 401);
       }
     },
   );

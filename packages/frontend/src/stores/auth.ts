@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, UserRole, ActionResult } from 'shared/types'
 import { createAuthService } from '@/services/authService'
+import { apiPostUnwrap } from '@/services/api'
 import { mockUsers, mockCurrentUser } from '@/mocks/unified'
 
 // ============================================
@@ -74,6 +75,18 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
+      // API mode: call backend dev-login endpoint
+      if (import.meta.env.VITE_USE_MOCK !== 'true') {
+        const data = await apiPostUnwrap<{ user: User; token: string; refreshToken: string }>(
+          '/auth/dev-login',
+          { email: mockCurrentUser.email },
+        )
+        user.value = data.user
+        localStorage.setItem('auth_token', data.token)
+        return { success: true, data: data.user }
+      }
+
+      // Mock mode: use local mock data
       await new Promise(r => setTimeout(r, 300))
       const demoUser = { ...mockCurrentUser }
       user.value = demoUser

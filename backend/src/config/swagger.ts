@@ -1,4 +1,5 @@
 import swaggerJsdoc from "swagger-jsdoc";
+import { env } from "./env";
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -99,7 +100,10 @@ const options: swaggerJsdoc.Options = {
     },
     security: [{ bearerAuth: [] }],
   },
-  apis: ["./src/routes/*.ts"],
+  apis:
+    env.NODE_ENV === "production"
+      ? ["./dist/routes/*.js"]
+      : ["./src/routes/*.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

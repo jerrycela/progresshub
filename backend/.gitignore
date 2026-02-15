@@ -27,4 +27,4 @@ yarn-error.log*
 Thumbs.db
 
 # Prisma
-prisma/migrations/
+# migrations are tracked in git for deployment
