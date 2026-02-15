@@ -169,6 +169,44 @@ const confirmUnclaim = async () => {
   }
 }
 
+// 快速回報：繼續（CLAIMED/PAUSED → IN_PROGRESS）
+const handleContinue = async (taskId: string) => {
+  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  if (!task) return
+  if (['CLAIMED', 'PAUSED'].includes(task.status)) {
+    const result = await taskStore.updateTaskStatus(taskId, 'IN_PROGRESS')
+    if (result.success) {
+      showSuccess(`「${task.title}」已開始進行`)
+    } else {
+      showError(result.error?.message || '操作失敗')
+    }
+  }
+}
+
+// 快速回報：卡關（→ BLOCKED）
+const handleBlocked = async (taskId: string) => {
+  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  if (!task) return
+  const result = await taskStore.updateTaskStatus(taskId, 'BLOCKED')
+  if (result.success) {
+    showSuccess(`「${task.title}」已標記為卡關`)
+  } else {
+    showError(result.error?.message || '操作失敗')
+  }
+}
+
+// 快速回報：完成（進度設為 100%）
+const handleComplete = async (taskId: string) => {
+  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  if (!task) return
+  const result = await taskStore.updateTaskProgress(taskId, 100)
+  if (result.success) {
+    showSuccess(`「${task.title}」已完成！`)
+  } else {
+    showError(result.error?.message || '操作失敗')
+  }
+}
+
 // 使用常數（排除 UNCLAIMED 和 DONE）
 const statusOptions = TASK_STATUS_OPTIONS.filter(
   opt => !['UNCLAIMED', 'DONE'].includes(opt.value as string),
@@ -228,6 +266,9 @@ const showCompleted = ref(false)
           @click="handleTaskClick"
           @unclaim="openUnclaimModal"
           @update-progress="openProgressModal"
+          @continue="handleContinue"
+          @blocked="handleBlocked"
+          @complete="handleComplete"
         />
       </div>
       <!-- 空狀態 (迭代 26: 使用 EmptyState 元件) -->
