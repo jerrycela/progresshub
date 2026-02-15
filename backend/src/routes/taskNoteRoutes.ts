@@ -7,6 +7,7 @@ import logger from "../config/logger";
 import { sendSuccess, sendError } from "../utils/response";
 import { toTaskDTO } from "../mappers";
 import { toProgressLogDTO } from "../mappers/progressLogMapper";
+import { AppError } from "../middleware/errorHandler";
 
 const router = Router();
 
@@ -75,6 +76,10 @@ router.post(
       });
       sendSuccess(res, note, 201);
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
       logger.error("Create task note error:", error);
       sendError(
         res,
@@ -149,14 +154,10 @@ router.post(
       );
       sendSuccess(res, toTaskDTO(task), 201);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to report progress";
-
-      if (message === "TASK_NOT_FOUND") {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-
       logger.error("Report task progress error:", error);
       sendError(
         res,

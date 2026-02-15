@@ -14,7 +14,7 @@ import type { TaskFormData } from '@/components/task/TaskForm.vue'
 // 任務編輯頁面 - 編輯現有任務
 // ============================================
 
-const { showSuccess } = useToast()
+const { showSuccess, showError } = useToast()
 const router = useRouter()
 const route = useRoute()
 
@@ -70,18 +70,24 @@ const canSubmit = computed(() => {
 // 提交表單
 const handleSubmit = async (): Promise<void> => {
   if (!originalTask.value) return
-  const result = await taskStore.updateTask(originalTask.value.id, {
-    title: form.title.trim(),
-    description: form.description || undefined,
-    projectId: form.projectId,
-    assigneeId: form.assigneeId || undefined,
-    functionTags: [...form.functionTags],
-    startDate: form.startDate || undefined,
-    dueDate: form.dueDate || undefined,
-  })
-  if (result.success) {
-    showSuccess(`任務「${form.title}」已更新`)
-    router.push(`/task-pool/${originalTask.value.id}`)
+  try {
+    const result = await taskStore.updateTask(originalTask.value.id, {
+      title: form.title.trim(),
+      description: form.description || undefined,
+      projectId: form.projectId,
+      assigneeId: form.assigneeId || undefined,
+      functionTags: [...form.functionTags],
+      startDate: form.startDate || undefined,
+      dueDate: form.dueDate || undefined,
+    })
+    if (result.success) {
+      showSuccess(`任務「${form.title}」已更新`)
+      router.push(`/task-pool/${originalTask.value.id}`)
+    } else {
+      showError(result.error?.message || '更新任務失敗')
+    }
+  } catch {
+    showError('更新任務失敗，請稍後再試')
   }
 }
 

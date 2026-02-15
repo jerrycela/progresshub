@@ -23,7 +23,7 @@ import type { MilestoneData, FunctionType, Task } from 'shared/types'
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
 const { getProjectName, getProjectOptions } = useProject()
-const { showSuccess, showWarning } = useToast()
+const { showSuccess, showWarning, showError } = useToast()
 const { showConfirm } = useConfirm()
 const employeeStore = useEmployeeStore()
 const milestoneStore = useMilestoneStore()
@@ -196,12 +196,16 @@ const submitMilestone = async (data: {
     createdAt: new Date().toISOString(),
   }
 
-  milestones.value = [...milestones.value, milestone].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  )
-  await milestoneStore.addMilestone(milestone)
-  showMilestoneModal.value = false
-  showSuccess(`已新增里程碑：${milestone.name}`)
+  try {
+    await milestoneStore.addMilestone(milestone)
+    milestones.value = [...milestones.value, milestone].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    )
+    showMilestoneModal.value = false
+    showSuccess(`已新增里程碑：${milestone.name}`)
+  } catch {
+    showError('新增里程碑失敗，請稍後再試')
+  }
 }
 
 const deleteMilestone = async (msId: string): Promise<void> => {
@@ -213,9 +217,13 @@ const deleteMilestone = async (msId: string): Promise<void> => {
   })
   if (!confirmed) return
 
-  milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
-  await milestoneStore.removeMilestone(msId)
-  showSuccess('已刪除里程碑')
+  try {
+    await milestoneStore.removeMilestone(msId)
+    milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
+    showSuccess('已刪除里程碑')
+  } catch {
+    showError('刪除里程碑失敗，請稍後再試')
+  }
 }
 </script>
 

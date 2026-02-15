@@ -20,7 +20,7 @@ import TaskNotes from '@/components/task/TaskNotes.vue'
 // 任務詳情頁 - 含進度歷程 Timeline
 // ============================================
 
-const { showSuccess, showWarning, showInfo } = useToast()
+const { showSuccess, showWarning, showInfo, showError } = useToast()
 const { showConfirm } = useConfirm()
 
 const taskStore = useTaskStore()
@@ -123,6 +123,8 @@ const returnTask = async (): Promise<void> => {
     if (result.success) {
       task.value = taskStore.getPoolTaskById(task.value.id) || null
       showSuccess('已退回任務')
+    } else {
+      showError(result.error?.message || '退回任務失敗')
     }
   }
 }
@@ -137,6 +139,8 @@ const submitProgress = async (): Promise<void> => {
   if (result.success) {
     task.value = taskStore.getPoolTaskById(task.value.id) || null
     showSuccess(`已提交進度：${newProgress.value.percentage}%`)
+  } else {
+    showError(result.error?.message || '提交進度失敗')
   }
   showProgressModal.value = false
   newProgress.value = { percentage: task.value?.progress || 0, notes: '' }
@@ -149,6 +153,8 @@ const assignTask = async (employeeId: string): Promise<void> => {
     const employee = employeeStore.getEmployeeById(employeeId)
     task.value = taskStore.getPoolTaskById(task.value.id) || null
     showSuccess(`已指派給：${employee?.name}`)
+  } else {
+    showError(result.error?.message || '指派任務失敗')
   }
   showAssignModal.value = false
 }
@@ -165,6 +171,8 @@ const deleteTask = async (): Promise<void> => {
     if (result.success) {
       showSuccess('已刪除任務')
       router.push('/task-pool')
+    } else {
+      showError(result.error?.message || '刪除任務失敗')
     }
   }
 }
@@ -195,10 +203,12 @@ const submitNote = async (): Promise<void> => {
   })
   if (result.success && result.data) {
     taskNotes.value = [result.data, ...taskNotes.value]
+    showSuccess('已新增註記')
+  } else {
+    showError(result.error?.message || '新增註記失敗')
   }
   showNoteModal.value = false
   newNoteContent.value = ''
-  showSuccess('已新增註記')
 }
 </script>
 

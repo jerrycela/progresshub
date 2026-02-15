@@ -15,6 +15,7 @@ import {
   sendError,
 } from "../utils/response";
 import { toTaskDTO } from "../mappers";
+import { AppError } from "../middleware/errorHandler";
 
 const router = Router();
 
@@ -230,6 +231,10 @@ router.post(
       });
       sendSuccess(res, toTaskDTO(task), 201);
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
       logger.error("Create task error:", error);
       sendError(res, "TASK_CREATE_FAILED", "Failed to create task", 500);
     }
@@ -288,6 +293,10 @@ router.put(
       const task = await taskService.updateTask(req.params.id, req.body);
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
       logger.error("Update task error:", error);
       sendError(res, "TASK_UPDATE_FAILED", "Failed to update task", 500);
     }

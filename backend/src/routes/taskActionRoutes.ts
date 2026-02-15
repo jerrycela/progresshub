@@ -7,6 +7,7 @@ import { TaskStatus } from "@prisma/client";
 import logger from "../config/logger";
 import { sendSuccess, sendError } from "../utils/response";
 import { toTaskDTO } from "../mappers";
+import { AppError } from "../middleware/errorHandler";
 
 const router = Router();
 
@@ -52,27 +53,10 @@ router.patch(
       );
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update status";
-
-      if (message === "TASK_NOT_FOUND") {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-      if (message.startsWith("INVALID_TRANSITION")) {
-        sendError(res, "INVALID_TRANSITION", message, 400);
-        return;
-      }
-      if (message === "PAUSE_REASON_REQUIRED") {
-        sendError(
-          res,
-          "PAUSE_REASON_REQUIRED",
-          "Pause reason is required when pausing a task",
-          400,
-        );
-        return;
-      }
-
       logger.error("Update task status error:", error);
       sendError(
         res,
@@ -118,14 +102,10 @@ router.patch(
       );
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to update progress";
-
-      if (message === "TASK_NOT_FOUND") {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-
       logger.error("Update task progress error:", error);
       sendError(
         res,
@@ -160,19 +140,10 @@ router.post(
       const task = await taskService.claimTask(req.params.id, req.user.userId);
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to claim task";
-
-      if (message === "TASK_NOT_CLAIMABLE") {
-        sendError(
-          res,
-          "TASK_NOT_CLAIMABLE",
-          "Task is not available for claiming",
-          409,
-        );
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-
       logger.error("Claim task error:", error);
       sendError(res, "TASK_CLAIM_FAILED", "Failed to claim task", 500);
     }
@@ -205,14 +176,10 @@ router.post(
       );
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to unclaim task";
-
-      if (message === "TASK_NOT_UNCLAIMABLE") {
-        sendError(res, "TASK_NOT_UNCLAIMABLE", "Task cannot be unclaimed", 409);
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-
       logger.error("Unclaim task error:", error);
       sendError(res, "TASK_UNCLAIM_FAILED", "Failed to unclaim task", 500);
     }

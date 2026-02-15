@@ -43,6 +43,7 @@ const TASK_INCLUDE = {
   assignedTo: { select: { id: true, name: true, email: true } },
   creator: { select: { id: true, name: true, email: true } },
   milestone: { select: { id: true, name: true } },
+  gitlabIssueMapping: { select: { gitlabIssueId: true, issueUrl: true } },
 } as const;
 
 type TransactionClient = Omit<

@@ -94,8 +94,6 @@ const submitContinue = async (task: Task) => {
       task.pausedAt = undefined
     }
 
-    // Mock: 模擬 API 呼叫
-    await new Promise(resolve => setTimeout(resolve, 500))
     showSuccess(`已回報「${task.title}」繼續進行中`)
   } catch {
     showError('回報失敗，請稍後再試')

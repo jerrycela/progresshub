@@ -141,24 +141,34 @@ watch(
   () => clearFieldError('endDate'),
 )
 
-const saveProject = () => {
+const saveProject = async () => {
   if (!validateProjectForm()) {
     showError('請修正表單錯誤')
     return
   }
 
   if (isEditing.value && editingProject.value.id) {
-    projectStore.updateProject(editingProject.value.id, editingProject.value)
-    showSuccess('專案已更新')
+    const result = await projectStore.updateProject(editingProject.value.id, editingProject.value)
+    if (result) {
+      showSuccess('專案已更新')
+    } else {
+      showError('更新專案失敗')
+      return
+    }
   } else {
-    projectStore.createProject({
+    const result = await projectStore.createProject({
       name: editingProject.value.name || '',
       description: editingProject.value.description,
       status: editingProject.value.status,
       startDate: editingProject.value.startDate,
       endDate: editingProject.value.endDate,
     })
-    showSuccess('專案已建立')
+    if (result) {
+      showSuccess('專案已建立')
+    } else {
+      showError('建立專案失敗')
+      return
+    }
   }
   showProjectModal.value = false
 }
