@@ -8,18 +8,15 @@ WORKDIR /app
 # Install OpenSSL for Prisma generate (CRITICAL for Alpine)
 RUN apk add --no-cache openssl
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Install dependencies (lockfile is at monorepo root, not in backend/)
+# Install dependencies (no lockfile — monorepo root only)
 COPY package.json ./
-RUN pnpm install
+RUN npm install
 
 # Copy source code
 COPY . .
 
 # Build TypeScript (includes prisma generate)
-RUN pnpm run build
+RUN npm run build
 
 # ===================================
 # Stage 2: Production
@@ -31,12 +28,9 @@ WORKDIR /app
 # Install OpenSSL for Prisma (CRITICAL for Alpine)
 RUN apk add --no-cache openssl
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 # Copy production dependencies
 COPY package.json ./
-RUN pnpm install --prod
+RUN npm install --omit=dev
 
 # Copy built files from build stage
 COPY --from=build /app/dist ./dist
