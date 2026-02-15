@@ -24,11 +24,17 @@ app.use(helmet()); // Security headers
 const getCorsOrigin = (): cors.CorsOptions["origin"] => {
   if (env.NODE_ENV === "production") {
     if (env.ALLOWED_ORIGINS.length === 0) {
-      logger.error(
-        "嚴重安全警告：生產環境未設定 ALLOWED_ORIGINS 環境變數，CORS 將拒絕所有跨域請求",
-      );
-      // 生產環境未設定白名單時，拒絕所有跨域請求
-      return false;
+      logger.warn("生產環境未設定 ALLOWED_ORIGINS，僅允許同源請求");
+      // 允許同源請求（origin 為 undefined 時表示同源或非瀏覽器請求）
+      return (origin, callback) => {
+        if (!origin) {
+          callback(null, true);
+        } else {
+          callback(
+            new Error("CORS not allowed: ALLOWED_ORIGINS not configured"),
+          );
+        }
+      };
     }
     return env.ALLOWED_ORIGINS;
   }

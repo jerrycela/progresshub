@@ -138,9 +138,7 @@ router.get(
       sendPaginatedSuccess(
         res,
         data.map((t) => toTaskDTO(t)),
-        total,
-        page,
-        limit,
+        { total, page, limit },
       );
     } catch (error) {
       logger.error("Get tasks error:", error);
