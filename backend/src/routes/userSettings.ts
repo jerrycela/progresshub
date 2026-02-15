@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import { body, validationResult } from "express-validator";
+import { Prisma } from "@prisma/client";
 import { userSettingsService } from "../services/userSettingsService";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
@@ -72,12 +73,19 @@ router.patch(
       sendSuccess(res, settings);
     } catch (error) {
       logger.error("Update user settings error:", error);
-      sendError(
-        res,
-        "USER_SETTINGS_UPDATE_FAILED",
-        getSafeErrorMessage(error, "Failed to update settings"),
-        400,
-      );
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        sendError(res, "EMAIL_ALREADY_EXISTS", "此 Email 已被使用", 409);
+      } else {
+        sendError(
+          res,
+          "USER_SETTINGS_UPDATE_FAILED",
+          getSafeErrorMessage(error, "Failed to update settings"),
+          500,
+        );
+      }
     }
   },
 );

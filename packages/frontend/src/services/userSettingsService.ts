@@ -60,7 +60,11 @@ class ApiUserSettingsService implements UserSettingsServiceInterface {
   }
 
   async updateSettings(updates: Partial<UserSettings>): Promise<ActionResult<UserSettings>> {
-    const data = await apiPatchUnwrap<UserSettings>('/user/settings', updates)
+    const payload: Record<string, unknown> = {}
+    if (updates.name !== undefined) payload.name = updates.name
+    if (updates.email !== undefined) payload.email = updates.email
+    if (updates.avatar !== undefined) payload.avatar = updates.avatar
+    const data = await apiPatchUnwrap<UserSettings>('/user/settings', payload)
     return { success: true, data }
   }
 

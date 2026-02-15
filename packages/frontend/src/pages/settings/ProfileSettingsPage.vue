@@ -9,7 +9,7 @@ import { useToast } from '@/composables/useToast'
 // 個人資料設定頁
 // ============================================
 
-const { showSuccess, showInfo } = useToast()
+const { showSuccess, showError, showInfo } = useToast()
 const userSettingsStore = useUserSettingsStore()
 
 const user = ref<UserSettings>({ ...userSettingsStore.settings })
@@ -57,20 +57,23 @@ const cancelEditing = (): void => {
 // 儲存變更
 const saveChanges = async (): Promise<void> => {
   isSaving.value = true
-
-  // 模擬 API 延遲
-  await new Promise(resolve => setTimeout(resolve, 500))
-
-  await userSettingsStore.updateSettings({
-    name: formData.value.name,
-    email: formData.value.email,
-  })
-
-  user.value = { ...userSettingsStore.settings }
-  isEditing.value = false
-  isSaving.value = false
-
-  showSuccess('個人資料已更新')
+  try {
+    const result = await userSettingsStore.updateSettings({
+      name: formData.value.name,
+      email: formData.value.email,
+    })
+    if (result.success) {
+      user.value = { ...userSettingsStore.settings }
+      isEditing.value = false
+      showSuccess('個人資料已更新')
+    } else {
+      showError(result.error?.message || '更新失敗，請稍後再試')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
+  } finally {
+    isSaving.value = false
+  }
 }
 
 // 檢查表單是否有變更

@@ -8,7 +8,7 @@ import { useConfirm } from '@/composables/useConfirm'
 // 整合設定頁 - Slack / GitLab 帳號連結
 // ============================================
 
-const { showSuccess, showWarning } = useToast()
+const { showSuccess, showError, showWarning } = useToast()
 const { showConfirm } = useConfirm()
 const userSettingsStore = useUserSettingsStore()
 
@@ -27,12 +27,18 @@ const handleLinkGitLab = async (): Promise<void> => {
     return
   }
 
-  const result = await userSettingsStore.linkGitLab(gitlabUsername.value.trim())
-  if (result.success && result.data) {
-    user.value = { ...result.data }
-    showLinkGitLabModal.value = false
-    gitlabUsername.value = ''
-    showSuccess(`已連結 GitLab 帳號：${user.value.gitlabUsername}`)
+  try {
+    const result = await userSettingsStore.linkGitLab(gitlabUsername.value.trim())
+    if (result.success && result.data) {
+      user.value = { ...result.data }
+      showLinkGitLabModal.value = false
+      gitlabUsername.value = ''
+      showSuccess(`已連結 GitLab 帳號：${user.value.gitlabUsername}`)
+    } else {
+      showError(result.error?.message || '連結 GitLab 失敗，請稍後再試')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
   }
 }
 
@@ -46,10 +52,16 @@ const handleUnlinkGitLab = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const result = await userSettingsStore.unlinkGitLab()
-  if (result.success && result.data) {
-    user.value = { ...result.data }
-    showSuccess('已解除 GitLab 帳號連結')
+  try {
+    const result = await userSettingsStore.unlinkGitLab()
+    if (result.success && result.data) {
+      user.value = { ...result.data }
+      showSuccess('已解除 GitLab 帳號連結')
+    } else {
+      showError(result.error?.message || '解除 GitLab 連結失敗，請稍後再試')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
   }
 }
 
@@ -60,12 +72,18 @@ const handleLinkSlack = async (): Promise<void> => {
     return
   }
 
-  const result = await userSettingsStore.linkSlack(slackUsername.value.trim())
-  if (result.success && result.data) {
-    user.value = { ...result.data }
-    showLinkSlackModal.value = false
-    slackUsername.value = ''
-    showSuccess(`已連結 Slack 帳號：${user.value.slackUsername}`)
+  try {
+    const result = await userSettingsStore.linkSlack(slackUsername.value.trim())
+    if (result.success && result.data) {
+      user.value = { ...result.data }
+      showLinkSlackModal.value = false
+      slackUsername.value = ''
+      showSuccess(`已連結 Slack 帳號：${user.value.slackUsername}`)
+    } else {
+      showError(result.error?.message || '連結 Slack 失敗，請稍後再試')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
   }
 }
 
@@ -79,10 +97,16 @@ const handleUnlinkSlack = async (): Promise<void> => {
   })
   if (!confirmed) return
 
-  const result = await userSettingsStore.unlinkSlack()
-  if (result.success && result.data) {
-    user.value = { ...result.data }
-    showSuccess('已解除 Slack 帳號連結')
+  try {
+    const result = await userSettingsStore.unlinkSlack()
+    if (result.success && result.data) {
+      user.value = { ...result.data }
+      showSuccess('已解除 Slack 帳號連結')
+    } else {
+      showError(result.error?.message || '解除 Slack 連結失敗，請稍後再試')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
   }
 }
 </script>
