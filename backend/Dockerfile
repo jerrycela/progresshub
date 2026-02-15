@@ -8,9 +8,9 @@ WORKDIR /app
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
-# Install dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Install dependencies (lockfile is at monorepo root, not in backend/)
+COPY package.json ./
+RUN pnpm install
 
 # Copy source code
 COPY . .
@@ -32,8 +32,8 @@ RUN apk add --no-cache openssl
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Copy production dependencies
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+COPY package.json ./
+RUN pnpm install --prod
 
 # Copy built files from build stage
 COPY --from=build /app/dist ./dist
