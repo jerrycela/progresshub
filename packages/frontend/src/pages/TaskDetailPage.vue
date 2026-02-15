@@ -337,7 +337,7 @@ const submitNote = async (): Promise<void> => {
             </div>
             <div>
               <dt class="text-sm text-muted">建立者</dt>
-              <dd class="mt-1 text-primary">{{ task.createdBy.name }}</dd>
+              <dd class="mt-1 text-primary">{{ task.createdBy?.name || '未知' }}</dd>
             </div>
             <div>
               <dt class="text-sm text-muted">建立時間</dt>

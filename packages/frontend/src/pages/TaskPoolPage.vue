@@ -410,7 +410,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 
                 <!-- 建立者 -->
                 <div class="flex items-center gap-1">
-                  <span class="text-xs">建立者: {{ task.createdBy.name }}</span>
+                  <span class="text-xs">建立者: {{ task.createdBy?.name || '未知' }}</span>
                 </div>
               </div>
             </div>

@@ -156,12 +156,27 @@ class MockTaskService implements TaskServiceInterface {
 }
 
 class ApiTaskService implements TaskServiceInterface {
+  private toPoolTask(task: Task): PoolTask {
+    return {
+      ...task,
+      sourceType: task.assigneeId ? 'ASSIGNED' : 'POOL',
+      createdBy: task.creator
+        ? { id: task.creator.id, name: task.creator.name }
+        : { id: '', name: '未知' },
+      department: undefined,
+      canEdit: true,
+      canDelete: false,
+      collaboratorNames: [],
+    }
+  }
+
   async fetchTasks(): Promise<Task[]> {
     return apiGetUnwrap<Task[]>('/tasks')
   }
 
   async fetchPoolTasks(): Promise<PoolTask[]> {
-    return apiGetUnwrap<PoolTask[]>('/tasks/pool')
+    const tasks = await apiGetUnwrap<Task[]>('/tasks/pool')
+    return tasks.map(t => this.toPoolTask(t))
   }
 
   async getTaskById(id: string): Promise<Task | undefined> {
@@ -169,7 +184,8 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async getPoolTaskById(id: string): Promise<PoolTask | undefined> {
-    return apiGetUnwrap<PoolTask>(`/tasks/pool/${id}`)
+    const task = await apiGetUnwrap<Task>(`/tasks/pool/${id}`)
+    return this.toPoolTask(task)
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
