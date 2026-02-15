@@ -5,6 +5,9 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Install OpenSSL for Prisma generate (CRITICAL for Alpine)
+RUN apk add --no-cache openssl
+
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
