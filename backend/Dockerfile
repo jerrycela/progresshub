@@ -18,6 +18,10 @@ COPY . .
 # Build TypeScript (includes prisma generate)
 RUN npm run build
 
+# Compile seed script for production use (seed uses upsert, safe to re-run)
+RUN npx tsc --esModuleInterop --skipLibCheck --module commonjs \
+    --moduleResolution node --target ES2020 --outDir seed-out prisma/seed.ts
+
 # ===================================
 # Stage 2: Production
 # ===================================
@@ -37,6 +41,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/seed-out/seed.js ./prisma/seed.js
 
 # Create logs directory for Winston file transport
 RUN mkdir -p logs
@@ -52,4 +57,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Start application (auto migrate + start)
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node dist/index.js"]
