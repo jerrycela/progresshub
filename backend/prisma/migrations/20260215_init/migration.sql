@@ -439,14 +439,3 @@ ALTER TABLE "gitlab_issue_mappings" ADD CONSTRAINT "gitlab_issue_mappings_connec
 
 -- AddForeignKey
 ALTER TABLE "gitlab_issue_mappings" ADD CONSTRAINT "gitlab_issue_mappings_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "tasks"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-┌─────────────────────────────────────────────────────────┐
-│  Update available 5.22.0 -> 7.4.0                       │
-│                                                         │
-│  This is a major update - please follow the guide at    │
-│  https://pris.ly/d/major-version-upgrade                │
-│                                                         │
-│  Run the following to update                            │
-│    npm i --save-dev prisma@latest                       │
-│    npm i @prisma/client@latest                          │
-└─────────────────────────────────────────────────────────┘
