@@ -149,24 +149,23 @@ const saveProject = async () => {
 
   if (isEditing.value && editingProject.value.id) {
     const result = await projectStore.updateProject(editingProject.value.id, editingProject.value)
-    if (result) {
+    if (result.success) {
       showSuccess('專案已更新')
     } else {
-      showError('更新專案失敗')
+      showError(result.error?.message || '更新專案失敗')
       return
     }
   } else {
     const result = await projectStore.createProject({
       name: editingProject.value.name || '',
       description: editingProject.value.description,
-      status: editingProject.value.status,
-      startDate: editingProject.value.startDate,
-      endDate: editingProject.value.endDate,
+      startDate: editingProject.value.startDate || new Date().toISOString().split('T')[0],
+      endDate: editingProject.value.endDate || '',
     })
-    if (result) {
+    if (result.success) {
       showSuccess('專案已建立')
     } else {
-      showError('建立專案失敗')
+      showError(result.error?.message || '建立專案失敗')
       return
     }
   }

@@ -18,11 +18,12 @@ import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 // 保留樂觀更新與回滾機制
 // ============================================
 
+const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 const service = createTaskService()
 
 export const useTaskStore = defineStore('tasks', () => {
-  const tasks = ref<Task[]>([...mockTasks])
-  const poolTasks = ref<PoolTask[]>([...mockPoolTasks])
+  const tasks = ref<Task[]>(isMock ? [...mockTasks] : [])
+  const poolTasks = ref<PoolTask[]>(isMock ? [...mockPoolTasks] : [])
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）

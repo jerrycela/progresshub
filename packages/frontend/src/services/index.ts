@@ -37,3 +37,4 @@ export { createProgressService, type ProgressServiceInterface } from './progress
 export { createDashboardService, type DashboardServiceInterface } from './dashboardService'
 export { createAuthService, type AuthServiceInterface } from './authService'
 export { createUserSettingsService, type UserSettingsServiceInterface } from './userSettingsService'
+export { createDepartmentService, type DepartmentServiceInterface } from './departmentService'

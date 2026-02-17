@@ -292,6 +292,18 @@ export const apiPatchUnwrap = async <T>(
 }
 
 /**
+ * 發送 PUT 請求並解包後端 ApiResponse 格式
+ */
+export const apiPutUnwrap = async <T>(
+  url: string,
+  payload?: unknown,
+  config?: ApiRequestConfig,
+): Promise<T> => {
+  const response = await apiPut<ApiResponse<T>>(url, payload, config)
+  return unwrapApiResponse(response)
+}
+
+/**
  * 發送 DELETE 請求並解包後端 ApiResponse 格式
  */
 export const apiDeleteUnwrap = async <T>(url: string, config?: ApiRequestConfig): Promise<T> => {

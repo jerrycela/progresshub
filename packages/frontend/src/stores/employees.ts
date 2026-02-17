@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MockEmployee, Department, ActionResult } from 'shared/types'
-import { createEmployeeService } from '@/services/employeeService'
+import { createEmployeeService, type CreateEmployeeInput } from '@/services/employeeService'
 import { mockEmployees } from '@/mocks/unified'
 
+const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 const service = createEmployeeService()
 
 export const useEmployeeStore = defineStore('employees', () => {
-  const employees = ref<MockEmployee[]>([...mockEmployees])
+  const employees = ref<MockEmployee[]>(isMock ? [...mockEmployees] : [])
 
   const getByDepartment = (dept: Department) =>
     computed(() => employees.value.filter(e => e.department === dept))
@@ -41,28 +42,88 @@ export const useEmployeeStore = defineStore('employees', () => {
     }
   }
 
-  const createEmployee = (input: Omit<MockEmployee, 'id'>): MockEmployee => {
-    const newEmployee: MockEmployee = {
-      id: `emp-${Date.now()}`,
-      ...input,
+  const createEmployee = async (
+    input: CreateEmployeeInput,
+  ): Promise<ActionResult<MockEmployee>> => {
+    try {
+      const result = await service.createEmployee(input)
+
+      if (!result.success || !result.data) {
+        return {
+          success: false,
+          error: result.error || { code: 'UNKNOWN_ERROR', message: '建立員工失敗' },
+        }
+      }
+
+      employees.value = [...employees.value, result.data]
+      return { success: true, data: result.data }
+    } catch (e) {
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '建立員工失敗' },
+      }
     }
-    employees.value = [...employees.value, newEmployee]
-    return newEmployee
   }
 
-  const updateEmployee = (id: string, input: Partial<MockEmployee>): MockEmployee | null => {
+  const updateEmployee = async (
+    id: string,
+    input: Partial<MockEmployee>,
+  ): Promise<ActionResult<MockEmployee>> => {
     const idx = employees.value.findIndex(e => e.id === id)
-    if (idx === -1) return null
+    if (idx === -1) {
+      return {
+        success: false,
+        error: { code: 'RESOURCE_NOT_FOUND', message: '找不到指定的員工' },
+      }
+    }
+
+    // 樂觀更新
+    const snapshot = employees.value
     const updated = { ...employees.value[idx], ...input }
     employees.value = employees.value.map((e, i) => (i === idx ? updated : e))
-    return updated
+
+    try {
+      const result = await service.updateEmployee(id, input)
+
+      if (result.success && result.data) {
+        employees.value = employees.value.map(e => (e.id === id ? { ...e, ...result.data } : e))
+      }
+
+      return { success: true, data: employees.value.find(e => e.id === id)! }
+    } catch (e) {
+      // 回滾
+      employees.value = snapshot
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '更新員工失敗' },
+      }
+    }
   }
 
-  const deleteEmployee = (id: string): boolean => {
+  const deleteEmployee = async (id: string): Promise<ActionResult<void>> => {
     const idx = employees.value.findIndex(e => e.id === id)
-    if (idx === -1) return false
+    if (idx === -1) {
+      return {
+        success: false,
+        error: { code: 'RESOURCE_NOT_FOUND', message: '找不到指定的員工' },
+      }
+    }
+
+    // 樂觀更新
+    const snapshot = employees.value
     employees.value = employees.value.filter(e => e.id !== id)
-    return true
+
+    try {
+      await service.deleteEmployee(id)
+      return { success: true }
+    } catch (e) {
+      // 回滾
+      employees.value = snapshot
+      return {
+        success: false,
+        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '刪除員工失敗' },
+      }
+    }
   }
 
   return {

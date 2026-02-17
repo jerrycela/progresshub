@@ -7,6 +7,7 @@ import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import { useProjectStore } from '@/stores/projects'
 import { useEmployeeStore } from '@/stores/employees'
 import { useTaskStore } from '@/stores/tasks'
+import { useDepartmentStore } from '@/stores/departments'
 
 // ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
@@ -19,6 +20,7 @@ const route = useRoute()
 const projectStore = useProjectStore()
 const employeeStore = useEmployeeStore()
 const taskStore = useTaskStore()
+const departmentStore = useDepartmentStore()
 
 // 初始化 Store 資料（確保 API 模式下載入後端資料）
 onMounted(() => {
@@ -26,6 +28,7 @@ onMounted(() => {
   employeeStore.fetchEmployees()
   taskStore.fetchTasks()
   taskStore.fetchPoolTasks()
+  departmentStore.fetchDepartments()
 })
 
 // 側邊欄展開狀態（行動裝置）

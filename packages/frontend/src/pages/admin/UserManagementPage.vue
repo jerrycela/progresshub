@@ -89,14 +89,16 @@ const openEditModal = (user: User) => {
   showEditModal.value = true
 }
 
-const saveUser = () => {
+const saveUser = async () => {
   if (!editingUser.value.id) return
-  employeeStore.updateEmployee(editingUser.value.id, {
+  const result = await employeeStore.updateEmployee(editingUser.value.id, {
     name: editingUser.value.name,
     email: editingUser.value.email,
     userRole: editingUser.value.role,
   })
-  showEditModal.value = false
+  if (result.success) {
+    showEditModal.value = false
+  }
 }
 
 // 新增使用者對話框
@@ -118,7 +120,7 @@ const openCreateModal = () => {
   showCreateModal.value = true
 }
 
-const createUser = () => {
+const createUser = async () => {
   const deptMap: Record<string, Department> = {
     PROGRAMMING: 'PROGRAMMING',
     ART: 'ART',
@@ -130,13 +132,15 @@ const createUser = () => {
     COMBAT: 'PROGRAMMING',
   }
   const functionType = newUser.value.functionType || 'PROGRAMMING'
-  employeeStore.createEmployee({
+  const result = await employeeStore.createEmployee({
     name: newUser.value.name || '',
     email: newUser.value.email || '',
     department: deptMap[functionType] || 'PROGRAMMING',
     userRole: newUser.value.role || 'EMPLOYEE',
   })
-  showCreateModal.value = false
+  if (result.success) {
+    showCreateModal.value = false
+  }
 }
 
 // 使用常數選項（迭代 28）
