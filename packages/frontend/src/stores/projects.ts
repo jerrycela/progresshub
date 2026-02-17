@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { Project, ActionResult } from 'shared/types'
 import { createProjectService, type CreateProjectInput } from '@/services/projectService'
 import { mockProjects } from '@/mocks/unified'
+import { storeAction } from '@/utils/storeHelpers'
 
 const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 const service = createProjectService()
@@ -18,39 +19,21 @@ export const useProjectStore = defineStore('projects', () => {
 
   const getProjectName = (id: string) => getProjectById(id)?.name ?? ''
 
-  const fetchProjects = async (): Promise<ActionResult<Project[]>> => {
-    try {
-      const data = await service.fetchProjects()
-      projects.value = data
-      return { success: true, data: projects.value }
-    } catch (e) {
-      return {
-        success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '載入專案失敗' },
-      }
-    }
-  }
+  const fetchProjects = () =>
+    storeAction(async () => {
+      projects.value = await service.fetchProjects()
+      return projects.value
+    }, '載入專案失敗')
 
-  const createProject = async (input: CreateProjectInput): Promise<ActionResult<Project>> => {
-    try {
+  const createProject = (input: CreateProjectInput) =>
+    storeAction(async () => {
       const result = await service.createProject(input)
-
       if (!result.success || !result.data) {
-        return {
-          success: false,
-          error: result.error || { code: 'UNKNOWN_ERROR', message: '建立專案失敗' },
-        }
+        throw new Error(result.error?.message || '建立專案失敗')
       }
-
       projects.value = [...projects.value, result.data]
-      return { success: true, data: result.data }
-    } catch (e) {
-      return {
-        success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '建立專案失敗' },
-      }
-    }
-  }
+      return result.data
+    }, '建立專案失敗')
 
   const updateProject = async (
     id: string,

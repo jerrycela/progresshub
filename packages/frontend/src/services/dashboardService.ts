@@ -1,6 +1,7 @@
 import type { DashboardStats, FunctionWorkload } from 'shared/types'
 import { mockDashboardStats, mockFunctionWorkloads } from '@/mocks/unified'
 import { apiGetUnwrap } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface DashboardServiceInterface {
   fetchStats(): Promise<DashboardStats>
@@ -9,12 +10,12 @@ export interface DashboardServiceInterface {
 
 class MockDashboardService implements DashboardServiceInterface {
   async fetchStats(): Promise<DashboardStats> {
-    await new Promise(r => setTimeout(r, 300))
+    await mockDelay(300)
     return { ...mockDashboardStats }
   }
 
   async fetchWorkloads(): Promise<FunctionWorkload[]> {
-    await new Promise(r => setTimeout(r, 300))
+    await mockDelay(300)
     return [...mockFunctionWorkloads]
   }
 }

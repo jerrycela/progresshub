@@ -1,6 +1,7 @@
 import type { User, ActionResult } from 'shared/types'
 import { apiGetUnwrap, apiPostUnwrap } from './api'
 import { mockCurrentUser } from '@/mocks/unified'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface AuthServiceInterface {
   loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>>
@@ -10,17 +11,17 @@ export interface AuthServiceInterface {
 
 class MockAuthService implements AuthServiceInterface {
   async loginWithSlack(): Promise<ActionResult<{ user: User; token: string }>> {
-    await new Promise(r => setTimeout(r, 500))
+    await mockDelay(500)
     return { success: true, data: { user: { ...mockCurrentUser }, token: 'mock-jwt-token' } }
   }
 
   async getCurrentUser(): Promise<ActionResult<User>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return { success: true, data: { ...mockCurrentUser } }
   }
 
   async logout(): Promise<void> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     localStorage.removeItem('auth_token')
   }
 }

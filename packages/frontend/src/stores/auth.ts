@@ -4,6 +4,7 @@ import type { User, UserRole, ActionResult } from 'shared/types'
 import { createAuthService } from '@/services/authService'
 import { apiPostUnwrap } from '@/services/api'
 import { mockUsers, mockCurrentUser } from '@/mocks/unified'
+import { mockDelay } from '@/utils/mockDelay'
 
 // ============================================
 // Auth Store - Service Layer 重構
@@ -87,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       // Mock mode: use local mock data
-      await new Promise(r => setTimeout(r, 300))
+      await mockDelay(300)
       const demoUser = { ...mockCurrentUser }
       user.value = demoUser
       localStorage.setItem('auth_token', DEMO_TOKEN)

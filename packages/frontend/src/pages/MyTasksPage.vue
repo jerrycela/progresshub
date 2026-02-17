@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useProgressLogStore } from '@/stores/progressLogs'
 import { useProject } from '@/composables/useProject'
 import { useToast } from '@/composables/useToast'
+import { useTaskModal } from '@/composables/useTaskModal'
 import { TASK_STATUS_OPTIONS } from '@/constants/filterOptions'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
@@ -99,9 +100,7 @@ watch(
 )
 
 // 放棄認領對話框
-const showUnclaimModal = ref(false)
-const taskToUnclaim = ref<Task | null>(null)
-const isUnclaimLoading = ref(false)
+const unclaimModal = useTaskModal<Task>()
 
 // 快速進度回報對話框
 const showProgressModal = ref(false)
@@ -144,30 +143,16 @@ const submitProgress = async () => {
 const openUnclaimModal = (taskId: string) => {
   const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
   if (task) {
-    taskToUnclaim.value = task
-    showUnclaimModal.value = true
+    unclaimModal.open(task)
   }
 }
 
-const confirmUnclaim = async () => {
-  if (!taskToUnclaim.value) return
-
-  isUnclaimLoading.value = true
-  try {
-    const result = await taskStore.unclaimTask(taskToUnclaim.value.id)
-    if (result.success) {
-      showSuccess(`已放棄「${taskToUnclaim.value.title}」`)
-      showUnclaimModal.value = false
-      taskToUnclaim.value = null
-    } else {
-      showError(result.error?.message || '放棄認領失敗')
-    }
-  } catch {
-    showError('操作失敗，請稍後再試')
-  } finally {
-    isUnclaimLoading.value = false
-  }
-}
+const confirmUnclaim = () =>
+  unclaimModal.execute(
+    t => taskStore.unclaimTask(t.id),
+    `已放棄「${unclaimModal.task.value?.title}」`,
+    '放棄認領失敗',
+  )
 
 // 快速回報：繼續（CLAIMED/PAUSED → IN_PROGRESS）
 const handleContinue = async (taskId: string) => {
@@ -304,25 +289,25 @@ const showCompleted = ref(false)
     </div>
 
     <!-- 放棄認領對話框 -->
-    <Modal v-model="showUnclaimModal" title="確認放棄認領" size="md">
-      <div v-if="taskToUnclaim" class="space-y-4">
+    <Modal v-model="unclaimModal.show.value" title="確認放棄認領" size="md">
+      <div v-if="unclaimModal.task.value" class="space-y-4">
         <p style="color: var(--text-secondary)">
           您確定要放棄認領以下任務嗎？此操作將使任務回到需求池。
         </p>
         <div class="p-4 rounded-lg bg-warning/10 border border-warning/30">
           <h4 class="font-semibold" style="color: var(--text-primary)">
-            {{ taskToUnclaim.title }}
+            {{ unclaimModal.task.value.title }}
           </h4>
           <p class="text-sm mt-1" style="color: var(--text-tertiary)">
-            目前進度：{{ taskToUnclaim.progress }}%
+            目前進度：{{ unclaimModal.task.value.progress }}%
           </p>
         </div>
         <p class="text-sm text-warning">注意：放棄認領後，您的進度將被清除</p>
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showUnclaimModal = false"> 取消 </Button>
-        <Button variant="danger" :loading="isUnclaimLoading" @click="confirmUnclaim">
+        <Button variant="secondary" @click="unclaimModal.close()"> 取消 </Button>
+        <Button variant="danger" :loading="unclaimModal.loading.value" @click="confirmUnclaim">
           確認放棄
         </Button>
       </template>

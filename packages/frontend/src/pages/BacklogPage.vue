@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { useProject } from '@/composables/useProject'
-import { useToast } from '@/composables/useToast'
+import { useTaskModal } from '@/composables/useTaskModal'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
 import { functionTypeLabels } from '@/constants/labels'
 import Card from '@/components/common/Card.vue'
@@ -22,7 +22,7 @@ import type { FunctionType, Task } from 'shared/types'
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { getProjectById, getProjectOptions } = useProject()
-const { showSuccess, showError } = useToast()
+const claimModal = useTaskModal<Task>()
 
 // 篩選條件
 const selectedFunction = ref<FunctionType | 'ALL'>('ALL')
@@ -47,35 +47,13 @@ const backlogTasks = computed(() => {
   return tasks
 })
 
-// 認領確認對話框
-const showClaimModal = ref(false)
-const taskToClaim = ref<Task | null>(null)
-const isClaimLoading = ref(false)
-
-const openClaimModal = (task: Task) => {
-  taskToClaim.value = task
-  showClaimModal.value = true
-}
-
-const confirmClaim = async () => {
-  if (!taskToClaim.value || !authStore.user) return
-
-  isClaimLoading.value = true
-  try {
-    const result = await taskStore.claimTask(taskToClaim.value.id, authStore.user.id)
-    if (result.success) {
-      showSuccess(`已成功認領「${taskToClaim.value.title}」`)
-      showClaimModal.value = false
-      taskToClaim.value = null
-    } else {
-      showError(result.error?.message || '認領失敗')
-    }
-  } catch {
-    showError('認領失敗，請稍後再試')
-  } finally {
-    isClaimLoading.value = false
-  }
-}
+// 認領確認
+const confirmClaim = () =>
+  claimModal.execute(
+    t => taskStore.claimTask(t.id, authStore.user!.id),
+    `已成功認領「${claimModal.task.value?.title}」`,
+    '認領失敗',
+  )
 
 // 使用常數和 composable
 const functionOptions = FUNCTION_OPTIONS
@@ -129,7 +107,7 @@ const projectOptions = computed(() => getProjectOptions(true))
         :key="task.id"
         :task="task"
         :project="getProjectById(task.projectId)"
-        @claim="openClaimModal(task)"
+        @claim="claimModal.open(task)"
       />
     </div>
 
@@ -144,16 +122,23 @@ const projectOptions = computed(() => getProjectOptions(true))
     </Card>
 
     <!-- 認領確認對話框 -->
-    <Modal v-model="showClaimModal" title="確認認領任務" size="md">
-      <div v-if="taskToClaim" class="space-y-4">
+    <Modal v-model="claimModal.show.value" title="確認認領任務" size="md">
+      <div v-if="claimModal.task.value" class="space-y-4">
         <p style="color: var(--text-secondary)">您確定要認領以下任務嗎？</p>
         <div class="p-4 rounded-lg" style="background-color: var(--bg-tertiary)">
-          <h4 class="font-semibold" style="color: var(--text-primary)">{{ taskToClaim.title }}</h4>
+          <h4 class="font-semibold" style="color: var(--text-primary)">
+            {{ claimModal.task.value.title }}
+          </h4>
           <p class="text-sm mt-1" style="color: var(--text-tertiary)">
-            {{ taskToClaim.description }}
+            {{ claimModal.task.value.description }}
           </p>
           <div class="flex flex-wrap gap-1.5 mt-3">
-            <Badge v-for="func in taskToClaim.functionTags" :key="func" variant="primary" size="sm">
+            <Badge
+              v-for="func in claimModal.task.value.functionTags"
+              :key="func"
+              variant="primary"
+              size="sm"
+            >
               {{ functionTypeLabels[func] }}
             </Badge>
           </div>
@@ -161,8 +146,8 @@ const projectOptions = computed(() => getProjectOptions(true))
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showClaimModal = false"> 取消 </Button>
-        <Button :loading="isClaimLoading" @click="confirmClaim"> 確認認領 </Button>
+        <Button variant="secondary" @click="claimModal.close()"> 取消 </Button>
+        <Button :loading="claimModal.loading.value" @click="confirmClaim"> 確認認領 </Button>
       </template>
     </Modal>
   </div>

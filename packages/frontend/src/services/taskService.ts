@@ -1,6 +1,7 @@
 import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPut, apiDelete } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface StatusUpdatePayload {
   pauseReason?: string
@@ -28,12 +29,12 @@ export interface TaskServiceInterface {
 
 class MockTaskService implements TaskServiceInterface {
   async fetchTasks(): Promise<Task[]> {
-    await new Promise(r => setTimeout(r, 300))
+    await mockDelay(300)
     return [...mockTasks]
   }
 
   async fetchPoolTasks(): Promise<PoolTask[]> {
-    await new Promise(r => setTimeout(r, 300))
+    await mockDelay(300)
     return [...mockPoolTasks]
   }
 
@@ -46,7 +47,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
 
     // 模擬後端邏輯：依 sourceType 決定初始狀態
     let status: TaskStatus = 'UNCLAIMED'
@@ -83,7 +84,7 @@ class MockTaskService implements TaskServiceInterface {
     status: TaskStatus,
     _payload?: StatusUpdatePayload,
   ): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
@@ -98,7 +99,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async updateTaskProgress(taskId: string, progress: number): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
@@ -115,7 +116,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async claimTask(taskId: string, userId: string): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
@@ -132,7 +133,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async unclaimTask(taskId: string): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
@@ -150,7 +151,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async deleteTask(taskId: string): Promise<ActionResult<void>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }
@@ -159,7 +160,7 @@ class MockTaskService implements TaskServiceInterface {
   }
 
   async updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const task = mockTasks.find(t => t.id === taskId)
     if (!task) {
       return { success: false, error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' } }

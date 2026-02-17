@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Department, ActionResult } from 'shared/types'
+import type { Department } from 'shared/types'
 import { createDepartmentService, type DepartmentData } from '@/services/departmentService'
+import { storeAction } from '@/utils/storeHelpers'
 
 const service = createDepartmentService()
 
@@ -17,18 +18,11 @@ export const useDepartmentStore = defineStore('departments', () => {
     })),
   )
 
-  const fetchDepartments = async (): Promise<ActionResult<DepartmentData[]>> => {
-    try {
-      const data = await service.fetchDepartments()
-      departments.value = data
-      return { success: true, data: departments.value }
-    } catch (e) {
-      return {
-        success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '載入部門失敗' },
-      }
-    }
-  }
+  const fetchDepartments = () =>
+    storeAction(async () => {
+      departments.value = await service.fetchDepartments()
+      return departments.value
+    }, '載入部門失敗')
 
   return {
     departments,

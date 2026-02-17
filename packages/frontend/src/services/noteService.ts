@@ -1,6 +1,7 @@
 import type { TaskNote, ActionResult } from 'shared/types'
 import { mockTaskNotes } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface NoteServiceInterface {
   fetchByTaskId(taskId: string): Promise<TaskNote[]>
@@ -9,14 +10,14 @@ export interface NoteServiceInterface {
 
 class MockNoteService implements NoteServiceInterface {
   async fetchByTaskId(taskId: string): Promise<TaskNote[]> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return mockTaskNotes
       .filter(n => n.taskId === taskId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
   async addNote(note: Omit<TaskNote, 'id' | 'createdAt'>): Promise<ActionResult<TaskNote>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const newNote: TaskNote = {
       ...note,
       id: `note-${Date.now()}`,

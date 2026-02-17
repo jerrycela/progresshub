@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import type { MockEmployee, Department, ActionResult } from 'shared/types'
 import { createEmployeeService, type CreateEmployeeInput } from '@/services/employeeService'
 import { mockEmployees } from '@/mocks/unified'
+import { storeAction } from '@/utils/storeHelpers'
 
 const isMock = import.meta.env.VITE_USE_MOCK === 'true'
 const service = createEmployeeService()
@@ -29,41 +30,21 @@ export const useEmployeeStore = defineStore('employees', () => {
     })),
   )
 
-  const fetchEmployees = async (): Promise<ActionResult<MockEmployee[]>> => {
-    try {
-      const data = await service.fetchEmployees()
-      employees.value = data
-      return { success: true, data: employees.value }
-    } catch (e) {
-      return {
-        success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '載入員工失敗' },
-      }
-    }
-  }
+  const fetchEmployees = () =>
+    storeAction(async () => {
+      employees.value = await service.fetchEmployees()
+      return employees.value
+    }, '載入員工失敗')
 
-  const createEmployee = async (
-    input: CreateEmployeeInput,
-  ): Promise<ActionResult<MockEmployee>> => {
-    try {
+  const createEmployee = (input: CreateEmployeeInput) =>
+    storeAction(async () => {
       const result = await service.createEmployee(input)
-
       if (!result.success || !result.data) {
-        return {
-          success: false,
-          error: result.error || { code: 'UNKNOWN_ERROR', message: '建立員工失敗' },
-        }
+        throw new Error(result.error?.message || '建立員工失敗')
       }
-
       employees.value = [...employees.value, result.data]
-      return { success: true, data: result.data }
-    } catch (e) {
-      return {
-        success: false,
-        error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '建立員工失敗' },
-      }
-    }
-  }
+      return result.data
+    }, '建立員工失敗')
 
   const updateEmployee = async (
     id: string,

@@ -1,6 +1,7 @@
 import type { MockEmployee, Department, ActionResult, UserRole } from 'shared/types'
 import { mockEmployees } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap, apiPutUnwrap, apiDelete } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 // 後端 DTO → 前端 MockEmployee 欄位映射
 // 後端回傳 `role`，前端 type 使用 `userRole`
@@ -33,7 +34,7 @@ export interface EmployeeServiceInterface {
 
 class MockEmployeeService implements EmployeeServiceInterface {
   async fetchEmployees(): Promise<MockEmployee[]> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return [...mockEmployees]
   }
 
@@ -46,7 +47,7 @@ class MockEmployeeService implements EmployeeServiceInterface {
   }
 
   async createEmployee(input: CreateEmployeeInput): Promise<ActionResult<MockEmployee>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const newEmployee: MockEmployee = {
       id: `emp-${Date.now()}`,
       name: input.name,
@@ -61,7 +62,7 @@ class MockEmployeeService implements EmployeeServiceInterface {
     id: string,
     input: Partial<MockEmployee>,
   ): Promise<ActionResult<MockEmployee>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const employee = mockEmployees.find(e => e.id === id)
     if (!employee) {
       return {
@@ -73,7 +74,7 @@ class MockEmployeeService implements EmployeeServiceInterface {
   }
 
   async deleteEmployee(id: string): Promise<ActionResult<void>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const employee = mockEmployees.find(e => e.id === id)
     if (!employee) {
       return {

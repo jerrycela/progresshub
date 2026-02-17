@@ -1,6 +1,7 @@
 import type { Project, ActionResult } from 'shared/types'
 import { mockProjects } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap, apiPutUnwrap, apiDelete } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface CreateProjectInput {
   name: string
@@ -19,7 +20,7 @@ export interface ProjectServiceInterface {
 
 class MockProjectService implements ProjectServiceInterface {
   async fetchProjects(): Promise<Project[]> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return [...mockProjects]
   }
 
@@ -28,7 +29,7 @@ class MockProjectService implements ProjectServiceInterface {
   }
 
   async createProject(input: CreateProjectInput): Promise<ActionResult<Project>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const newProject: Project = {
       id: `proj-${Date.now()}`,
       name: input.name,
@@ -44,7 +45,7 @@ class MockProjectService implements ProjectServiceInterface {
   }
 
   async updateProject(id: string, input: Partial<Project>): Promise<ActionResult<Project>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const project = mockProjects.find(p => p.id === id)
     if (!project) {
       return { success: false, error: { code: 'PROJECT_NOT_FOUND', message: '找不到指定的專案' } }
@@ -53,7 +54,7 @@ class MockProjectService implements ProjectServiceInterface {
   }
 
   async deleteProject(id: string): Promise<ActionResult<void>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     const project = mockProjects.find(p => p.id === id)
     if (!project) {
       return { success: false, error: { code: 'PROJECT_NOT_FOUND', message: '找不到指定的專案' } }

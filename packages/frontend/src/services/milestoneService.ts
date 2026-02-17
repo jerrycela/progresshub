@@ -1,6 +1,7 @@
 import type { MilestoneData, ActionResult } from 'shared/types'
 import { mockMilestones } from '@/mocks/unified'
 import { apiGetUnwrap, apiPostUnwrap, apiDelete } from './api'
+import { mockDelay } from '@/utils/mockDelay'
 
 export interface MilestoneServiceInterface {
   fetchMilestones(): Promise<MilestoneData[]>
@@ -10,17 +11,17 @@ export interface MilestoneServiceInterface {
 
 class MockMilestoneService implements MilestoneServiceInterface {
   async fetchMilestones(): Promise<MilestoneData[]> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return [...mockMilestones]
   }
 
   async addMilestone(ms: MilestoneData): Promise<ActionResult<MilestoneData>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return { success: true, data: ms }
   }
 
   async removeMilestone(): Promise<ActionResult<void>> {
-    await new Promise(r => setTimeout(r, 200))
+    await mockDelay()
     return { success: true }
   }
 }
