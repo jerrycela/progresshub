@@ -67,7 +67,6 @@ router.get("/live", (_req, res) => {
   sendSuccess(res, {
     status: "alive",
     timestamp: new Date().toISOString(),
-    memory: process.memoryUsage(),
   });
 });
 

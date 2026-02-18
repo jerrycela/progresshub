@@ -76,10 +76,12 @@ export function useFormValidation<T extends Record<string, unknown>>(
 
     const error = validateField(formData.value[fieldName], rules)
     if (error) {
-      errors.value[fieldName as string] = error
+      errors.value = { ...errors.value, [fieldName as string]: error }
       return false
     } else {
-      delete errors.value[fieldName as string]
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { [fieldName as string]: _, ...rest } = errors.value
+      errors.value = rest
       return true
     }
   }

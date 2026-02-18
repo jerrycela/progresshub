@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, onUnmounted } from 'vue'
 
 // 對話框元件 - 用於顯示彈出視窗
 interface Props {
@@ -32,29 +32,32 @@ const handleOverlayClick = () => {
   }
 }
 
-// 監聽 ESC 鍵關閉
+// ESC 鍵處理函式（提取為具名函式以便正確 cleanup）
+const handleEsc = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.closable) {
+    close()
+  }
+}
+
+// 監聽 ESC 鍵關閉 + 管理背景滾動
 watch(
   () => props.modelValue,
   isOpen => {
     if (isOpen) {
-      const handleEsc = (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && props.closable) {
-          close()
-        }
-      }
       document.addEventListener('keydown', handleEsc)
-      // 防止背景滾動
       document.body.style.overflow = 'hidden'
-
-      return () => {
-        document.removeEventListener('keydown', handleEsc)
-        document.body.style.overflow = ''
-      }
     } else {
+      document.removeEventListener('keydown', handleEsc)
       document.body.style.overflow = ''
     }
   },
 )
+
+// 元件卸載時確保清理
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleEsc)
+  document.body.style.overflow = ''
+})
 
 const sizeClasses: Record<string, string> = {
   sm: 'max-w-sm',
@@ -73,6 +76,9 @@ const sizeClasses: Record<string, string> = {
 
         <!-- 對話框內容 -->
         <div
+          role="dialog"
+          aria-modal="true"
+          :aria-labelledby="title ? 'modal-title' : undefined"
           :class="['relative w-full rounded-xl shadow-xl', sizeClasses[size]]"
           style="background-color: var(--card-bg)"
         >
@@ -83,10 +89,13 @@ const sizeClasses: Record<string, string> = {
             style="border-color: var(--border-primary)"
           >
             <slot name="header">
-              <h3 class="text-lg font-semibold" style="color: var(--text-primary)">{{ title }}</h3>
+              <h3 id="modal-title" class="text-lg font-semibold" style="color: var(--text-primary)">
+                {{ title }}
+              </h3>
             </slot>
             <button
               v-if="closable"
+              aria-label="關閉"
               class="p-1 rounded-lg transition-colors hover-bg"
               style="color: var(--text-muted)"
               @click="close"

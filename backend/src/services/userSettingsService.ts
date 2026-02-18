@@ -156,7 +156,7 @@ export class UserSettingsService {
     userId: string,
     _username: string,
   ): Promise<UserSettingsDTO | null> {
-    const slackUserId = `placeholder-manual-link`;
+    const slackUserId = `placeholder-manual-link-${userId}`;
 
     await prisma.employee.update({
       where: { id: userId },

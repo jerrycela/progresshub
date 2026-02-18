@@ -11,7 +11,9 @@ import milestoneRoutes from "./milestones";
 import gitlabRoutes from "./gitlab";
 import dashboardRoutes from "./dashboard";
 import userSettingsRoutes from "./userSettings";
+import slackRoutes from "./slack";
 import { sendSuccess } from "../utils/response";
+import { env } from "../config/env";
 import { env } from "../config/env";
 
 const router = Router();
@@ -30,19 +32,20 @@ router.use("/gitlab", gitlabRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/user", userSettingsRoutes);
 
-// Conditionally mount Slack routes only when configured
+// Slack 路由同步掛載（條件式啟用）
 if (env.SLACK_BOT_TOKEN) {
-  import("./slack").then((slackRoutes) => {
-    router.use("/slack", slackRoutes.default);
-  });
+  router.use("/slack", slackRoutes);
 }
 
-// API Info
+// API Info（僅開發環境顯示完整端點列表，生產環境隱藏）
 router.get("/", (_req, res) => {
-  sendSuccess(res, {
+  const info: Record<string, unknown> = {
     name: "ProgressHub API",
     version: "1.0.0",
-    endpoints: {
+  };
+
+  if (env.NODE_ENV === "development") {
+    info.endpoints = {
       auth: "/api/auth",
       employees: "/api/employees",
       projects: "/api/projects",
@@ -56,8 +59,10 @@ router.get("/", (_req, res) => {
       gitlab: "/api/gitlab",
       dashboard: "/api/dashboard",
       user: "/api/user",
-    },
-  });
+    };
+  }
+
+  sendSuccess(res, info);
 });
 
 export default router;

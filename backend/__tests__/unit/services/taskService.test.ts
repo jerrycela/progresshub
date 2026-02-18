@@ -442,6 +442,13 @@ describe('TaskService', () => {
   });
 
   describe('updateStatus', () => {
+    beforeEach(() => {
+      // updateStatus 使用 $transaction，需要模擬 tx client
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(mockedPrisma),
+      );
+    });
+
     it('應允許合法的狀態轉換 CLAIMED → IN_PROGRESS', async () => {
       (mockedPrisma.task.findUnique as jest.Mock).mockResolvedValue({
         ...mockTask,
@@ -774,6 +781,12 @@ describe('TaskService', () => {
   });
 
   describe('狀態機完整性驗證', () => {
+    beforeEach(() => {
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(mockedPrisma),
+      );
+    });
+
     const testTransition = async (from: string, to: string, shouldSucceed: boolean) => {
       (mockedPrisma.task.findUnique as jest.Mock).mockResolvedValue({
         ...mockTask,

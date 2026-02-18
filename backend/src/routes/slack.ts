@@ -31,6 +31,9 @@ function verifySlackSignature(req: Request): boolean {
     return false;
   }
 
+  // NOTE: Slack 官方建議使用原始 request body 計算簽章，
+  // 但 express.json() 已解析 body。JSON.stringify 在大多數情況下能正確還原，
+  // 但鍵序/格式可能與原始 body 不同。若遇到驗證失敗，需改用 express.raw() 保留原始 body。
   const sigBasestring = `v0:${timestamp}:${JSON.stringify(req.body)}`;
   const mySignature =
     "v0=" +
@@ -244,7 +247,7 @@ router.post(
       } else {
         res.json({
           response_type: "ephemeral",
-          text: `未知指令: \`${command}\`\n輸入 \`/time help\` 查看可用指令`,
+          text: `未知指令\n輸入 \`/time help\` 查看可用指令`,
         });
       }
     } catch (error) {

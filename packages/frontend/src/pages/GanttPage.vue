@@ -43,8 +43,8 @@ const showMilestoneModal = ref(false)
 const showTaskRelationModal = ref(false)
 const selectedTask = ref<Task | null>(null)
 
-// 里程碑資料
-const milestones = ref<MilestoneData[]>(milestoneStore.allSorted())
+// 里程碑資料（從 store 取得，單一資料源）
+const milestones = computed(() => milestoneStore.allSorted())
 
 const canManageMilestones = computed(() =>
   authStore.user ? ['PM', 'ADMIN'].includes(authStore.user.role) : false,
@@ -185,7 +185,7 @@ const submitMilestone = async (data: {
   }
 
   const milestone: MilestoneData = {
-    id: `ms-${Date.now()}`,
+    id: `ms-${crypto.randomUUID()}`,
     projectId: data.projectId,
     name: data.name.trim(),
     description: data.description.trim() || undefined,
@@ -198,9 +198,6 @@ const submitMilestone = async (data: {
 
   try {
     await milestoneStore.addMilestone(milestone)
-    milestones.value = [...milestones.value, milestone].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    )
     showMilestoneModal.value = false
     showSuccess(`已新增里程碑：${milestone.name}`)
   } catch {
@@ -219,7 +216,6 @@ const deleteMilestone = async (msId: string): Promise<void> => {
 
   try {
     await milestoneStore.removeMilestone(msId)
-    milestones.value = milestones.value.filter((ms: MilestoneData) => ms.id !== msId)
     showSuccess('已刪除里程碑')
   } catch {
     showError('刪除里程碑失敗，請稍後再試')

@@ -17,6 +17,7 @@ interface EnvConfig {
   SLACK_BOT_TOKEN: string;
   ALLOWED_ORIGINS: string[];
   API_BASE_URL: string;
+  ENABLE_DEV_LOGIN: boolean;
 }
 
 // Issue #1 修復：JWT Secret 安全性檢查
@@ -73,6 +74,7 @@ export const env: EnvConfig = {
   SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || "",
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(",") || [],
   API_BASE_URL: process.env.API_BASE_URL || "http://localhost:3000",
+  ENABLE_DEV_LOGIN: process.env.ENABLE_DEV_LOGIN === "true",
 };
 
 // Issue #4 修復：完整的環境變數驗證

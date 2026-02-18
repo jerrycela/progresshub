@@ -172,7 +172,7 @@ describe('useTaskStore', () => {
       await vi.advanceTimersByTimeAsync(200)
       await claimPromise
 
-      expect(store.loading.claim[taskId]).toBe(false)
+      expect(store.loading.claim[taskId]).toBeUndefined()
     })
   })
 
@@ -703,7 +703,7 @@ describe('useTaskStore', () => {
       await vi.advanceTimersByTimeAsync(200)
       await updatePromise
 
-      expect(store.loading.update[task.id]).toBe(false)
+      expect(store.loading.update[task.id]).toBeUndefined()
     })
   })
 })

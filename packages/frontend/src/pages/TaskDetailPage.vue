@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProgressLogStore } from '@/stores/progressLogs'
@@ -10,6 +10,7 @@ import type { PoolTask, TaskNote } from 'shared/types'
 import type { ProgressLog, UserRole } from 'shared/types'
 import { getStatusLabel, getStatusClass, getSourceLabel } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
+import { useFormatDate } from '@/composables/useFormatDate'
 import { useConfirm } from '@/composables/useConfirm'
 import ProgressTimeline from '@/components/task/ProgressTimeline.vue'
 import GitLabIssueCard from '@/components/task/GitLabIssueCard.vue'
@@ -22,6 +23,7 @@ import TaskNotes from '@/components/task/TaskNotes.vue'
 
 const { showSuccess, showWarning, showInfo, showError } = useToast()
 const { showConfirm } = useConfirm()
+const { formatDate, formatDateTime } = useFormatDate()
 
 const taskStore = useTaskStore()
 const progressLogStore = useProgressLogStore()
@@ -57,32 +59,28 @@ const currentUserForModal = computed(() => ({
 // 新進度回報表單
 const newProgress = ref({ percentage: 0, notes: '' })
 
-onMounted(() => {
-  const taskId = route.params.id as string
+const loadTaskData = (taskId: string) => {
   task.value = taskStore.getPoolTaskById(taskId) || null
   progressLogs.value = progressLogStore.byTaskId(taskId)
   taskNotes.value = noteStore.byTaskId(taskId)
   if (task.value) {
-    newProgress.value.percentage = task.value.progress
+    newProgress.value = { percentage: task.value.progress, notes: '' }
   }
+}
+
+onMounted(() => {
+  loadTaskData(route.params.id as string)
 })
 
-// 格式化日期時間
-const formatDateTime = (dateString: string): string => {
-  const date = new Date(dateString)
-  return date.toLocaleString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
-// 格式化日期
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString('zh-TW')
-}
+// 響應路由參數變化（同頁面不同任務間跳轉）
+watch(
+  () => route.params.id,
+  newId => {
+    if (newId) {
+      loadTaskData(newId as string)
+    }
+  },
+)
 
 const goBack = (): void => {
   router.push('/task-pool')
@@ -168,7 +166,7 @@ const deleteTask = async (): Promise<void> => {
 }
 
 const openGitLabIssue = (url: string): void => {
-  window.open(url, '_blank')
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 const editGitLabIssue = (): void => {
   showInfo('GitLab Issue 編輯功能即將推出')

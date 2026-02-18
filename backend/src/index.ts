@@ -50,7 +50,7 @@ const getCorsOrigin = (): cors.CorsOptions["origin"] => {
     ) {
       callback(null, true);
     } else {
-      callback(new Error(`CORS 不允許來自 ${origin} 的請求`));
+      callback(new Error("CORS policy: origin not allowed"));
     }
   };
 };

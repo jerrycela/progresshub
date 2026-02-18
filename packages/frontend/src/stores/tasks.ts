@@ -39,6 +39,8 @@ export const useTaskStore = defineStore('tasks', () => {
   const isLoading = computed(() => loading.value.fetch || loading.value.create)
 
   // Getters
+  const allTasks = computed((): Task[] => tasks.value)
+
   const backlogTasks = computed(() => tasks.value.filter((t: Task) => t.status === 'UNCLAIMED'))
 
   const myTasks = computed(() =>
@@ -177,7 +179,7 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_UPDATE_FAILED', message },
       }
     } finally {
-      loading.value.claim[taskId] = false
+      delete loading.value.claim[taskId]
     }
   }
 
@@ -245,7 +247,7 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_UPDATE_FAILED', message },
       }
     } finally {
-      loading.value.unclaim[taskId] = false
+      delete loading.value.unclaim[taskId]
     }
   }
 
@@ -319,7 +321,7 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_UPDATE_FAILED', message },
       }
     } finally {
-      loading.value.update[taskId] = false
+      delete loading.value.update[taskId]
     }
   }
 
@@ -389,7 +391,7 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'TASK_UPDATE_FAILED', message },
       }
     } finally {
-      loading.value.update[taskId] = false
+      delete loading.value.update[taskId]
     }
   }
 
@@ -538,6 +540,7 @@ export const useTaskStore = defineStore('tasks', () => {
     loading,
     isLoading,
     // Getters
+    allTasks,
     backlogTasks,
     myTasks,
     completedTasks,

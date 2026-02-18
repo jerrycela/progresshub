@@ -128,7 +128,9 @@ const validateProjectForm = (): boolean => {
 
 // 清除特定欄位錯誤
 const clearFieldError = (field: string) => {
-  delete formErrors.value[field]
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { [field]: _, ...rest } = formErrors.value
+  formErrors.value = rest
 }
 
 // 監聽欄位變化清除錯誤

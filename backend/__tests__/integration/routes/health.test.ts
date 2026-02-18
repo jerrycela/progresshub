@@ -86,15 +86,7 @@ describe('Health Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('status', 'alive');
       expect(response.body.data).toHaveProperty('timestamp');
-      expect(response.body.data).toHaveProperty('memory');
-    });
-
-    it('回傳的 memory 應包含記憶體使用資訊', async () => {
-      const response = await request(app).get('/health/live');
-
-      expect(response.body.data.memory).toHaveProperty('rss');
-      expect(response.body.data.memory).toHaveProperty('heapTotal');
-      expect(response.body.data.memory).toHaveProperty('heapUsed');
+      expect(response.body.data).not.toHaveProperty('memory');
     });
   });
 });

@@ -74,12 +74,53 @@ export function useFormatDate() {
     return d.toISOString().split('T')[0]
   }
 
+  /**
+   * 格式化日期時間（年/月/日 時:分）
+   * @example formatDateTime('2026-02-03T14:30:00') => '2026/02/03 14:30'
+   */
+  const formatDateTime = (date?: string | Date): string => {
+    if (!date) return '-'
+    const d = typeof date === 'string' ? new Date(date) : date
+    return d.toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  /**
+   * 格式化日期為本地化格式
+   * @example formatDate('2026-02-03') => '2026/2/3'
+   */
+  const formatDate = (date?: string | Date): string => {
+    if (!date) return '-'
+    const d = typeof date === 'string' ? new Date(date) : date
+    return d.toLocaleDateString('zh-TW')
+  }
+
+  /**
+   * 判斷任務是否逾期（已過截止日且未完成）
+   */
+  const isTaskOverdue = (task: { dueDate?: string | null; status: string }): boolean => {
+    if (!task.dueDate || task.status === 'DONE') return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dueDate = new Date(task.dueDate)
+    dueDate.setHours(0, 0, 0, 0)
+    return dueDate < today
+  }
+
   return {
     formatShort,
     formatFull,
     formatISO,
+    formatDateTime,
+    formatDate,
     getRelativeDays,
     getToday,
     getDaysAgo,
+    isTaskOverdue,
   }
 }

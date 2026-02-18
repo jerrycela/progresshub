@@ -1,5 +1,6 @@
 import { computed, type Ref } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
+import { useFormatDate } from '@/composables/useFormatDate'
 import { topologicalSort } from '@/utils/topologicalSort'
 import type { Task, MilestoneData, FunctionType } from 'shared/types'
 
@@ -16,15 +17,7 @@ export function useGanttData(
   getProjectName: (id: string) => string | undefined,
 ) {
   const taskStore = useTaskStore()
-
-  const isTaskOverdue = (task: Task): boolean => {
-    if (!task.dueDate || task.status === 'DONE') return false
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const dueDate = new Date(task.dueDate)
-    dueDate.setHours(0, 0, 0, 0)
-    return dueDate < today
-  }
+  const { isTaskOverdue } = useFormatDate()
 
   const filteredTasks = computed(() => {
     let tasks = taskStore.tasks as Task[]

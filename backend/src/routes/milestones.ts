@@ -73,7 +73,7 @@ router.post(
         description: req.body.description,
         targetDate: new Date(req.body.date),
         color: req.body.color,
-        createdById: req.user!.userId,
+        createdById: req.user?.userId ?? "",
       });
       sendSuccess(res, toMilestoneDTO(milestone), 201);
     } catch (error) {

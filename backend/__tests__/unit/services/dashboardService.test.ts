@@ -20,6 +20,7 @@ jest.mock('../../../src/config/database', () => ({
     employee: {
       count: jest.fn(),
     },
+    $transaction: jest.fn((queries: Promise<unknown>[]) => Promise.all(queries)),
   },
 }));
 

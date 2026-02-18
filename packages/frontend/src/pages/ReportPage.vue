@@ -317,7 +317,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
               :loading="isReporting"
               @click="openReportModal(task, 'CONTINUE')"
             >
-              {{ task.status === 'PAUSED' ? '繼續' : '繼續' }}
+              繼續
             </Button>
             <Button
               variant="primary"

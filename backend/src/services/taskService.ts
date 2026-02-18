@@ -388,70 +388,73 @@ export class TaskService {
       blockerReason?: string;
     },
   ): Promise<Task> {
-    const task = await prisma.task.findUnique({ where: { id: taskId } });
-    if (!task) {
-      throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
-    }
+    // 使用 $transaction 防止 read-then-write race condition
+    return prisma.$transaction(async (tx) => {
+      const task = await tx.task.findUnique({ where: { id: taskId } });
+      if (!task) {
+        throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
+      }
 
-    const allowed = VALID_TRANSITIONS[task.status];
-    if (!allowed.includes(newStatus)) {
-      throw new AppError(
-        409,
-        `Cannot transition task from ${task.status} to ${newStatus}`,
-        "INVALID_TRANSITION",
-      );
-    }
-
-    const updateData: Prisma.TaskUpdateInput = {
-      status: newStatus,
-    };
-
-    // PAUSED 需要 pauseReason
-    if (newStatus === "PAUSED") {
-      if (!payload?.pauseReason) {
+      const allowed = VALID_TRANSITIONS[task.status];
+      if (!allowed.includes(newStatus)) {
         throw new AppError(
-          400,
-          "Pause reason is required when pausing a task",
-          "PAUSE_REASON_REQUIRED",
+          409,
+          `Cannot transition task from ${task.status} to ${newStatus}`,
+          "INVALID_TRANSITION",
         );
       }
-      updateData.pauseReason = payload.pauseReason;
-      updateData.pauseNote = payload.pauseNote;
-      updateData.pausedAt = new Date();
-    }
 
-    // BLOCKED 需要 blockerReason
-    if (newStatus === "BLOCKED") {
-      updateData.blockerReason = payload?.blockerReason;
-    }
+      const updateData: Prisma.TaskUpdateInput = {
+        status: newStatus,
+      };
 
-    // IN_PROGRESS 設定實際開始日期
-    if (newStatus === "IN_PROGRESS" && !task.actualStartDate) {
-      updateData.actualStartDate = new Date();
-    }
+      // PAUSED 需要 pauseReason
+      if (newStatus === "PAUSED") {
+        if (!payload?.pauseReason) {
+          throw new AppError(
+            400,
+            "Pause reason is required when pausing a task",
+            "PAUSE_REASON_REQUIRED",
+          );
+        }
+        updateData.pauseReason = payload.pauseReason;
+        updateData.pauseNote = payload.pauseNote;
+        updateData.pausedAt = new Date();
+      }
 
-    // 從 PAUSED/BLOCKED 恢復時清除原因
-    if (
-      newStatus === "IN_PROGRESS" &&
-      (task.status === "PAUSED" || task.status === "BLOCKED")
-    ) {
-      updateData.pauseReason = null;
-      updateData.pauseNote = null;
-      updateData.pausedAt = null;
-      updateData.blockerReason = null;
-    }
+      // BLOCKED 需要 blockerReason
+      if (newStatus === "BLOCKED") {
+        updateData.blockerReason = payload?.blockerReason;
+      }
 
-    // DONE 設定實際結束日期和進度
-    if (newStatus === "DONE") {
-      updateData.actualEndDate = new Date();
-      updateData.closedAt = new Date();
-      updateData.progressPercentage = 100;
-    }
+      // IN_PROGRESS 設定實際開始日期
+      if (newStatus === "IN_PROGRESS" && !task.actualStartDate) {
+        updateData.actualStartDate = new Date();
+      }
 
-    return prisma.task.update({
-      where: { id: taskId },
-      data: updateData,
-      include: TASK_INCLUDE,
+      // 從 PAUSED/BLOCKED 恢復時清除原因
+      if (
+        newStatus === "IN_PROGRESS" &&
+        (task.status === "PAUSED" || task.status === "BLOCKED")
+      ) {
+        updateData.pauseReason = null;
+        updateData.pauseNote = null;
+        updateData.pausedAt = null;
+        updateData.blockerReason = null;
+      }
+
+      // DONE 設定實際結束日期和進度
+      if (newStatus === "DONE") {
+        updateData.actualEndDate = new Date();
+        updateData.closedAt = new Date();
+        updateData.progressPercentage = 100;
+      }
+
+      return tx.task.update({
+        where: { id: taskId },
+        data: updateData,
+        include: TASK_INCLUDE,
+      });
     });
   }
 

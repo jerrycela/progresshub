@@ -16,7 +16,7 @@ export function useGantt(
   filteredMilestones: Ref<MilestoneData[]>,
   timeScale: Ref<TimeScale>,
 ) {
-  const { formatShort } = useFormatDate()
+  const { formatShort, isTaskOverdue } = useFormatDate()
 
   const dateRange = computed(() => {
     const tasks = filteredTasks.value
@@ -155,15 +155,6 @@ export function useGantt(
     const position = ((msDate - dateRange.value.start.getTime()) / range) * 100
 
     return Math.max(0, Math.min(100, position))
-  }
-
-  const isTaskOverdue = (task: Task): boolean => {
-    if (!task.dueDate || task.status === 'DONE') return false
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const dueDate = new Date(task.dueDate)
-    dueDate.setHours(0, 0, 0, 0)
-    return dueDate < today
   }
 
   const getTaskDuration = (task: Task): number => {

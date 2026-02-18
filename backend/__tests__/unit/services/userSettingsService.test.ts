@@ -224,7 +224,7 @@ describe('UserSettingsService', () => {
 
       expect(mockedPrisma.employee.update).toHaveBeenCalledWith({
         where: { id: 'emp-001' },
-        data: { slackUserId: 'placeholder-manual-link' },
+        data: { slackUserId: 'placeholder-manual-link-emp-001' },
       });
     });
   });

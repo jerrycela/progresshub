@@ -82,10 +82,13 @@ router.post(
  * POST /api/auth/dev-login
  * Dev login (bypasses Slack OAuth). Controlled by ENABLE_DEV_LOGIN env var.
  */
-if (
-  env.NODE_ENV === "development" ||
-  (process.env.ENABLE_DEV_LOGIN === "true" && env.NODE_ENV !== "production")
-) {
+if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
+  if (env.NODE_ENV !== "development") {
+    console.warn(
+      "[SECURITY] Dev login enabled in non-development environment. " +
+        "This should only be used for staging/testing purposes.",
+    );
+  }
   router.post(
     "/dev-login",
     [

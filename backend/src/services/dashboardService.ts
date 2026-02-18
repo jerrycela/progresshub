@@ -77,39 +77,37 @@ export class DashboardService {
       "COMBAT",
     ];
 
-    const workloads = await Promise.all(
-      functionTypes.map(async (functionType) => {
-        const [memberCount, totalTasks, unclaimedTasks, inProgressTasks] =
-          await Promise.all([
-            prisma.employee.count({
-              where: { functionType, isActive: true },
-            }),
-            prisma.task.count({
-              where: { functionTags: { has: functionType } },
-            }),
-            prisma.task.count({
-              where: {
-                functionTags: { has: functionType },
-                status: "UNCLAIMED",
-              },
-            }),
-            prisma.task.count({
-              where: {
-                functionTags: { has: functionType },
-                status: { in: ["CLAIMED", "IN_PROGRESS"] },
-              },
-            }),
-          ]);
-
-        return {
-          functionType,
-          totalTasks,
-          unclaimedTasks,
-          inProgressTasks,
-          memberCount,
-        };
+    // 使用 $transaction 批次處理所有查詢，減少 DB round-trips
+    const queries = functionTypes.flatMap((functionType) => [
+      prisma.employee.count({
+        where: { functionType, isActive: true },
       }),
-    );
+      prisma.task.count({
+        where: { functionTags: { has: functionType } },
+      }),
+      prisma.task.count({
+        where: {
+          functionTags: { has: functionType },
+          status: "UNCLAIMED",
+        },
+      }),
+      prisma.task.count({
+        where: {
+          functionTags: { has: functionType },
+          status: { in: ["CLAIMED", "IN_PROGRESS"] },
+        },
+      }),
+    ]);
+
+    const results = await prisma.$transaction(queries);
+
+    const workloads = functionTypes.map((functionType, i) => ({
+      functionType,
+      memberCount: results[i * 4] as number,
+      totalTasks: results[i * 4 + 1] as number,
+      unclaimedTasks: results[i * 4 + 2] as number,
+      inProgressTasks: results[i * 4 + 3] as number,
+    }));
 
     cache.set("dashboard_workloads", workloads);
     return workloads;
