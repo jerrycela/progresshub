@@ -309,7 +309,7 @@ router.put(
  */
 router.delete(
   "/:id",
-  authorize(PermissionLevel.PM),
+  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
   auditLog("DELETE_TASK"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {

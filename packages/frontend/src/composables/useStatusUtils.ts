@@ -80,6 +80,38 @@ export const getRoleBadgeClass = (role: UserRole | string): string => {
 }
 
 /**
+ * 任務來源類型標籤對照
+ */
+const SOURCE_LABELS: Record<string, string> = {
+  ASSIGNED: '指派任務',
+  POOL: '任務池',
+  SELF_CREATED: '自建任務',
+}
+
+/**
+ * 任務來源類型 CSS 類別對照
+ */
+const SOURCE_BADGE_CLASSES: Record<string, string> = {
+  ASSIGNED: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  POOL: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  SELF_CREATED: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+}
+
+/**
+ * 取得任務來源類型標籤
+ */
+export const getSourceLabel = (sourceType: string): string => {
+  return SOURCE_LABELS[sourceType] || sourceType
+}
+
+/**
+ * 取得任務來源類型徽章 CSS 類別
+ */
+export const getSourceClass = (sourceType: string): string => {
+  return SOURCE_BADGE_CLASSES[sourceType] || ''
+}
+
+/**
  * 狀態工具 Composable
  * 提供任務狀態和角色相關的工具函數
  */
@@ -88,10 +120,14 @@ export const useStatusUtils = () => ({
   getStatusClass,
   getRoleLabel,
   getRoleBadgeClass,
+  getSourceLabel,
+  getSourceClass,
   STATUS_LABELS,
   STATUS_BADGE_CLASSES,
   ROLE_LABELS,
   ROLE_BADGE_CLASSES,
+  SOURCE_LABELS,
+  SOURCE_BADGE_CLASSES,
 })
 
 export default useStatusUtils

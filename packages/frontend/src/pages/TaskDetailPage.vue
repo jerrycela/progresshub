@@ -8,7 +8,7 @@ import { useEmployeeStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import type { PoolTask, TaskNote } from 'shared/types'
 import type { ProgressLog, UserRole } from 'shared/types'
-import { getStatusLabel, getStatusClass } from '@/composables/useStatusUtils'
+import { getStatusLabel, getStatusClass, getSourceLabel } from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import ProgressTimeline from '@/components/task/ProgressTimeline.vue'
@@ -82,16 +82,6 @@ const formatDateTime = (dateString: string): string => {
 // 格式化日期
 const formatDate = (dateString: string): string => {
   return new Date(dateString).toLocaleDateString('zh-TW')
-}
-
-// 來源類型
-const getSourceLabel = (sourceType: string): string => {
-  const labels: Record<string, string> = {
-    ASSIGNED: '指派任務',
-    POOL: '任務池',
-    SELF_CREATED: '自建任務',
-  }
-  return labels[sourceType] || sourceType
 }
 
 const goBack = (): void => {

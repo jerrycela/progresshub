@@ -12,6 +12,7 @@ jest.mock('../../../src/config/database', () => ({
       delete: jest.fn(),
       aggregate: jest.fn(),
     },
+    $transaction: jest.fn(),
   },
 }));
 
@@ -216,8 +217,16 @@ describe('TimeEntryService', () => {
   });
 
   describe('createBatchTimeEntries', () => {
-    it('應批次建立多筆工時記錄', async () => {
-      (mockedPrisma.timeEntry.create as jest.Mock).mockResolvedValue(mockEntry);
+    it('應在 transaction 內批次建立多筆工時記錄', async () => {
+      const txClient = {
+        timeEntry: {
+          create: jest.fn().mockResolvedValue(mockEntry),
+          aggregate: jest.fn().mockResolvedValue({ _sum: { hours: 0 } }),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
 
       const entries = [
         { employeeId: 'emp-001', projectId: 'proj-001', categoryId: 'cat-001', date: today, hours: 2 },
@@ -227,7 +236,8 @@ describe('TimeEntryService', () => {
       const result = await service.createBatchTimeEntries(entries);
 
       expect(result).toHaveLength(2);
-      expect(mockedPrisma.timeEntry.create).toHaveBeenCalledTimes(2);
+      expect(txClient.timeEntry.create).toHaveBeenCalledTimes(2);
+      expect(mockedPrisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
 

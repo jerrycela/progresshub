@@ -66,9 +66,15 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // 驗證 Slack 簽名
-      if (env.NODE_ENV === "production" && !verifySlackSignature(req)) {
-        sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
-        return;
+      if (!verifySlackSignature(req)) {
+        if (env.NODE_ENV === "development" && !env.SLACK_SIGNING_SECRET) {
+          logger.warn(
+            "Skipping Slack signature verification in dev mode (no signing secret)",
+          );
+        } else {
+          sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
+          return;
+        }
       }
 
       const { user_id, text } = req.body;
@@ -259,9 +265,15 @@ router.post(
   "/interactions",
   async (req: Request, res: Response): Promise<void> => {
     try {
-      if (env.NODE_ENV === "production" && !verifySlackSignature(req)) {
-        sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
-        return;
+      if (!verifySlackSignature(req)) {
+        if (env.NODE_ENV === "development" && !env.SLACK_SIGNING_SECRET) {
+          logger.warn(
+            "Skipping Slack signature verification in dev mode (no signing secret)",
+          );
+        } else {
+          sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
+          return;
+        }
       }
 
       // 安全地解析 Slack 互動事件的 payload

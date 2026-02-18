@@ -82,7 +82,10 @@ router.post(
  * POST /api/auth/dev-login
  * Dev login (bypasses Slack OAuth). Controlled by ENABLE_DEV_LOGIN env var.
  */
-if (env.NODE_ENV === "development" || process.env.ENABLE_DEV_LOGIN === "true") {
+if (
+  env.NODE_ENV === "development" ||
+  (process.env.ENABLE_DEV_LOGIN === "true" && env.NODE_ENV !== "production")
+) {
   router.post(
     "/dev-login",
     [

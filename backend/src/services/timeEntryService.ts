@@ -1,5 +1,10 @@
-import prisma from '../config/database';
-import { Prisma, TimeEntryStatus } from '@prisma/client';
+import prisma from "../config/database";
+import { Prisma, TimeEntryStatus } from "@prisma/client";
+
+type TransactionClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
 
 export interface CreateTimeEntryDto {
   employeeId: string;
@@ -83,7 +88,7 @@ export class TimeEntryService {
         where,
         skip,
         take: limit,
-        orderBy: { date: 'desc' },
+        orderBy: { date: "desc" },
         include: {
           project: { select: { id: true, name: true } },
           task: { select: { id: true, name: true } },
@@ -142,23 +147,25 @@ export class TimeEntryService {
    * 批次建立工時記錄（週報）
    */
   async createBatchTimeEntries(entries: CreateTimeEntryDto[]) {
-    const results = [];
-    for (const entry of entries) {
-      await this.validateTimeEntry(entry);
-      const created = await prisma.timeEntry.create({
-        data: {
-          employeeId: entry.employeeId,
-          projectId: entry.projectId,
-          taskId: entry.taskId,
-          categoryId: entry.categoryId,
-          date: new Date(entry.date),
-          hours: entry.hours,
-          description: entry.description,
-        },
-      });
-      results.push(created);
-    }
-    return results;
+    return prisma.$transaction(async (tx) => {
+      const results = [];
+      for (const entry of entries) {
+        await this.validateTimeEntry(entry, tx);
+        const created = await tx.timeEntry.create({
+          data: {
+            employeeId: entry.employeeId,
+            projectId: entry.projectId,
+            taskId: entry.taskId,
+            categoryId: entry.categoryId,
+            date: new Date(entry.date),
+            hours: entry.hours,
+            description: entry.description,
+          },
+        });
+        results.push(created);
+      }
+      return results;
+    });
   }
 
   /**
@@ -166,9 +173,9 @@ export class TimeEntryService {
    */
   async updateTimeEntry(id: string, data: UpdateTimeEntryDto) {
     const existing = await prisma.timeEntry.findUnique({ where: { id } });
-    if (!existing) throw new Error('Time entry not found');
-    if (existing.status === 'APPROVED') {
-      throw new Error('Cannot modify approved time entry');
+    if (!existing) throw new Error("Time entry not found");
+    if (existing.status === "APPROVED") {
+      throw new Error("Cannot modify approved time entry");
     }
 
     return prisma.timeEntry.update({
@@ -176,7 +183,7 @@ export class TimeEntryService {
       data: {
         ...data,
         date: data.date ? new Date(data.date) : undefined,
-        status: 'PENDING', // 修改後重設為待審核
+        status: "PENDING", // 修改後重設為待審核
       },
       include: {
         project: { select: { id: true, name: true } },
@@ -191,9 +198,9 @@ export class TimeEntryService {
    */
   async deleteTimeEntry(id: string) {
     const existing = await prisma.timeEntry.findUnique({ where: { id } });
-    if (!existing) throw new Error('Time entry not found');
-    if (existing.status === 'APPROVED') {
-      throw new Error('Cannot delete approved time entry');
+    if (!existing) throw new Error("Time entry not found");
+    if (existing.status === "APPROVED") {
+      throw new Error("Cannot delete approved time entry");
     }
 
     await prisma.timeEntry.delete({ where: { id } });
@@ -206,7 +213,7 @@ export class TimeEntryService {
     return prisma.timeEntry.update({
       where: { id },
       data: {
-        status: 'APPROVED',
+        status: "APPROVED",
         approvedBy: approverId,
         approvedAt: new Date(),
       },
@@ -220,7 +227,7 @@ export class TimeEntryService {
     return prisma.timeEntry.update({
       where: { id },
       data: {
-        status: 'REJECTED',
+        status: "REJECTED",
         approvedBy: approverId,
         approvedAt: new Date(),
         rejectedReason: reason,
@@ -233,9 +240,9 @@ export class TimeEntryService {
    */
   async batchApprove(ids: string[], approverId: string) {
     return prisma.timeEntry.updateMany({
-      where: { id: { in: ids }, status: 'PENDING' },
+      where: { id: { in: ids }, status: "PENDING" },
       data: {
-        status: 'APPROVED',
+        status: "APPROVED",
         approvedBy: approverId,
         approvedAt: new Date(),
       },
@@ -245,7 +252,10 @@ export class TimeEntryService {
   /**
    * 取得週報資料
    */
-  async getWeeklyTimesheet(employeeId: string, weekStart: Date): Promise<WeeklyTimesheet> {
+  async getWeeklyTimesheet(
+    employeeId: string,
+    weekStart: Date,
+  ): Promise<WeeklyTimesheet> {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 6);
 
@@ -258,27 +268,30 @@ export class TimeEntryService {
         project: { select: { id: true, name: true } },
         task: { select: { id: true, name: true } },
       },
-      orderBy: { date: 'asc' },
+      orderBy: { date: "asc" },
     });
 
     // 按專案/任務分組
-    const grouped = new Map<string, {
-      projectId: string;
-      projectName: string;
-      taskId?: string;
-      taskName?: string;
-      dailyHours: Record<string, number>;
-      totalHours: number;
-    }>();
+    const grouped = new Map<
+      string,
+      {
+        projectId: string;
+        projectName: string;
+        taskId?: string;
+        taskName?: string;
+        dailyHours: Record<string, number>;
+        totalHours: number;
+      }
+    >();
 
     const dailyTotals: Record<string, number> = {};
     let weeklyTotal = 0;
 
     for (const entry of entries) {
-      const key = entry.taskId 
-        ? `${entry.projectId}-${entry.taskId}` 
+      const key = entry.taskId
+        ? `${entry.projectId}-${entry.taskId}`
         : entry.projectId;
-      const dateKey = entry.date.toISOString().split('T')[0];
+      const dateKey = entry.date.toISOString().split("T")[0];
       const hours = Number(entry.hours);
 
       if (!grouped.has(key)) {
@@ -339,19 +352,24 @@ export class TimeEntryService {
   /**
    * 驗證工時記錄
    */
-  private async validateTimeEntry(data: CreateTimeEntryDto) {
+  private async validateTimeEntry(
+    data: CreateTimeEntryDto,
+    tx?: TransactionClient,
+  ) {
+    const db = tx ?? prisma;
+
     // BR-01: 最小單位 0.25 小時
     if (data.hours % 0.25 !== 0) {
-      throw new Error('Hours must be in increments of 0.25');
+      throw new Error("Hours must be in increments of 0.25");
     }
 
     // BR-02: 單筆上限 12 小時
     if (data.hours > 12) {
-      throw new Error('Single entry cannot exceed 12 hours');
+      throw new Error("Single entry cannot exceed 12 hours");
     }
 
     // BR-03: 單日總工時上限 16 小時
-    const existingTotal = await prisma.timeEntry.aggregate({
+    const existingTotal = await db.timeEntry.aggregate({
       where: {
         employeeId: data.employeeId,
         date: new Date(data.date),
@@ -361,7 +379,7 @@ export class TimeEntryService {
 
     const currentTotal = Number(existingTotal._sum.hours || 0);
     if (currentTotal + data.hours > 16) {
-      throw new Error('Daily total cannot exceed 16 hours');
+      throw new Error("Daily total cannot exceed 16 hours");
     }
 
     // BR-04: 只能登記過去 7 天內的工時
@@ -371,7 +389,7 @@ export class TimeEntryService {
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     if (entryDate < sevenDaysAgo) {
-      throw new Error('Cannot log time entries older than 7 days');
+      throw new Error("Cannot log time entries older than 7 days");
     }
   }
 }

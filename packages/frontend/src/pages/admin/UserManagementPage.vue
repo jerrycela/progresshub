@@ -11,6 +11,7 @@ import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { User, UserRole, FunctionType, Department } from 'shared/types'
+import { validateField, commonRules } from '@/composables/useFormValidation'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -80,17 +81,38 @@ const roleBadgeVariant = (role: UserRole) => {
   return variants[role] || 'default'
 }
 
+// 驗證規則
+const nameRules = [
+  commonRules.required('姓名為必填'),
+  commonRules.minLength(2, '姓名至少需要 2 個字元'),
+]
+const emailRules = [commonRules.required('電子郵件為必填'), commonRules.email()]
+
+// 表單驗證錯誤
+const formErrors = ref<Record<string, string>>({})
+
+const validateUserForm = (name: unknown, email: unknown): boolean => {
+  formErrors.value = {}
+  const nameError = validateField(name, nameRules)
+  const emailError = validateField(email, emailRules)
+  if (nameError) formErrors.value.name = nameError
+  if (emailError) formErrors.value.email = emailError
+  return !nameError && !emailError
+}
+
 // 編輯使用者對話框
 const showEditModal = ref(false)
 const editingUser = ref<Partial<User>>({})
 
 const openEditModal = (user: User) => {
   editingUser.value = { ...user }
+  formErrors.value = {}
   showEditModal.value = true
 }
 
 const saveUser = async () => {
   if (!editingUser.value.id) return
+  if (!validateUserForm(editingUser.value.name, editingUser.value.email)) return
   const result = await employeeStore.updateEmployee(editingUser.value.id, {
     name: editingUser.value.name,
     email: editingUser.value.email,
@@ -117,10 +139,12 @@ const openCreateModal = () => {
     role: 'EMPLOYEE',
     functionType: 'PROGRAMMING',
   }
+  formErrors.value = {}
   showCreateModal.value = true
 }
 
 const createUser = async () => {
+  if (!validateUserForm(newUser.value.name, newUser.value.email)) return
   const deptMap: Record<string, Department> = {
     PROGRAMMING: 'PROGRAMMING',
     ART: 'ART',
@@ -297,8 +321,8 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <!-- 編輯使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showEditModal" title="編輯成員資料" size="md">
       <div class="space-y-4">
-        <Input v-model="editingUser.name" label="姓名" />
-        <Input v-model="editingUser.email" type="email" label="信箱" />
+        <Input v-model="editingUser.name" label="姓名" :error="formErrors.name" />
+        <Input v-model="editingUser.email" type="email" label="信箱" :error="formErrors.email" />
         <Select v-model="editingUser.role" label="角色" :options="roleFormOptions" />
         <Select v-model="editingUser.functionType" label="職能" :options="functionFormOptions" />
       </div>
@@ -312,8 +336,19 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <!-- 新增使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showCreateModal" title="新增成員" size="md">
       <div class="space-y-4">
-        <Input v-model="newUser.name" label="姓名" placeholder="輸入成員姓名" />
-        <Input v-model="newUser.email" type="email" label="信箱" placeholder="輸入公司信箱" />
+        <Input
+          v-model="newUser.name"
+          label="姓名"
+          placeholder="輸入成員姓名"
+          :error="formErrors.name"
+        />
+        <Input
+          v-model="newUser.email"
+          type="email"
+          label="信箱"
+          placeholder="輸入公司信箱"
+          :error="formErrors.email"
+        />
         <Select v-model="newUser.role" label="角色" :options="roleFormOptions" />
         <Select v-model="newUser.functionType" label="職能" :options="functionFormOptions" />
       </div>

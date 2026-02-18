@@ -6,7 +6,12 @@ import { useProjectStore } from '@/stores/projects'
 import { useDepartmentStore } from '@/stores/departments'
 import type { PoolTask } from 'shared/types'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
-import { getStatusLabel } from '@/composables/useStatusUtils'
+import {
+  getStatusLabel,
+  getStatusClass,
+  getSourceLabel,
+  getSourceClass,
+} from '@/composables/useStatusUtils'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import type { Department, FunctionType } from 'shared/types'
@@ -71,50 +76,6 @@ const taskStats = computed(() => ({
   inProgress: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'IN_PROGRESS').length,
   completed: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'DONE').length,
 }))
-
-// 狀態標籤樣式
-const getStatusClass = (status: string): string => {
-  switch (status) {
-    case 'UNCLAIMED':
-      return 'status-badge-unclaimed'
-    case 'CLAIMED':
-    case 'IN_PROGRESS':
-      return 'status-badge-in-progress'
-    case 'DONE':
-      return 'status-badge-done'
-    case 'BLOCKED':
-      return 'status-badge-blocked'
-    default:
-      return ''
-  }
-}
-
-// 來源類型標籤
-const getSourceLabel = (sourceType: string): string => {
-  switch (sourceType) {
-    case 'ASSIGNED':
-      return '已指派'
-    case 'POOL':
-      return '任務池'
-    case 'SELF_CREATED':
-      return '自建'
-    default:
-      return sourceType
-  }
-}
-
-const getSourceClass = (sourceType: string): string => {
-  switch (sourceType) {
-    case 'ASSIGNED':
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
-    case 'POOL':
-      return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
-    case 'SELF_CREATED':
-      return 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300'
-    default:
-      return ''
-  }
-}
 
 // 點擊任務卡片
 const viewTaskDetail = (task: PoolTask): void => {
@@ -347,7 +308,12 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
                 >
                   {{ getSourceLabel(task.sourceType) }}
                 </span>
-                <span :class="['status-badge', getStatusClass(task.status)]">
+                <span
+                  :class="[
+                    'px-2 py-0.5 text-xs font-medium rounded-full',
+                    getStatusClass(task.status),
+                  ]"
+                >
                   {{ getStatusLabel(task.status) }}
                 </span>
                 <span class="text-xs text-muted">
@@ -443,25 +409,3 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
     </div>
   </div>
 </template>
-
-<style scoped>
-.status-badge-unclaimed {
-  background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
-}
-
-.status-badge-in-progress {
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.status-badge-done {
-  background-color: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.status-badge-blocked {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-}
-</style>

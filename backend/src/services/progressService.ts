@@ -96,16 +96,17 @@ export class ProgressService {
       });
 
       // 更新任務進度和狀態
-      const status =
-        data.progressPercentage === 100
-          ? "DONE"
-          : data.progressPercentage > 0
-            ? "IN_PROGRESS"
-            : "UNCLAIMED";
-
       const task = await tx.task.findUnique({
         where: { id: data.taskId },
       });
+
+      let status = task?.status;
+      if (data.progressPercentage === 100) {
+        status = "DONE";
+      } else if (data.progressPercentage > 0 && task?.status === "UNCLAIMED") {
+        status = "IN_PROGRESS";
+      }
+      // progressPercentage === 0 時保留原狀態，不強制轉為 UNCLAIMED
 
       await tx.task.update({
         where: { id: data.taskId },

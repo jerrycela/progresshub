@@ -101,6 +101,7 @@ describe('ProgressService', () => {
         task: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'task-001',
+            status: 'UNCLAIMED',
             actualStartDate: null,
           }),
           update: jest.fn().mockResolvedValue({}),
@@ -162,7 +163,7 @@ describe('ProgressService', () => {
       );
     });
 
-    it('進度 0% 應將狀態設為 UNCLAIMED', async () => {
+    it('進度 0% 應保留原狀態（不強制轉為 UNCLAIMED）', async () => {
       const txClient = {
         progressLog: {
           create: jest.fn().mockResolvedValue(mockLog),
@@ -170,7 +171,8 @@ describe('ProgressService', () => {
         task: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'task-001',
-            actualStartDate: null,
+            status: 'IN_PROGRESS',
+            actualStartDate: new Date(),
           }),
           update: jest.fn().mockResolvedValue({}),
         },
@@ -187,7 +189,7 @@ describe('ProgressService', () => {
 
       expect(txClient.task.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ status: 'UNCLAIMED' }),
+          data: expect.objectContaining({ status: 'IN_PROGRESS' }),
         }),
       );
     });
