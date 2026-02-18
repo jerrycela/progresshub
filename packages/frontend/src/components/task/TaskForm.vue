@@ -31,6 +31,11 @@ const props = withDefaults(
   },
 )
 
+const emit = defineEmits<{
+  (e: 'update:functionTags', tags: FunctionType[]): void
+  (e: 'update:collaboratorIds', ids: string[]): void
+}>()
+
 const functionTagOptions: { value: FunctionType; label: string }[] = [
   { value: 'ART', label: '美術' },
   { value: 'PROGRAMMING', label: '程式' },
@@ -47,21 +52,19 @@ const filteredEmployees = computed(() => {
 })
 
 const toggleFunctionTag = (tag: FunctionType): void => {
-  const idx = props.form.functionTags.indexOf(tag)
-  if (idx === -1) {
-    props.form.functionTags = [...props.form.functionTags, tag]
-  } else {
-    props.form.functionTags = props.form.functionTags.filter((t: FunctionType) => t !== tag)
-  }
+  const current = props.form.functionTags
+  const newTags = current.includes(tag)
+    ? current.filter((t: FunctionType) => t !== tag)
+    : [...current, tag]
+  emit('update:functionTags', newTags)
 }
 
 const toggleCollaborator = (empId: string): void => {
-  const idx = props.form.collaboratorIds.indexOf(empId)
-  if (idx === -1) {
-    props.form.collaboratorIds = [...props.form.collaboratorIds, empId]
-  } else {
-    props.form.collaboratorIds = props.form.collaboratorIds.filter((id: string) => id !== empId)
-  }
+  const current = props.form.collaboratorIds
+  const newIds = current.includes(empId)
+    ? current.filter((id: string) => id !== empId)
+    : [...current, empId]
+  emit('update:collaboratorIds', newIds)
 }
 </script>
 

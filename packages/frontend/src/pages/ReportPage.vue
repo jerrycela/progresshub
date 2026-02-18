@@ -88,10 +88,6 @@ const submitContinue = async (task: Task) => {
         showError(result.error?.message || '恢復任務失敗')
         return
       }
-      // 清除暫停相關資訊
-      task.pauseReason = undefined
-      task.pauseNote = undefined
-      task.pausedAt = undefined
     }
 
     showSuccess(`已回報「${task.title}」繼續進行中`)
@@ -117,8 +113,10 @@ const submitPause = async () => {
   isReporting.value = true
   try {
     // 更新任務狀態為暫停
+    const pauseReasonLabel =
+      pauseReasonOptions.find(opt => opt.value === pauseReason.value)?.label ?? pauseReason.value
     const result = await taskStore.updateTaskStatus(selectedTask.value.id, 'PAUSED', {
-      pauseReason: pauseReason.value,
+      pauseReason: pauseReasonLabel,
       pauseNote: pauseNote.value || undefined,
     })
     if (!result.success) {
@@ -126,14 +124,8 @@ const submitPause = async () => {
       return
     }
 
-    // 記錄暫停資訊（Mock）
-    const task = selectedTask.value
-    task.pauseReason = pauseReasonOptions.find(opt => opt.value === pauseReason.value)?.label
-    task.pauseNote = pauseNote.value
-    task.pausedAt = new Date().toISOString()
-
     showPauseModal.value = false
-    showSuccess(`已暫停「${task.title}」`)
+    showSuccess(`已暫停「${selectedTask.value.title}」`)
   } catch {
     showError('暫停任務失敗，請稍後再試')
   } finally {

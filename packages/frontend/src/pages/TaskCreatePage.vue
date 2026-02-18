@@ -211,6 +211,8 @@ const handleCancel = (): void => {
       :show-assignee="showAssignee"
       assignee-label="指派給"
       :assignee-required="true"
+      @update:function-tags="form.functionTags = $event"
+      @update:collaborator-ids="form.collaboratorIds = $event"
     />
 
     <!-- 任務關聯 -->

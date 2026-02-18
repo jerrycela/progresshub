@@ -6,13 +6,18 @@ import { env } from "../config/env";
 import { Employee, PermissionLevel } from "@prisma/client";
 import { toUserDTO, UserDTO } from "../mappers";
 
-// TODO: 將 OAuth state 存儲遷移到 Redis，目前使用記憶體 Map 在多進程/多節點部署時會導致驗證失敗
+// FIXME: OAuth state 使用 In-Memory Map，在多進程/多節點/重啟時會失效。
+// 影響：使用者在節點 A 產生 state，但 callback 打到節點 B 時會驗證失敗。
+// 優先級：生產環境部署前必須遷移至 Redis 或資料庫。
+// 參考：https://github.com/your-org/progresshub/issues/XX
 const OAUTH_STATE_MAX_COUNT = 1000;
 const STATE_TTL = 10 * 60 * 1000; // 10 minutes
 const oauthStates = new Map<string, { expiresAt: number }>();
 
-// In-memory refresh token store
-// NOTE: 生產環境應使用 Redis 或資料庫持久化存儲，記憶體存儲在重啟或多節點部署時會失效
+// FIXME: Refresh Token 使用 In-Memory Map，在多進程/多節點/重啟時會全部失效。
+// 影響：伺服器重啟後所有使用者的 refresh token 失效，需要重新登入。
+// 多節點部署時，A 節點核發的 token 在 B 節點無法驗證。
+// 優先級：生產環境部署前必須遷移至 Redis 或資料庫。
 const REFRESH_TOKEN_MAX_COUNT = 10000;
 const refreshTokenStore = new Map<
   string,

@@ -190,8 +190,10 @@ describe('UserSettingsService', () => {
 
       expect(mockedPrisma.gitLabInstance.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          name: 'Default GitLab',
+          name: 'Default GitLab (manual-link)',
           baseUrl: 'https://gitlab.com',
+          clientId: 'placeholder-not-configured',
+          clientSecret: 'placeholder-not-configured',
         }),
       });
     });
@@ -222,7 +224,7 @@ describe('UserSettingsService', () => {
 
       expect(mockedPrisma.employee.update).toHaveBeenCalledWith({
         where: { id: 'emp-001' },
-        data: { slackUserId: expect.stringMatching(/^U\d+$/) },
+        data: { slackUserId: 'placeholder-manual-link' },
       });
     });
   });

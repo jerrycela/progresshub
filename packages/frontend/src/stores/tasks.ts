@@ -355,6 +355,8 @@ export const useTaskStore = defineStore('tasks', () => {
       }
       if (status === 'PAUSED') {
         extraFields.pausedAt = now
+        if (payload?.pauseReason) extraFields.pauseReason = payload.pauseReason
+        if (payload?.pauseNote) extraFields.pauseNote = payload.pauseNote
       }
       if (originalStatus === 'PAUSED' && status === 'IN_PROGRESS') {
         extraFields.pauseReason = undefined

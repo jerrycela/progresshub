@@ -163,6 +163,8 @@ const handleCancel = (): void => {
         :projects="projectStore.projects"
         :departments="departmentStore.departments"
         :employees="employeeStore.employees"
+        @update:function-tags="form.functionTags = $event"
+        @update:collaborator-ids="form.collaboratorIds = $event"
       />
 
       <!-- 操作按鈕 -->

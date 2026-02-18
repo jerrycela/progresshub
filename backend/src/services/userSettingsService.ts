@@ -89,7 +89,9 @@ export class UserSettingsService {
   }
 
   /**
-   * 連結 GitLab 帳號（簡化版：只記錄 username）
+   * 連結 GitLab 帳號（手動連結簡化版，不走 OAuth 流程）
+   * 僅記錄 username 供 UI 顯示，不會取得真實的 access token。
+   * 標記為 "placeholder-" 前綴的欄位皆為非真實資料。
    */
   async linkGitLab(
     userId: string,
@@ -107,15 +109,15 @@ export class UserSettingsService {
         data: { gitlabUsername: username },
       });
     } else {
-      // 取得或建立預設 instance
+      // 取得或建立預設 instance（手動連結用，非真實 OAuth 設定）
       let instance = await prisma.gitLabInstance.findFirst();
       if (!instance) {
         instance = await prisma.gitLabInstance.create({
           data: {
-            name: "Default GitLab",
+            name: "Default GitLab (manual-link)",
             baseUrl: "https://gitlab.com",
-            clientId: "default",
-            clientSecret: "default",
+            clientId: "placeholder-not-configured",
+            clientSecret: "placeholder-not-configured",
           },
         });
       }
@@ -124,9 +126,9 @@ export class UserSettingsService {
         data: {
           employeeId: userId,
           instanceId: instance.id,
-          gitlabUserId: Date.now(),
+          gitlabUserId: 0,
           gitlabUsername: username,
-          accessToken: "manual-link",
+          accessToken: "placeholder-manual-link-no-oauth",
         },
       });
     }
@@ -147,13 +149,14 @@ export class UserSettingsService {
   }
 
   /**
-   * 連結 Slack 帳號
+   * 連結 Slack 帳號（手動連結簡化版，不走 OAuth 流程）
+   * 產生 placeholder ID 供 UI 顯示，非真實 Slack User ID。
    */
   async linkSlack(
     userId: string,
     _username: string,
   ): Promise<UserSettingsDTO | null> {
-    const slackUserId = `U${Date.now()}`;
+    const slackUserId = `placeholder-manual-link`;
 
     await prisma.employee.update({
       where: { id: userId },
