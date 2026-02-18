@@ -33,7 +33,6 @@ model Employee {
   createdTasks      Task[]        @relation("CreatedTasks")
   progressLogs      ProgressLog[]
   timeEntries       TimeEntry[]   @relation("EmployeeTimeEntries")
-  approvedEntries   TimeEntry[]   @relation("ApprovedTimeEntries")
   timeEstimates     TimeEstimate[] @relation("TimeEstimates")
   gitlabConnections GitLabConnection[]
   taskNotes         TaskNote[]
@@ -219,10 +218,6 @@ model TimeEntry {
   date        DateTime        @db.Date
   hours       Decimal         @db.Decimal(4, 2)
   description String?         @db.Text
-  status      TimeEntryStatus @default(PENDING)
-  approvedBy  String?         @map("approved_by")
-  approvedAt  DateTime?       @map("approved_at")
-  rejectedReason String?      @map("rejected_reason") @db.Text
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
@@ -231,7 +226,6 @@ model TimeEntry {
   project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task           Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
   category       TimeCategory    @relation(fields: [categoryId], references: [id])
-  approver       Employee?       @relation("ApprovedTimeEntries", fields: [approvedBy], references: [id])
   gitlabActivity GitLabActivity?
 
   @@index([employeeId])
@@ -239,7 +233,6 @@ model TimeEntry {
   @@index([taskId])
   @@index([categoryId])
   @@index([date])
-  @@index([status])
   @@map("time_entries")
 }
 
@@ -258,13 +251,6 @@ model TimeEstimate {
   estimator      Employee @relation("TimeEstimates", fields: [estimatedBy], references: [id])
 
   @@map("time_estimates")
-}
-
-// 工時記錄狀態
-enum TimeEntryStatus {
-  PENDING
-  APPROVED
-  REJECTED
 }
 
 // Enums

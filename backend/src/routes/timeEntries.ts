@@ -1,8 +1,7 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { timeEntryService } from "../services/timeEntryService";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
-import { PermissionLevel, TimeEntryStatus } from "@prisma/client";
+import { authenticate, AuthRequest } from "../middleware/auth";
 import { getStartOfWeek, getStartOfDay } from "../utils/dateUtils";
 import {
   sendSuccess,
@@ -57,7 +56,6 @@ router.get(
         projectId: req.query.projectId as string,
         taskId: req.query.taskId as string,
         categoryId: req.query.categoryId as string,
-        status: req.query.status as TimeEntryStatus,
         startDate: req.query.startDate
           ? new Date(req.query.startDate as string)
           : undefined,
@@ -375,110 +373,6 @@ router.delete(
         "TIME_ENTRY_DELETE_FAILED",
         getSafeErrorMessage(error, "Failed to delete time entry"),
         400,
-      );
-    }
-  },
-);
-
-/**
- * POST /api/time-entries/:id/approve
- * 審核通過
- */
-router.post(
-  "/:id/approve",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  [param("id").isString().trim().notEmpty()],
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
-      return;
-    }
-
-    try {
-      const updated = await timeEntryService.approveTimeEntry(
-        req.params.id,
-        req.user?.userId ?? "",
-      );
-      sendSuccess(res, updated);
-    } catch (error) {
-      sendError(
-        res,
-        "TIME_ENTRY_APPROVE_FAILED",
-        "Failed to approve time entry",
-        500,
-      );
-    }
-  },
-);
-
-/**
- * POST /api/time-entries/:id/reject
- * 駁回
- */
-router.post(
-  "/:id/reject",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  [
-    param("id").isString().trim().notEmpty(),
-    body("reason")
-      .isString()
-      .trim()
-      .notEmpty()
-      .withMessage("Rejection reason required"),
-  ],
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
-      return;
-    }
-
-    try {
-      const updated = await timeEntryService.rejectTimeEntry(
-        req.params.id,
-        req.user?.userId ?? "",
-        req.body.reason,
-      );
-      sendSuccess(res, updated);
-    } catch (error) {
-      sendError(
-        res,
-        "TIME_ENTRY_REJECT_FAILED",
-        "Failed to reject time entry",
-        500,
-      );
-    }
-  },
-);
-
-/**
- * POST /api/time-entries/batch-approve
- * 批次審核
- */
-router.post(
-  "/batch-approve",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  [body("ids").isArray({ min: 1 }).withMessage("IDs array required")],
-  async (req: AuthRequest, res: Response): Promise<void> => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
-      return;
-    }
-
-    try {
-      const result = await timeEntryService.batchApprove(
-        req.body.ids,
-        req.user?.userId ?? "",
-      );
-      sendSuccess(res, { approved: result.count });
-    } catch (error) {
-      sendError(
-        res,
-        "TIME_ENTRY_BATCH_APPROVE_FAILED",
-        "Failed to batch approve",
-        500,
       );
     }
   },

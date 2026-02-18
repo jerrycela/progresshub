@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { Prisma, TimeEntryStatus } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { getStartOfToday, getStartOfDay } from "../utils/dateUtils";
 
 type TransactionClient = Omit<
@@ -31,7 +31,6 @@ export interface TimeEntryListParams {
   projectId?: string;
   taskId?: string;
   categoryId?: string;
-  status?: TimeEntryStatus;
   startDate?: Date;
   endDate?: Date;
   page?: number;
@@ -63,7 +62,6 @@ export class TimeEntryService {
       projectId,
       taskId,
       categoryId,
-      status,
       startDate,
       endDate,
       page = 1,
@@ -77,7 +75,6 @@ export class TimeEntryService {
     if (projectId) where.projectId = projectId;
     if (taskId) where.taskId = taskId;
     if (categoryId) where.categoryId = categoryId;
-    if (status) where.status = status;
     if (startDate || endDate) {
       where.date = {};
       if (startDate) where.date.gte = startDate;
@@ -177,9 +174,6 @@ export class TimeEntryService {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.timeEntry.findUnique({ where: { id } });
       if (!existing) throw new Error("Time entry not found");
-      if (existing.status === "APPROVED") {
-        throw new Error("Cannot modify approved time entry");
-      }
 
       return tx.timeEntry.update({
         where: { id },
@@ -190,7 +184,6 @@ export class TimeEntryService {
           hours: data.hours,
           description: data.description,
           date: data.date ? new Date(data.date) : undefined,
-          status: "PENDING", // 修改後重設為待審核
         },
         include: {
           project: { select: { id: true, name: true } },
@@ -209,76 +202,8 @@ export class TimeEntryService {
     await prisma.$transaction(async (tx) => {
       const existing = await tx.timeEntry.findUnique({ where: { id } });
       if (!existing) throw new Error("Time entry not found");
-      if (existing.status === "APPROVED") {
-        throw new Error("Cannot delete approved time entry");
-      }
 
       await tx.timeEntry.delete({ where: { id } });
-    });
-  }
-
-  /**
-   * 審核工時記錄（僅允許 PENDING 狀態）
-   */
-  async approveTimeEntry(id: string, approverId: string) {
-    return prisma.$transaction(async (tx) => {
-      const existing = await tx.timeEntry.findUnique({ where: { id } });
-      if (!existing) throw new Error("Time entry not found");
-      if (existing.status !== "PENDING") {
-        throw new Error("Only pending time entries can be approved");
-      }
-      if (existing.employeeId === approverId) {
-        throw new Error("Cannot approve your own time entry");
-      }
-
-      return tx.timeEntry.update({
-        where: { id },
-        data: {
-          status: "APPROVED",
-          approvedBy: approverId,
-          approvedAt: new Date(),
-        },
-      });
-    });
-  }
-
-  /**
-   * 駁回工時記錄（僅允許 PENDING 狀態）
-   */
-  async rejectTimeEntry(id: string, approverId: string, reason: string) {
-    return prisma.$transaction(async (tx) => {
-      const existing = await tx.timeEntry.findUnique({ where: { id } });
-      if (!existing) throw new Error("Time entry not found");
-      if (existing.status !== "PENDING") {
-        throw new Error("Only pending time entries can be rejected");
-      }
-      if (existing.employeeId === approverId) {
-        throw new Error("Cannot reject your own time entry");
-      }
-
-      return tx.timeEntry.update({
-        where: { id },
-        data: {
-          status: "REJECTED",
-          approvedBy: approverId,
-          approvedAt: new Date(),
-          rejectedReason: reason,
-        },
-      });
-    });
-  }
-
-  /**
-   * 批次審核
-   */
-  async batchApprove(ids: string[], approverId: string) {
-    return prisma.timeEntry.updateMany({
-      where: { id: { in: ids }, status: "PENDING" },
-      data: {
-        status: "APPROVED",
-        approvedBy: approverId,
-        approvedAt: new Date(),
-      },
     });
   }
 
