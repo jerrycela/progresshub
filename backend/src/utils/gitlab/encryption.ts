@@ -1,18 +1,20 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
-const ALGORITHM = 'aes-256-gcm';
+const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 
 /**
  * 取得加密金鑰
+ * 使用環境變數 GITLAB_ENCRYPTION_SALT 作為 salt（有預設值向後相容）
  */
 function getEncryptionKey(): Buffer {
   const key = process.env.GITLAB_ENCRYPTION_KEY;
   if (!key) {
-    throw new Error('GITLAB_ENCRYPTION_KEY environment variable is required');
+    throw new Error("GITLAB_ENCRYPTION_KEY environment variable is required");
   }
-  // 確保金鑰長度為 32 bytes
-  return crypto.scryptSync(key, 'salt', 32);
+  const salt =
+    process.env.GITLAB_ENCRYPTION_SALT || "progresshub-gitlab-default-salt";
+  return crypto.scryptSync(key, salt, 32);
 }
 
 /**
@@ -23,13 +25,13 @@ export function encrypt(text: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
 
   const tag = cipher.getAuthTag();
 
   // 格式: iv:tag:encrypted
-  return `${iv.toString('hex')}:${tag.toString('hex')}:${encrypted}`;
+  return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted}`;
 }
 
 /**
@@ -37,21 +39,21 @@ export function encrypt(text: string): string {
  */
 export function decrypt(encryptedText: string): string {
   const key = getEncryptionKey();
-  const parts = encryptedText.split(':');
+  const parts = encryptedText.split(":");
 
   if (parts.length !== 3) {
-    throw new Error('Invalid encrypted text format');
+    throw new Error("Invalid encrypted text format");
   }
 
-  const iv = Buffer.from(parts[0], 'hex');
-  const tag = Buffer.from(parts[1], 'hex');
+  const iv = Buffer.from(parts[0], "hex");
+  const tag = Buffer.from(parts[1], "hex");
   const encrypted = parts[2];
 
   const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(tag);
 
-  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
+  let decrypted = decipher.update(encrypted, "hex", "utf8");
+  decrypted += decipher.final("utf8");
 
   return decrypted;
 }

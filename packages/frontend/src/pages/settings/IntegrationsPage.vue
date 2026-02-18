@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useUserSettingsStore, type UserSettings } from '@/stores/userSettings'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import Modal from '@/components/common/Modal.vue'
 
 // ============================================
 // 整合設定頁 - Slack / GitLab 帳號連結
@@ -242,55 +243,43 @@ const handleUnlinkSlack = async (): Promise<void> => {
     </div>
 
     <!-- 連結 Slack Modal -->
-    <div v-if="showLinkSlackModal" class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/50" @click="showLinkSlackModal = false"></div>
-      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4 bg-page-primary">
-        <h3 class="text-lg font-semibold mb-4 text-primary">連結 Slack 帳號</h3>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-2 text-secondary"> Slack 使用者名稱 </label>
-            <input
-              v-model="slackUsername"
-              type="text"
-              class="input-field w-full"
-              placeholder="例如：@john.doe"
-            />
-            <p class="mt-2 text-xs text-muted">請輸入您在 Slack 上的使用者名稱（包含 @）</p>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-3 mt-6">
-          <button class="btn-secondary" @click="showLinkSlackModal = false">取消</button>
-          <button class="btn-primary" @click="handleLinkSlack">確認連結</button>
+    <Modal v-model="showLinkSlackModal" title="連結 Slack 帳號" size="md">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2 text-secondary"> Slack 使用者名稱 </label>
+          <input
+            v-model="slackUsername"
+            type="text"
+            class="input-field w-full"
+            placeholder="例如：@john.doe"
+          />
+          <p class="mt-2 text-xs text-muted">請輸入您在 Slack 上的使用者名稱（包含 @）</p>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <button class="btn-secondary" @click="showLinkSlackModal = false">取消</button>
+        <button class="btn-primary" @click="handleLinkSlack">確認連結</button>
+      </template>
+    </Modal>
 
     <!-- 連結 GitLab Modal -->
-    <div v-if="showLinkGitLabModal" class="fixed inset-0 z-50 flex items-center justify-center">
-      <div class="absolute inset-0 bg-black/50" @click="showLinkGitLabModal = false"></div>
-      <div class="relative rounded-xl shadow-xl p-6 w-full max-w-md mx-4 bg-page-primary">
-        <h3 class="text-lg font-semibold mb-4 text-primary">連結 GitLab 帳號</h3>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-2 text-secondary"> GitLab 使用者名稱 </label>
-            <input
-              v-model="gitlabUsername"
-              type="text"
-              class="input-field w-full"
-              placeholder="例如：john.doe"
-            />
-            <p class="mt-2 text-xs text-muted">請輸入您在 GitLab 上的使用者名稱</p>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-3 mt-6">
-          <button class="btn-secondary" @click="showLinkGitLabModal = false">取消</button>
-          <button class="btn-primary" @click="handleLinkGitLab">確認連結</button>
+    <Modal v-model="showLinkGitLabModal" title="連結 GitLab 帳號" size="md">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-2 text-secondary"> GitLab 使用者名稱 </label>
+          <input
+            v-model="gitlabUsername"
+            type="text"
+            class="input-field w-full"
+            placeholder="例如：john.doe"
+          />
+          <p class="mt-2 text-xs text-muted">請輸入您在 GitLab 上的使用者名稱</p>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <button class="btn-secondary" @click="showLinkGitLabModal = false">取消</button>
+        <button class="btn-primary" @click="handleLinkGitLab">確認連結</button>
+      </template>
+    </Modal>
   </div>
 </template>

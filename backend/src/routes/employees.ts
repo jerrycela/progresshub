@@ -50,8 +50,8 @@ router.get(
       const limit = Number(req.query.limit) || 20;
 
       const result = await employeeService.getEmployees({
-        page: req.query.page as unknown as number,
-        limit: req.query.limit as unknown as number,
+        page,
+        limit,
         department: req.query.department as string,
         permissionLevel: req.query.permissionLevel as PermissionLevel,
         search: req.query.search as string,
@@ -189,6 +189,13 @@ router.put(
       if (!existing) {
         sendError(res, "EMPLOYEE_NOT_FOUND", "Employee not found", 404);
         return;
+      }
+
+      // 非 ADMIN 使用者不能修改權限相關欄位
+      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      if (!isAdmin) {
+        delete req.body.permissionLevel;
+        delete req.body.managedProjects;
       }
 
       // 檢查 Email 是否已被其他人使用

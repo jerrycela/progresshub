@@ -9,6 +9,7 @@ import {
 } from "../../types/gitlab";
 import { GitLabActivityType } from "@prisma/client";
 import logger from "../../config/logger";
+import { taskService } from "../../services/taskService";
 
 const router = Router();
 
@@ -23,10 +24,38 @@ router.post(
     const token = req.headers["x-gitlab-token"] as string;
     const eventType = req.headers["x-gitlab-event"] as string;
 
-    // 快速回應，避免 timeout
+    // 先同步驗證簽章，再回應 200
+    try {
+      const instance =
+        await gitLabInstanceService.getInstanceWithSecrets(instanceId);
+      if (!instance) {
+        logger.error(`Webhook: Instance ${instanceId} not found`);
+        res.status(404).json({ error: "Instance not found" });
+        return;
+      }
+
+      if (!instance.webhookSecret) {
+        logger.error(
+          `Webhook: Instance ${instanceId} has no webhook secret configured`,
+        );
+        res.status(403).json({ error: "Webhook secret not configured" });
+        return;
+      }
+
+      if (!verifyWebhookSignature(token, instance.webhookSecret)) {
+        logger.error(`Webhook: Invalid signature for instance ${instanceId}`);
+        res.status(401).json({ error: "Invalid signature" });
+        return;
+      }
+    } catch (error) {
+      logger.error("Webhook signature verification error:", error);
+      res.status(500).json({ error: "Verification failed" });
+      return;
+    }
+
+    // 簽章驗證通過，快速回應後異步處理
     res.status(200).json({ received: true });
 
-    // 異步處理事件
     processWebhookEvent(instanceId, token, eventType, req.body).catch(
       (error) => {
         logger.error("Webhook processing error:", error);
@@ -40,25 +69,11 @@ router.post(
  */
 async function processWebhookEvent(
   instanceId: string,
-  token: string,
+  _token: string,
   _eventType: string,
   body: unknown,
 ): Promise<void> {
-  // 取得實例並驗證 webhook secret
-  const instance =
-    await gitLabInstanceService.getInstanceWithSecrets(instanceId);
-  if (!instance) {
-    logger.error(`Webhook: Instance ${instanceId} not found`);
-    return;
-  }
-
-  if (instance.webhookSecret) {
-    if (!verifyWebhookSignature(token, instance.webhookSecret)) {
-      logger.error(`Webhook: Invalid signature for instance ${instanceId}`);
-      return;
-    }
-  }
-
+  // 簽章已在路由層同步驗證完畢，此處直接處理事件
   const event = body as Record<string, unknown>;
   const objectKind = event.objectKind as string;
   const project = event.project as { pathWithNamespace: string } | undefined;
@@ -306,10 +321,14 @@ async function handleIssueEvent(
 
   if (mapping && mapping.syncDirection !== "TASK_TO_GITLAB") {
     const taskStatus = issue.state === "closed" ? "DONE" : "IN_PROGRESS";
-    await prisma.task.update({
-      where: { id: mapping.taskId },
-      data: { status: taskStatus },
-    });
+    try {
+      await taskService.updateStatus(mapping.taskId, taskStatus);
+    } catch (error) {
+      logger.warn(
+        `Webhook: Failed to update task ${mapping.taskId} status to ${taskStatus} via state machine:`,
+        error,
+      );
+    }
 
     await prisma.gitLabIssueMapping.update({
       where: { id: mapping.id },

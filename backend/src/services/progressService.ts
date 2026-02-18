@@ -103,7 +103,11 @@ export class ProgressService {
       let status = task?.status;
       if (data.progressPercentage === 100) {
         status = "DONE";
-      } else if (data.progressPercentage > 0 && task?.status === "UNCLAIMED") {
+      } else if (
+        data.progressPercentage > 0 &&
+        (task?.status === "CLAIMED" || task?.status === "UNCLAIMED")
+      ) {
+        // CLAIMED -> IN_PROGRESS 遵循狀態機；UNCLAIMED 需先認領但此處容許自動轉換
         status = "IN_PROGRESS";
       }
       // progressPercentage === 0 時保留原狀態，不強制轉為 UNCLAIMED

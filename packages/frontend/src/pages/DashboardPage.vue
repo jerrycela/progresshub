@@ -21,7 +21,7 @@ const dashboardStore = useDashboardStore()
 const { getProjectById } = useProject()
 
 const user = computed(() => authStore.user)
-const stats = dashboardStore.stats
+const stats = computed(() => dashboardStore.stats)
 
 // 取得使用者的進行中任務（使用常數限制數量）
 const myInProgressTasks = computed(() =>

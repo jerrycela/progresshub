@@ -14,6 +14,9 @@ const isDark = ref(false)
 
 // 是否已初始化
 let isInitialized = false
+// 全域 mediaQuery 監聽器引用（用於 cleanup）
+let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null
+let mediaQuery: MediaQueryList | null = null
 
 /**
  * 主題切換 Composable
@@ -113,15 +116,15 @@ export function useTheme() {
       })
     })
 
-    // 監聽系統主題變化
+    // 監聽系統主題變化（具名函式以便 cleanup）
     if (typeof window !== 'undefined') {
-      window
-        .matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', (e: MediaQueryListEvent) => {
-          if (currentTheme.value === 'system') {
-            applyTheme(e.matches)
-          }
-        })
+      mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+      mediaQueryHandler = (e: MediaQueryListEvent) => {
+        if (currentTheme.value === 'system') {
+          applyTheme(e.matches)
+        }
+      }
+      mediaQuery.addEventListener('change', mediaQueryHandler)
     }
   }
 

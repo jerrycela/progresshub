@@ -76,26 +76,34 @@ const completedTasks = computed(() => {
   )
 })
 
-// 載入任務的進度記錄
+// 載入任務的進度記錄（並行請求）
 const fetchTaskLogs = async (taskIds: string[]) => {
-  for (const id of taskIds) {
-    await progressLogStore.fetchByTaskId(id)
-  }
+  await Promise.all(taskIds.map(id => progressLogStore.fetchByTaskId(id)))
+}
+
+// 已載入過的 taskId 集合，避免重複請求
+const loadedTaskIds = new Set<string>()
+
+// 僅對新增的 taskId 發送請求
+const fetchNewTaskLogs = async (taskIds: string[]) => {
+  const newIds = taskIds.filter(id => !loadedTaskIds.has(id))
+  if (newIds.length === 0) return
+  newIds.forEach(id => loadedTaskIds.add(id))
+  await fetchTaskLogs(newIds)
 }
 
 onMounted(() => {
   const allTaskIds = [...myTasks.value, ...completedTasks.value].map(t => t.id)
   if (allTaskIds.length > 0) {
-    fetchTaskLogs(allTaskIds)
+    fetchNewTaskLogs(allTaskIds)
   }
 })
 
 watch(
   () => [...myTasks.value, ...completedTasks.value].map(t => t.id).join(','),
-  newIds => {
-    if (newIds) {
-      fetchTaskLogs(newIds.split(','))
-    }
+  () => {
+    const allTaskIds = [...myTasks.value, ...completedTasks.value].map(t => t.id)
+    fetchNewTaskLogs(allTaskIds)
   },
 )
 

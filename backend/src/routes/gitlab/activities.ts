@@ -57,8 +57,8 @@ router.get(
             : req.query.converted === "false"
               ? false
               : undefined,
-        page: (req.query.page as unknown as number) || 1,
-        limit: (req.query.limit as unknown as number) || 50,
+        page: Number(req.query.page) || 1,
+        limit: Number(req.query.limit) || 50,
       };
 
       const result = await gitLabActivityService.getActivities(

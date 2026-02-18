@@ -382,8 +382,16 @@ export class TimeEntryService {
       throw new Error("Daily total cannot exceed 16 hours");
     }
 
-    // BR-04: 只能登記過去 7 天內的工時
+    // BR-04: 只能登記過去 7 天內的工時，且不允許未來日期
     const entryDate = new Date(data.date);
+    entryDate.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (entryDate > today) {
+      throw new Error("Cannot log time entries for future dates");
+    }
+
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     sevenDaysAgo.setHours(0, 0, 0, 0);

@@ -60,8 +60,8 @@ router.get(
         endDate: req.query.endDate
           ? new Date(req.query.endDate as string)
           : undefined,
-        page: req.query.page as unknown as number,
-        limit: req.query.limit as unknown as number,
+        page,
+        limit,
       });
 
       sendPaginatedSuccess(res, result.data, {
@@ -271,7 +271,7 @@ router.post(
 
       const entries = req.body.entries.map((e: Record<string, unknown>) => ({
         ...e,
-        employeeId: req.user!.userId,
+        employeeId: req.user?.userId ?? "",
       }));
 
       const created = await timeEntryService.createBatchTimeEntries(entries);
@@ -316,8 +316,11 @@ router.put(
         return;
       }
 
-      // 只能修改自己的記錄
-      if (existing.employeeId !== req.user?.userId) {
+      // ADMIN/PM 可修改任何人的記錄，一般員工只能修改自己的
+      const isPrivileged =
+        req.user?.permissionLevel === "ADMIN" ||
+        req.user?.permissionLevel === "PM";
+      if (!isPrivileged && existing.employeeId !== req.user?.userId) {
         sendError(res, "FORBIDDEN", "Access denied", 403);
         return;
       }
@@ -359,7 +362,10 @@ router.delete(
         return;
       }
 
-      if (existing.employeeId !== req.user?.userId) {
+      const isPrivileged =
+        req.user?.permissionLevel === "ADMIN" ||
+        req.user?.permissionLevel === "PM";
+      if (!isPrivileged && existing.employeeId !== req.user?.userId) {
         sendError(res, "FORBIDDEN", "Access denied", 403);
         return;
       }
@@ -395,7 +401,7 @@ router.post(
     try {
       const updated = await timeEntryService.approveTimeEntry(
         req.params.id,
-        req.user!.userId,
+        req.user?.userId ?? "",
       );
       sendSuccess(res, updated);
     } catch (error) {
@@ -434,7 +440,7 @@ router.post(
     try {
       const updated = await timeEntryService.rejectTimeEntry(
         req.params.id,
-        req.user!.userId,
+        req.user?.userId ?? "",
         req.body.reason,
       );
       sendSuccess(res, updated);
@@ -467,7 +473,7 @@ router.post(
     try {
       const result = await timeEntryService.batchApprove(
         req.body.ids,
-        req.user!.userId,
+        req.user?.userId ?? "",
       );
       sendSuccess(res, { approved: result.count });
     } catch (error) {

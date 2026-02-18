@@ -14,6 +14,9 @@ export interface TaskFormData {
   functionTags: FunctionType[]
 }
 
+// NOTE: form prop 為 reactive 物件，父元件透過 reactive() 建立後傳入。
+// 子元件的 v-model 直接修改此物件的屬性是有意為之的雙向綁定模式。
+// 這是 Vue 3 中 reactive 物件作為 prop 的已知慣例，避免為每個欄位 emit update 事件。
 const props = withDefaults(
   defineProps<{
     form: TaskFormData

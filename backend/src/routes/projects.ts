@@ -43,8 +43,8 @@ router.get(
       const limit = Number(req.query.limit) || 20;
 
       const result = await projectService.getProjects({
-        page: req.query.page as unknown as number,
-        limit: req.query.limit as unknown as number,
+        page,
+        limit,
         // express-validator 已驗證 status 為合法的 ProjectStatus 值
         status: req.query.status as string as ProjectStatus,
         search: req.query.search as string,

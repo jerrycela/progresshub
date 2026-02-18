@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useProject } from '@/composables/useProject'
 import { useFormatDate } from '@/composables/useFormatDate'
-import { mockEmployees } from '@/mocks/employees'
+import { useEmployeeStore } from '@/stores/employees'
 import Badge from '@/components/common/Badge.vue'
 import Avatar from '@/components/common/Avatar.vue'
-import type { Task, TaskStatus, MockEmployee } from 'shared/types'
+import type { Task, TaskStatus } from 'shared/types'
 
 // ============================================
 // 任務基本資訊組件
@@ -19,6 +20,7 @@ const props = defineProps<Props>()
 
 const { getProjectName } = useProject()
 const { formatShort } = useFormatDate()
+const employeeStore = useEmployeeStore()
 
 // 根據狀態決定 Badge 樣式
 const getStatusBadgeVariant = (status: TaskStatus) => {
@@ -46,10 +48,10 @@ const statusLabels: Record<TaskStatus, string> = {
   BLOCKED: '卡關',
 }
 
-// 找出負責人資訊
-const assignee = props.task.assigneeId
-  ? mockEmployees.find((emp: MockEmployee) => emp.id === props.task.assigneeId)
-  : null
+// 從 store 取得負責人資訊（支援 API 和 Mock 模式）
+const assignee = computed(() =>
+  props.task.assigneeId ? employeeStore.getEmployeeById(props.task.assigneeId) : null,
+)
 </script>
 
 <template>

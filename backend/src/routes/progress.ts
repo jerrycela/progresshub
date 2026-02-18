@@ -48,8 +48,8 @@ router.get(
         endDate: req.query.endDate
           ? new Date(req.query.endDate as string)
           : undefined,
-        page: req.query.page as unknown as number,
-        limit: req.query.limit as unknown as number,
+        page,
+        limit,
       });
 
       sendPaginatedSuccess(res, result.data, {
