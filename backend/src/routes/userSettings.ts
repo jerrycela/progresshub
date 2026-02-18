@@ -5,10 +5,12 @@ import { userSettingsService } from "../services/userSettingsService";
 import { authenticate, AuthRequest } from "../middleware/auth";
 import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
 import logger from "../config/logger";
+import { sanitizeBody } from "../middleware/sanitize";
 
 const router = Router();
 
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/user/settings

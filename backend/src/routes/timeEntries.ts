@@ -10,9 +10,12 @@ import {
   getSafeErrorMessage,
 } from "../utils/response";
 
+import { sanitizeBody } from "../middleware/sanitize";
+
 const router = Router();
 
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/time-entries

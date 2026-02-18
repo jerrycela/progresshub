@@ -4,10 +4,12 @@ import { timeCategoryService } from "../services/timeCategoryService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel } from "@prisma/client";
 import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
+import { sanitizeBody } from "../middleware/sanitize";
 
 const router = Router();
 
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/time-categories

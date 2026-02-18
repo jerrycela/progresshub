@@ -5,10 +5,12 @@ import { PermissionLevel } from "@prisma/client";
 import { sendSuccess, sendError } from "../utils/response";
 import { milestoneService } from "../services/milestoneService";
 import { toMilestoneDTO } from "../mappers";
+import { sanitizeBody } from "../middleware/sanitize";
 
 const router = Router();
 
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/milestones

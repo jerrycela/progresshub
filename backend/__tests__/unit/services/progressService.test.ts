@@ -93,7 +93,7 @@ describe('ProgressService', () => {
   });
 
   describe('createProgressLog', () => {
-    it('應建立進度記錄並更新任務', async () => {
+    it('應建立進度記錄並更新任務（CLAIMED → IN_PROGRESS）', async () => {
       const txClient = {
         progressLog: {
           create: jest.fn().mockResolvedValue(mockLog),
@@ -101,7 +101,7 @@ describe('ProgressService', () => {
         task: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'task-001',
-            status: 'UNCLAIMED',
+            status: 'CLAIMED',
             actualStartDate: null,
           }),
           update: jest.fn().mockResolvedValue({}),
@@ -128,6 +128,33 @@ describe('ProgressService', () => {
           }),
         }),
       );
+    });
+
+    it('UNCLAIMED 任務不允許回報進度', async () => {
+      const txClient = {
+        progressLog: {
+          create: jest.fn().mockResolvedValue(mockLog),
+        },
+        task: {
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'task-001',
+            status: 'UNCLAIMED',
+            actualStartDate: null,
+          }),
+          update: jest.fn(),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
+
+      await expect(
+        service.createProgressLog({
+          taskId: 'task-001',
+          employeeId: 'emp-001',
+          progressPercentage: 50,
+        }),
+      ).rejects.toThrow('Cannot report progress on unclaimed task');
     });
 
     it('進度 100% 應將狀態設為 DONE', async () => {

@@ -193,21 +193,20 @@ router.put(
 
       // 非 ADMIN 使用者不能修改權限相關欄位
       const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
-      if (!isAdmin) {
-        delete req.body.permissionLevel;
-        delete req.body.managedProjects;
-      }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { permissionLevel, managedProjects, ...safeBody } = req.body;
+      const updateData = isAdmin ? req.body : safeBody;
 
       // 檢查 Email 是否已被其他人使用
       if (
-        req.body.email &&
-        (await employeeService.emailExists(req.body.email, id))
+        updateData.email &&
+        (await employeeService.emailExists(updateData.email, id))
       ) {
         sendError(res, "EMAIL_EXISTS", "Email already exists", 409);
         return;
       }
 
-      const employee = await employeeService.updateEmployee(id, req.body);
+      const employee = await employeeService.updateEmployee(id, updateData);
       sendSuccess(res, toUserDTO(employee));
     } catch (error) {
       sendError(

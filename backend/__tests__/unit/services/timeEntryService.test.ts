@@ -242,16 +242,30 @@ describe('TimeEntryService', () => {
   });
 
   describe('updateTimeEntry', () => {
+    let txClient: { timeEntry: { findUnique: jest.Mock; update: jest.Mock } };
+
+    beforeEach(() => {
+      txClient = {
+        timeEntry: {
+          findUnique: jest.fn(),
+          update: jest.fn(),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
+    });
+
     it('應更新 PENDING 工時記錄', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry);
-      (mockedPrisma.timeEntry.update as jest.Mock).mockResolvedValue({
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+      txClient.timeEntry.update.mockResolvedValue({
         ...mockEntryWithRelations,
         hours: 3,
       });
 
       await service.updateTimeEntry('te-001', { hours: 3 });
 
-      expect(mockedPrisma.timeEntry.update).toHaveBeenCalledWith(
+      expect(txClient.timeEntry.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ status: 'PENDING' }),
         }),
@@ -259,7 +273,7 @@ describe('TimeEntryService', () => {
     });
 
     it('不能修改已核准的工時記錄', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue({
+      txClient.timeEntry.findUnique.mockResolvedValue({
         ...mockEntry,
         status: 'APPROVED',
       });
@@ -270,7 +284,7 @@ describe('TimeEntryService', () => {
     });
 
     it('工時記錄不存在時應拋出錯誤', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue(null);
+      txClient.timeEntry.findUnique.mockResolvedValue(null);
 
       await expect(
         service.updateTimeEntry('nonexistent', { hours: 3 }),
@@ -279,17 +293,31 @@ describe('TimeEntryService', () => {
   });
 
   describe('deleteTimeEntry', () => {
+    let txClient: { timeEntry: { findUnique: jest.Mock; delete: jest.Mock } };
+
+    beforeEach(() => {
+      txClient = {
+        timeEntry: {
+          findUnique: jest.fn(),
+          delete: jest.fn(),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
+    });
+
     it('應刪除 PENDING 工時記錄', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue(mockEntry);
-      (mockedPrisma.timeEntry.delete as jest.Mock).mockResolvedValue(mockEntry);
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+      txClient.timeEntry.delete.mockResolvedValue(mockEntry);
 
       await service.deleteTimeEntry('te-001');
 
-      expect(mockedPrisma.timeEntry.delete).toHaveBeenCalledWith({ where: { id: 'te-001' } });
+      expect(txClient.timeEntry.delete).toHaveBeenCalledWith({ where: { id: 'te-001' } });
     });
 
     it('不能刪除已核准的工時記錄', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue({
+      txClient.timeEntry.findUnique.mockResolvedValue({
         ...mockEntry,
         status: 'APPROVED',
       });
@@ -300,7 +328,7 @@ describe('TimeEntryService', () => {
     });
 
     it('工時記錄不存在時應拋出錯誤', async () => {
-      (mockedPrisma.timeEntry.findUnique as jest.Mock).mockResolvedValue(null);
+      txClient.timeEntry.findUnique.mockResolvedValue(null);
 
       await expect(service.deleteTimeEntry('nonexistent')).rejects.toThrow(
         'Time entry not found',
@@ -309,15 +337,30 @@ describe('TimeEntryService', () => {
   });
 
   describe('approveTimeEntry', () => {
+    let txClient: { timeEntry: { findUnique: jest.Mock; update: jest.Mock } };
+
+    beforeEach(() => {
+      txClient = {
+        timeEntry: {
+          findUnique: jest.fn(),
+          update: jest.fn(),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
+    });
+
     it('應核准工時記錄', async () => {
-      (mockedPrisma.timeEntry.update as jest.Mock).mockResolvedValue({
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+      txClient.timeEntry.update.mockResolvedValue({
         ...mockEntry,
         status: 'APPROVED',
       });
 
       await service.approveTimeEntry('te-001', 'approver-001');
 
-      expect(mockedPrisma.timeEntry.update).toHaveBeenCalledWith({
+      expect(txClient.timeEntry.update).toHaveBeenCalledWith({
         where: { id: 'te-001' },
         data: {
           status: 'APPROVED',
@@ -326,18 +369,52 @@ describe('TimeEntryService', () => {
         },
       });
     });
+
+    it('不能核准自己的工時記錄', async () => {
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+
+      await expect(
+        service.approveTimeEntry('te-001', 'emp-001'),
+      ).rejects.toThrow('Cannot approve your own time entry');
+    });
+
+    it('只能核准 PENDING 工時記錄', async () => {
+      txClient.timeEntry.findUnique.mockResolvedValue({
+        ...mockEntry,
+        status: 'APPROVED',
+      });
+
+      await expect(
+        service.approveTimeEntry('te-001', 'approver-001'),
+      ).rejects.toThrow('Only pending time entries can be approved');
+    });
   });
 
   describe('rejectTimeEntry', () => {
+    let txClient: { timeEntry: { findUnique: jest.Mock; update: jest.Mock } };
+
+    beforeEach(() => {
+      txClient = {
+        timeEntry: {
+          findUnique: jest.fn(),
+          update: jest.fn(),
+        },
+      };
+      (mockedPrisma.$transaction as jest.Mock).mockImplementation(
+        async (fn: Function) => fn(txClient),
+      );
+    });
+
     it('應駁回工時記錄並附上原因', async () => {
-      (mockedPrisma.timeEntry.update as jest.Mock).mockResolvedValue({
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+      txClient.timeEntry.update.mockResolvedValue({
         ...mockEntry,
         status: 'REJECTED',
       });
 
       await service.rejectTimeEntry('te-001', 'approver-001', '工時過高');
 
-      expect(mockedPrisma.timeEntry.update).toHaveBeenCalledWith({
+      expect(txClient.timeEntry.update).toHaveBeenCalledWith({
         where: { id: 'te-001' },
         data: {
           status: 'REJECTED',
@@ -346,6 +423,25 @@ describe('TimeEntryService', () => {
           rejectedReason: '工時過高',
         },
       });
+    });
+
+    it('不能駁回自己的工時記錄', async () => {
+      txClient.timeEntry.findUnique.mockResolvedValue(mockEntry);
+
+      await expect(
+        service.rejectTimeEntry('te-001', 'emp-001', '原因'),
+      ).rejects.toThrow('Cannot reject your own time entry');
+    });
+
+    it('只能駁回 PENDING 工時記錄', async () => {
+      txClient.timeEntry.findUnique.mockResolvedValue({
+        ...mockEntry,
+        status: 'APPROVED',
+      });
+
+      await expect(
+        service.rejectTimeEntry('te-001', 'approver-001', '原因'),
+      ).rejects.toThrow('Only pending time entries can be rejected');
     });
   });
 

@@ -172,24 +172,27 @@ export class TimeEntryService {
    * 更新工時記錄
    */
   async updateTimeEntry(id: string, data: UpdateTimeEntryDto) {
-    const existing = await prisma.timeEntry.findUnique({ where: { id } });
-    if (!existing) throw new Error("Time entry not found");
-    if (existing.status === "APPROVED") {
-      throw new Error("Cannot modify approved time entry");
-    }
+    // 使用 $transaction 防止 TOCTOU 競態條件
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.timeEntry.findUnique({ where: { id } });
+      if (!existing) throw new Error("Time entry not found");
+      if (existing.status === "APPROVED") {
+        throw new Error("Cannot modify approved time entry");
+      }
 
-    return prisma.timeEntry.update({
-      where: { id },
-      data: {
-        ...data,
-        date: data.date ? new Date(data.date) : undefined,
-        status: "PENDING", // 修改後重設為待審核
-      },
-      include: {
-        project: { select: { id: true, name: true } },
-        task: { select: { id: true, name: true } },
-        category: { select: { id: true, name: true, color: true } },
-      },
+      return tx.timeEntry.update({
+        where: { id },
+        data: {
+          ...data,
+          date: data.date ? new Date(data.date) : undefined,
+          status: "PENDING", // 修改後重設為待審核
+        },
+        include: {
+          project: { select: { id: true, name: true } },
+          task: { select: { id: true, name: true } },
+          category: { select: { id: true, name: true, color: true } },
+        },
+      });
     });
   }
 
@@ -197,41 +200,66 @@ export class TimeEntryService {
    * 刪除工時記錄
    */
   async deleteTimeEntry(id: string) {
-    const existing = await prisma.timeEntry.findUnique({ where: { id } });
-    if (!existing) throw new Error("Time entry not found");
-    if (existing.status === "APPROVED") {
-      throw new Error("Cannot delete approved time entry");
-    }
+    // 使用 $transaction 防止 TOCTOU 競態條件
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.timeEntry.findUnique({ where: { id } });
+      if (!existing) throw new Error("Time entry not found");
+      if (existing.status === "APPROVED") {
+        throw new Error("Cannot delete approved time entry");
+      }
 
-    await prisma.timeEntry.delete({ where: { id } });
-  }
-
-  /**
-   * 審核工時記錄
-   */
-  async approveTimeEntry(id: string, approverId: string) {
-    return prisma.timeEntry.update({
-      where: { id },
-      data: {
-        status: "APPROVED",
-        approvedBy: approverId,
-        approvedAt: new Date(),
-      },
+      await tx.timeEntry.delete({ where: { id } });
     });
   }
 
   /**
-   * 駁回工時記錄
+   * 審核工時記錄（僅允許 PENDING 狀態）
+   */
+  async approveTimeEntry(id: string, approverId: string) {
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.timeEntry.findUnique({ where: { id } });
+      if (!existing) throw new Error("Time entry not found");
+      if (existing.status !== "PENDING") {
+        throw new Error("Only pending time entries can be approved");
+      }
+      if (existing.employeeId === approverId) {
+        throw new Error("Cannot approve your own time entry");
+      }
+
+      return tx.timeEntry.update({
+        where: { id },
+        data: {
+          status: "APPROVED",
+          approvedBy: approverId,
+          approvedAt: new Date(),
+        },
+      });
+    });
+  }
+
+  /**
+   * 駁回工時記錄（僅允許 PENDING 狀態）
    */
   async rejectTimeEntry(id: string, approverId: string, reason: string) {
-    return prisma.timeEntry.update({
-      where: { id },
-      data: {
-        status: "REJECTED",
-        approvedBy: approverId,
-        approvedAt: new Date(),
-        rejectedReason: reason,
-      },
+    return prisma.$transaction(async (tx) => {
+      const existing = await tx.timeEntry.findUnique({ where: { id } });
+      if (!existing) throw new Error("Time entry not found");
+      if (existing.status !== "PENDING") {
+        throw new Error("Only pending time entries can be rejected");
+      }
+      if (existing.employeeId === approverId) {
+        throw new Error("Cannot reject your own time entry");
+      }
+
+      return tx.timeEntry.update({
+        where: { id },
+        data: {
+          status: "REJECTED",
+          approvedBy: approverId,
+          approvedAt: new Date(),
+          rejectedReason: reason,
+        },
+      });
     });
   }
 

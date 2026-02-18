@@ -9,10 +9,13 @@ import {
   sendError,
 } from "../utils/response";
 
+import { sanitizeBody } from "../middleware/sanitize";
+
 const router = Router();
 
 // 所有進度路由都需要認證
 router.use(authenticate);
+router.use(sanitizeBody);
 
 /**
  * GET /api/progress

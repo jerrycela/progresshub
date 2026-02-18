@@ -14,7 +14,6 @@ import userSettingsRoutes from "./userSettings";
 import slackRoutes from "./slack";
 import { sendSuccess } from "../utils/response";
 import { env } from "../config/env";
-import { env } from "../config/env";
 
 const router = Router();
 

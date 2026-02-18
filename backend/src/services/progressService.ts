@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
+import { AppError } from "../middleware/errorHandler";
 
 // 使用 Prisma 生成的類型（需要先執行 prisma generate）
 type ProgressLog = Prisma.ProgressLogGetPayload<object>;
@@ -100,14 +101,20 @@ export class ProgressService {
         where: { id: data.taskId },
       });
 
+      // UNCLAIMED 任務不允許回報進度（需先認領）
+      if (task?.status === "UNCLAIMED" && data.progressPercentage > 0) {
+        throw new AppError(
+          409,
+          "Cannot report progress on unclaimed task. Please claim the task first.",
+          "TASK_NOT_CLAIMED",
+        );
+      }
+
       let status = task?.status;
       if (data.progressPercentage === 100) {
         status = "DONE";
-      } else if (
-        data.progressPercentage > 0 &&
-        (task?.status === "CLAIMED" || task?.status === "UNCLAIMED")
-      ) {
-        // CLAIMED -> IN_PROGRESS 遵循狀態機；UNCLAIMED 需先認領但此處容許自動轉換
+      } else if (data.progressPercentage > 0 && task?.status === "CLAIMED") {
+        // CLAIMED -> IN_PROGRESS 遵循狀態機
         status = "IN_PROGRESS";
       }
       // progressPercentage === 0 時保留原狀態，不強制轉為 UNCLAIMED
