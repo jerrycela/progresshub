@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, type ComputedRef } from 'vue'
 import type {
   Task,
   TaskStatus,
@@ -54,14 +54,40 @@ export const useTaskStore = defineStore('tasks', () => {
     return tasks.value.filter((t: Task) => t.dueDate && t.dueDate < today && t.status !== 'DONE')
   })
 
-  const getTasksByProject = (projectId: string) =>
-    computed(() => tasks.value.filter((t: Task) => t.projectId === projectId))
+  // Computed 快取：避免每次呼叫建立新的 computed 造成記憶體洩漏
+  const _projectComputedCache = new Map<string, ComputedRef<Task[]>>()
+  const _functionComputedCache = new Map<string, ComputedRef<Task[]>>()
+  const _statusComputedCache = new Map<string, ComputedRef<Task[]>>()
 
-  const getTasksByFunction = (functionType: FunctionType) =>
-    computed(() => tasks.value.filter((t: Task) => t.functionTags.includes(functionType)))
+  const getTasksByProject = (projectId: string) => {
+    if (!_projectComputedCache.has(projectId)) {
+      _projectComputedCache.set(
+        projectId,
+        computed(() => tasks.value.filter((t: Task) => t.projectId === projectId)),
+      )
+    }
+    return _projectComputedCache.get(projectId)!
+  }
 
-  const getTasksByStatus = (status: TaskStatus) =>
-    computed(() => tasks.value.filter((t: Task) => t.status === status))
+  const getTasksByFunction = (functionType: FunctionType) => {
+    if (!_functionComputedCache.has(functionType)) {
+      _functionComputedCache.set(
+        functionType,
+        computed(() => tasks.value.filter((t: Task) => t.functionTags.includes(functionType))),
+      )
+    }
+    return _functionComputedCache.get(functionType)!
+  }
+
+  const getTasksByStatus = (status: TaskStatus) => {
+    if (!_statusComputedCache.has(status)) {
+      _statusComputedCache.set(
+        status,
+        computed(() => tasks.value.filter((t: Task) => t.status === status)),
+      )
+    }
+    return _statusComputedCache.get(status)!
+  }
 
   const getTaskById = (taskId: string) => tasks.value.find((t: Task) => t.id === taskId)
 

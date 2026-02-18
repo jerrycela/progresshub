@@ -23,10 +23,7 @@ const generateId = (): string => `toast-${Date.now()}-${Math.random().toString(3
 
 // 移除 Toast
 const removeToast = (id: string): void => {
-  const index = toasts.value.findIndex((t: ToastItem) => t.id === id)
-  if (index > -1) {
-    toasts.value.splice(index, 1)
-  }
+  toasts.value = toasts.value.filter((t: ToastItem) => t.id !== id)
 }
 
 // 新增 Toast
@@ -39,7 +36,7 @@ const addToast = (type: ToastType, message: string, duration?: number): string =
     duration: duration ?? TOAST.DURATION,
   }
 
-  toasts.value.push(toast)
+  toasts.value = [...toasts.value, toast]
 
   // 自動移除
   if (toast.duration > 0) {

@@ -81,14 +81,16 @@ const fetchTaskLogs = async (taskIds: string[]) => {
   await Promise.all(taskIds.map(id => progressLogStore.fetchByTaskId(id)))
 }
 
-// 已載入過的 taskId 集合，避免重複請求
-const loadedTaskIds = new Set<string>()
+// 已載入過的 taskId 集合，避免重複請求（使用 ref 確保 HMR 正確重置）
+const loadedTaskIds = ref(new Set<string>())
 
 // 僅對新增的 taskId 發送請求
 const fetchNewTaskLogs = async (taskIds: string[]) => {
-  const newIds = taskIds.filter(id => !loadedTaskIds.has(id))
+  const newIds = taskIds.filter(id => !loadedTaskIds.value.has(id))
   if (newIds.length === 0) return
-  newIds.forEach(id => loadedTaskIds.add(id))
+  const updated = new Set(loadedTaskIds.value)
+  newIds.forEach(id => updated.add(id))
+  loadedTaskIds.value = updated
   await fetchTaskLogs(newIds)
 }
 

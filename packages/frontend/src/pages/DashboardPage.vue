@@ -73,7 +73,6 @@ const icons = {
         :value="stats.completedTasks"
         :icon="icons.completed"
         color="green"
-        :trend="{ value: 12, isPositive: true }"
       />
       <StatCard
         title="進行中"

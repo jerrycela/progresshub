@@ -4,18 +4,12 @@
 // ============================================
 
 import type { TaskStatus, UserRole } from 'shared/types'
+import { taskStatusLabels, roleLabels } from '@/constants/labels'
 
 /**
- * 任務狀態標籤對照
+ * 任務狀態標籤對照（單一來源：constants/labels.ts）
  */
-const STATUS_LABELS: Record<string, string> = {
-  UNCLAIMED: '待認領',
-  CLAIMED: '已認領',
-  IN_PROGRESS: '進行中',
-  PAUSED: '暫停中',
-  DONE: '已完成',
-  BLOCKED: '卡關',
-}
+const STATUS_LABELS: Record<string, string> = taskStatusLabels
 
 /**
  * 任務狀態 CSS 類別對照（徽章樣式）
@@ -30,15 +24,9 @@ const STATUS_BADGE_CLASSES: Record<string, string> = {
 }
 
 /**
- * 角色標籤對照
+ * 角色標籤對照（單一來源：constants/labels.ts）
  */
-const ROLE_LABELS: Record<string, string> = {
-  EMPLOYEE: '一般同仁',
-  PM: '專案經理',
-  PRODUCER: '製作人',
-  MANAGER: '部門主管',
-  ADMIN: '管理員',
-}
+const ROLE_LABELS: Record<string, string> = roleLabels
 
 /**
  * 角色徽章 CSS 類別對照

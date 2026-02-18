@@ -3,7 +3,7 @@
 // 支援 Light/Dark mode，並記憶使用者偏好
 // ============================================
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -12,11 +12,11 @@ type Theme = 'light' | 'dark' | 'system'
 const currentTheme = ref<Theme>('light')
 const isDark = ref(false)
 
-// 是否已初始化
-let isInitialized = false
+// 初始化狀態使用 ref，確保 HMR 時可正確重置
+const isInitialized = ref(false)
 // 全域 mediaQuery 監聽器引用（用於 cleanup）
-let mediaQueryHandler: ((e: MediaQueryListEvent) => void) | null = null
-let mediaQuery: MediaQueryList | null = null
+const mediaQueryHandler = ref<((e: MediaQueryListEvent) => void) | null>(null)
+const mediaQueryRef = ref<MediaQueryList | null>(null)
 
 /**
  * 主題切換 Composable
@@ -95,8 +95,8 @@ export function useTheme() {
    * 初始化主題
    */
   const initTheme = (): void => {
-    if (isInitialized) return
-    isInitialized = true
+    if (isInitialized.value) return
+    isInitialized.value = true
 
     // 防止初始化時的閃爍
     document.documentElement.classList.add('no-transition')
@@ -118,13 +118,13 @@ export function useTheme() {
 
     // 監聽系統主題變化（具名函式以便 cleanup）
     if (typeof window !== 'undefined') {
-      mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      mediaQueryHandler = (e: MediaQueryListEvent) => {
+      mediaQueryRef.value = window.matchMedia('(prefers-color-scheme: dark)')
+      mediaQueryHandler.value = (e: MediaQueryListEvent) => {
         if (currentTheme.value === 'system') {
           applyTheme(e.matches)
         }
       }
-      mediaQuery.addEventListener('change', mediaQueryHandler)
+      mediaQueryRef.value.addEventListener('change', mediaQueryHandler.value)
     }
   }
 
@@ -141,11 +141,6 @@ export function useTheme() {
       (opt: { value: Theme; label: string }) => opt.value === currentTheme.value,
     )
     return option?.label || '跟隨系統'
-  })
-
-  // 自動初始化
-  onMounted(() => {
-    initTheme()
   })
 
   return {

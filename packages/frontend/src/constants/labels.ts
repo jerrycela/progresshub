@@ -21,7 +21,7 @@ export const taskStatusLabels: Record<string, string> = {
   IN_PROGRESS: '進行中',
   PAUSED: '暫停中',
   DONE: '已完成',
-  BLOCKED: '阻塞',
+  BLOCKED: '卡關',
 }
 
 // 角色名稱對照

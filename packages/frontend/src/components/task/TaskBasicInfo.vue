@@ -6,6 +6,7 @@ import { useEmployeeStore } from '@/stores/employees'
 import Badge from '@/components/common/Badge.vue'
 import Avatar from '@/components/common/Avatar.vue'
 import type { Task, TaskStatus } from 'shared/types'
+import { taskStatusLabels } from '@/constants/labels'
 
 // ============================================
 // 任務基本資訊組件
@@ -38,15 +39,8 @@ const getStatusBadgeVariant = (status: TaskStatus) => {
   return variants[status]
 }
 
-// 狀態顯示名稱
-const statusLabels: Record<TaskStatus, string> = {
-  UNCLAIMED: '待認領',
-  CLAIMED: '已認領',
-  IN_PROGRESS: '進行中',
-  PAUSED: '暫停中',
-  DONE: '已完成',
-  BLOCKED: '卡關',
-}
+// 狀態顯示名稱（單一來源：constants/labels.ts）
+const statusLabels = taskStatusLabels as Record<TaskStatus, string>
 
 // 從 store 取得負責人資訊（支援 API 和 Mock 模式）
 const assignee = computed(() =>
