@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
 import { AppError } from "../middleware/errorHandler";
+import { getStartOfToday, getStartOfTomorrow } from "../utils/dateUtils";
 
 // 使用 Prisma 生成的類型（需要先執行 prisma generate）
 type ProgressLog = Prisma.ProgressLogGetPayload<object>;
@@ -131,6 +132,7 @@ export class ProgressService {
               : undefined,
           // 如果完成，設定實際結束日期
           actualEndDate: status === "DONE" ? new Date() : undefined,
+          closedAt: status === "DONE" ? new Date() : undefined,
         },
       });
 
@@ -146,11 +148,8 @@ export class ProgressService {
     tasksReported: number;
     totalInProgressTasks: number;
   }> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const today = getStartOfToday();
+    const tomorrow = getStartOfTomorrow();
 
     // 取得今日回報數量
     const todayLogs = await prisma.progressLog.findMany({

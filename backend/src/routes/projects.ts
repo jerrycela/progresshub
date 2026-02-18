@@ -45,8 +45,7 @@ router.get(
       const result = await projectService.getProjects({
         page,
         limit,
-        // express-validator 已驗證 status 為合法的 ProjectStatus 值
-        status: req.query.status as string as ProjectStatus,
+        status: req.query.status as ProjectStatus | undefined,
         search: req.query.search as string,
       });
 

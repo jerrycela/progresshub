@@ -118,7 +118,7 @@ router.get(
     }
 
     try {
-      const days = (req.query.days as unknown as number) || 7;
+      const days = Number(req.query.days) || 7;
       const stats = await progressService.getProjectProgressStats(
         req.params.projectId,
         days,

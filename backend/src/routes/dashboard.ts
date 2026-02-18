@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import { dashboardService } from "../services/dashboardService";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { PermissionLevel } from "@prisma/client";
 import { sendSuccess, sendError } from "../utils/response";
 import logger from "../config/logger";
 
@@ -36,6 +37,12 @@ router.get(
  */
 router.get(
   "/workloads",
+  authorize(
+    PermissionLevel.PM,
+    PermissionLevel.PRODUCER,
+    PermissionLevel.MANAGER,
+    PermissionLevel.ADMIN,
+  ),
   async (_req: AuthRequest, res: Response): Promise<void> => {
     try {
       const workloads = await dashboardService.getWorkloads();

@@ -7,6 +7,7 @@ import prisma from "../config/database";
 import { env } from "../config/env";
 import logger from "../config/logger";
 import { sendError } from "../utils/response";
+import { getStartOfWeek } from "../utils/dateUtils";
 
 const router = Router();
 
@@ -148,11 +149,7 @@ router.post(
         });
       } else if (command === "week") {
         // 顯示本週工時
-        const weekStart = new Date();
-        const day = weekStart.getDay();
-        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
-        weekStart.setDate(diff);
-        weekStart.setHours(0, 0, 0, 0);
+        const weekStart = getStartOfWeek();
 
         const timesheet = await timeEntryService.getWeeklyTimesheet(
           employee.id,

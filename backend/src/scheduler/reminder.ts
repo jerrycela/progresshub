@@ -3,6 +3,7 @@ import { WebClient } from "@slack/web-api";
 import prisma from "../config/database";
 import { env } from "../config/env";
 import logger from "../config/logger";
+import { getStartOfToday } from "../utils/dateUtils";
 
 let slackClient: WebClient | null = null;
 
@@ -26,8 +27,7 @@ async function checkUnreportedEmployees(): Promise<void> {
       `[Scheduler] ${new Date().toISOString()} - Checking unreported employees...`,
     );
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getStartOfToday();
 
     // Get all employees with active tasks
     const employees = await prisma.employee.findMany({

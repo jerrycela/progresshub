@@ -171,8 +171,8 @@ router.get(
 
       const summary = await timeStatsService.getMonthlySummary(
         req.user.userId,
-        req.query.year as unknown as number,
-        req.query.month as unknown as number,
+        Number(req.query.year),
+        Number(req.query.month),
       );
       sendSuccess(res, summary);
     } catch (error: unknown) {

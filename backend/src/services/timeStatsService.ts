@@ -1,5 +1,6 @@
-import prisma from '../config/database';
-import { Prisma } from '@prisma/client';
+import prisma from "../config/database";
+import { Prisma } from "@prisma/client";
+import { getStartOfWeek } from "../utils/dateUtils";
 
 export interface DateRangeParams {
   startDate: Date;
@@ -69,14 +70,17 @@ export class TimeStatsService {
   /**
    * 取得專案工時統計
    */
-  async getProjectStats(projectId: string, dateRange?: DateRangeParams): Promise<ProjectTimeStats> {
+  async getProjectStats(
+    projectId: string,
+    dateRange?: DateRangeParams,
+  ): Promise<ProjectTimeStats> {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       select: { id: true, name: true },
     });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new Error("Project not found");
     }
 
     const where: Prisma.TimeEntryWhereInput = { projectId };
@@ -107,9 +111,9 @@ export class TimeStatsService {
         billableHours += hours;
       }
 
-      if (entry.status === 'APPROVED') {
+      if (entry.status === "APPROVED") {
         approvedHours += hours;
-      } else if (entry.status === 'PENDING') {
+      } else if (entry.status === "PENDING") {
         pendingHours += hours;
       }
 
@@ -122,12 +126,15 @@ export class TimeStatsService {
       }
     }
 
-    const categoryBreakdown = Array.from(categoryMap.entries()).map(([categoryId, data]) => ({
-      categoryId,
-      categoryName: data.name,
-      hours: data.hours,
-      percentage: totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
-    }));
+    const categoryBreakdown = Array.from(categoryMap.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: data.name,
+        hours: data.hours,
+        percentage:
+          totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
+      }),
+    );
 
     return {
       projectId: project.id,
@@ -143,14 +150,17 @@ export class TimeStatsService {
   /**
    * 取得員工工時統計
    */
-  async getEmployeeStats(employeeId: string, dateRange?: DateRangeParams): Promise<EmployeeTimeStats> {
+  async getEmployeeStats(
+    employeeId: string,
+    dateRange?: DateRangeParams,
+  ): Promise<EmployeeTimeStats> {
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
       select: { id: true, name: true },
     });
 
     if (!employee) {
-      throw new Error('Employee not found');
+      throw new Error("Employee not found");
     }
 
     const where: Prisma.TimeEntryWhereInput = { employeeId };
@@ -176,9 +186,9 @@ export class TimeStatsService {
       const hours = Number(entry.hours);
       totalHours += hours;
 
-      if (entry.status === 'APPROVED') {
+      if (entry.status === "APPROVED") {
         approvedHours += hours;
-      } else if (entry.status === 'PENDING') {
+      } else if (entry.status === "PENDING") {
         pendingHours += hours;
       }
 
@@ -201,19 +211,25 @@ export class TimeStatsService {
       }
     }
 
-    const projectBreakdown = Array.from(projectMap.entries()).map(([projectId, data]) => ({
-      projectId,
-      projectName: data.name,
-      hours: data.hours,
-      percentage: totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
-    }));
+    const projectBreakdown = Array.from(projectMap.entries()).map(
+      ([projectId, data]) => ({
+        projectId,
+        projectName: data.name,
+        hours: data.hours,
+        percentage:
+          totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
+      }),
+    );
 
-    const categoryBreakdown = Array.from(categoryMap.entries()).map(([categoryId, data]) => ({
-      categoryId,
-      categoryName: data.name,
-      hours: data.hours,
-      percentage: totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
-    }));
+    const categoryBreakdown = Array.from(categoryMap.entries()).map(
+      ([categoryId, data]) => ({
+        categoryId,
+        categoryName: data.name,
+        hours: data.hours,
+        percentage:
+          totalHours > 0 ? Math.round((data.hours / totalHours) * 100) : 0,
+      }),
+    );
 
     return {
       employeeId: employee.id,
@@ -256,8 +272,8 @@ export class TimeStatsService {
       totalHours += hours;
 
       if (entry.category.billable) billableHours += hours;
-      if (entry.status === 'APPROVED') approvedHours += hours;
-      if (entry.status === 'PENDING') pendingHours += hours;
+      if (entry.status === "APPROVED") approvedHours += hours;
+      if (entry.status === "PENDING") pendingHours += hours;
 
       employeeSet.add(entry.employeeId);
       projectSet.add(entry.projectId);
@@ -279,19 +295,27 @@ export class TimeStatsService {
       }
 
       // Daily trend
-      const dateKey = entry.date.toISOString().split('T')[0];
+      const dateKey = entry.date.toISOString().split("T")[0];
       dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + hours);
     }
 
     // Top 5 projects
     const topProjects = Array.from(projectMap.entries())
-      .map(([projectId, data]) => ({ projectId, projectName: data.name, hours: data.hours }))
+      .map(([projectId, data]) => ({
+        projectId,
+        projectName: data.name,
+        hours: data.hours,
+      }))
       .sort((a, b) => b.hours - a.hours)
       .slice(0, 5);
 
     // Top 5 employees
     const topEmployees = Array.from(employeeMap.entries())
-      .map(([employeeId, data]) => ({ employeeId, employeeName: data.name, hours: data.hours }))
+      .map(([employeeId, data]) => ({
+        employeeId,
+        employeeName: data.name,
+        hours: data.hours,
+      }))
       .sort((a, b) => b.hours - a.hours)
       .slice(0, 5);
 
@@ -330,7 +354,7 @@ export class TimeStatsService {
         project: { select: { name: true } },
         category: { select: { name: true, billable: true } },
       },
-      orderBy: { date: 'asc' },
+      orderBy: { date: "asc" },
     });
 
     // Group by week
@@ -342,17 +366,17 @@ export class TimeStatsService {
       billableHours: number;
     }> = [];
 
-    let currentWeek: typeof weeks[0] | null = null;
+    let currentWeek: (typeof weeks)[0] | null = null;
     let weekNumber = 1;
 
     for (const entry of entries) {
       const entryDate = new Date(entry.date);
-      const dayOfWeek = entryDate.getDay();
-      const weekStart = new Date(entryDate);
-      weekStart.setDate(entryDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-      weekStart.setHours(0, 0, 0, 0);
+      const weekStart = getStartOfWeek(entryDate);
 
-      if (!currentWeek || weekStart.getTime() !== currentWeek.startDate.getTime()) {
+      if (
+        !currentWeek ||
+        weekStart.getTime() !== currentWeek.startDate.getTime()
+      ) {
         if (currentWeek) weeks.push(currentWeek);
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
@@ -376,7 +400,7 @@ export class TimeStatsService {
 
     const totalHours = entries.reduce((sum, e) => sum + Number(e.hours), 0);
     const billableHours = entries
-      .filter(e => e.category.billable)
+      .filter((e) => e.category.billable)
       .reduce((sum, e) => sum + Number(e.hours), 0);
 
     return {
@@ -385,7 +409,9 @@ export class TimeStatsService {
       totalHours,
       billableHours,
       weeks,
-      workingDays: new Set(entries.map(e => e.date.toISOString().split('T')[0])).size,
+      workingDays: new Set(
+        entries.map((e) => e.date.toISOString().split("T")[0]),
+      ).size,
     };
   }
 
@@ -400,11 +426,11 @@ export class TimeStatsService {
     });
 
     if (!approver) {
-      throw new Error('Approver not found');
+      throw new Error("Approver not found");
     }
 
-    let projectFilter: Prisma.TimeEntryWhereInput['projectId'];
-    if (approver.permissionLevel === 'ADMIN') {
+    let projectFilter: Prisma.TimeEntryWhereInput["projectId"];
+    if (approver.permissionLevel === "ADMIN") {
       // Admin 可以看到所有待審核
       projectFilter = undefined;
     } else if (approver.managedProjects.length > 0) {
@@ -415,7 +441,7 @@ export class TimeStatsService {
 
     const pendingEntries = await prisma.timeEntry.findMany({
       where: {
-        status: 'PENDING',
+        status: "PENDING",
         ...(projectFilter && { projectId: projectFilter }),
       },
       include: {
@@ -424,8 +450,14 @@ export class TimeStatsService {
       },
     });
 
-    const employeeMap = new Map<string, { name: string; count: number; hours: number }>();
-    const projectMap = new Map<string, { name: string; count: number; hours: number }>();
+    const employeeMap = new Map<
+      string,
+      { name: string; count: number; hours: number }
+    >();
+    const projectMap = new Map<
+      string,
+      { name: string; count: number; hours: number }
+    >();
 
     for (const entry of pendingEntries) {
       const hours = Number(entry.hours);
@@ -436,7 +468,11 @@ export class TimeStatsService {
         emp.count++;
         emp.hours += hours;
       } else {
-        employeeMap.set(entry.employeeId, { name: entry.employee.name, count: 1, hours });
+        employeeMap.set(entry.employeeId, {
+          name: entry.employee.name,
+          count: 1,
+          hours,
+        });
       }
 
       // By project
@@ -445,13 +481,20 @@ export class TimeStatsService {
         proj.count++;
         proj.hours += hours;
       } else {
-        projectMap.set(entry.projectId, { name: entry.project.name, count: 1, hours });
+        projectMap.set(entry.projectId, {
+          name: entry.project.name,
+          count: 1,
+          hours,
+        });
       }
     }
 
     return {
       totalPending: pendingEntries.length,
-      totalPendingHours: pendingEntries.reduce((sum, e) => sum + Number(e.hours), 0),
+      totalPendingHours: pendingEntries.reduce(
+        (sum, e) => sum + Number(e.hours),
+        0,
+      ),
       byEmployee: Array.from(employeeMap.entries()).map(([id, data]) => ({
         employeeId: id,
         employeeName: data.name,

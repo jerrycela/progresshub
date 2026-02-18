@@ -473,6 +473,15 @@ export class TaskService {
         throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
       }
 
+      // UNCLAIMED 任務不允許回報進度（與 progressService 保持一致）
+      if (task.status === "UNCLAIMED" && progressPercentage > 0) {
+        throw new AppError(
+          409,
+          "Cannot report progress on unclaimed task. Please claim the task first.",
+          "TASK_NOT_CLAIMED",
+        );
+      }
+
       const progressDelta = progressPercentage - task.progressPercentage;
 
       // 建立進度記錄
@@ -487,7 +496,7 @@ export class TaskService {
         },
       });
 
-      // 更新任務
+      // 狀態轉移邏輯（與 progressService 一致）
       const newStatus: TaskStatus =
         progressPercentage === 100
           ? "DONE"

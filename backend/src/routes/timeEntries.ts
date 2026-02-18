@@ -3,6 +3,7 @@ import { body, param, query, validationResult } from "express-validator";
 import { timeEntryService } from "../services/timeEntryService";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel, TimeEntryStatus } from "@prisma/client";
+import { getStartOfWeek, getStartOfDay } from "../utils/dateUtils";
 import {
   sendSuccess,
   sendPaginatedSuccess,
@@ -124,16 +125,9 @@ router.get(
       }
 
       // 預設本週一
-      let weekStart: Date;
-      if (req.query.weekStart) {
-        weekStart = new Date(req.query.weekStart as string);
-      } else {
-        weekStart = new Date();
-        const day = weekStart.getDay();
-        const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
-        weekStart.setDate(diff);
-      }
-      weekStart.setHours(0, 0, 0, 0);
+      const weekStart = req.query.weekStart
+        ? getStartOfDay(new Date(req.query.weekStart as string))
+        : getStartOfWeek();
 
       const timesheet = await timeEntryService.getWeeklyTimesheet(
         req.user.userId,

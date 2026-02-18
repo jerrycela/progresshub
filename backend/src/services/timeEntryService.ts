@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { Prisma, TimeEntryStatus } from "@prisma/client";
+import { getStartOfToday, getStartOfDay } from "../utils/dateUtils";
 
 type TransactionClient = Omit<
   typeof prisma,
@@ -183,7 +184,11 @@ export class TimeEntryService {
       return tx.timeEntry.update({
         where: { id },
         data: {
-          ...data,
+          projectId: data.projectId,
+          taskId: data.taskId,
+          categoryId: data.categoryId,
+          hours: data.hours,
+          description: data.description,
           date: data.date ? new Date(data.date) : undefined,
           status: "PENDING", // 修改後重設為待審核
         },
@@ -354,8 +359,7 @@ export class TimeEntryService {
    * 取得今日工時摘要
    */
   async getTodaySummary(employeeId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getStartOfToday();
 
     const entries = await prisma.timeEntry.findMany({
       where: {
@@ -411,18 +415,16 @@ export class TimeEntryService {
     }
 
     // BR-04: 只能登記過去 7 天內的工時，且不允許未來日期
-    const entryDate = new Date(data.date);
-    entryDate.setHours(0, 0, 0, 0);
+    const entryDate = getStartOfDay(new Date(data.date));
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (entryDate > today) {
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+    if (entryDate > endOfToday) {
       throw new Error("Cannot log time entries for future dates");
     }
 
-    const sevenDaysAgo = new Date();
+    const sevenDaysAgo = getStartOfToday();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
 
     if (entryDate < sevenDaysAgo) {
       throw new Error("Cannot log time entries older than 7 days");
