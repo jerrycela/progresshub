@@ -128,7 +128,7 @@ const changeAvatar = (): void => {
             </svg>
           </button>
         </div>
-        <p class="mt-3 text-sm" style="color: var(--text-muted)">點擊更換頭像</p>
+        <p v-if="isEditing" class="mt-3 text-sm" style="color: var(--text-muted)">點擊更換頭像</p>
       </div>
 
       <!-- 資料欄位 -->
