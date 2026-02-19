@@ -12,6 +12,7 @@ import {
 } from "../utils/response";
 import { sanitizeBody } from "../middleware/sanitize";
 import { toProjectDTO } from "../mappers";
+import { ErrorCodes } from "shared/types/api";
 
 const router = Router();
 
@@ -34,7 +35,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -71,14 +78,20 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const project = await projectService.getProjectById(req.params.id);
       if (!project) {
-        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
+        sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
         return;
       }
       sendSuccess(res, toProjectDTO(project));
@@ -99,7 +112,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -128,7 +147,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -162,7 +187,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -206,14 +237,20 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
+        sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
         return;
       }
 
@@ -259,14 +296,20 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const existing = await projectService.getProjectById(req.params.id);
       if (!existing) {
-        sendError(res, "PROJECT_NOT_FOUND", "Project not found", 404);
+        sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
         return;
       }
 

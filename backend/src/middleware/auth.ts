@@ -4,6 +4,7 @@ import { env } from "../config/env";
 import prisma from "../config/database";
 import { PermissionLevel } from "@prisma/client";
 import { sendError } from "../utils/response";
+import { ErrorCodes } from "shared/types/api";
 
 export interface JwtPayload {
   userId: string;
@@ -29,7 +30,7 @@ export const authenticate = async (
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      sendError(res, "AUTH_REQUIRED", "未提供認證 Token", 401);
+      sendError(res, ErrorCodes.AUTH_REQUIRED, "未提供認證 Token", 401);
       return;
     }
 
@@ -43,7 +44,7 @@ export const authenticate = async (
     });
 
     if (!user || !user.isActive) {
-      sendError(res, "AUTH_INVALID_TOKEN", "無效的認證 Token", 401);
+      sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
     }
 
@@ -57,14 +58,14 @@ export const authenticate = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      sendError(res, "AUTH_INVALID_TOKEN", "無效的認證 Token", 401);
+      sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
     }
     if (error instanceof jwt.TokenExpiredError) {
-      sendError(res, "AUTH_EXPIRED", "認證 Token 已過期", 401);
+      sendError(res, ErrorCodes.AUTH_EXPIRED, "認證 Token 已過期", 401);
       return;
     }
-    sendError(res, "AUTH_REQUIRED", "認證失敗", 500);
+    sendError(res, ErrorCodes.AUTH_REQUIRED, "認證失敗", 500);
   }
 };
 
@@ -75,12 +76,12 @@ export const authenticate = async (
 export const authorize = (...allowedRoles: PermissionLevel[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
+      sendError(res, ErrorCodes.AUTH_REQUIRED, "未通過認證", 401);
       return;
     }
 
     if (!allowedRoles.includes(req.user.permissionLevel)) {
-      sendError(res, "AUTH_FORBIDDEN", "權限不足", 403);
+      sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "權限不足", 403);
       return;
     }
 
@@ -99,7 +100,7 @@ export const authorizeTaskAccess = async (
   next: NextFunction,
 ): Promise<void> => {
   if (!req.user) {
-    sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
+    sendError(res, ErrorCodes.AUTH_REQUIRED, "未通過認證", 401);
     return;
   }
 
@@ -111,7 +112,7 @@ export const authorizeTaskAccess = async (
 
   const taskId = req.params.id;
   if (!taskId) {
-    sendError(res, "VALIDATION_ERROR", "Missing task ID", 400);
+    sendError(res, ErrorCodes.VALIDATION_FAILED, "Missing task ID", 400);
     return;
   }
 
@@ -121,7 +122,7 @@ export const authorizeTaskAccess = async (
   });
 
   if (!task) {
-    sendError(res, "TASK_NOT_FOUND", "任務不存在", 404);
+    sendError(res, ErrorCodes.TASK_NOT_FOUND, "任務不存在", 404);
     return;
   }
 
@@ -136,7 +137,7 @@ export const authorizeTaskAccess = async (
     return;
   }
 
-  sendError(res, "AUTH_FORBIDDEN", "您沒有權限修改此任務", 403);
+  sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "您沒有權限修改此任務", 403);
 };
 
 /**
@@ -149,7 +150,7 @@ export const authorizeSelfOrAdmin = (
   next: NextFunction,
 ): void => {
   if (!req.user) {
-    sendError(res, "AUTH_REQUIRED", "未通過認證", 401);
+    sendError(res, ErrorCodes.AUTH_REQUIRED, "未通過認證", 401);
     return;
   }
 
@@ -163,5 +164,5 @@ export const authorizeSelfOrAdmin = (
     return;
   }
 
-  sendError(res, "AUTH_FORBIDDEN", "您只能編輯自己的資料", 403);
+  sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "您只能編輯自己的資料", 403);
 };

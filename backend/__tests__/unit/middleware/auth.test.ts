@@ -146,7 +146,7 @@ describe('Auth Middleware', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(403);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: false,
-        error: { code: 'AUTH_FORBIDDEN', message: '權限不足' },
+        error: { code: 'AUTH_UNAUTHORIZED', message: '權限不足' },
       });
     });
 
