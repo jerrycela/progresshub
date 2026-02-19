@@ -489,7 +489,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
         <!-- 提示訊息 -->
         <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
           <p class="text-sm text-amber-600 dark:text-amber-400">
-            💡 暫停後，任務會標記為「暫停中」狀態。您可以隨時點擊「繼續」按鈕恢復任務。
+            暫停後，任務會標記為「暫停中」狀態。您可以隨時點擊「繼續」按鈕恢復任務。
           </p>
         </div>
       </div>
