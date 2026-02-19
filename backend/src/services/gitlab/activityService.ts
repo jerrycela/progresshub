@@ -8,6 +8,7 @@ import {
   BatchConvertActivitiesDto,
 } from "../../types/gitlab";
 import logger from "../../config/logger";
+import { AppError } from "../../middleware/errorHandler";
 
 export class GitLabActivityService {
   /**
@@ -20,7 +21,7 @@ export class GitLabActivityService {
     });
 
     if (!connection) {
-      throw new Error("Connection not found");
+      throw new AppError(404, "Connection not found");
     }
 
     const accessToken =
@@ -337,15 +338,15 @@ export class GitLabActivityService {
     });
 
     if (!activity) {
-      throw new Error("Activity not found");
+      throw new AppError(404, "Activity not found");
     }
 
     if (activity.connection.employeeId !== employeeId) {
-      throw new Error("Access denied");
+      throw new AppError(403, "Access denied");
     }
 
     if (activity.timeEntryId) {
-      throw new Error("Activity already converted");
+      throw new AppError(409, "Activity already converted");
     }
 
     // 需要一個專案來建立工時記錄
@@ -354,11 +355,14 @@ export class GitLabActivityService {
     if (data.taskId) {
       const task = await prisma.task.findUnique({ where: { id: data.taskId } });
       if (!task) {
-        throw new Error("Task not found");
+        throw new AppError(404, "Task not found");
       }
       projectId = task.projectId;
     } else {
-      throw new Error("taskId is required to convert activity to time entry");
+      throw new AppError(
+        400,
+        "taskId is required to convert activity to time entry",
+      );
     }
 
     // 建立工時記錄
@@ -440,16 +444,16 @@ export class GitLabActivityService {
     });
 
     if (!activity) {
-      throw new Error("Activity not found");
+      throw new AppError(404, "Activity not found");
     }
 
     if (activity.connection.employeeId !== employeeId) {
-      throw new Error("Access denied");
+      throw new AppError(403, "Access denied");
     }
 
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) {
-      throw new Error("Task not found");
+      throw new AppError(404, "Task not found");
     }
 
     await prisma.gitLabActivity.update({

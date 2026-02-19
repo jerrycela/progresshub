@@ -1,7 +1,7 @@
 import { Router, Response } from "express";
 import { body, param, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
-import { AuthRequest } from "../middleware/auth";
+import { AuthRequest, authorizeTaskAccess } from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
 import { TaskStatus } from "@prisma/client";
 import logger from "../config/logger";
@@ -17,6 +17,7 @@ const router = Router();
  */
 router.patch(
   "/:id/status",
+  authorizeTaskAccess,
   auditLog("UPDATE_TASK_STATUS"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
@@ -74,6 +75,7 @@ router.patch(
  */
 router.patch(
   "/:id/progress",
+  authorizeTaskAccess,
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("progress")

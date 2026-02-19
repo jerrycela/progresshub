@@ -1,7 +1,8 @@
-import prisma from '../../config/database';
-import { encrypt, decrypt } from '../../utils/gitlab/encryption';
-import { generateWebhookSecret } from '../../utils/gitlab/webhookVerifier';
-import { CreateInstanceDto, UpdateInstanceDto } from '../../types/gitlab';
+import prisma from "../../config/database";
+import { encrypt, decrypt } from "../../utils/gitlab/encryption";
+import { generateWebhookSecret } from "../../utils/gitlab/webhookVerifier";
+import { CreateInstanceDto, UpdateInstanceDto } from "../../types/gitlab";
+import { AppError } from "../../middleware/errorHandler";
 
 export class GitLabInstanceService {
   /**
@@ -25,7 +26,7 @@ export class GitLabInstanceService {
           select: { connections: true },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: "asc" },
     });
 
     return instances;
@@ -65,7 +66,9 @@ export class GitLabInstanceService {
     return {
       ...instance,
       clientSecret: decrypt(instance.clientSecret),
-      webhookSecret: instance.webhookSecret ? decrypt(instance.webhookSecret) : undefined,
+      webhookSecret: instance.webhookSecret
+        ? decrypt(instance.webhookSecret)
+        : undefined,
     };
   }
 
@@ -79,7 +82,7 @@ export class GitLabInstanceService {
     });
 
     if (existing) {
-      throw new Error('GitLab instance with this URL already exists');
+      throw new AppError(409, "GitLab instance with this URL already exists");
     }
 
     // 加密敏感資料
@@ -90,7 +93,7 @@ export class GitLabInstanceService {
     const instance = await prisma.gitLabInstance.create({
       data: {
         name: data.name,
-        baseUrl: data.baseUrl.replace(/\/$/, ''), // 移除尾部斜線
+        baseUrl: data.baseUrl.replace(/\/$/, ""), // 移除尾部斜線
         clientId: data.clientId,
         clientSecret: encryptedClientSecret,
         webhookSecret: encryptedWebhookSecret,
@@ -110,7 +113,7 @@ export class GitLabInstanceService {
   async updateInstance(id: string, data: UpdateInstanceDto) {
     const existing = await prisma.gitLabInstance.findUnique({ where: { id } });
     if (!existing) {
-      throw new Error('GitLab instance not found');
+      throw new AppError(404, "GitLab instance not found");
     }
 
     const updateData: Record<string, unknown> = {};
@@ -154,13 +157,14 @@ export class GitLabInstanceService {
     });
 
     if (!existing) {
-      throw new Error('GitLab instance not found');
+      throw new AppError(404, "GitLab instance not found");
     }
 
     if (existing._count.connections > 0) {
-      throw new Error(
+      throw new AppError(
+        409,
         `Cannot delete instance with ${existing._count.connections} active connections. ` +
-          'Please disconnect all users first.'
+          "Please disconnect all users first.",
       );
     }
 
@@ -185,27 +189,29 @@ export class GitLabInstanceService {
   /**
    * 驗證實例連線
    */
-  async testConnection(id: string): Promise<{ success: boolean; message: string }> {
+  async testConnection(
+    id: string,
+  ): Promise<{ success: boolean; message: string }> {
     const instance = await this.getInstanceWithSecrets(id);
     if (!instance) {
-      return { success: false, message: 'Instance not found' };
+      return { success: false, message: "Instance not found" };
     }
 
     try {
       // 嘗試存取 GitLab API（無需認證的端點）
       const response = await fetch(`${instance.baseUrl}/api/v4/version`);
       if (response.ok) {
-        const data = await response.json() as { version: string };
+        const data = (await response.json()) as { version: string };
         return {
           success: true,
           message: `Connected to GitLab ${data.version}`,
         };
       }
-      return { success: false, message: 'Failed to connect to GitLab API' };
+      return { success: false, message: "Failed to connect to GitLab API" };
     } catch (error) {
       return {
         success: false,
-        message: `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Connection error: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
   }

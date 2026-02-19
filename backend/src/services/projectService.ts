@@ -1,5 +1,6 @@
 import prisma from "../config/database";
 import { Project, ProjectStatus, Prisma } from "@prisma/client";
+import { AppError } from "../middleware/errorHandler";
 
 export interface CreateProjectDto {
   name: string;
@@ -131,7 +132,8 @@ export class ProjectService {
     });
 
     if (activeTasks > 0) {
-      throw new Error(
+      throw new AppError(
+        409,
         `無法刪除專案：仍有 ${activeTasks} 個進行中的任務。請先完成或取消這些任務。`,
       );
     }
@@ -206,7 +208,7 @@ export class ProjectService {
     });
 
     if (!project) {
-      throw new Error("Project not found");
+      throw new AppError(404, "Project not found");
     }
 
     const tasks = project.tasks.map((task) => ({

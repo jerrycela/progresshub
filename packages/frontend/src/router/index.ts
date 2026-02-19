@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw, RouteLocationNormalized } from 'vue-router'
 import type { UserRole } from 'shared/types'
+import { useToast } from '@/composables/useToast'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -202,10 +203,13 @@ router.beforeEach(async (to, _from, next) => {
         )
       }
 
+      // 顯示權限不足提示
+      const { showError } = useToast()
+      showError('你沒有權限訪問該頁面')
+
       // 導向首頁並顯示提示（可改為專門的 403 頁面）
       return next({
         path: '/dashboard',
-        query: { error: 'permission_denied' },
       })
     }
   }

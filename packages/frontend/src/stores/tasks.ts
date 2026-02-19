@@ -29,6 +29,7 @@ export const useTaskStore = defineStore('tasks', () => {
   // Loading 狀態（細粒度）
   const loading = ref({
     fetch: false,
+    fetchPoolTasks: false,
     create: false,
     claim: {} as Record<string, boolean>,
     unclaim: {} as Record<string, boolean>,
@@ -128,7 +129,7 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const fetchPoolTasks = async (): Promise<ActionResult<PoolTask[]>> => {
-    loading.value.fetch = true
+    loading.value.fetchPoolTasks = true
     error.value = null
 
     try {
@@ -145,7 +146,7 @@ export const useTaskStore = defineStore('tasks', () => {
         error: { code: 'UNKNOWN_ERROR', message },
       }
     } finally {
-      loading.value.fetch = false
+      loading.value.fetchPoolTasks = false
     }
   }
 

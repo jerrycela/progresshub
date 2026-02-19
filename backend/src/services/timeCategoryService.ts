@@ -1,4 +1,5 @@
-import prisma from '../config/database';
+import prisma from "../config/database";
+import { AppError } from "../middleware/errorHandler";
 
 export interface CreateTimeCategoryDto {
   name: string;
@@ -23,7 +24,7 @@ export class TimeCategoryService {
     const where = includeInactive ? {} : { isActive: true };
     return prisma.timeCategory.findMany({
       where,
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     });
   }
 
@@ -45,13 +46,13 @@ export class TimeCategoryService {
       where: { name: data.name },
     });
     if (existing) {
-      throw new Error('Category name already exists');
+      throw new AppError(409, "Category name already exists");
     }
 
     return prisma.timeCategory.create({
       data: {
         name: data.name,
-        color: data.color || '#3B82F6',
+        color: data.color || "#3B82F6",
         billable: data.billable ?? true,
         sortOrder: data.sortOrder || 0,
       },
@@ -64,7 +65,7 @@ export class TimeCategoryService {
   async updateCategory(id: string, data: UpdateTimeCategoryDto) {
     const existing = await prisma.timeCategory.findUnique({ where: { id } });
     if (!existing) {
-      throw new Error('Category not found');
+      throw new AppError(404, "Category not found");
     }
 
     // 如果更改名稱，檢查是否與其他類別重複
@@ -73,7 +74,7 @@ export class TimeCategoryService {
         where: { name: data.name },
       });
       if (duplicate) {
-        throw new Error('Category name already exists');
+        throw new AppError(409, "Category name already exists");
       }
     }
 
@@ -89,7 +90,7 @@ export class TimeCategoryService {
   async deactivateCategory(id: string) {
     const existing = await prisma.timeCategory.findUnique({ where: { id } });
     if (!existing) {
-      throw new Error('Category not found');
+      throw new AppError(404, "Category not found");
     }
 
     return prisma.timeCategory.update({
@@ -104,7 +105,7 @@ export class TimeCategoryService {
   async activateCategory(id: string) {
     const existing = await prisma.timeCategory.findUnique({ where: { id } });
     if (!existing) {
-      throw new Error('Category not found');
+      throw new AppError(404, "Category not found");
     }
 
     return prisma.timeCategory.update({
@@ -123,11 +124,14 @@ export class TimeCategoryService {
     });
 
     if (!existing) {
-      throw new Error('Category not found');
+      throw new AppError(404, "Category not found");
     }
 
     if (existing._count.timeEntries > 0) {
-      throw new Error('Cannot delete category with existing time entries. Deactivate instead.');
+      throw new AppError(
+        409,
+        "Cannot delete category with existing time entries. Deactivate instead.",
+      );
     }
 
     await prisma.timeCategory.delete({ where: { id } });
@@ -138,12 +142,12 @@ export class TimeCategoryService {
    */
   async initializeDefaultCategories() {
     const defaultCategories = [
-      { name: '開發', color: '#3B82F6', billable: true, sortOrder: 1 },
-      { name: '測試', color: '#10B981', billable: true, sortOrder: 2 },
-      { name: '會議', color: '#F59E0B', billable: true, sortOrder: 3 },
-      { name: '文件', color: '#8B5CF6', billable: true, sortOrder: 4 },
-      { name: '研究', color: '#EC4899', billable: true, sortOrder: 5 },
-      { name: '其他', color: '#6B7280', billable: false, sortOrder: 99 },
+      { name: "開發", color: "#3B82F6", billable: true, sortOrder: 1 },
+      { name: "測試", color: "#10B981", billable: true, sortOrder: 2 },
+      { name: "會議", color: "#F59E0B", billable: true, sortOrder: 3 },
+      { name: "文件", color: "#8B5CF6", billable: true, sortOrder: 4 },
+      { name: "研究", color: "#EC4899", billable: true, sortOrder: 5 },
+      { name: "其他", color: "#6B7280", billable: false, sortOrder: 99 },
     ];
 
     for (const category of defaultCategories) {

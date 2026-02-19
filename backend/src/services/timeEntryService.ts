@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
 import { getStartOfToday, getStartOfDay } from "../utils/dateUtils";
+import { AppError } from "../middleware/errorHandler";
 
 type TransactionClient = Omit<
   typeof prisma,
@@ -173,7 +174,7 @@ export class TimeEntryService {
     // 使用 $transaction 防止 TOCTOU 競態條件
     return prisma.$transaction(async (tx) => {
       const existing = await tx.timeEntry.findUnique({ where: { id } });
-      if (!existing) throw new Error("Time entry not found");
+      if (!existing) throw new AppError(404, "Time entry not found");
 
       return tx.timeEntry.update({
         where: { id },
@@ -201,7 +202,7 @@ export class TimeEntryService {
     // 使用 $transaction 防止 TOCTOU 競態條件
     await prisma.$transaction(async (tx) => {
       const existing = await tx.timeEntry.findUnique({ where: { id } });
-      if (!existing) throw new Error("Time entry not found");
+      if (!existing) throw new AppError(404, "Time entry not found");
 
       await tx.timeEntry.delete({ where: { id } });
     });
@@ -317,12 +318,12 @@ export class TimeEntryService {
 
     // BR-01: 最小單位 0.25 小時
     if (data.hours % 0.25 !== 0) {
-      throw new Error("Hours must be in increments of 0.25");
+      throw new AppError(400, "Hours must be in increments of 0.25");
     }
 
     // BR-02: 單筆上限 12 小時
     if (data.hours > 12) {
-      throw new Error("Single entry cannot exceed 12 hours");
+      throw new AppError(400, "Single entry cannot exceed 12 hours");
     }
 
     // BR-03: 單日總工時上限 16 小時
@@ -336,7 +337,7 @@ export class TimeEntryService {
 
     const currentTotal = Number(existingTotal._sum.hours || 0);
     if (currentTotal + data.hours > 16) {
-      throw new Error("Daily total cannot exceed 16 hours");
+      throw new AppError(400, "Daily total cannot exceed 16 hours");
     }
 
     // BR-04: 只能登記過去 7 天內的工時，且不允許未來日期
@@ -345,14 +346,14 @@ export class TimeEntryService {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
     if (entryDate > endOfToday) {
-      throw new Error("Cannot log time entries for future dates");
+      throw new AppError(400, "Cannot log time entries for future dates");
     }
 
     const sevenDaysAgo = getStartOfToday();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     if (entryDate < sevenDaysAgo) {
-      throw new Error("Cannot log time entries older than 7 days");
+      throw new AppError(400, "Cannot log time entries older than 7 days");
     }
   }
 }

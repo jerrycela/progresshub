@@ -257,7 +257,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
     <!-- 任務列表 -->
     <div class="space-y-4">
       <!-- Loading skeleton -->
-      <template v-if="taskStore.loading.fetch">
+      <template v-if="taskStore.loading.fetchPoolTasks">
         <div v-for="i in 3" :key="i" class="card p-5 animate-pulse">
           <div class="flex items-center gap-2 mb-3">
             <div class="h-5 w-16 bg-[var(--bg-tertiary)] rounded-full" />

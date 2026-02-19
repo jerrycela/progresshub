@@ -5,6 +5,7 @@ import prisma from "../config/database";
 import { env } from "../config/env";
 import { Employee, PermissionLevel } from "@prisma/client";
 import { toUserDTO, UserDTO } from "../mappers";
+import { AppError } from "../middleware/errorHandler";
 
 // FIXME: OAuth state 使用 In-Memory Map，在多進程/多節點/重啟時會失效。
 // 影響：使用者在節點 A 產生 state，但 callback 打到節點 B 時會驗證失敗。
@@ -45,7 +46,10 @@ export class AuthService {
     }
 
     if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
-      throw new Error("OAuth state storage is full, please try again later");
+      throw new AppError(
+        503,
+        "OAuth state storage is full, please try again later",
+      );
     }
 
     const state = crypto.randomBytes(32).toString("hex");
@@ -83,14 +87,15 @@ export class AuthService {
     );
 
     if (!tokenResponse.data.ok) {
-      throw new Error(
+      throw new AppError(
+        502,
         `Slack OAuth failed: ${tokenResponse.data.error || "unknown error"}`,
       );
     }
 
     const { authed_user } = tokenResponse.data;
     if (!authed_user?.id) {
-      throw new Error("Slack OAuth: missing user identity");
+      throw new AppError(502, "Slack OAuth: missing user identity");
     }
 
     // Get user profile from Slack
@@ -156,7 +161,7 @@ export class AuthService {
     });
 
     if (!employee) {
-      throw new Error(`Employee with email ${email} not found`);
+      throw new AppError(404, `Employee with email ${email} not found`);
     }
 
     return this.completeDevLogin(employee);
@@ -171,7 +176,7 @@ export class AuthService {
     });
 
     if (!employee) {
-      throw new Error(`Employee with ID ${employeeId} not found`);
+      throw new AppError(404, `Employee with ID ${employeeId} not found`);
     }
 
     return this.completeDevLogin(employee);
@@ -179,7 +184,7 @@ export class AuthService {
 
   private async completeDevLogin(employee: Employee): Promise<LoginResult> {
     if (!employee.isActive) {
-      throw new Error("Account is disabled");
+      throw new AppError(403, "Account is disabled");
     }
 
     await prisma.employee.update({
@@ -274,18 +279,18 @@ export class AuthService {
     };
 
     if (decoded.type !== "refresh") {
-      throw new Error("Invalid token type");
+      throw new AppError(401, "Invalid token type");
     }
 
     // Check if the token is in the store (not revoked)
     const stored = refreshTokenStore.get(token);
     if (!stored) {
-      throw new Error("Refresh token has been revoked or is invalid");
+      throw new AppError(401, "Refresh token has been revoked or is invalid");
     }
 
     if (Date.now() > stored.expiresAt) {
       refreshTokenStore.delete(token);
-      throw new Error("Refresh token has expired");
+      throw new AppError(401, "Refresh token has expired");
     }
 
     return { userId: decoded.userId };
@@ -324,7 +329,7 @@ export class AuthService {
 
     if (!employee || !employee.isActive) {
       this.revokeRefreshToken(refreshToken);
-      throw new Error("User not found or account is disabled");
+      throw new AppError(401, "User not found or account is disabled");
     }
 
     // Revoke old refresh token and issue a new one (token rotation)

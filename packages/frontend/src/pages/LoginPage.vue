@@ -2,11 +2,13 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import Button from '@/components/common/Button.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const { showError } = useToast()
 const isLoading = ref(false)
 
 const redirectAfterLogin = () => {
@@ -21,6 +23,9 @@ const handleSlackLogin = async () => {
     const result = await authStore.login()
     if (result.success) {
       redirectAfterLogin()
+    } else {
+      const message = result.error?.message || '登入失敗，請稍後再試'
+      showError(message)
     }
   } finally {
     isLoading.value = false
@@ -34,6 +39,9 @@ const handleDemoLogin = async () => {
     const result = await authStore.demoLogin()
     if (result.success) {
       redirectAfterLogin()
+    } else {
+      const message = result.error?.message || 'Demo 登入失敗，請稍後再試'
+      showError(message)
     }
   } finally {
     isLoading.value = false

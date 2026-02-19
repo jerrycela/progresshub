@@ -202,6 +202,10 @@ router.post(
     body("estimatedHours").optional().isFloat({ min: 0 }),
     body("dependsOnTaskIds").optional().isArray(),
     body("dependsOnTaskIds.*").optional().isString().trim().notEmpty(),
+    body("sourceType")
+      .optional()
+      .isIn(["SELF_CREATED", "ASSIGNED", "POOL"])
+      .withMessage("sourceType must be SELF_CREATED, ASSIGNED, or POOL"),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -228,6 +232,7 @@ router.post(
         estimatedHours: req.body.estimatedHours,
         dependencies: req.body.dependsOnTaskIds,
         creatorId: req.user?.userId,
+        sourceType: req.body.sourceType,
       });
       sendSuccess(res, toTaskDTO(task), 201);
     } catch (error) {
@@ -323,6 +328,15 @@ router.delete(
       await taskService.deleteTask(req.params.id);
       res.status(204).end();
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(
+          res,
+          error.errorCode || "TASK_DELETE_FAILED",
+          error.message,
+          error.statusCode,
+        );
+        return;
+      }
       logger.error("Delete task error:", error);
       sendError(res, "TASK_DELETE_FAILED", "Failed to delete task", 500);
     }

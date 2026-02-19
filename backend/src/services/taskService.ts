@@ -65,6 +65,7 @@ export interface CreateTaskDto {
   milestoneId?: string;
   estimatedHours?: number;
   creatorId?: string;
+  sourceType?: "SELF_CREATED" | "ASSIGNED" | "POOL";
 }
 
 export interface UpdateTaskDto {
@@ -208,13 +209,26 @@ export class TaskService {
       }
     }
 
+    // 根據 sourceType 決定初始狀態和負責人
+    let status: TaskStatus;
+    let assignedToId: string | undefined = data.assignedToId;
+
+    if (data.sourceType === "SELF_CREATED") {
+      status = "CLAIMED";
+      assignedToId = data.creatorId; // 自建任務指派給自己
+    } else if (assignedToId) {
+      status = "CLAIMED";
+    } else {
+      status = "UNCLAIMED";
+    }
+
     return prisma.task.create({
       data: {
         projectId: data.projectId,
         name: data.name,
         description: data.description,
         priority: data.priority || "MEDIUM",
-        assignedToId: data.assignedToId,
+        assignedToId,
         collaborators: data.collaborators || [],
         functionTags: data.functionTags || [],
         plannedStartDate: data.plannedStartDate
@@ -227,7 +241,7 @@ export class TaskService {
         milestoneId: data.milestoneId,
         estimatedHours: data.estimatedHours,
         creatorId: data.creatorId,
-        status: data.assignedToId ? "CLAIMED" : "UNCLAIMED",
+        status,
       },
       include: TASK_INCLUDE,
     });

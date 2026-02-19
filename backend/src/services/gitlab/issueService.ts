@@ -3,6 +3,7 @@ import { SyncDirection, TaskStatus } from "@prisma/client";
 import { createGitLabClient } from "../../utils/gitlab/apiClient";
 import { gitLabOAuthService } from "./oauthService";
 import { CreateIssueMappingDto } from "../../types/gitlab";
+import { AppError } from "../../middleware/errorHandler";
 
 export class GitLabIssueService {
   /**
@@ -48,13 +49,13 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error("Connection not found or access denied");
+      throw new AppError(404, "Connection not found or access denied");
     }
 
     // 驗證任務存在
     const task = await prisma.task.findUnique({ where: { id: data.taskId } });
     if (!task) {
-      throw new Error("Task not found");
+      throw new AppError(404, "Task not found");
     }
 
     // 檢查是否已存在對應
@@ -68,7 +69,7 @@ export class GitLabIssueService {
     });
 
     if (existingByIssue) {
-      throw new Error("This GitLab issue is already mapped to a task");
+      throw new AppError(409, "This GitLab issue is already mapped to a task");
     }
 
     const existingByTask = await prisma.gitLabIssueMapping.findUnique({
@@ -76,7 +77,7 @@ export class GitLabIssueService {
     });
 
     if (existingByTask) {
-      throw new Error("This task is already mapped to a GitLab issue");
+      throw new AppError(409, "This task is already mapped to a GitLab issue");
     }
 
     // 取得 Issue 資訊
@@ -115,7 +116,7 @@ export class GitLabIssueService {
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error("Mapping not found or access denied");
+      throw new AppError(404, "Mapping not found or access denied");
     }
 
     await prisma.gitLabIssueMapping.delete({ where: { id: mappingId } });
@@ -134,11 +135,14 @@ export class GitLabIssueService {
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error("Mapping not found or access denied");
+      throw new AppError(404, "Mapping not found or access denied");
     }
 
     if (mapping.syncDirection === "TASK_TO_GITLAB") {
-      throw new Error("Sync direction does not allow GitLab to Task sync");
+      throw new AppError(
+        400,
+        "Sync direction does not allow GitLab to Task sync",
+      );
     }
 
     const accessToken = await gitLabOAuthService.getValidAccessToken(
@@ -184,11 +188,14 @@ export class GitLabIssueService {
     });
 
     if (!mapping || mapping.connection.employeeId !== employeeId) {
-      throw new Error("Mapping not found or access denied");
+      throw new AppError(404, "Mapping not found or access denied");
     }
 
     if (mapping.syncDirection === "GITLAB_TO_TASK") {
-      throw new Error("Sync direction does not allow Task to GitLab sync");
+      throw new AppError(
+        400,
+        "Sync direction does not allow Task to GitLab sync",
+      );
     }
 
     const accessToken = await gitLabOAuthService.getValidAccessToken(
@@ -229,7 +236,7 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error("Connection not found or access denied");
+      throw new AppError(404, "Connection not found or access denied");
     }
 
     const task = await prisma.task.findUnique({
@@ -238,7 +245,7 @@ export class GitLabIssueService {
     });
 
     if (!task) {
-      throw new Error("Task not found");
+      throw new AppError(404, "Task not found");
     }
 
     // 檢查任務是否已有對應
@@ -247,7 +254,7 @@ export class GitLabIssueService {
     });
 
     if (existing) {
-      throw new Error("Task is already mapped to a GitLab issue");
+      throw new AppError(409, "Task is already mapped to a GitLab issue");
     }
 
     const accessToken =
@@ -289,7 +296,7 @@ export class GitLabIssueService {
     });
 
     if (!connection || connection.employeeId !== employeeId) {
-      throw new Error("Connection not found or access denied");
+      throw new AppError(404, "Connection not found or access denied");
     }
 
     const accessToken =

@@ -1,6 +1,6 @@
 import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
-import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPut, apiDelete } from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPutUnwrap, apiDelete } from './api'
 import { mockDelay } from '@/utils/mockDelay'
 
 export interface StatusUpdatePayload {
@@ -172,14 +172,23 @@ class MockTaskService implements TaskServiceInterface {
 
 class ApiTaskService implements TaskServiceInterface {
   private toPoolTask(task: Task): PoolTask {
+    // 推導 sourceType：creatorId === assigneeId 為自建；有 assigneeId 為指派；否則為任務池
+    const sourceType: import('shared/types').TaskSourceType =
+      task.creatorId && task.assigneeId && task.creatorId === task.assigneeId
+        ? 'SELF_CREATED'
+        : task.assigneeId
+          ? 'ASSIGNED'
+          : 'POOL'
+
     return {
       ...task,
-      sourceType: task.assigneeId ? 'ASSIGNED' : 'POOL',
+      sourceType,
       createdBy: task.creator
         ? { id: task.creator.id, name: task.creator.name }
         : { id: '', name: '未知' },
       department: undefined,
       canEdit: true,
+      // 只有任務建立者或 PM/ADMIN 可刪除；前端 service 無角色資訊，保守設為 false
       canDelete: false,
       collaboratorNames: [],
     }
@@ -255,11 +264,8 @@ class ApiTaskService implements TaskServiceInterface {
     if (input.progress !== undefined) backendPayload.progressPercentage = input.progress
     if (input.status !== undefined) backendPayload.status = input.status
 
-    const response = await apiPut<{ success: boolean; data: Task }>(
-      `/tasks/${taskId}`,
-      backendPayload,
-    )
-    return { success: true, data: response.data }
+    const data = await apiPutUnwrap<Task>(`/tasks/${taskId}`, backendPayload)
+    return { success: true, data }
   }
 }
 

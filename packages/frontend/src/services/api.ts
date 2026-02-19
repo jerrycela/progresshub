@@ -45,8 +45,53 @@ api.interceptors.request.use(
 )
 
 // ============================================
+// Token Refresh 狀態管理
+// 防止並發 refresh 請求
+// ============================================
+
+type QueueItem = {
+  resolve: (token: string) => void
+  reject: (error: unknown) => void
+}
+
+let isRefreshing = false
+let failedQueue: QueueItem[] = []
+
+const processQueue = (error: unknown, token: string | null): void => {
+  failedQueue.forEach(item => {
+    if (error) {
+      item.reject(error)
+    } else {
+      item.resolve(token as string)
+    }
+  })
+  failedQueue = []
+}
+
+const forceLogout = async (): Promise<void> => {
+  localStorage.removeItem('auth_token')
+  localStorage.removeItem('auth_refresh_token')
+
+  try {
+    const { default: router } = await import('@/router')
+    const currentPath = router.currentRoute.value.fullPath
+
+    if (currentPath !== '/login') {
+      await router.push({
+        path: '/login',
+        query: { redirect: currentPath },
+      })
+    }
+  } catch {
+    window.location.href = '/login'
+  }
+
+  showErrorToast('登入已過期，請重新登入')
+}
+
+// ============================================
 // Response Interceptor
-// 統一錯誤處理：401 導向登入、其他錯誤 toast 通知
+// 統一錯誤處理：401 自動 refresh → 導向登入、其他錯誤 toast 通知
 // ============================================
 
 api.interceptors.response.use(
@@ -61,38 +106,105 @@ api.interceptors.response.use(
 
     const status = error.response?.status
     const responseData = error.response?.data
+    const originalRequest = error.config
 
-    // 401 未認證 → 清除 token，透過 router 導向登入頁
+    // 401 未認證 → Mock 模式直接登出；API 模式先嘗試 refresh
     if (status === 401) {
-      localStorage.removeItem('auth_token')
+      // Mock 模式、refresh 請求本身、登入請求 → 直接登出不嘗試 refresh
+      const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh')
+      const isLoginRequest =
+        originalRequest?.url?.includes('/auth/dev-login') ||
+        originalRequest?.url?.includes('/auth/slack')
+      const isMockMode = import.meta.env.VITE_USE_MOCK === 'true'
 
-      // 動態載入 router 避免循環依賴
-      try {
-        const { default: router } = await import('@/router')
-        const currentPath = router.currentRoute.value.fullPath
-
-        // 避免重複導向登入頁
-        if (currentPath !== '/login') {
-          await router.push({
-            path: '/login',
-            query: { redirect: currentPath },
-          })
-        }
-      } catch {
-        // router 載入失敗時的降級方案
-        window.location.href = '/login'
+      if (isMockMode || isRefreshRequest || isLoginRequest) {
+        await forceLogout()
+        return Promise.reject(
+          new ApiError({
+            message: '登入已過期，請重新登入',
+            statusCode: 401,
+            errorCode: responseData?.code || 'AUTH_EXPIRED',
+          }),
+        )
       }
 
-      // 顯示認證過期的 toast 通知
-      showErrorToast('登入已過期，請重新登入')
+      const refreshToken = localStorage.getItem('auth_refresh_token')
 
-      return Promise.reject(
-        new ApiError({
-          message: '登入已過期，請重新登入',
-          statusCode: 401,
-          errorCode: responseData?.code || 'AUTH_EXPIRED',
-        }),
-      )
+      // 沒有 refresh token → 直接登出
+      if (!refreshToken) {
+        await forceLogout()
+        return Promise.reject(
+          new ApiError({
+            message: '登入已過期，請重新登入',
+            statusCode: 401,
+            errorCode: responseData?.code || 'AUTH_EXPIRED',
+          }),
+        )
+      }
+
+      // 已有 refresh 進行中 → 加入等候隊列
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then(newToken => {
+          if (originalRequest) {
+            originalRequest.headers = originalRequest.headers ?? {}
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`
+            return api(originalRequest)
+          }
+        })
+      }
+
+      // 發起 refresh
+      isRefreshing = true
+
+      try {
+        const response = await axios.post<{
+          success: boolean
+          data: { token: string; refreshToken: string }
+        }>(
+          `${api.defaults.baseURL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' } },
+        )
+
+        const { token: newToken, refreshToken: newRefreshToken } = response.data.data
+
+        localStorage.setItem('auth_token', newToken)
+        localStorage.setItem('auth_refresh_token', newRefreshToken)
+
+        // 同步更新 authStore（若已初始化）
+        try {
+          const { useAuthStore } = await import('@/stores/auth')
+          const authStore = useAuthStore()
+          // 重新取得使用者資訊以確保 store 狀態同步
+          if (!authStore.user) {
+            await authStore.initAuth()
+          }
+        } catch {
+          // store 更新失敗不影響主流程
+        }
+
+        processQueue(null, newToken)
+
+        if (originalRequest) {
+          originalRequest.headers = originalRequest.headers ?? {}
+          originalRequest.headers['Authorization'] = `Bearer ${newToken}`
+          return api(originalRequest)
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        await forceLogout()
+        return Promise.reject(
+          new ApiError({
+            message: '登入已過期，請重新登入',
+            statusCode: 401,
+            errorCode: 'AUTH_EXPIRED',
+          }),
+        )
+      } finally {
+        isRefreshing = false
+      }
     }
 
     // 403 權限不足

@@ -300,6 +300,45 @@ describe('TaskService', () => {
 
       expect(mockedPrisma.task.create).toHaveBeenCalled();
     });
+
+    it('SELF_CREATED 時應設為 CLAIMED 且 assignedToId 為 creatorId', async () => {
+      (mockedPrisma.task.create as jest.Mock).mockResolvedValue(mockTaskWithRelations);
+
+      await service.createTask({
+        projectId: 'proj-001',
+        name: '自建任務',
+        sourceType: 'SELF_CREATED',
+        creatorId: 'emp-001',
+      });
+
+      expect(mockedPrisma.task.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'CLAIMED',
+            assignedToId: 'emp-001',
+          }),
+        }),
+      );
+    });
+
+    it('POOL sourceType 且無 assigneeId 時應設為 UNCLAIMED', async () => {
+      (mockedPrisma.task.create as jest.Mock).mockResolvedValue(mockTaskWithRelations);
+
+      await service.createTask({
+        projectId: 'proj-001',
+        name: '任務池任務',
+        sourceType: 'POOL',
+        creatorId: 'emp-001',
+      });
+
+      expect(mockedPrisma.task.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: 'UNCLAIMED',
+          }),
+        }),
+      );
+    });
   });
 
   describe('updateTask', () => {
