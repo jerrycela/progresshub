@@ -51,7 +51,7 @@ const roles: RoleDefinition[] = [
     id: 'ADMIN',
     label: '管理員',
     description: '系統管理員，擁有所有權限',
-    color: 'red',
+    color: 'indigo',
     icon: 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
   },
 ]
@@ -150,6 +150,7 @@ const getRoleColorClass = (color: string, isSelected: boolean): string => {
     purple: 'bg-purple-50 border-purple-500 dark:bg-purple-900/20',
     orange: 'bg-orange-50 border-orange-500 dark:bg-orange-900/20',
     red: 'bg-red-50 border-red-500 dark:bg-red-900/20',
+    indigo: 'bg-indigo-50 border-indigo-500 dark:bg-indigo-900/20',
   }
   return colorMap[color] || ''
 }
@@ -162,6 +163,7 @@ const getRoleIconColorClass = (color: string, isSelected: boolean): string => {
     purple: 'text-purple-600 dark:text-purple-400',
     orange: 'text-orange-600 dark:text-orange-400',
     red: 'text-red-600 dark:text-red-400',
+    indigo: 'text-indigo-600 dark:text-indigo-400',
   }
   return colorMap[color] || ''
 }
@@ -172,6 +174,7 @@ const getRoleBadgeClass = (color: string): string => {
     purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
     orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
     red: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    indigo: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
   }
   return colorMap[color] || ''
 }

@@ -42,6 +42,7 @@ const goToSettings = (): void => {
       <button
         class="lg:hidden p-2 -ml-2 rounded-md transition-colors duration-150 hover-bg"
         style="color: var(--text-secondary)"
+        aria-label="開啟選單"
         @click="emit('toggle-sidebar')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,6 +82,7 @@ const goToSettings = (): void => {
         class="p-2 rounded-md transition-colors duration-150 hover-bg"
         style="color: var(--text-secondary)"
         :title="isDark ? '切換到淺色模式' : '切換到深色模式'"
+        aria-label="切換深色模式"
         @click="toggleTheme"
       >
         <!-- 太陽圖示 (Light mode) -->
@@ -101,26 +103,6 @@ const goToSettings = (): void => {
             d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
           />
         </svg>
-      </button>
-
-      <!-- 通知鈴鐺 -->
-      <button
-        class="relative p-2 rounded-md transition-colors duration-150 hover-bg"
-        style="color: var(--text-secondary)"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-        <!-- 通知紅點 -->
-        <span
-          class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-          style="background-color: var(--accent)"
-        />
       </button>
 
       <!-- 使用者資訊（可點擊導向設定頁） -->

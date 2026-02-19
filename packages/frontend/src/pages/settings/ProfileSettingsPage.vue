@@ -128,7 +128,7 @@ const changeAvatar = (): void => {
             </svg>
           </button>
         </div>
-        <p class="mt-3 text-sm" style="color: var(--text-muted)">點擊更換頭像</p>
+        <p v-if="isEditing" class="mt-3 text-sm" style="color: var(--text-muted)">點擊更換頭像</p>
       </div>
 
       <!-- 資料欄位 -->
@@ -144,7 +144,7 @@ const changeAvatar = (): void => {
               v-if="isEditing"
               v-model="formData.name"
               type="text"
-              class="input-field w-full"
+              class="input w-full"
               placeholder="請輸入姓名"
             />
             <p v-else class="py-2" style="color: var(--text-primary)">
@@ -161,7 +161,7 @@ const changeAvatar = (): void => {
               v-if="isEditing"
               v-model="formData.email"
               type="email"
-              class="input-field w-full"
+              class="input w-full"
               placeholder="請輸入 Email"
             />
             <p v-else class="py-2" style="color: var(--text-primary)">

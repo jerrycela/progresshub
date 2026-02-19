@@ -8,6 +8,7 @@ import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import type { TaskSourceType } from 'shared/types'
 import { useToast } from '@/composables/useToast'
+import { roleLabels } from '@/constants/labels'
 import TaskForm from '@/components/task/TaskForm.vue'
 import type { TaskFormData } from '@/components/task/TaskForm.vue'
 import TaskRelationSelector from '@/components/task/TaskRelationSelector.vue'
@@ -124,6 +125,7 @@ const handleCancel = (): void => {
       <button
         class="p-2 rounded-lg transition-colors cursor-pointer"
         style="background-color: var(--bg-tertiary)"
+        aria-label="返回"
         @click="handleCancel"
       >
         <svg
@@ -144,7 +146,9 @@ const handleCancel = (): void => {
       <div>
         <h1 class="text-2xl font-bold" style="color: var(--text-primary)">建立任務</h1>
         <p class="text-sm mt-1" style="color: var(--text-secondary)">
-          建立者: {{ authStore.user?.name }} ({{ authStore.user?.role }})
+          建立者: {{ authStore.user?.name }} ({{
+            roleLabels[authStore.user?.role ?? ''] || authStore.user?.role
+          }})
         </p>
       </div>
     </div>

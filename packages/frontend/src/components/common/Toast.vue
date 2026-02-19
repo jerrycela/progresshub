@@ -82,6 +82,7 @@ const handleClose = (toast: ToastItem) => {
         <button
           type="button"
           class="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+          aria-label="關閉通知"
           @click="handleClose(toast)"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

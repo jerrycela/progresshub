@@ -102,7 +102,7 @@ const closeDropdown = (): void => {
     <!-- 下拉選單觸發器 -->
     <button
       type="button"
-      class="input-field w-full text-left flex items-center justify-between cursor-pointer transition-all duration-150"
+      class="input w-full text-left flex items-center justify-between cursor-pointer transition-all duration-150"
       :class="{ 'ring-2 ring-[var(--accent-primary)]': isOpen }"
       @click="toggleDropdown"
     >
@@ -133,7 +133,7 @@ const closeDropdown = (): void => {
           v-model="searchQuery"
           type="text"
           placeholder="搜尋任務..."
-          class="input-field w-full"
+          class="input w-full"
           @click.stop
         />
       </div>
@@ -227,6 +227,7 @@ const closeDropdown = (): void => {
         <button
           type="button"
           class="hover:bg-white/20 rounded-full p-0.5 transition-colors duration-150 cursor-pointer"
+          aria-label="移除"
           @click="removeTask(task.id)"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

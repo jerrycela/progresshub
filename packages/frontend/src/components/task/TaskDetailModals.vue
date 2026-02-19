@@ -84,7 +84,7 @@ const getRoleLabel = (role: string): string => {
         <textarea
           :value="newProgress.notes"
           rows="3"
-          class="input-field w-full"
+          class="input w-full"
           placeholder="描述進度更新內容..."
           @input="
             emit('update:newProgress', {
@@ -146,7 +146,7 @@ const getRoleLabel = (role: string): string => {
         <input
           :value="gitlabUrl"
           type="text"
-          class="input-field w-full"
+          class="input w-full"
           placeholder="https://gitlab.com/project/issues/123"
           @input="emit('update:gitlabUrl', ($event.target as HTMLInputElement).value)"
         />
@@ -195,7 +195,7 @@ const getRoleLabel = (role: string): string => {
         <textarea
           :value="newNoteContent"
           rows="4"
-          class="input-field w-full resize-none"
+          class="input w-full resize-none"
           placeholder="輸入註記內容..."
           @input="emit('update:newNoteContent', ($event.target as HTMLTextAreaElement).value)"
         ></textarea>

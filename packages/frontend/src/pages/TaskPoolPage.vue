@@ -199,13 +199,13 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
               v-model="searchQuery"
               type="text"
               placeholder="搜尋任務名稱或描述..."
-              class="input-field w-full pl-10"
+              class="input w-full pl-10"
             />
           </div>
         </div>
 
         <!-- 專案篩選 -->
-        <select v-model="selectedProject" class="input-field cursor-pointer">
+        <select v-model="selectedProject" class="input cursor-pointer">
           <option value="">所有專案</option>
           <option v-for="project in projectStore.projects" :key="project.id" :value="project.id">
             {{ project.name }}
@@ -213,7 +213,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         </select>
 
         <!-- 職能篩選 -->
-        <select v-model="selectedFunction" class="input-field cursor-pointer">
+        <select v-model="selectedFunction" class="input cursor-pointer">
           <option value="">所有職能</option>
           <option v-for="func in functionOptions" :key="func.value" :value="func.value">
             {{ func.label }}
@@ -221,7 +221,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         </select>
 
         <!-- 部門篩選 -->
-        <select v-model="selectedDepartment" class="input-field cursor-pointer">
+        <select v-model="selectedDepartment" class="input cursor-pointer">
           <option value="">所有部門</option>
           <option v-for="dept in departmentStore.departments" :key="dept.id" :value="dept.id">
             {{ dept.name }}
@@ -229,11 +229,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         </select>
 
         <!-- 狀態篩選 -->
-        <select
-          v-model="selectedStatus"
-          class="input-field cursor-pointer"
-          :disabled="showOnlyUnclaimed"
-        >
+        <select v-model="selectedStatus" class="input cursor-pointer" :disabled="showOnlyUnclaimed">
           <option value="">所有狀態</option>
           <option value="UNCLAIMED">待認領</option>
           <option value="IN_PROGRESS">進行中</option>

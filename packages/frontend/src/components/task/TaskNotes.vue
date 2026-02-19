@@ -47,6 +47,7 @@ const getRoleLabel = (role: string): string => {
       <button
         v-if="canAddNote"
         class="btn-secondary text-sm flex items-center gap-1"
+        aria-label="新增註記"
         @click="emit('addNote')"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -471,17 +471,6 @@ const deleteMilestone = async (msId: string): Promise<void> => {
       </div>
     </Card>
 
-    <!-- 開發中提示 -->
-    <div
-      class="p-4 rounded-lg text-sm bg-info/10 border border-info/30"
-      style="color: var(--text-primary)"
-    >
-      <p class="font-medium">開發中提示</p>
-      <p class="mt-1" style="color: var(--text-secondary)">
-        此為簡化版甘特圖預覽。正式版本將整合 Frappe Gantt 套件，支援拖拽調整、縮放、互動編輯等功能。
-      </p>
-    </div>
-
     <!-- 里程碑管理 Modal -->
     <MilestoneModal
       v-model="showMilestoneModal"

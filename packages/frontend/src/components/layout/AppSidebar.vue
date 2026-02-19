@@ -152,6 +152,7 @@ const handleLogout = async (): Promise<void> => {
       <button
         class="p-2 rounded-md transition-colors duration-150"
         style="color: var(--text-tertiary)"
+        aria-label="關閉選單"
         @click="emit('close')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
