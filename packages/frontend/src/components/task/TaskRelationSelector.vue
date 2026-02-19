@@ -102,7 +102,7 @@ const closeDropdown = (): void => {
     <!-- 下拉選單觸發器 -->
     <button
       type="button"
-      class="input-field w-full text-left flex items-center justify-between cursor-pointer transition-all duration-150"
+      class="input w-full text-left flex items-center justify-between cursor-pointer transition-all duration-150"
       :class="{ 'ring-2 ring-[var(--accent-primary)]': isOpen }"
       @click="toggleDropdown"
     >
@@ -133,7 +133,7 @@ const closeDropdown = (): void => {
           v-model="searchQuery"
           type="text"
           placeholder="搜尋任務..."
-          class="input-field w-full"
+          class="input w-full"
           @click.stop
         />
       </div>

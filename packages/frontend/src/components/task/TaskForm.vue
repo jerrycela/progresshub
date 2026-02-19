@@ -80,12 +80,7 @@ const toggleCollaborator = (empId: string): void => {
       <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
         任務標題 <span style="color: var(--accent-primary)">*</span>
       </label>
-      <input
-        v-model="form.title"
-        type="text"
-        placeholder="輸入任務標題"
-        class="input-field w-full"
-      />
+      <input v-model="form.title" type="text" placeholder="輸入任務標題" class="input w-full" />
     </div>
 
     <div>
@@ -96,7 +91,7 @@ const toggleCollaborator = (empId: string): void => {
         v-model="form.description"
         rows="4"
         placeholder="輸入任務描述..."
-        class="input-field w-full resize-none"
+        class="input w-full resize-none"
       ></textarea>
     </div>
 
@@ -104,7 +99,7 @@ const toggleCollaborator = (empId: string): void => {
       <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
         所屬專案 <span style="color: var(--accent-primary)">*</span>
       </label>
-      <select v-model="form.projectId" class="input-field w-full cursor-pointer">
+      <select v-model="form.projectId" class="input w-full cursor-pointer">
         <option value="">請選擇專案</option>
         <option v-for="project in projects" :key="project.id" :value="project.id">
           {{ project.name }}
@@ -116,7 +111,7 @@ const toggleCollaborator = (empId: string): void => {
       <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
         相關部門
       </label>
-      <select v-model="form.department" class="input-field w-full cursor-pointer">
+      <select v-model="form.department" class="input w-full cursor-pointer">
         <option value="">請選擇部門</option>
         <option v-for="dept in departments" :key="dept.id" :value="dept.id">
           {{ dept.name }}
@@ -153,13 +148,13 @@ const toggleCollaborator = (empId: string): void => {
         <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
           開始日期
         </label>
-        <input v-model="form.startDate" type="date" class="input-field w-full cursor-pointer" />
+        <input v-model="form.startDate" type="date" class="input w-full cursor-pointer" />
       </div>
       <div>
         <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
           截止日期
         </label>
-        <input v-model="form.dueDate" type="date" class="input-field w-full cursor-pointer" />
+        <input v-model="form.dueDate" type="date" class="input w-full cursor-pointer" />
       </div>
     </div>
   </div>
@@ -173,7 +168,7 @@ const toggleCollaborator = (empId: string): void => {
         {{ assigneeLabel }}
         <span v-if="assigneeRequired" style="color: var(--accent-primary)">*</span>
       </label>
-      <select v-model="form.assigneeId" class="input-field w-full cursor-pointer">
+      <select v-model="form.assigneeId" class="input w-full cursor-pointer">
         <option value="">{{ assigneeRequired ? '請選擇負責人' : '尚未指派' }}</option>
         <option v-for="emp in filteredEmployees" :key="emp.id" :value="emp.id">
           {{ emp.name }} ({{ emp.department }})

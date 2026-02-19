@@ -250,7 +250,7 @@ const handleUnlinkSlack = async (): Promise<void> => {
           <input
             v-model="slackUsername"
             type="text"
-            class="input-field w-full"
+            class="input w-full"
             placeholder="例如：@john.doe"
           />
           <p class="mt-2 text-xs text-muted">請輸入您在 Slack 上的使用者名稱（包含 @）</p>
@@ -270,7 +270,7 @@ const handleUnlinkSlack = async (): Promise<void> => {
           <input
             v-model="gitlabUsername"
             type="text"
-            class="input-field w-full"
+            class="input w-full"
             placeholder="例如：john.doe"
           />
           <p class="mt-2 text-xs text-muted">請輸入您在 GitLab 上的使用者名稱</p>
