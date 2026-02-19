@@ -20,34 +20,34 @@ defineExpose({})
 // 顏色對照
 const colorClasses: Record<string, { bg: string; text: string; icon: string }> = {
   blue: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-600',
-    icon: 'bg-blue-100 text-blue-600',
+    bg: 'bg-blue-50 dark:bg-blue-500/10',
+    text: 'text-blue-600 dark:text-blue-400',
+    icon: 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   green: {
-    bg: 'bg-green-50',
-    text: 'text-green-600',
-    icon: 'bg-green-100 text-green-600',
+    bg: 'bg-green-50 dark:bg-green-500/10',
+    text: 'text-green-600 dark:text-green-400',
+    icon: 'bg-green-100 dark:bg-green-500/10 text-green-600 dark:text-green-400',
   },
   yellow: {
-    bg: 'bg-yellow-50',
-    text: 'text-yellow-600',
-    icon: 'bg-yellow-100 text-yellow-600',
+    bg: 'bg-yellow-50 dark:bg-yellow-500/10',
+    text: 'text-yellow-600 dark:text-yellow-400',
+    icon: 'bg-yellow-100 dark:bg-yellow-500/10 text-yellow-600 dark:text-yellow-400',
   },
   red: {
-    bg: 'bg-red-50',
-    text: 'text-red-600',
-    icon: 'bg-red-100 text-red-600',
+    bg: 'bg-red-50 dark:bg-red-500/10',
+    text: 'text-red-600 dark:text-red-400',
+    icon: 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400',
   },
   purple: {
-    bg: 'bg-purple-50',
-    text: 'text-purple-600',
-    icon: 'bg-purple-100 text-purple-600',
+    bg: 'bg-purple-50 dark:bg-purple-500/10',
+    text: 'text-purple-600 dark:text-purple-400',
+    icon: 'bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400',
   },
   gray: {
-    bg: 'bg-gray-50',
-    text: 'text-gray-600',
-    icon: 'bg-gray-100 text-gray-600',
+    bg: 'bg-gray-50 dark:bg-gray-500/10',
+    text: 'text-gray-600 dark:text-gray-400',
+    icon: 'bg-gray-100 dark:bg-gray-500/10 text-gray-600 dark:text-gray-400',
   },
 }
 
@@ -66,14 +66,12 @@ const defaultIcons: Record<string, string> = {
 </script>
 
 <template>
-  <div
-    class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow"
-  >
+  <div class="card rounded-xl p-5 hover:shadow-md transition-shadow">
     <div class="flex items-center justify-between">
       <!-- 左側：數值與標題 -->
       <div>
-        <p class="text-sm font-medium text-gray-500">{{ title }}</p>
-        <p class="mt-1 text-3xl font-bold text-gray-900">{{ value }}</p>
+        <p class="text-sm font-medium" style="color: var(--text-secondary)">{{ title }}</p>
+        <p class="mt-1 text-3xl font-bold" style="color: var(--text-primary)">{{ value }}</p>
 
         <!-- 趨勢指標 -->
         <div v-if="trend" class="mt-2 flex items-center gap-1">
@@ -93,7 +91,7 @@ const defaultIcons: Record<string, string> = {
             </svg>
             {{ Math.abs(trend.value) }}%
           </span>
-          <span class="text-sm text-gray-500">較上週</span>
+          <span class="text-sm" style="color: var(--text-secondary)">較上週</span>
         </div>
       </div>
 
