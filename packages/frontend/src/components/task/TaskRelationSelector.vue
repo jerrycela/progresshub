@@ -227,6 +227,7 @@ const closeDropdown = (): void => {
         <button
           type="button"
           class="hover:bg-white/20 rounded-full p-0.5 transition-colors duration-150 cursor-pointer"
+          aria-label="移除"
           @click="removeTask(task.id)"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

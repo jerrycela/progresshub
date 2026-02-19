@@ -42,6 +42,7 @@ const goToSettings = (): void => {
       <button
         class="lg:hidden p-2 -ml-2 rounded-md transition-colors duration-150 hover-bg"
         style="color: var(--text-secondary)"
+        aria-label="開啟選單"
         @click="emit('toggle-sidebar')"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,6 +82,7 @@ const goToSettings = (): void => {
         class="p-2 rounded-md transition-colors duration-150 hover-bg"
         style="color: var(--text-secondary)"
         :title="isDark ? '切換到淺色模式' : '切換到深色模式'"
+        aria-label="切換深色模式"
         @click="toggleTheme"
       >
         <!-- 太陽圖示 (Light mode) -->

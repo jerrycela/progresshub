@@ -134,6 +134,7 @@ const handleCancel = (): void => {
         <button
           class="p-2 rounded-lg transition-colors cursor-pointer"
           style="background-color: var(--bg-tertiary)"
+          aria-label="返回"
           @click="handleCancel"
         >
           <svg

@@ -72,6 +72,7 @@ const handleSubmit = () => {
             <button
               v-if="canManage"
               class="text-danger hover:text-danger/80 cursor-pointer"
+              aria-label="刪除里程碑"
               @click="emit('delete', ms.id)"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
