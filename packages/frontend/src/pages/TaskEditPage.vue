@@ -41,9 +41,17 @@ const form = reactive<TaskFormData>({
 })
 
 // 載入任務資料
-onMounted(() => {
+onMounted(async () => {
   const taskId = route.params.id as string
-  const task = taskStore.getPoolTaskById(taskId)
+
+  // 先從 store 快取嘗試
+  let task = taskStore.getPoolTaskById(taskId)
+
+  // 找不到時做 fallback fetch
+  if (!task) {
+    await taskStore.fetchPoolTasks()
+    task = taskStore.getPoolTaskById(taskId)
+  }
 
   if (task) {
     originalTask.value = task

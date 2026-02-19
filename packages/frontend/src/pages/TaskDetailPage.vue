@@ -34,6 +34,7 @@ const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
+const isLoading = ref(true)
 const task = ref<PoolTask | null>(null)
 const progressLogs = ref<ProgressLog[]>([])
 const taskNotes = ref<TaskNote[]>([])
@@ -59,13 +60,31 @@ const currentUserForModal = computed(() => ({
 // 新進度回報表單
 const newProgress = ref({ percentage: 0, notes: '' })
 
-const loadTaskData = (taskId: string) => {
-  task.value = taskStore.getPoolTaskById(taskId) || null
-  progressLogs.value = progressLogStore.byTaskId(taskId)
-  taskNotes.value = noteStore.byTaskId(taskId)
+const loadTaskData = async (taskId: string) => {
+  isLoading.value = true
+
+  // 先從 store 快取嘗試
+  let found = taskStore.getPoolTaskById(taskId) || null
+
+  // 找不到時做 fallback fetch
+  if (!found) {
+    await taskStore.fetchPoolTasks()
+    found = taskStore.getPoolTaskById(taskId) || null
+  }
+
+  task.value = found
+
   if (task.value) {
     newProgress.value = { percentage: task.value.progress, notes: '' }
   }
+
+  // 同時載入進度歷程與備註
+  await Promise.all([progressLogStore.fetchByTaskId(taskId), noteStore.fetchByTaskId(taskId)])
+
+  progressLogs.value = progressLogStore.byTaskId(taskId)
+  taskNotes.value = noteStore.byTaskId(taskId)
+
+  isLoading.value = false
 }
 
 onMounted(() => {
@@ -218,7 +237,15 @@ const submitNote = async (): Promise<void> => {
       <span>返回任務池</span>
     </button>
 
-    <div v-if="task" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- 載入中 -->
+    <div v-if="isLoading" class="flex items-center justify-center py-12">
+      <div
+        class="animate-spin rounded-full h-8 w-8 border-b-2"
+        style="border-color: var(--accent-primary)"
+      ></div>
+    </div>
+
+    <div v-else-if="task" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 左側：任務詳情 -->
       <div class="lg:col-span-2 space-y-6">
         <!-- 任務基本資訊 -->
@@ -373,7 +400,7 @@ const submitNote = async (): Promise<void> => {
     </div>
 
     <!-- 任務不存在 -->
-    <div v-else class="card p-12 text-center">
+    <div v-else-if="!isLoading" class="card p-12 text-center">
       <svg
         class="w-16 h-16 mx-auto text-muted"
         fill="none"
