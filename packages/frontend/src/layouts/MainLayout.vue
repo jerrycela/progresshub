@@ -8,6 +8,8 @@ import { useProjectStore } from '@/stores/projects'
 import { useEmployeeStore } from '@/stores/employees'
 import { useTaskStore } from '@/stores/tasks'
 import { useDepartmentStore } from '@/stores/departments'
+import { useDashboardStore } from '@/stores/dashboard'
+import { useMilestoneStore } from '@/stores/milestones'
 
 // ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
@@ -21,14 +23,30 @@ const projectStore = useProjectStore()
 const employeeStore = useEmployeeStore()
 const taskStore = useTaskStore()
 const departmentStore = useDepartmentStore()
+const dashboardStore = useDashboardStore()
+const milestoneStore = useMilestoneStore()
+
+// 等待式初始化狀態
+const isInitializing = ref(true)
 
 // 初始化 Store 資料（確保 API 模式下載入後端資料）
-onMounted(() => {
-  projectStore.fetchProjects()
-  employeeStore.fetchEmployees()
-  taskStore.fetchTasks()
-  taskStore.fetchPoolTasks()
-  departmentStore.fetchDepartments()
+onMounted(async () => {
+  try {
+    await Promise.all([
+      projectStore.fetchProjects(),
+      employeeStore.fetchEmployees(),
+      taskStore.fetchTasks(),
+      taskStore.fetchPoolTasks(),
+      departmentStore.fetchDepartments(),
+      dashboardStore.fetchStats(),
+      dashboardStore.fetchWorkloads(),
+      milestoneStore.fetchMilestones(),
+    ])
+  } catch (error) {
+    console.error('初始化失敗', error)
+  } finally {
+    isInitializing.value = false
+  }
 })
 
 // 側邊欄展開狀態（行動裝置）
@@ -52,7 +70,23 @@ watch(
 </script>
 
 <template>
-  <div class="min-h-screen flex" style="background-color: var(--bg-primary)">
+  <!-- 載入畫面 -->
+  <div
+    v-if="isInitializing"
+    class="min-h-screen flex items-center justify-center"
+    style="background-color: var(--bg-primary)"
+  >
+    <div class="flex flex-col items-center gap-4">
+      <div
+        class="w-10 h-10 rounded-full border-4 border-t-transparent animate-spin"
+        style="border-color: var(--text-secondary); border-top-color: transparent"
+      ></div>
+      <span class="text-sm" style="color: var(--text-secondary)">載入中...</span>
+    </div>
+  </div>
+
+  <!-- 主佈局 -->
+  <div v-else class="min-h-screen flex" style="background-color: var(--bg-primary)">
     <!-- 側邊選單 -->
     <AppSidebar :is-open="isSidebarOpen" @close="closeSidebar" />
 
