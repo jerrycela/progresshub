@@ -134,7 +134,11 @@ const submitProgress = async () => {
 
   isProgressLoading.value = true
   try {
-    const result = await taskStore.updateTaskProgress(taskToReport.value.id, progressValue.value)
+    const result = await taskStore.updateTaskProgress(
+      taskToReport.value.id,
+      progressValue.value,
+      progressNote.value || undefined,
+    )
     if (result.success) {
       showSuccess(`已更新「${taskToReport.value.title}」進度至 ${progressValue.value}%`)
       showProgressModal.value = false
