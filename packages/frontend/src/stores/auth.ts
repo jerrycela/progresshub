@@ -84,6 +84,9 @@ export const useAuthStore = defineStore('auth', () => {
         )
         user.value = data.user
         localStorage.setItem('auth_token', data.token)
+        if (data.refreshToken) {
+          localStorage.setItem('auth_refresh_token', data.refreshToken)
+        }
         return { success: true, data: data.user }
       }
 
@@ -145,11 +148,17 @@ export const useAuthStore = defineStore('auth', () => {
       await service.logout()
       user.value = null
       localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_refresh_token')
 
       return { success: true }
     } catch (e) {
       const message = e instanceof Error ? e.message : '登出失敗'
       error.value = message
+
+      // 即使後端 API 失敗，仍清除本地狀態確保使用者能成功登出
+      user.value = null
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_refresh_token')
 
       return {
         success: false,
