@@ -11,6 +11,13 @@ const service = createEmployeeService()
 export const useEmployeeStore = defineStore('employees', () => {
   const employees = ref<MockEmployee[]>(isMock ? [...mockEmployees] : [])
 
+  const loading = ref({
+    fetch: false,
+    create: false,
+    update: false,
+    delete: false,
+  })
+
   const getByDepartment = (dept: Department) =>
     computed(() => employees.value.filter(e => e.department === dept))
 
@@ -31,20 +38,34 @@ export const useEmployeeStore = defineStore('employees', () => {
   )
 
   const fetchEmployees = () =>
-    storeAction(async () => {
-      employees.value = await service.fetchEmployees()
-      return employees.value
-    }, '載入員工失敗')
+    storeAction(
+      async () => {
+        employees.value = await service.fetchEmployees()
+        return employees.value
+      },
+      '載入員工失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetch = isLoading
+      },
+    )
 
   const createEmployee = (input: CreateEmployeeInput) =>
-    storeAction(async () => {
-      const result = await service.createEmployee(input)
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || '建立員工失敗')
-      }
-      employees.value = [...employees.value, result.data]
-      return result.data
-    }, '建立員工失敗')
+    storeAction(
+      async () => {
+        const result = await service.createEmployee(input)
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '建立員工失敗')
+        }
+        employees.value = [...employees.value, result.data]
+        return result.data
+      },
+      '建立員工失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.create = isLoading
+      },
+    )
 
   const updateEmployee = async (
     id: string,
@@ -63,6 +84,7 @@ export const useEmployeeStore = defineStore('employees', () => {
     const updated = { ...employees.value[idx], ...input }
     employees.value = employees.value.map((e, i) => (i === idx ? updated : e))
 
+    loading.value.update = true
     try {
       const result = await service.updateEmployee(id, input)
 
@@ -78,6 +100,8 @@ export const useEmployeeStore = defineStore('employees', () => {
         success: false,
         error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '更新員工失敗' },
       }
+    } finally {
+      loading.value.update = false
     }
   }
 
@@ -94,6 +118,7 @@ export const useEmployeeStore = defineStore('employees', () => {
     const snapshot = employees.value
     employees.value = employees.value.filter(e => e.id !== id)
 
+    loading.value.delete = true
     try {
       await service.deleteEmployee(id)
       return { success: true }
@@ -104,11 +129,14 @@ export const useEmployeeStore = defineStore('employees', () => {
         success: false,
         error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '刪除員工失敗' },
       }
+    } finally {
+      loading.value.delete = false
     }
   }
 
   return {
     employees,
+    loading,
     getByDepartment,
     filteredByDepartment,
     getEmployeeById,

@@ -11,6 +11,13 @@ const service = createProjectService()
 export const useProjectStore = defineStore('projects', () => {
   const projects = ref<Project[]>(isMock ? [...mockProjects] : [])
 
+  const loading = ref({
+    fetch: false,
+    create: false,
+    update: false,
+    delete: false,
+  })
+
   const activeProjects = computed(() => projects.value.filter(p => p.status === 'ACTIVE'))
 
   const projectOptions = computed(() => projects.value.map(p => ({ value: p.id, label: p.name })))
@@ -20,20 +27,34 @@ export const useProjectStore = defineStore('projects', () => {
   const getProjectName = (id: string) => getProjectById(id)?.name ?? ''
 
   const fetchProjects = () =>
-    storeAction(async () => {
-      projects.value = await service.fetchProjects()
-      return projects.value
-    }, '載入專案失敗')
+    storeAction(
+      async () => {
+        projects.value = await service.fetchProjects()
+        return projects.value
+      },
+      '載入專案失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetch = isLoading
+      },
+    )
 
   const createProject = (input: CreateProjectInput) =>
-    storeAction(async () => {
-      const result = await service.createProject(input)
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || '建立專案失敗')
-      }
-      projects.value = [...projects.value, result.data]
-      return result.data
-    }, '建立專案失敗')
+    storeAction(
+      async () => {
+        const result = await service.createProject(input)
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '建立專案失敗')
+        }
+        projects.value = [...projects.value, result.data]
+        return result.data
+      },
+      '建立專案失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.create = isLoading
+      },
+    )
 
   const updateProject = async (
     id: string,
@@ -53,6 +74,7 @@ export const useProjectStore = defineStore('projects', () => {
     const optimistic = { ...projects.value[idx], ...input, updatedAt: now }
     projects.value = projects.value.map((p, i) => (i === idx ? optimistic : p))
 
+    loading.value.update = true
     try {
       const result = await service.updateProject(id, input)
 
@@ -68,6 +90,8 @@ export const useProjectStore = defineStore('projects', () => {
         success: false,
         error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '更新專案失敗' },
       }
+    } finally {
+      loading.value.update = false
     }
   }
 
@@ -84,6 +108,7 @@ export const useProjectStore = defineStore('projects', () => {
     const snapshot = projects.value
     projects.value = projects.value.filter(p => p.id !== id)
 
+    loading.value.delete = true
     try {
       await service.deleteProject(id)
       return { success: true }
@@ -94,11 +119,14 @@ export const useProjectStore = defineStore('projects', () => {
         success: false,
         error: { code: 'UNKNOWN_ERROR', message: e instanceof Error ? e.message : '刪除專案失敗' },
       }
+    } finally {
+      loading.value.delete = false
     }
   }
 
   return {
     projects,
+    loading,
     activeProjects,
     projectOptions,
     getProjectById,

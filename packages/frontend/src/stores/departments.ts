@@ -9,6 +9,10 @@ const service = createDepartmentService()
 export const useDepartmentStore = defineStore('departments', () => {
   const departments = ref<DepartmentData[]>([])
 
+  const loading = ref({
+    fetch: false,
+  })
+
   const getDepartmentName = (id: Department) => departments.value.find(d => d.id === id)?.name ?? ''
 
   const departmentOptions = computed(() =>
@@ -19,13 +23,21 @@ export const useDepartmentStore = defineStore('departments', () => {
   )
 
   const fetchDepartments = () =>
-    storeAction(async () => {
-      departments.value = await service.fetchDepartments()
-      return departments.value
-    }, '載入部門失敗')
+    storeAction(
+      async () => {
+        departments.value = await service.fetchDepartments()
+        return departments.value
+      },
+      '載入部門失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetch = isLoading
+      },
+    )
 
   return {
     departments,
+    loading,
     getDepartmentName,
     departmentOptions,
     fetchDepartments,

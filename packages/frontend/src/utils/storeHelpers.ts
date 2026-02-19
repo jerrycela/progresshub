@@ -8,7 +8,9 @@ export async function storeAction<T>(
   action: () => Promise<T>,
   errorMessage: string,
   errorCode: ErrorCode = 'UNKNOWN_ERROR',
+  onLoadingChange?: (isLoading: boolean) => void,
 ): Promise<ActionResult<T>> {
+  onLoadingChange?.(true)
   try {
     const data = await action()
     return { success: true, data }
@@ -20,5 +22,7 @@ export async function storeAction<T>(
         message: e instanceof Error ? e.message : errorMessage,
       },
     }
+  } finally {
+    onLoadingChange?.(false)
   }
 }

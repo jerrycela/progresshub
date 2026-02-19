@@ -16,21 +16,41 @@ export const useDashboardStore = defineStore('dashboard', () => {
   })
   const functionWorkloads = ref<FunctionWorkload[]>([])
 
+  const loading = ref({
+    fetchStats: false,
+    fetchWorkloads: false,
+  })
+
   const fetchStats = () =>
-    storeAction(async () => {
-      stats.value = await service.fetchStats()
-      return stats.value
-    }, '載入統計失敗')
+    storeAction(
+      async () => {
+        stats.value = await service.fetchStats()
+        return stats.value
+      },
+      '載入統計失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetchStats = isLoading
+      },
+    )
 
   const fetchWorkloads = () =>
-    storeAction(async () => {
-      functionWorkloads.value = await service.fetchWorkloads()
-      return functionWorkloads.value
-    }, '載入負載統計失敗')
+    storeAction(
+      async () => {
+        functionWorkloads.value = await service.fetchWorkloads()
+        return functionWorkloads.value
+      },
+      '載入負載統計失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetchWorkloads = isLoading
+      },
+    )
 
   return {
     stats,
     functionWorkloads,
+    loading,
     fetchStats,
     fetchWorkloads,
   }
