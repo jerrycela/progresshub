@@ -7,6 +7,7 @@ import { encrypt, decrypt } from "../../utils/gitlab/encryption";
 import { createGitLabClient } from "../../utils/gitlab/apiClient";
 import { env } from "../../config/env";
 import logger from "../../config/logger";
+import { AppError } from "../../middleware/errorHandler";
 
 // TODO: 將 OAuth state 存儲遷移到 Redis，目前使用記憶體 Map 在多進程/多節點部署時會導致驗證失敗
 // 當前為非生產就緒的實作，僅適用於單進程環境
@@ -35,11 +36,11 @@ export class GitLabOAuthService {
     const instance =
       await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error("GitLab instance not found");
+      throw new AppError(404, "GitLab instance not found");
     }
 
     if (!instance.isActive) {
-      throw new Error("GitLab instance is not active");
+      throw new AppError(400, "GitLab instance is not active");
     }
 
     // 生成 state token（防 CSRF）
@@ -51,7 +52,7 @@ export class GitLabOAuthService {
 
     // 檢查是否超出最大數量限制，若超出則拒絕新增
     if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
-      throw new Error("OAuth state 存儲已滿，請稍後再試");
+      throw new AppError(503, "OAuth state 存儲已滿，請稍後再試");
     }
 
     // 儲存 state
@@ -103,7 +104,7 @@ export class GitLabOAuthService {
     const instance =
       await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error("GitLab instance not found");
+      throw new AppError(404, "GitLab instance not found");
     }
 
     const redirectUri = `${env.API_BASE_URL || "http://localhost:4000"}/api/gitlab/connections/oauth/callback`;
@@ -126,7 +127,8 @@ export class GitLabOAuthService {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(
+        throw new AppError(
+          502,
           `Failed to exchange code for tokens: ${error.response?.data?.error_description || error.message}`,
         );
       }
@@ -144,18 +146,18 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error("Connection not found");
+      throw new AppError(404, "Connection not found");
     }
 
     if (!connection.refreshToken) {
-      throw new Error("No refresh token available");
+      throw new AppError(400, "No refresh token available");
     }
 
     const instance = await gitLabInstanceService.getInstanceWithSecrets(
       connection.instanceId,
     );
     if (!instance) {
-      throw new Error("GitLab instance not found");
+      throw new AppError(404, "GitLab instance not found");
     }
 
     const decryptedRefreshToken = decrypt(connection.refreshToken);
@@ -182,7 +184,8 @@ export class GitLabOAuthService {
       return tokens;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(
+        throw new AppError(
+          502,
           `Failed to refresh token: ${error.response?.data?.error_description || error.message}`,
         );
       }
@@ -200,14 +203,14 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error("Connection not found");
+      throw new AppError(404, "Connection not found");
     }
 
     const instance = await gitLabInstanceService.getInstanceWithSecrets(
       connection.instanceId,
     );
     if (!instance) {
-      throw new Error("GitLab instance not found");
+      throw new AppError(404, "GitLab instance not found");
     }
 
     const decryptedToken = decrypt(connection.accessToken);
@@ -235,7 +238,7 @@ export class GitLabOAuthService {
     const instance =
       await gitLabInstanceService.getInstanceWithSecrets(instanceId);
     if (!instance) {
-      throw new Error("GitLab instance not found");
+      throw new AppError(404, "GitLab instance not found");
     }
 
     // 取得 GitLab 使用者資訊
@@ -332,7 +335,7 @@ export class GitLabOAuthService {
     });
 
     if (!connection) {
-      throw new Error("Connection not found");
+      throw new AppError(404, "Connection not found");
     }
 
     // 檢查 token 是否即將過期（5 分鐘內）

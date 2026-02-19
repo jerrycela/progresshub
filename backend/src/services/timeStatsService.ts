@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
 import { getStartOfWeek } from "../utils/dateUtils";
+import { AppError } from "../middleware/errorHandler";
 
 export interface DateRangeParams {
   startDate: Date;
@@ -80,7 +81,7 @@ export class TimeStatsService {
     });
 
     if (!project) {
-      throw new Error("Project not found");
+      throw new AppError(404, "Project not found");
     }
 
     const where: Prisma.TimeEntryWhereInput = { projectId };
@@ -160,7 +161,7 @@ export class TimeStatsService {
     });
 
     if (!employee) {
-      throw new Error("Employee not found");
+      throw new AppError(404, "Employee not found");
     }
 
     const where: Prisma.TimeEntryWhereInput = { employeeId };
@@ -426,7 +427,7 @@ export class TimeStatsService {
     });
 
     if (!approver) {
-      throw new Error("Approver not found");
+      throw new AppError(404, "Approver not found");
     }
 
     let projectFilter: Prisma.TimeEntryWhereInput["projectId"];
