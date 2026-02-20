@@ -37,6 +37,9 @@ const users = computed<User[]>(() =>
   })),
 )
 
+// 提交中狀態保護
+const isSaving = ref(false)
+
 // 搜尋關鍵字
 const searchQuery = ref('')
 
@@ -113,13 +116,19 @@ const openEditModal = (user: User) => {
 const saveUser = async () => {
   if (!editingUser.value.id) return
   if (!validateUserForm(editingUser.value.name, editingUser.value.email)) return
-  const result = await employeeStore.updateEmployee(editingUser.value.id, {
-    name: editingUser.value.name,
-    email: editingUser.value.email,
-    userRole: editingUser.value.role,
-  })
-  if (result.success) {
-    showEditModal.value = false
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    const result = await employeeStore.updateEmployee(editingUser.value.id, {
+      name: editingUser.value.name,
+      email: editingUser.value.email,
+      userRole: editingUser.value.role,
+    })
+    if (result.success) {
+      showEditModal.value = false
+    }
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -145,25 +154,31 @@ const openCreateModal = () => {
 
 const createUser = async () => {
   if (!validateUserForm(newUser.value.name, newUser.value.email)) return
-  const deptMap: Record<string, Department> = {
-    PROGRAMMING: 'PROGRAMMING',
-    ART: 'ART',
-    PLANNING: 'PLANNING',
-    SOUND: 'SOUND',
-    QA: 'QA',
-    VFX: 'ART',
-    ANIMATION: 'ART',
-    COMBAT: 'PROGRAMMING',
-  }
-  const functionType = newUser.value.functionType || 'PROGRAMMING'
-  const result = await employeeStore.createEmployee({
-    name: newUser.value.name || '',
-    email: newUser.value.email || '',
-    department: deptMap[functionType] || 'PROGRAMMING',
-    userRole: newUser.value.role || 'EMPLOYEE',
-  })
-  if (result.success) {
-    showCreateModal.value = false
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    const deptMap: Record<string, Department> = {
+      PROGRAMMING: 'PROGRAMMING',
+      ART: 'ART',
+      PLANNING: 'PLANNING',
+      SOUND: 'SOUND',
+      QA: 'QA',
+      VFX: 'ART',
+      ANIMATION: 'ART',
+      COMBAT: 'PROGRAMMING',
+    }
+    const functionType = newUser.value.functionType || 'PROGRAMMING'
+    const result = await employeeStore.createEmployee({
+      name: newUser.value.name || '',
+      email: newUser.value.email || '',
+      department: deptMap[functionType] || 'PROGRAMMING',
+      userRole: newUser.value.role || 'EMPLOYEE',
+    })
+    if (result.success) {
+      showCreateModal.value = false
+    }
+  } finally {
+    isSaving.value = false
   }
 }
 
@@ -328,8 +343,10 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showEditModal = false"> 取消 </Button>
-        <Button @click="saveUser"> 儲存變更 </Button>
+        <Button variant="secondary" :disabled="isSaving" @click="showEditModal = false">
+          取消
+        </Button>
+        <Button :loading="isSaving" @click="saveUser"> 儲存變更 </Button>
       </template>
     </Modal>
 
@@ -354,8 +371,10 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showCreateModal = false"> 取消 </Button>
-        <Button @click="createUser"> 新增成員 </Button>
+        <Button variant="secondary" :disabled="isSaving" @click="showCreateModal = false">
+          取消
+        </Button>
+        <Button :loading="isSaving" @click="createUser"> 新增成員 </Button>
       </template>
     </Modal>
   </div>

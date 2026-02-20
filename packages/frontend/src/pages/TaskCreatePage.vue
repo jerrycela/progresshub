@@ -27,6 +27,7 @@ const taskStore = useTaskStore()
 const authStore = useAuthStore()
 
 const sourceType = ref<TaskSourceType>('POOL')
+const isSubmitting = ref(false)
 
 // 來源類型選項
 const sourceTypeOptions: {
@@ -84,31 +85,37 @@ const canSubmit = computed(() => {
 
 // 提交表單
 const handleSubmit = async (): Promise<void> => {
-  const result = await taskStore.createTask({
-    title: form.title,
-    projectId: form.projectId,
-    description: form.description,
-    functionTags: form.functionTags,
-    startDate: form.startDate,
-    dueDate: form.dueDate,
-    sourceType: sourceType.value,
-    assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
-    department: form.department || undefined,
-    createdBy: authStore.user
-      ? {
-          id: authStore.user.id,
-          name: authStore.user.name,
-          userRole: authStore.user.role,
-        }
-      : undefined,
-    dependsOnTaskIds: dependsOnTaskIds.value.length > 0 ? dependsOnTaskIds.value : undefined,
-  })
+  if (isSubmitting.value) return
+  isSubmitting.value = true
+  try {
+    const result = await taskStore.createTask({
+      title: form.title,
+      projectId: form.projectId,
+      description: form.description,
+      functionTags: form.functionTags,
+      startDate: form.startDate,
+      dueDate: form.dueDate,
+      sourceType: sourceType.value,
+      assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
+      department: form.department || undefined,
+      createdBy: authStore.user
+        ? {
+            id: authStore.user.id,
+            name: authStore.user.name,
+            userRole: authStore.user.role,
+          }
+        : undefined,
+      dependsOnTaskIds: dependsOnTaskIds.value.length > 0 ? dependsOnTaskIds.value : undefined,
+    })
 
-  if (result.success) {
-    showSuccess(`任務「${form.title}」已建立`)
-    router.push('/task-pool')
-  } else {
-    showError(result.error?.message || '建立任務失敗')
+    if (result.success) {
+      showSuccess(`任務「${form.title}」已建立`)
+      router.push('/task-pool')
+    } else {
+      showError(result.error?.message || '建立任務失敗')
+    }
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -235,14 +242,16 @@ const handleCancel = (): void => {
         取消
       </button>
       <button
-        :disabled="!canSubmit"
+        :disabled="!canSubmit || isSubmitting"
         :class="[
           'px-6 py-2.5 rounded-lg font-medium transition-colors',
-          canSubmit ? 'btn-primary cursor-pointer' : 'opacity-50 cursor-not-allowed',
+          canSubmit && !isSubmitting
+            ? 'btn-primary cursor-pointer'
+            : 'opacity-50 cursor-not-allowed',
         ]"
         @click="handleSubmit"
       >
-        建立任務
+        {{ isSubmitting ? '建立中...' : '建立任務' }}
       </button>
     </div>
   </div>
