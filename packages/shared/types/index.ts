@@ -210,9 +210,10 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
 // ============================================
 // 任務狀態轉換規則（Ralph Loop 迭代 2 新增）
 // ============================================
+// NOTE: Must stay in sync with backend/src/services/taskService.ts VALID_TRANSITIONS
 export const TaskStatusTransitions: Record<TaskStatus, TaskStatus[]> = {
   UNCLAIMED: ['CLAIMED'],
-  CLAIMED: ['UNCLAIMED', 'IN_PROGRESS'],
+  CLAIMED: ['UNCLAIMED', 'IN_PROGRESS', 'BLOCKED', 'PAUSED'],
   IN_PROGRESS: ['CLAIMED', 'PAUSED', 'BLOCKED', 'DONE'],
   PAUSED: ['IN_PROGRESS'],  // 暫停後可繼續進行
   BLOCKED: ['IN_PROGRESS'],
