@@ -1,4 +1,5 @@
 import { Response } from "express";
+import type { PaginationMeta } from "shared/types/api";
 import { env } from "../config/env";
 
 /**
@@ -11,7 +12,7 @@ import { env } from "../config/env";
 export interface ApiSuccessResponse<T> {
   success: true;
   data: T;
-  meta?: { total: number; page: number; limit: number; hasMore: boolean };
+  meta?: PaginationMeta;
 }
 
 export interface ApiErrorResponse {

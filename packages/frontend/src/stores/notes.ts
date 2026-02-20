@@ -9,31 +9,51 @@ const service = createNoteService()
 export const useNoteStore = defineStore('notes', () => {
   const notes = ref<TaskNote[]>([])
 
+  const loading = ref({
+    fetch: false,
+    add: false,
+  })
+
   const byTaskId = (taskId: string) =>
     notes.value
       .filter(n => n.taskId === taskId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
   const fetchByTaskId = (taskId: string) =>
-    storeAction(async () => {
-      const data = await service.fetchByTaskId(taskId)
-      const existingOtherNotes = notes.value.filter(n => n.taskId !== taskId)
-      notes.value = [...existingOtherNotes, ...data]
-      return data
-    }, '載入註記失敗')
+    storeAction(
+      async () => {
+        const data = await service.fetchByTaskId(taskId)
+        const existingOtherNotes = notes.value.filter(n => n.taskId !== taskId)
+        notes.value = [...existingOtherNotes, ...data]
+        return data
+      },
+      '載入註記失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.fetch = isLoading
+      },
+    )
 
   const addNote = (note: Omit<TaskNote, 'id' | 'createdAt'>) =>
-    storeAction(async () => {
-      const result = await service.addNote(note)
-      if (!result.success || !result.data) {
-        throw new Error(result.error?.message || '新增註記失敗')
-      }
-      notes.value = [...notes.value, result.data]
-      return result.data
-    }, '新增註記失敗')
+    storeAction(
+      async () => {
+        const result = await service.addNote(note)
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '新增註記失敗')
+        }
+        notes.value = [...notes.value, result.data]
+        return result.data
+      },
+      '新增註記失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.add = isLoading
+      },
+    )
 
   return {
     notes,
+    loading,
     byTaskId,
     fetchByTaskId,
     addNote,

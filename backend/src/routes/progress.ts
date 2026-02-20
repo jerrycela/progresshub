@@ -10,6 +10,7 @@ import {
 } from "../utils/response";
 
 import { sanitizeBody } from "../middleware/sanitize";
+import { ErrorCodes } from "shared/types/api";
 
 const router = Router();
 
@@ -34,7 +35,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -78,7 +85,7 @@ router.get(
 router.get("/today", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+      sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
       return;
     }
 
@@ -113,7 +120,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -155,13 +168,19 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -170,7 +189,7 @@ router.post(
       // 驗證任務存在
       const task = await taskService.getTaskById(taskId);
       if (!task) {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
 

@@ -16,6 +16,7 @@ import {
 } from "../utils/response";
 import { toTaskDTO } from "../mappers";
 import { AppError } from "../middleware/errorHandler";
+import { ErrorCodes } from "shared/types/api";
 
 const router = Router();
 
@@ -47,14 +48,20 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const task = await taskService.getTaskById(req.params.id);
       if (!task) {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
       sendSuccess(res, toTaskDTO(task));
@@ -72,7 +79,7 @@ router.get(
 router.get("/my", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
-      sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+      sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
       return;
     }
 
@@ -116,7 +123,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -158,14 +171,20 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const task = await taskService.getTaskById(req.params.id);
       if (!task) {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
       sendSuccess(res, toTaskDTO(task));
@@ -210,7 +229,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -241,7 +266,12 @@ router.post(
         return;
       }
       logger.error("Create task error:", error);
-      sendError(res, "TASK_CREATE_FAILED", "Failed to create task", 500);
+      sendError(
+        res,
+        ErrorCodes.TASK_CREATE_FAILED,
+        "Failed to create task",
+        500,
+      );
     }
   },
 );
@@ -284,14 +314,20 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const existing = await taskService.getTaskById(req.params.id);
       if (!existing) {
-        sendError(res, "TASK_NOT_FOUND", "Task not found", 404);
+        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
 
@@ -303,7 +339,12 @@ router.put(
         return;
       }
       logger.error("Update task error:", error);
-      sendError(res, "TASK_UPDATE_FAILED", "Failed to update task", 500);
+      sendError(
+        res,
+        ErrorCodes.TASK_UPDATE_FAILED,
+        "Failed to update task",
+        500,
+      );
     }
   },
 );
@@ -320,7 +361,13 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -338,7 +385,12 @@ router.delete(
         return;
       }
       logger.error("Delete task error:", error);
-      sendError(res, "TASK_DELETE_FAILED", "Failed to delete task", 500);
+      sendError(
+        res,
+        ErrorCodes.TASK_DELETE_FAILED,
+        "Failed to delete task",
+        500,
+      );
     }
   },
 );
