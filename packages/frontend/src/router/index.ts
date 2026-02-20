@@ -25,10 +25,6 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/DashboardPage.vue'),
       },
       {
-        path: 'backlog',
-        redirect: '/task-pool',
-      },
-      {
         path: 'my-tasks',
         name: 'MyTasks',
         component: () => import('@/pages/MyTasksPage.vue'),
