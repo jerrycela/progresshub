@@ -54,7 +54,7 @@ const statusLabel = computed(() => {
 
 <template>
   <div
-    class="bg-pearl-gray border border-metal-silver rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
+    class="bg-surface border border-metal-silver rounded-lg p-4 hover:shadow-md transition-all duration-200 cursor-pointer"
     @click="emit('viewDetail', task)"
   >
     <!-- 職能標籤與狀態 -->
@@ -70,19 +70,19 @@ const statusLabel = computed(() => {
     </div>
 
     <!-- 任務標題 -->
-    <h4 class="text-base font-semibold text-carbon-black mb-2">
+    <h4 class="text-base font-semibold text-primary mb-2">
       {{ task.title }}
     </h4>
 
     <!-- 進度條 -->
     <div class="mb-3">
-      <div class="flex items-center justify-between text-sm text-cool-gray mb-1">
+      <div class="flex items-center justify-between text-sm text-secondary mb-1">
         <span>進度</span>
         <span class="font-semibold">{{ task.progress }}%</span>
       </div>
-      <div class="w-full bg-light-metal rounded-full h-2">
+      <div class="w-full bg-elevated rounded-full h-2">
         <div
-          class="bg-samurai-red h-2 rounded-full transition-all duration-300"
+          class="bg-samurai h-2 rounded-full transition-all duration-300"
           :style="{ width: `${task.progress}%` }"
         />
       </div>
@@ -91,14 +91,14 @@ const statusLabel = computed(() => {
     <!-- 負責人與查看按鈕 -->
     <div class="flex items-center justify-between">
       <div v-if="assignee" class="flex items-center gap-2">
-        <Avatar :src="assignee.avatar" :alt="assignee.name" size="sm" />
-        <span class="text-sm text-cool-gray">{{ assignee.name }}</span>
+        <Avatar :src="assignee.avatar" :name="assignee.name" size="sm" />
+        <span class="text-sm text-secondary">{{ assignee.name }}</span>
       </div>
-      <div v-else class="text-sm text-light-gray">未指派</div>
+      <div v-else class="text-sm text-muted">未指派</div>
 
       <button
         type="button"
-        class="text-sm text-samurai-red hover:text-samurai-red-dark font-medium transition-colors duration-150"
+        class="text-sm text-accent font-medium hover:text-accent-primary transition-colors duration-150"
         @click.stop="emit('viewDetail', task)"
       >
         查看詳細 →

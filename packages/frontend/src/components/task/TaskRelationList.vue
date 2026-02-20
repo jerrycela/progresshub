@@ -32,10 +32,10 @@ const linkIcon =
   <div class="mt-6">
     <!-- 標題列 -->
     <div class="flex items-center gap-2 mb-4">
-      <svg class="w-5 h-5 text-samurai-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="linkIcon" />
       </svg>
-      <h3 class="text-lg font-semibold text-carbon-black">
+      <h3 class="text-lg font-semibold text-primary">
         {{ props.label }} ({{ relatedTasks.length }})
       </h3>
     </div>

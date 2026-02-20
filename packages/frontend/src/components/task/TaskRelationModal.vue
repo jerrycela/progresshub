@@ -97,7 +97,7 @@ const handleBreadcrumbClick = (index: number): void => {
       <!-- 麵包屑導航 -->
       <nav
         v-if="navigationStack.length > 1"
-        class="flex items-center gap-2 mb-4 pb-3 border-b border-metal-silver"
+        class="flex items-center gap-2 mb-4 pb-3 border-b border-default"
       >
         <button
           v-for="(item, index) in navigationStack"
@@ -106,8 +106,8 @@ const handleBreadcrumbClick = (index: number): void => {
           class="flex items-center gap-2 text-sm transition-colors duration-150"
           :class="
             index === navigationStack.length - 1
-              ? 'text-carbon-black font-semibold'
-              : 'text-cool-gray hover:text-samurai-red'
+              ? 'text-primary font-semibold'
+              : 'text-secondary hover:text-accent'
           "
           @click="handleBreadcrumbClick(index)"
         >
