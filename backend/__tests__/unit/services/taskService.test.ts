@@ -148,17 +148,14 @@ describe('TaskService', () => {
   });
 
   describe('getPoolTasks', () => {
-    it('應回傳 UNCLAIMED 任務', async () => {
+    it('應回傳所有任務（不限狀態）', async () => {
       (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.getPoolTasks();
 
-      expect(mockedPrisma.task.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { status: 'UNCLAIMED' },
-          orderBy: { createdAt: 'desc' },
-        }),
-      );
+      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.where).toBeUndefined();
+      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
     });
   });
 

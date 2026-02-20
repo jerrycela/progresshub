@@ -131,11 +131,10 @@ export class TaskService {
   }
 
   /**
-   * 取得任務池（UNCLAIMED 任務）
+   * 取得任務池（所有任務，前端負責篩選）
    */
   async getPoolTasks(): Promise<Task[]> {
     return prisma.task.findMany({
-      where: { status: "UNCLAIMED" },
       orderBy: { createdAt: "desc" },
       include: {
         ...TASK_INCLUDE,
