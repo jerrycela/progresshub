@@ -33,6 +33,7 @@ model Employee {
   createdTasks      Task[]        @relation("CreatedTasks")
   progressLogs      ProgressLog[]
   timeEntries       TimeEntry[]   @relation("EmployeeTimeEntries")
+  approvedTimeEntries TimeEntry[] @relation("TimeEntryApprovals")
   timeEstimates     TimeEstimate[] @relation("TimeEstimates")
   gitlabConnections GitLabConnection[]
   taskNotes         TaskNote[]
@@ -218,6 +219,10 @@ model TimeEntry {
   date        DateTime        @db.Date
   hours       Decimal         @db.Decimal(4, 2)
   description String?         @db.Text
+  status         TimeEntryStatus @default(PENDING)
+  approvedBy     String?         @map("approved_by")
+  approvedAt     DateTime?       @map("approved_at")
+  rejectedReason String?         @map("rejected_reason") @db.Text
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
@@ -226,6 +231,7 @@ model TimeEntry {
   project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   task           Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
   category       TimeCategory    @relation(fields: [categoryId], references: [id])
+  approver       Employee?       @relation("TimeEntryApprovals", fields: [approvedBy], references: [id], onDelete: SetNull)
   gitlabActivity GitLabActivity?
 
   @@index([employeeId])
@@ -281,6 +287,12 @@ enum TaskStatus {
 enum MilestoneStatus {
   PENDING
   ACHIEVED
+}
+
+enum TimeEntryStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 // ============================================
