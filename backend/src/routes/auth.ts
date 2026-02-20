@@ -5,6 +5,7 @@ import { authenticate, AuthRequest } from "../middleware/auth";
 import { sendSuccess, sendError } from "../utils/response";
 import { toUserDTO } from "../mappers";
 import { env } from "../config/env";
+import { AppError } from "../middleware/errorHandler";
 
 const router = Router();
 
@@ -72,6 +73,10 @@ router.post(
       const result = await authService.loginWithSlackCode(code);
       sendSuccess(res, result);
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
       const message = error instanceof Error ? error.message : "Login failed";
       sendError(res, "AUTH_LOGIN_FAILED", message, 500);
     }
@@ -131,6 +136,10 @@ if (
           : await authService.devLogin(email);
         sendSuccess(res, result);
       } catch (error) {
+        if (error instanceof AppError) {
+          sendError(res, error.errorCode, error.message, error.statusCode);
+          return;
+        }
         sendError(res, "AUTH_LOGIN_FAILED", "Invalid credentials", 401);
       }
     },
@@ -189,6 +198,10 @@ router.post(
       const result = await authService.refreshAccessToken(refreshToken);
       sendSuccess(res, result);
     } catch (error) {
+      if (error instanceof AppError) {
+        sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
       const message =
         error instanceof Error ? error.message : "Token refresh failed";
       sendError(res, "AUTH_REFRESH_FAILED", message, 401);

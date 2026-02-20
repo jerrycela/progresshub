@@ -1,22 +1,23 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError } from "axios";
 import {
   GitLabUser,
   GitLabCommit,
   GitLabMergeRequest,
   GitLabIssue,
-} from '../../types/gitlab';
+} from "../../types/gitlab";
+import { AppError } from "../../middleware/errorHandler";
 
 export class GitLabApiClient {
   private client: AxiosInstance;
   private baseUrl: string;
 
   constructor(baseUrl: string, accessToken: string) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.baseUrl = baseUrl.replace(/\/$/, "");
     this.client = axios.create({
       baseURL: `${this.baseUrl}/api/v4`,
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       timeout: 30000,
     });
@@ -25,28 +26,30 @@ export class GitLabApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error: AxiosError) => {
-        if (error.response?.status === 401) {
-          throw new Error('GitLab authentication failed. Token may be expired.');
+        const status = error.response?.status;
+        if (status === 401) {
+          throw new AppError(401, "GitLab authentication failed");
         }
-        if (error.response?.status === 403) {
-          throw new Error('GitLab access denied. Insufficient permissions.');
+        if (status === 403) {
+          throw new AppError(403, "GitLab access denied");
         }
-        if (error.response?.status === 404) {
-          throw new Error('GitLab resource not found.');
-        }
-        throw error;
-      }
+        const message = error.message || "GitLab request failed";
+        throw new AppError(status || 502, message);
+      },
     );
   }
 
   // 取得當前使用者資訊
   async getCurrentUser(): Promise<GitLabUser> {
-    const response = await this.client.get('/user');
+    const response = await this.client.get("/user");
     return this.transformUser(response.data);
   }
 
   // 取得使用者的 Commits
-  async getUserCommits(projectPath: string, since?: Date): Promise<GitLabCommit[]> {
+  async getUserCommits(
+    projectPath: string,
+    since?: Date,
+  ): Promise<GitLabCommit[]> {
     const params: Record<string, unknown> = { all: true, per_page: 100 };
     if (since) {
       params.since = since.toISOString();
@@ -55,68 +58,84 @@ export class GitLabApiClient {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await this.client.get(
       `/projects/${encodedPath}/repository/commits`,
-      { params }
+      { params },
     );
-    return response.data.map((commit: unknown) => this.transformCommit(commit as Record<string, unknown>));
+    return response.data.map((commit: unknown) =>
+      this.transformCommit(commit as Record<string, unknown>),
+    );
   }
 
   // 取得 Commit 詳情（包含 stats）
-  async getCommitDetails(projectPath: string, sha: string): Promise<GitLabCommit> {
+  async getCommitDetails(
+    projectPath: string,
+    sha: string,
+  ): Promise<GitLabCommit> {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await this.client.get(
-      `/projects/${encodedPath}/repository/commits/${sha}`
+      `/projects/${encodedPath}/repository/commits/${sha}`,
     );
     return this.transformCommit(response.data);
   }
 
   // 取得使用者的 MRs
   async getUserMergeRequests(
-    state?: 'opened' | 'merged' | 'closed' | 'all'
+    state?: "opened" | "merged" | "closed" | "all",
   ): Promise<GitLabMergeRequest[]> {
-    const response = await this.client.get('/merge_requests', {
-      params: { state: state || 'all', scope: 'all', per_page: 100 },
+    const response = await this.client.get("/merge_requests", {
+      params: { state: state || "all", scope: "all", per_page: 100 },
     });
-    return response.data.map((mr: unknown) => this.transformMergeRequest(mr as Record<string, unknown>));
+    return response.data.map((mr: unknown) =>
+      this.transformMergeRequest(mr as Record<string, unknown>),
+    );
   }
 
   // 取得專案的 MRs
   async getProjectMergeRequests(
     projectPath: string,
-    state?: 'opened' | 'merged' | 'closed' | 'all',
-    since?: Date
+    state?: "opened" | "merged" | "closed" | "all",
+    since?: Date,
   ): Promise<GitLabMergeRequest[]> {
     const encodedPath = encodeURIComponent(projectPath);
     const params: Record<string, unknown> = {
-      state: state || 'all',
+      state: state || "all",
       per_page: 100,
     };
     if (since) {
       params.updated_after = since.toISOString();
     }
 
-    const response = await this.client.get(`/projects/${encodedPath}/merge_requests`, {
-      params,
-    });
-    return response.data.map((mr: unknown) => this.transformMergeRequest(mr as Record<string, unknown>));
+    const response = await this.client.get(
+      `/projects/${encodedPath}/merge_requests`,
+      {
+        params,
+      },
+    );
+    return response.data.map((mr: unknown) =>
+      this.transformMergeRequest(mr as Record<string, unknown>),
+    );
   }
 
   // 取得使用者的 Issues
-  async getUserIssues(state?: 'opened' | 'closed' | 'all'): Promise<GitLabIssue[]> {
-    const response = await this.client.get('/issues', {
-      params: { state: state || 'all', scope: 'all', per_page: 100 },
+  async getUserIssues(
+    state?: "opened" | "closed" | "all",
+  ): Promise<GitLabIssue[]> {
+    const response = await this.client.get("/issues", {
+      params: { state: state || "all", scope: "all", per_page: 100 },
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
+    return response.data.map((issue: unknown) =>
+      this.transformIssue(issue as Record<string, unknown>),
+    );
   }
 
   // 取得專案的 Issues
   async getProjectIssues(
     projectPath: string,
-    state?: 'opened' | 'closed' | 'all',
-    since?: Date
+    state?: "opened" | "closed" | "all",
+    since?: Date,
   ): Promise<GitLabIssue[]> {
     const encodedPath = encodeURIComponent(projectPath);
     const params: Record<string, unknown> = {
-      state: state || 'all',
+      state: state || "all",
       per_page: 100,
     };
     if (since) {
@@ -126,33 +145,40 @@ export class GitLabApiClient {
     const response = await this.client.get(`/projects/${encodedPath}/issues`, {
       params,
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
+    return response.data.map((issue: unknown) =>
+      this.transformIssue(issue as Record<string, unknown>),
+    );
   }
 
   // 取得單一 Issue
   async getIssue(projectPath: string, issueIid: number): Promise<GitLabIssue> {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await this.client.get(
-      `/projects/${encodedPath}/issues/${issueIid}`
+      `/projects/${encodedPath}/issues/${issueIid}`,
     );
     return this.transformIssue(response.data);
   }
 
   // 取得專案列表
   async getProjects(membership = true): Promise<unknown[]> {
-    const response = await this.client.get('/projects', {
-      params: { membership, per_page: 100, order_by: 'last_activity_at' },
+    const response = await this.client.get("/projects", {
+      params: { membership, per_page: 100, order_by: "last_activity_at" },
     });
     return response.data;
   }
 
   // 搜尋 Issues
-  async searchIssues(projectPath: string, query: string): Promise<GitLabIssue[]> {
+  async searchIssues(
+    projectPath: string,
+    query: string,
+  ): Promise<GitLabIssue[]> {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await this.client.get(`/projects/${encodedPath}/issues`, {
       params: { search: query, per_page: 20 },
     });
-    return response.data.map((issue: unknown) => this.transformIssue(issue as Record<string, unknown>));
+    return response.data.map((issue: unknown) =>
+      this.transformIssue(issue as Record<string, unknown>),
+    );
   }
 
   // 建立 Issue
@@ -160,13 +186,13 @@ export class GitLabApiClient {
     projectPath: string,
     title: string,
     description?: string,
-    labels?: string[]
+    labels?: string[],
   ): Promise<GitLabIssue> {
     const encodedPath = encodeURIComponent(projectPath);
     const response = await this.client.post(`/projects/${encodedPath}/issues`, {
       title,
       description,
-      labels: labels?.join(','),
+      labels: labels?.join(","),
     });
     return this.transformIssue(response.data);
   }
@@ -178,18 +204,18 @@ export class GitLabApiClient {
     updates: {
       title?: string;
       description?: string;
-      state_event?: 'close' | 'reopen';
+      state_event?: "close" | "reopen";
       labels?: string[];
-    }
+    },
   ): Promise<GitLabIssue> {
     const encodedPath = encodeURIComponent(projectPath);
     const body: Record<string, unknown> = { ...updates };
     if (updates.labels) {
-      body.labels = updates.labels.join(',');
+      body.labels = updates.labels.join(",");
     }
     const response = await this.client.put(
       `/projects/${encodedPath}/issues/${issueIid}`,
-      body
+      body,
     );
     return this.transformIssue(response.data);
   }
@@ -200,7 +226,7 @@ export class GitLabApiClient {
       id: data.id as number,
       username: data.username as string,
       name: data.name as string,
-      email: (data.email as string) || '',
+      email: (data.email as string) || "",
       avatarUrl: data.avatar_url as string,
       webUrl: data.web_url as string,
     };
@@ -230,21 +256,23 @@ export class GitLabApiClient {
     };
   }
 
-  private transformMergeRequest(data: Record<string, unknown>): GitLabMergeRequest {
+  private transformMergeRequest(
+    data: Record<string, unknown>,
+  ): GitLabMergeRequest {
     const author = data.author as Record<string, unknown>;
     return {
       id: data.id as number,
       iid: data.iid as number,
       title: data.title as string,
-      description: (data.description as string) || '',
-      state: data.state as 'opened' | 'closed' | 'merged',
+      description: (data.description as string) || "",
+      state: data.state as "opened" | "closed" | "merged",
       sourceBranch: data.source_branch as string,
       targetBranch: data.target_branch as string,
       author: {
         id: author.id as number,
         username: author.username as string,
         name: author.name as string,
-        email: (author.email as string) || '',
+        email: (author.email as string) || "",
         avatarUrl: author.avatar_url as string,
         webUrl: author.web_url as string,
       },
@@ -265,8 +293,8 @@ export class GitLabApiClient {
       id: data.id as number,
       iid: data.iid as number,
       title: data.title as string,
-      description: (data.description as string) || '',
-      state: data.state as 'opened' | 'closed',
+      description: (data.description as string) || "",
+      state: data.state as "opened" | "closed",
       labels: (data.labels as string[]) || [],
       assignees: assignees.map((a) => this.transformUser(a)),
       author: this.transformUser(author),
@@ -285,6 +313,9 @@ export class GitLabApiClient {
 }
 
 // Factory function
-export function createGitLabClient(baseUrl: string, accessToken: string): GitLabApiClient {
+export function createGitLabClient(
+  baseUrl: string,
+  accessToken: string,
+): GitLabApiClient {
   return new GitLabApiClient(baseUrl, accessToken);
 }
