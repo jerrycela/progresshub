@@ -16,7 +16,7 @@ import {
 } from "../utils/response";
 import { toTaskDTO } from "../mappers";
 import { AppError } from "../middleware/errorHandler";
-import { ErrorCodes } from "shared/types/api";
+import { ErrorCodes } from "../types/shared-api";
 
 const router = Router();
 

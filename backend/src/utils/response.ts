@@ -1,5 +1,5 @@
 import { Response } from "express";
-import type { PaginationMeta } from "shared/types/api";
+import type { PaginationMeta } from "../types/shared-api";
 import { env } from "../config/env";
 
 /**

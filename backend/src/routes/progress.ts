@@ -10,7 +10,7 @@ import {
 } from "../utils/response";
 
 import { sanitizeBody } from "../middleware/sanitize";
-import { ErrorCodes } from "shared/types/api";
+import { ErrorCodes } from "../types/shared-api";
 
 const router = Router();
 

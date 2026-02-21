@@ -4,7 +4,7 @@ import { env } from "../config/env";
 import prisma from "../config/database";
 import { PermissionLevel } from "@prisma/client";
 import { sendError } from "../utils/response";
-import { ErrorCodes } from "shared/types/api";
+import { ErrorCodes } from "../types/shared-api";
 
 export interface JwtPayload {
   userId: string;

@@ -12,7 +12,7 @@ import {
 } from "../utils/response";
 import { sanitizeBody } from "../middleware/sanitize";
 import { toProjectDTO } from "../mappers";
-import { ErrorCodes } from "shared/types/api";
+import { ErrorCodes } from "../types/shared-api";
 
 const router = Router();
 

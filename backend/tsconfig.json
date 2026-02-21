@@ -16,11 +16,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "shared/*": ["../packages/shared/*"]
-    }
+    "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "../packages/shared/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }
