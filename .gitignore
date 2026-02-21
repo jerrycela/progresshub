@@ -42,9 +42,9 @@ env/
 .DS_Store
 Thumbs.db
 
-# Claude Code (internal tooling)
-.claude/
-CLAUDE.md
+# Claude Code — 允許 .claude/ 供 Web 版讀取，僅忽略本機檔案
+.claude/settings.local.json
+.claude/.dotfiles-version
 
 # Planning & session files
 task_plan.md
