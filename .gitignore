@@ -79,3 +79,6 @@ openclawfortest/
 # Playwright
 playwright-report/
 test-results/
+.venv/
+*.pyc
+.claude/skills/notebooklm/data/
