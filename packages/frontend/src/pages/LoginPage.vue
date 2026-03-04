@@ -13,8 +13,13 @@ const isLoading = ref(false)
 
 const redirectAfterLogin = () => {
   const redirect = route.query.redirect as string
-  router.push(redirect || '/dashboard')
+  // Prevent open redirect: only allow internal paths
+  const safeRedirect =
+    redirect?.startsWith('/') && !redirect.startsWith('//') ? redirect : '/dashboard'
+  router.push(safeRedirect)
 }
+
+const isDemoEnvironment = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true'
 
 // Slack OAuth 登入
 const handleSlackLogin = async () => {
@@ -120,8 +125,14 @@ const handleDemoLogin = async () => {
           <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
         </div>
 
-        <!-- Demo 登入按鈕 - 侍魂赤紅 -->
-        <Button variant="primary" block :loading="isLoading" @click="handleDemoLogin">
+        <!-- Demo 登入按鈕 - 僅在開發/測試環境顯示 -->
+        <Button
+          v-if="isDemoEnvironment"
+          variant="primary"
+          block
+          :loading="isLoading"
+          @click="handleDemoLogin"
+        >
           Demo 模式快速登入
         </Button>
 

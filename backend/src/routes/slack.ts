@@ -32,10 +32,13 @@ function verifySlackSignature(req: Request): boolean {
     return false;
   }
 
-  // NOTE: Slack 官方建議使用原始 request body 計算簽章，
-  // 但 express.json() 已解析 body。JSON.stringify 在大多數情況下能正確還原，
-  // 但鍵序/格式可能與原始 body 不同。若遇到驗證失敗，需改用 express.raw() 保留原始 body。
-  const sigBasestring = `v0:${timestamp}:${JSON.stringify(req.body)}`;
+  // Use raw body for signature verification (Slack requires exact original body)
+  const rawBody = (req as any).rawBody;
+  if (!rawBody) {
+    logger.error("Raw body not available for Slack signature verification");
+    return false;
+  }
+  const sigBasestring = `v0:${timestamp}:${rawBody}`;
   const mySignature =
     "v0=" +
     crypto

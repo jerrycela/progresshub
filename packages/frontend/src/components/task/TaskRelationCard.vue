@@ -2,9 +2,9 @@
 import Badge from '@/components/common/Badge.vue'
 import Avatar from '@/components/common/Avatar.vue'
 import { computed } from 'vue'
-import type { Task, User } from 'shared/types'
+import type { Task } from 'shared/types'
 import { functionTypeLabels, taskStatusLabels } from '@/mocks/unified'
-import { mockUsers } from '@/mocks/employees'
+import { useEmployeeStore } from '@/stores/employees'
 
 // ============================================
 // 關聯任務卡片組件
@@ -21,10 +21,12 @@ const emit = defineEmits<{
   viewDetail: [task: Task]
 }>()
 
+const employeeStore = useEmployeeStore()
+
 // 取得負責人資訊
 const assignee = computed(() => {
   if (!props.task.assigneeId) return null
-  return mockUsers.find((u: User) => u.id === props.task.assigneeId)
+  return employeeStore.getEmployeeById(props.task.assigneeId)
 })
 
 // 狀態標籤顏色

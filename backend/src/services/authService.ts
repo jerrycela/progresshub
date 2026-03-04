@@ -141,6 +141,11 @@ export class AuthService {
       }
     }
 
+    // Check if account is active
+    if (!employee.isActive) {
+      throw new AppError(403, "帳號已停用，請聯繫管理員");
+    }
+
     // Update last active
     await prisma.employee.update({
       where: { id: employee.id },

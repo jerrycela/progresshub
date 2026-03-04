@@ -365,27 +365,30 @@ export class GitLabActivityService {
       );
     }
 
-    // 建立工時記錄
-    const timeEntry = await prisma.timeEntry.create({
-      data: {
-        employeeId,
-        projectId,
-        taskId: data.taskId,
-        categoryId: data.categoryId,
-        date: activity.activityAt,
-        hours: data.hours,
-        description: data.description || this.generateDescription(activity),
-        status: "PENDING",
-      },
-    });
+    // 建立工時記錄並更新活動（同一個 transaction 保證原子性）
+    const timeEntry = await prisma.$transaction(async (tx) => {
+      const entry = await tx.timeEntry.create({
+        data: {
+          employeeId,
+          projectId,
+          taskId: data.taskId,
+          categoryId: data.categoryId,
+          date: activity.activityAt,
+          hours: data.hours,
+          description: data.description || this.generateDescription(activity),
+          status: "PENDING",
+        },
+      });
 
-    // 更新活動
-    await prisma.gitLabActivity.update({
-      where: { id: activityId },
-      data: {
-        timeEntryId: timeEntry.id,
-        taskId: data.taskId,
-      },
+      await tx.gitLabActivity.update({
+        where: { id: activityId },
+        data: {
+          timeEntryId: entry.id,
+          taskId: data.taskId,
+        },
+      });
+
+      return entry;
     });
 
     return timeEntry.id;
