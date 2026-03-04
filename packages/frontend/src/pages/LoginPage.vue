@@ -118,23 +118,17 @@ const handleDemoLogin = async () => {
           使用 Slack 登入
         </Button>
 
-        <!-- 分隔線 -->
-        <div class="flex items-center my-6">
-          <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
-          <span class="px-3 text-sm" style="color: var(--text-muted)">或</span>
-          <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
-        </div>
-
-        <!-- Demo 登入按鈕 - 僅在開發/測試環境顯示 -->
-        <Button
-          v-if="isDemoEnvironment"
-          variant="primary"
-          block
-          :loading="isLoading"
-          @click="handleDemoLogin"
-        >
-          Demo 模式快速登入
-        </Button>
+        <!-- 分隔線與 Demo 登入按鈕 - 僅在開發/測試環境顯示 -->
+        <template v-if="isDemoEnvironment">
+          <div class="flex items-center my-6">
+            <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
+            <span class="px-3 text-sm" style="color: var(--text-muted)">或</span>
+            <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
+          </div>
+          <Button variant="primary" block :loading="isLoading" @click="handleDemoLogin">
+            Demo 模式快速登入
+          </Button>
+        </template>
 
         <p v-if="authStore.error" class="text-red-400 text-sm text-center mt-4">
           {{ authStore.error }}

@@ -97,7 +97,16 @@ app.use(
     },
   }),
 ); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true, limit: "1mb" })); // Parse URL-encoded bodies
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "1mb",
+    // Preserve raw body for Slack signature verification (Slack sends URL-encoded)
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf.toString();
+    },
+  }),
+); // Parse URL-encoded bodies
 // Issue #15: 整合 Winston logger
 app.use(
   morgan(env.NODE_ENV === "development" ? "dev" : "combined", {
