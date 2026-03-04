@@ -213,7 +213,13 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
-    const data = await apiPostUnwrap<Task>('/tasks', input)
+    // Strip empty strings for optional date fields; backend isISO8601() rejects ""
+    const payload: CreateTaskInput = {
+      ...input,
+      startDate: input.startDate || undefined,
+      dueDate: input.dueDate || undefined,
+    }
+    const data = await apiPostUnwrap<Task>('/tasks', payload)
     return { success: true, data }
   }
 

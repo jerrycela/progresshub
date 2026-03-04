@@ -91,10 +91,10 @@ const handleSubmit = async (): Promise<void> => {
     const result = await taskStore.createTask({
       title: form.title,
       projectId: form.projectId,
-      description: form.description,
+      description: form.description || undefined,
       functionTags: form.functionTags,
-      startDate: form.startDate,
-      dueDate: form.dueDate,
+      startDate: form.startDate || undefined,
+      dueDate: form.dueDate || undefined,
       sourceType: sourceType.value,
       assigneeId: sourceType.value === 'ASSIGNED' ? form.assigneeId : undefined,
       department: form.department || undefined,
@@ -114,6 +114,9 @@ const handleSubmit = async (): Promise<void> => {
     } else {
       showError(result.error?.message || '建立任務失敗')
     }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : '建立任務時發生未知錯誤'
+    showError(message)
   } finally {
     isSubmitting.value = false
   }

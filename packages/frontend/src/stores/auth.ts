@@ -92,7 +92,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Mock mode: use local mock data
       await mockDelay(300)
-      const demoUser: User = { ...mockCurrentUser, name, role }
+      const functionType = role === 'EMPLOYEE' ? 'PROGRAMMING' : 'PLANNING'
+      const demoUser: User = {
+        ...mockCurrentUser,
+        name,
+        role,
+        functionType: functionType as User['functionType'],
+      }
       user.value = demoUser
       localStorage.setItem('auth_token', DEMO_TOKEN)
       return { success: true, data: demoUser }

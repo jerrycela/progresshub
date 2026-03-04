@@ -196,7 +196,7 @@ export class AuthService {
 
     const employee = await prisma.employee.upsert({
       where: { email },
-      update: { name, permissionLevel },
+      update: { name, permissionLevel, functionType },
       create: {
         email,
         name,
