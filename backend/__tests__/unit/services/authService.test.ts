@@ -10,6 +10,11 @@ jest.mock('../../../src/config/database', () => ({
       create: jest.fn(),
       update: jest.fn(),
     },
+    refreshToken: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      deleteMany: jest.fn(),
+    },
   },
 }));
 
@@ -50,6 +55,9 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock refreshToken.create to resolve successfully (called by generateRefreshToken)
+    (prisma as any).refreshToken.create.mockResolvedValue({ id: 'rt-001', token: 'mock-refresh-token' });
+    (prisma as any).refreshToken.deleteMany.mockResolvedValue({ count: 0 });
   });
 
   describe('generateToken', () => {
