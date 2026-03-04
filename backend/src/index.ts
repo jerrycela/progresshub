@@ -90,25 +90,15 @@ app.use("/api/auth/dev-login", authLimiter);
 app.use("/api/auth/slack", authLimiter);
 app.use("/api/auth/refresh", authLimiter);
 
+// Preserve raw body for Slack signature verification
+const preserveRawBody = (req: any, _res: any, buf: Buffer) => {
+  req.rawBody = buf.toString();
+};
+
+app.use(express.json({ limit: "1mb", verify: preserveRawBody }));
 app.use(
-  express.json({
-    limit: "1mb",
-    // Preserve raw body for Slack signature verification
-    verify: (req: any, _res, buf) => {
-      req.rawBody = buf.toString();
-    },
-  }),
-); // Parse JSON bodies
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "1mb",
-    // Preserve raw body for Slack signature verification (Slack sends URL-encoded)
-    verify: (req: any, _res, buf) => {
-      req.rawBody = buf.toString();
-    },
-  }),
-); // Parse URL-encoded bodies
+  express.urlencoded({ extended: true, limit: "1mb", verify: preserveRawBody }),
+);
 // Issue #15: 整合 Winston logger
 app.use(
   morgan(env.NODE_ENV === "development" ? "dev" : "combined", {

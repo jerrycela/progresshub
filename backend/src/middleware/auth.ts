@@ -66,7 +66,7 @@ export const authenticate = async (
       sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
     }
-    sendError(res, ErrorCodes.AUTH_REQUIRED, "認證失敗", 500);
+    sendError(res, ErrorCodes.SERVER_ERROR, "認證失敗", 500);
   }
 };
 

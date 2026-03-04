@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const demoLogin = async (): Promise<ActionResult<User>> => {
+  const demoLogin = async (name: string, role: UserRole): Promise<ActionResult<User>> => {
     loading.value.login = true
     error.value = null
 
@@ -80,7 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (import.meta.env.VITE_USE_MOCK !== 'true') {
         const data = await apiPostUnwrap<{ user: User; token: string; refreshToken: string }>(
           '/auth/dev-login',
-          { employeeId: mockCurrentUser.id },
+          { name, permissionLevel: role },
         )
         user.value = data.user
         localStorage.setItem('auth_token', data.token)
@@ -92,7 +92,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       // Mock mode: use local mock data
       await mockDelay(300)
-      const demoUser = { ...mockCurrentUser }
+      const demoUser: User = { ...mockCurrentUser, name, role }
       user.value = demoUser
       localStorage.setItem('auth_token', DEMO_TOKEN)
       return { success: true, data: demoUser }
@@ -108,15 +108,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const login = async (slackCode?: string): Promise<ActionResult<User>> => {
+  const login = async (code: string, state: string): Promise<ActionResult<User>> => {
     loading.value.login = true
     error.value = null
 
     try {
-      const result = await service.loginWithSlack(slackCode || '')
+      const result = await service.loginWithSlack(code, state)
       if (result.success && result.data) {
         user.value = result.data.user
         localStorage.setItem('auth_token', result.data.token)
+        if (result.data.refreshToken) {
+          localStorage.setItem('auth_refresh_token', result.data.refreshToken)
+        }
         return { success: true, data: result.data.user }
       }
 

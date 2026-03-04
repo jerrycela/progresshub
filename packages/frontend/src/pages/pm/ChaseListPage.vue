@@ -271,7 +271,10 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
     <!-- 無異常狀態 (迭代 28: 使用 EmptyState 元件) -->
     <Card
       v-if="
-        overdueTasks.length === 0 && blockedTasks.length === 0 && longUnclaimedTasks.length === 0
+        overdueTasks.length === 0 &&
+        blockedTasks.length === 0 &&
+        longUnclaimedTasks.length === 0 &&
+        staleTasks.length === 0
       "
       class="bg-success/5 border-success/20"
     >

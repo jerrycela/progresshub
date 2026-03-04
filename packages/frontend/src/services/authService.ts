@@ -4,13 +4,19 @@ import { mockCurrentUser } from '@/mocks/unified'
 import { mockDelay } from '@/utils/mockDelay'
 
 export interface AuthServiceInterface {
-  loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>>
+  loginWithSlack(
+    code: string,
+    state: string,
+  ): Promise<ActionResult<{ user: User; token: string; refreshToken?: string }>>
   getCurrentUser(): Promise<ActionResult<User>>
   logout(): Promise<void>
 }
 
 class MockAuthService implements AuthServiceInterface {
-  async loginWithSlack(): Promise<ActionResult<{ user: User; token: string }>> {
+  async loginWithSlack(
+    _code: string,
+    _state: string,
+  ): Promise<ActionResult<{ user: User; token: string; refreshToken?: string }>> {
     await mockDelay(500)
     return { success: true, data: { user: { ...mockCurrentUser }, token: 'mock-jwt-token' } }
   }
@@ -27,8 +33,14 @@ class MockAuthService implements AuthServiceInterface {
 }
 
 class ApiAuthService implements AuthServiceInterface {
-  async loginWithSlack(code: string): Promise<ActionResult<{ user: User; token: string }>> {
-    const data = await apiPostUnwrap<{ user: User; token: string }>('/auth/slack', { code })
+  async loginWithSlack(
+    code: string,
+    state: string,
+  ): Promise<ActionResult<{ user: User; token: string; refreshToken?: string }>> {
+    const data = await apiPostUnwrap<{ user: User; token: string; refreshToken?: string }>(
+      '/auth/slack',
+      { code, state },
+    )
     return { success: true, data }
   }
 

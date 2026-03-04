@@ -34,19 +34,21 @@ const { showError } = useToast()
 
 // 初始化 Store 資料（確保 API 模式下載入後端資料）
 onMounted(async () => {
-  const results = await Promise.allSettled([
-    projectStore.fetchProjects(),
-    employeeStore.fetchEmployees(),
-    taskStore.fetchTasks(),
-    taskStore.fetchPoolTasks(),
-    departmentStore.fetchDepartments(),
-    dashboardStore.fetchStats(),
-    dashboardStore.fetchWorkloads(),
-    milestoneStore.fetchMilestones(),
-  ])
+  const fetches = [
+    { label: '專案', fn: () => projectStore.fetchProjects() },
+    { label: '員工', fn: () => employeeStore.fetchEmployees() },
+    { label: '任務', fn: () => taskStore.fetchTasks() },
+    { label: '任務池', fn: () => taskStore.fetchPoolTasks() },
+    { label: '部門', fn: () => departmentStore.fetchDepartments() },
+    { label: '統計', fn: () => dashboardStore.fetchStats() },
+    { label: '工作量', fn: () => dashboardStore.fetchWorkloads() },
+    { label: '里程碑', fn: () => milestoneStore.fetchMilestones() },
+  ]
 
-  const labels = ['專案', '員工', '任務', '任務池', '部門', '統計', '工作量', '里程碑']
-  const failed = results.map((r, i) => (r.status === 'rejected' ? labels[i] : null)).filter(Boolean)
+  const results = await Promise.allSettled(fetches.map(f => f.fn()))
+  const failed = results
+    .map((r, i) => (r.status === 'rejected' ? fetches[i].label : null))
+    .filter((l): l is string => l !== null)
 
   if (failed.length > 0) {
     showError(`部分資料載入失敗：${failed.join('、')}，請重新整理頁面`)

@@ -177,6 +177,38 @@ export class AuthService {
     return this.completeDevLogin(employee);
   }
 
+  /**
+   * Demo login: find-or-create an employee by name + role, then issue tokens.
+   * Email is deterministically derived from the name slug to ensure idempotency.
+   */
+  async demoLogin(
+    name: string,
+    permissionLevel: PermissionLevel,
+  ): Promise<LoginResult> {
+    const nameSlug = name
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+    const email = `demo-${nameSlug}@demo.progresshub.local`;
+
+    const functionType =
+      permissionLevel === PermissionLevel.EMPLOYEE ? "PROGRAMMING" : "PLANNING";
+
+    const employee = await prisma.employee.upsert({
+      where: { email },
+      update: { name, permissionLevel },
+      create: {
+        email,
+        name,
+        permissionLevel,
+        isActive: true,
+        functionType,
+      },
+    });
+
+    return this.completeDevLogin(employee);
+  }
+
   private async completeDevLogin(employee: Employee): Promise<LoginResult> {
     if (!employee.isActive) {
       throw new AppError(403, "Account is disabled");

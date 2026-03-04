@@ -33,6 +33,27 @@ router.get("/slack/authorize", (_req: AuthRequest, res: Response): void => {
 });
 
 /**
+ * GET /api/auth/slack/callback
+ * Slack OAuth callback — receives code+state from Slack, redirects to frontend
+ */
+router.get("/slack/callback", (req: AuthRequest, res: Response): void => {
+  const { code, state } = req.query;
+  const frontendUrl = env.FRONTEND_URL;
+
+  if (!code || !state) {
+    res.redirect(
+      `${frontendUrl}/login?error=${encodeURIComponent("Slack 授權失敗：缺少必要參數")}`,
+    );
+    return;
+  }
+
+  // Redirect to frontend with code and state for the frontend to complete the exchange
+  res.redirect(
+    `${frontendUrl}/login?code=${encodeURIComponent(code as string)}&state=${encodeURIComponent(state as string)}`,
+  );
+});
+
+/**
  * POST /api/auth/slack
  * Slack OAuth 登入（需要有效的 CSRF state）
  */
@@ -108,6 +129,16 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         .trim()
         .notEmpty()
         .withMessage("Valid employee ID is required"),
+      body("name")
+        .optional()
+        .isString()
+        .trim()
+        .notEmpty()
+        .withMessage("Name is required for demo login"),
+      body("permissionLevel")
+        .optional()
+        .isIn(["EMPLOYEE", "PM", "PRODUCER", "ADMIN"])
+        .withMessage("Valid permission level is required"),
     ],
     async (req: AuthRequest, res: Response): Promise<void> => {
       const errors = validationResult(req);
@@ -116,18 +147,26 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         return;
       }
 
-      const { email, employeeId } = req.body;
-      if (!email && !employeeId) {
-        sendError(
-          res,
-          "VALIDATION_ERROR",
-          "Either email or employeeId is required",
-          400,
-        );
-        return;
-      }
+      const { email, employeeId, name, permissionLevel } = req.body;
 
       try {
+        // Demo login mode: name + permissionLevel
+        if (name && permissionLevel) {
+          const result = await authService.demoLogin(name, permissionLevel);
+          sendSuccess(res, result);
+          return;
+        }
+
+        if (!email && !employeeId) {
+          sendError(
+            res,
+            "VALIDATION_ERROR",
+            "Either email or employeeId is required",
+            400,
+          );
+          return;
+        }
+
         const result = employeeId
           ? await authService.devLoginById(employeeId)
           : await authService.devLogin(email);
@@ -214,11 +253,16 @@ router.post(
   "/logout",
   authenticate,
   async (req: AuthRequest, res: Response): Promise<void> => {
-    const { refreshToken } = req.body;
-    if (typeof refreshToken === "string" && refreshToken.length > 0) {
-      await authService.revokeRefreshToken(refreshToken);
+    try {
+      const { refreshToken } = req.body;
+      if (typeof refreshToken === "string" && refreshToken.length > 0) {
+        await authService.revokeRefreshToken(refreshToken);
+      }
+      sendSuccess(res, { message: "Logged out successfully" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Logout failed";
+      sendError(res, "AUTH_LOGOUT_FAILED", message, 500);
     }
-    sendSuccess(res, { message: "Logged out successfully" });
   },
 );
 

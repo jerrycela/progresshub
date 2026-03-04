@@ -1,15 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { apiGetUnwrap } from '@/services/api'
 import Button from '@/components/common/Button.vue'
+import type { UserRole } from 'shared/types'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { showError } = useToast()
 const isLoading = ref(false)
+
+const demoName = ref('')
+const demoRole = ref<UserRole>('EMPLOYEE')
+
+const demoRoleOptions: { label: string; value: UserRole }[] = [
+  { label: 'PM', value: 'PM' },
+  { label: '一般同仁', value: 'EMPLOYEE' },
+  { label: '製作人', value: 'PRODUCER' },
+  { label: '管理者', value: 'ADMIN' },
+]
 
 const redirectAfterLogin = () => {
   const redirect = route.query.redirect as string
@@ -21,18 +33,44 @@ const redirectAfterLogin = () => {
 
 const isDemoEnvironment = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEMO === 'true'
 
-// Slack OAuth 登入
+// Handle Slack OAuth callback — detect code+state in URL query params
+onMounted(async () => {
+  const code = route.query.code as string | undefined
+  const state = route.query.state as string | undefined
+  const errorMsg = route.query.error as string | undefined
+
+  if (errorMsg) {
+    showError(errorMsg)
+    router.replace({ path: '/login' })
+    return
+  }
+
+  if (code && state) {
+    isLoading.value = true
+    // Clean URL immediately to prevent resubmission
+    router.replace({ path: '/login' })
+    try {
+      const result = await authStore.login(code, state)
+      if (result.success) {
+        redirectAfterLogin()
+      } else {
+        showError(result.error?.message || 'Slack 登入失敗')
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+})
+
+// Slack OAuth 登入 — redirect to Slack authorization page
 const handleSlackLogin = async () => {
   isLoading.value = true
   try {
-    const result = await authStore.login()
-    if (result.success) {
-      redirectAfterLogin()
-    } else {
-      const message = result.error?.message || '登入失敗，請稍後再試'
-      showError(message)
-    }
-  } finally {
+    const data = await apiGetUnwrap<{ authUrl: string }>('/auth/slack/authorize')
+    // Redirect to Slack OAuth page
+    window.location.href = data.authUrl
+  } catch {
+    showError('無法取得 Slack 授權連結，請稍後再試')
     isLoading.value = false
   }
 }
@@ -41,7 +79,7 @@ const handleSlackLogin = async () => {
 const handleDemoLogin = async () => {
   isLoading.value = true
   try {
-    const result = await authStore.demoLogin()
+    const result = await authStore.demoLogin(demoName.value.trim(), demoRole.value)
     if (result.success) {
       redirectAfterLogin()
     } else {
@@ -118,16 +156,68 @@ const handleDemoLogin = async () => {
           使用 Slack 登入
         </Button>
 
-        <!-- 分隔線與 Demo 登入按鈕 - 僅在開發/測試環境顯示 -->
+        <!-- 分隔線與 Demo 登入表單 - 僅在開發/測試環境顯示 -->
         <template v-if="isDemoEnvironment">
           <div class="flex items-center my-6">
             <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
-            <span class="px-3 text-sm" style="color: var(--text-muted)">或</span>
+            <span class="px-3 text-sm" style="color: var(--text-muted)">或使用 Demo 登入</span>
             <div class="flex-1 border-t" style="border-color: var(--border-primary)"></div>
           </div>
-          <Button variant="primary" block :loading="isLoading" @click="handleDemoLogin">
-            Demo 模式快速登入
-          </Button>
+
+          <!-- Demo 登入表單 -->
+          <div class="space-y-4">
+            <!-- 姓名輸入 -->
+            <div>
+              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+                姓名
+              </label>
+              <input
+                v-model="demoName"
+                type="text"
+                class="input w-full"
+                placeholder="請輸入您的姓名"
+              />
+            </div>
+
+            <!-- 角色選擇 -->
+            <div>
+              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+                角色
+              </label>
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  v-for="option in demoRoleOptions"
+                  :key="option.value"
+                  type="button"
+                  class="px-3 py-2 rounded-lg text-sm font-medium transition-colors border"
+                  :class="
+                    demoRole === option.value
+                      ? 'border-samurai text-samurai bg-samurai/10'
+                      : 'hover:border-samurai/50'
+                  "
+                  :style="
+                    demoRole !== option.value
+                      ? 'border-color: var(--border-primary); color: var(--text-secondary)'
+                      : ''
+                  "
+                  @click="demoRole = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Demo 登入按鈕 -->
+            <Button
+              variant="primary"
+              block
+              :loading="isLoading"
+              :disabled="!demoName.trim()"
+              @click="handleDemoLogin"
+            >
+              以 Demo 身分登入
+            </Button>
+          </div>
         </template>
 
         <p v-if="authStore.error" class="text-red-400 text-sm text-center mt-4">
