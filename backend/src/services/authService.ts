@@ -15,16 +15,6 @@ const OAUTH_STATE_MAX_COUNT = 1000;
 const STATE_TTL = 10 * 60 * 1000; // 10 minutes
 const oauthStates = new Map<string, { expiresAt: number }>();
 
-// FIXME: Refresh Token 使用 In-Memory Map，在多進程/多節點/重啟時會全部失效。
-// 影響：伺服器重啟後所有使用者的 refresh token 失效，需要重新登入。
-// 多節點部署時，A 節點核發的 token 在 B 節點無法驗證。
-// 優先級：生產環境部署前必須遷移至 Redis 或資料庫。
-const REFRESH_TOKEN_MAX_COUNT = 10000;
-const refreshTokenStore = new Map<
-  string,
-  { userId: string; expiresAt: number }
->();
-
 export interface LoginResult {
   token: string;
   refreshToken: string;
@@ -153,7 +143,7 @@ export class AuthService {
     });
 
     const token = this.generateToken(employee);
-    const refreshToken = this.generateRefreshToken(employee);
+    const refreshToken = await this.generateRefreshToken(employee);
     return { token, refreshToken, user: toUserDTO(employee) };
   }
 
@@ -198,7 +188,7 @@ export class AuthService {
     });
 
     const token = this.generateToken(employee);
-    const refreshToken = this.generateRefreshToken(employee);
+    const refreshToken = await this.generateRefreshToken(employee);
     return { token, refreshToken, user: toUserDTO(employee) };
   }
 
@@ -233,28 +223,11 @@ export class AuthService {
   }
 
   /**
-   * Generate a refresh token (long-lived) and store it in-memory.
+   * Generate a refresh token (long-lived) and persist it to the database.
    * The refresh token itself is a JWT signed with a separate secret.
+   * Runs a 1% probabilistic cleanup of expired tokens to prevent table bloat.
    */
-  generateRefreshToken(employee: Employee): string {
-    // Cleanup expired tokens
-    const now = Date.now();
-    for (const [key, value] of refreshTokenStore.entries()) {
-      if (now > value.expiresAt) {
-        refreshTokenStore.delete(key);
-      }
-    }
-
-    if (refreshTokenStore.size >= REFRESH_TOKEN_MAX_COUNT) {
-      // Evict oldest entries when store is full
-      const entries = Array.from(refreshTokenStore.entries());
-      entries.sort((a, b) => a[1].expiresAt - b[1].expiresAt);
-      const toRemove = Math.floor(REFRESH_TOKEN_MAX_COUNT * 0.1);
-      for (let i = 0; i < toRemove; i++) {
-        refreshTokenStore.delete(entries[i][0]);
-      }
-    }
-
+  async generateRefreshToken(employee: Employee): Promise<string> {
     const refreshToken = jwt.sign(
       {
         userId: employee.id,
@@ -264,20 +237,33 @@ export class AuthService {
       { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as SignOptions,
     );
 
-    // Parse expiry from JWT_REFRESH_EXPIRES_IN for the in-memory store
     const expiresInMs = this.parseExpiresIn(env.JWT_REFRESH_EXPIRES_IN);
-    refreshTokenStore.set(refreshToken, {
-      userId: employee.id,
-      expiresAt: now + expiresInMs,
+    const expiresAt = new Date(Date.now() + expiresInMs);
+
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: employee.id,
+        expiresAt,
+      },
     });
+
+    // 1% probabilistic cleanup of expired tokens to avoid table bloat
+    if (Math.random() < 0.01) {
+      prisma.refreshToken
+        .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+        .catch(() => {
+          // Non-critical cleanup; ignore errors
+        });
+    }
 
     return refreshToken;
   }
 
   /**
-   * Verify a refresh token: check JWT signature and ensure it exists in the store.
+   * Verify a refresh token: check JWT signature and ensure it exists in the database.
    */
-  verifyRefreshToken(token: string): { userId: string } {
+  async verifyRefreshToken(token: string): Promise<{ userId: string }> {
     const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as {
       userId: string;
       type: string;
@@ -287,14 +273,14 @@ export class AuthService {
       throw new AppError(401, "Invalid token type");
     }
 
-    // Check if the token is in the store (not revoked)
-    const stored = refreshTokenStore.get(token);
+    // Check if the token exists in the database (not revoked)
+    const stored = await prisma.refreshToken.findUnique({ where: { token } });
     if (!stored) {
       throw new AppError(401, "Refresh token has been revoked or is invalid");
     }
 
-    if (Date.now() > stored.expiresAt) {
-      refreshTokenStore.delete(token);
+    if (new Date() > stored.expiresAt) {
+      await prisma.refreshToken.delete({ where: { token } });
       throw new AppError(401, "Refresh token has expired");
     }
 
@@ -304,19 +290,15 @@ export class AuthService {
   /**
    * Revoke a specific refresh token (used during logout).
    */
-  revokeRefreshToken(token: string): void {
-    refreshTokenStore.delete(token);
+  async revokeRefreshToken(token: string): Promise<void> {
+    await prisma.refreshToken.deleteMany({ where: { token } });
   }
 
   /**
    * Revoke all refresh tokens for a given user.
    */
-  revokeAllUserRefreshTokens(userId: string): void {
-    for (const [key, value] of refreshTokenStore.entries()) {
-      if (value.userId === userId) {
-        refreshTokenStore.delete(key);
-      }
-    }
+  async revokeAllUserRefreshTokens(userId: string): Promise<void> {
+    await prisma.refreshToken.deleteMany({ where: { userId } });
   }
 
   /**
@@ -326,22 +308,22 @@ export class AuthService {
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<{ token: string; refreshToken: string }> {
-    const { userId } = this.verifyRefreshToken(refreshToken);
+    const { userId } = await this.verifyRefreshToken(refreshToken);
 
     const employee = await prisma.employee.findUnique({
       where: { id: userId },
     });
 
     if (!employee || !employee.isActive) {
-      this.revokeRefreshToken(refreshToken);
+      await this.revokeRefreshToken(refreshToken);
       throw new AppError(401, "User not found or account is disabled");
     }
 
     // Revoke old refresh token and issue a new one (token rotation)
-    this.revokeRefreshToken(refreshToken);
+    await this.revokeRefreshToken(refreshToken);
 
     const newAccessToken = this.generateToken(employee);
-    const newRefreshToken = this.generateRefreshToken(employee);
+    const newRefreshToken = await this.generateRefreshToken(employee);
 
     return { token: newAccessToken, refreshToken: newRefreshToken };
   }

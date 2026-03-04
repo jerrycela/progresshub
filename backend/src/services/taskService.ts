@@ -135,6 +135,7 @@ export class TaskService {
    */
   async getPoolTasks(): Promise<Task[]> {
     return prisma.task.findMany({
+      take: 500,
       orderBy: { createdAt: "desc" },
       include: {
         ...TASK_INCLUDE,

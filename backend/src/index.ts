@@ -87,6 +87,8 @@ const authLimiter = rateLimit({
 app.use("/api/", apiLimiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/dev-login", authLimiter);
+app.use("/api/auth/slack", authLimiter);
+app.use("/api/auth/refresh", authLimiter);
 
 app.use(
   express.json({

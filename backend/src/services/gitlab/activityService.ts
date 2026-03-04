@@ -404,6 +404,8 @@ export class GitLabActivityService {
     let converted = 0;
     let failed = 0;
 
+    // Intentional: each conversion runs in its own transaction (see convertToTimeEntry).
+    // Partial success is by design — we convert what we can and report failures.
     for (const activityId of data.activityIds) {
       try {
         const activity = await prisma.gitLabActivity.findUnique({

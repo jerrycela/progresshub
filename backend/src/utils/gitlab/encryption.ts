@@ -5,16 +5,21 @@ const IV_LENGTH = 16;
 
 /**
  * 取得加密金鑰
- * 使用環境變數 GITLAB_ENCRYPTION_SALT 作為 salt（有預設值向後相容）
+ * 使用環境變數 GITLAB_ENCRYPTION_SALT 作為 salt
+ * 生產環境必須提供，開發環境有預設值向後相容
  */
 function getEncryptionKey(): Buffer {
   const key = process.env.GITLAB_ENCRYPTION_KEY;
   if (!key) {
     throw new Error("GITLAB_ENCRYPTION_KEY environment variable is required");
   }
-  const salt =
-    process.env.GITLAB_ENCRYPTION_SALT || "progresshub-gitlab-default-salt";
-  return crypto.scryptSync(key, salt, 32);
+  const salt = process.env.GITLAB_ENCRYPTION_SALT;
+  if (!salt && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "GITLAB_ENCRYPTION_SALT environment variable is required in production",
+    );
+  }
+  return crypto.scryptSync(key, salt || "progresshub-gitlab-default-salt", 32);
 }
 
 /**

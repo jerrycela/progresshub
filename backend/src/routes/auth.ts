@@ -213,10 +213,10 @@ router.post(
 router.post(
   "/logout",
   authenticate,
-  (req: AuthRequest, res: Response): void => {
+  async (req: AuthRequest, res: Response): Promise<void> => {
     const { refreshToken } = req.body;
     if (typeof refreshToken === "string" && refreshToken.length > 0) {
-      authService.revokeRefreshToken(refreshToken);
+      await authService.revokeRefreshToken(refreshToken);
     }
     sendSuccess(res, { message: "Logged out successfully" });
   },

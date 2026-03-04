@@ -295,7 +295,13 @@ async function handleIssueEvent(
       return;
   }
 
-  const eventId = `issue_${projectPath}_${issue.iid}_${issue.action}_${Date.now()}`;
+  const eventId = `issue_${projectPath}_${issue.iid}_${issue.action}`;
+
+  // Idempotency: skip if this event was already processed
+  const existing = await prisma.gitLabActivity.findUnique({
+    where: { gitlabEventId: eventId },
+  });
+  if (existing) return;
 
   await prisma.gitLabActivity.create({
     data: {

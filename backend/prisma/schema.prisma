@@ -39,6 +39,7 @@ model Employee {
   taskNotes         TaskNote[]
   userSettings      UserSettings?
   createdMilestones Milestone[]   @relation("MilestoneCreator")
+  refreshTokens     RefreshToken[]
 
   @@map("employees")
 }
@@ -186,6 +187,21 @@ model UserSettings {
   employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
+}
+
+// Refresh Token 表
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  employee  Employee @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // ============================================
