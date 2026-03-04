@@ -375,7 +375,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
       </svg>
       <h3 class="text-lg font-medium mb-1 text-primary">太棒了！目前沒有待回報的任務</h3>
       <p class="text-tertiary">您可以前往需求池認領新任務</p>
-      <RouterLink to="/backlog" class="inline-block mt-4">
+      <RouterLink to="/task-pool" class="inline-block mt-4">
         <Button variant="primary">前往需求池</Button>
       </RouterLink>
     </Card>

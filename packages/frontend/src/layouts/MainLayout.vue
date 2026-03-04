@@ -10,6 +10,7 @@ import { useTaskStore } from '@/stores/tasks'
 import { useDepartmentStore } from '@/stores/departments'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMilestoneStore } from '@/stores/milestones'
+import { useToast } from '@/composables/useToast'
 
 // ============================================
 // 主框架佈局元件 - 包含 Header + Sidebar + 內容區 + Toast
@@ -29,24 +30,29 @@ const milestoneStore = useMilestoneStore()
 // 等待式初始化狀態
 const isInitializing = ref(true)
 
+const { showError } = useToast()
+
 // 初始化 Store 資料（確保 API 模式下載入後端資料）
 onMounted(async () => {
-  try {
-    await Promise.all([
-      projectStore.fetchProjects(),
-      employeeStore.fetchEmployees(),
-      taskStore.fetchTasks(),
-      taskStore.fetchPoolTasks(),
-      departmentStore.fetchDepartments(),
-      dashboardStore.fetchStats(),
-      dashboardStore.fetchWorkloads(),
-      milestoneStore.fetchMilestones(),
-    ])
-  } catch (error) {
-    console.error('初始化失敗', error)
-  } finally {
-    isInitializing.value = false
+  const results = await Promise.allSettled([
+    projectStore.fetchProjects(),
+    employeeStore.fetchEmployees(),
+    taskStore.fetchTasks(),
+    taskStore.fetchPoolTasks(),
+    departmentStore.fetchDepartments(),
+    dashboardStore.fetchStats(),
+    dashboardStore.fetchWorkloads(),
+    milestoneStore.fetchMilestones(),
+  ])
+
+  const labels = ['專案', '員工', '任務', '任務池', '部門', '統計', '工作量', '里程碑']
+  const failed = results.map((r, i) => (r.status === 'rejected' ? labels[i] : null)).filter(Boolean)
+
+  if (failed.length > 0) {
+    showError(`部分資料載入失敗：${failed.join('、')}，請重新整理頁面`)
   }
+
+  isInitializing.value = false
 })
 
 // 側邊欄展開狀態（行動裝置）

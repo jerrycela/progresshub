@@ -277,7 +277,7 @@ const showCompleted = ref(false)
           title="目前沒有進行中的任務"
         >
           <RouterLink
-            to="/backlog"
+            to="/task-pool"
             class="inline-block mt-2 font-medium text-samurai hover:text-samurai-dark transition-colors"
           >
             前往需求池認領任務

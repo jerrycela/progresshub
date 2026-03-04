@@ -118,7 +118,7 @@ const icons = {
             title="目前沒有進行中的任務"
           >
             <RouterLink
-              to="/backlog"
+              to="/task-pool"
               class="inline-block mt-2 font-medium transition-colors duration-150"
               style="color: var(--accent)"
             >
@@ -151,7 +151,7 @@ const icons = {
 
             <!-- 認領新任務 -->
             <RouterLink
-              to="/backlog"
+              to="/task-pool"
               class="flex items-center gap-3 p-3 rounded-md transition-all duration-150"
               style="background-color: var(--bg-tertiary); color: var(--text-secondary)"
             >

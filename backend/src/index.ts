@@ -115,7 +115,9 @@ app.use(
 );
 
 // Issue #14: Swagger API 文檔
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+if (env.NODE_ENV !== "production") {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
 // Issue #16: 增強健康檢查端點
 app.use("/health", healthRoutes);
@@ -147,7 +149,9 @@ const startServer = async () => {
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`Scheduler: ${enableScheduler ? "enabled" : "disabled"}`);
       logger.info(`Health check: http://localhost:${env.PORT}/health`);
-      logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
+      if (env.NODE_ENV !== "production") {
+        logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
+      }
     });
   } catch (error) {
     logger.error("Failed to start server:", error);

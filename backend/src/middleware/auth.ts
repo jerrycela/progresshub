@@ -57,12 +57,13 @@ export const authenticate = async (
 
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
-      return;
-    }
+    // TokenExpiredError must be checked before JsonWebTokenError (it's a subclass)
     if (error instanceof jwt.TokenExpiredError) {
       sendError(res, ErrorCodes.AUTH_EXPIRED, "認證 Token 已過期", 401);
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
     }
     sendError(res, ErrorCodes.AUTH_REQUIRED, "認證失敗", 500);
@@ -99,45 +100,49 @@ export const authorizeTaskAccess = async (
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
-  if (!req.user) {
-    sendError(res, ErrorCodes.AUTH_REQUIRED, "未通過認證", 401);
-    return;
+  try {
+    if (!req.user) {
+      sendError(res, ErrorCodes.AUTH_REQUIRED, "未通過認證", 401);
+      return;
+    }
+
+    // ADMIN always has access
+    if (req.user.permissionLevel === PermissionLevel.ADMIN) {
+      next();
+      return;
+    }
+
+    const taskId = req.params.id;
+    if (!taskId) {
+      sendError(res, ErrorCodes.VALIDATION_FAILED, "Missing task ID", 400);
+      return;
+    }
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      select: { assignedToId: true, creatorId: true, collaborators: true },
+    });
+
+    if (!task) {
+      sendError(res, ErrorCodes.TASK_NOT_FOUND, "任務不存在", 404);
+      return;
+    }
+
+    const userId = req.user.userId;
+    const isCreator = task.creatorId === userId;
+    const isAssignee = task.assignedToId === userId;
+    const isCollaborator = task.collaborators.includes(userId);
+    const isPM = req.user.permissionLevel === PermissionLevel.PM;
+
+    if (isCreator || isAssignee || isCollaborator || isPM) {
+      next();
+      return;
+    }
+
+    sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "您沒有權限修改此任務", 403);
+  } catch (error) {
+    next(error);
   }
-
-  // ADMIN always has access
-  if (req.user.permissionLevel === PermissionLevel.ADMIN) {
-    next();
-    return;
-  }
-
-  const taskId = req.params.id;
-  if (!taskId) {
-    sendError(res, ErrorCodes.VALIDATION_FAILED, "Missing task ID", 400);
-    return;
-  }
-
-  const task = await prisma.task.findUnique({
-    where: { id: taskId },
-    select: { assignedToId: true, creatorId: true, collaborators: true },
-  });
-
-  if (!task) {
-    sendError(res, ErrorCodes.TASK_NOT_FOUND, "任務不存在", 404);
-    return;
-  }
-
-  const userId = req.user.userId;
-  const isCreator = task.creatorId === userId;
-  const isAssignee = task.assignedToId === userId;
-  const isCollaborator = task.collaborators.includes(userId);
-  const isPM = req.user.permissionLevel === PermissionLevel.PM;
-
-  if (isCreator || isAssignee || isCollaborator || isPM) {
-    next();
-    return;
-  }
-
-  sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "您沒有權限修改此任務", 403);
 };
 
 /**
