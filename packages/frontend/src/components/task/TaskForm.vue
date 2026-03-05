@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { FunctionType, MockEmployee } from 'shared/types'
+import { DepartmentLabels } from 'shared/types'
 import SearchableSelect from '@/components/common/SearchableSelect.vue'
 import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 import MultiSearchSelect from '@/components/common/MultiSearchSelect.vue'
@@ -61,7 +62,7 @@ const filteredEmployeeOptions = computed<SearchableOption[]>(() =>
   filteredEmployees.value.map(e => ({
     value: e.id,
     label: e.name,
-    sublabel: e.department,
+    sublabel: DepartmentLabels[e.department] || e.department,
   })),
 )
 

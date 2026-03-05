@@ -6,6 +6,7 @@ import { useGantt, type TimeScale } from '@/composables/useGantt'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { FUNCTION_OPTIONS } from '@/constants/filterOptions'
+import { DepartmentLabels } from 'shared/types'
 import Card from '@/components/common/Card.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import GanttFilters from '@/components/gantt/GanttFilters.vue'
@@ -184,7 +185,7 @@ const employeeOptions = computed<SearchableOption[]>(() => [
   ...employeeStore.employees.map(emp => ({
     value: emp.id,
     label: emp.name,
-    sublabel: emp.department,
+    sublabel: DepartmentLabels[emp.department] || emp.department,
   })),
 ])
 
