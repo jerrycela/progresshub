@@ -79,7 +79,10 @@ const sizeClasses: Record<string, string> = {
           role="dialog"
           aria-modal="true"
           :aria-labelledby="title ? 'modal-title' : undefined"
-          :class="['relative w-full rounded-xl shadow-xl', sizeClasses[size]]"
+          :class="[
+            'relative w-full rounded-xl shadow-xl flex flex-col max-h-[calc(100vh-2rem)]',
+            sizeClasses[size],
+          ]"
           style="background-color: var(--card-bg)"
         >
           <!-- 標頭 -->
@@ -112,7 +115,7 @@ const sizeClasses: Record<string, string> = {
           </div>
 
           <!-- 內容 -->
-          <div class="px-6 py-4">
+          <div class="px-6 py-4 overflow-y-auto flex-1 min-h-0">
             <slot />
           </div>
 

@@ -192,6 +192,7 @@ export const useTaskStore = defineStore('tasks', () => {
 
       if (result.success && result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
+        syncPoolTask(taskId, result.data)
       }
 
       return { success: true, data: tasks.value.find(t => t.id === taskId)! }

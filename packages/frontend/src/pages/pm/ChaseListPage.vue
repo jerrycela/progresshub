@@ -85,7 +85,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
     </div>
 
     <!-- 統計概覽 -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card class="bg-danger/5 border-danger/20">
         <div class="flex items-center gap-3">
           <div class="p-3 bg-danger/10 rounded-xl">
