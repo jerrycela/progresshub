@@ -93,7 +93,11 @@ const openCreateModal = () => {
 
 const openEditModal = (project: Project) => {
   isEditing.value = true
-  editingProject.value = { ...project }
+  editingProject.value = {
+    ...project,
+    startDate: project.startDate?.slice(0, 10) ?? '',
+    endDate: project.endDate?.slice(0, 10) ?? '',
+  }
   showProjectModal.value = true
 }
 

@@ -110,7 +110,7 @@ const pauseReasonLabel = computed(() => {
 // 可否認領
 const canClaim = computed(() => props.task.status === 'UNCLAIMED')
 const canUnclaim = computed(() => ['CLAIMED', 'IN_PROGRESS'].includes(props.task.status))
-const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED'].includes(props.task.status))
+const canReport = computed(() => ['IN_PROGRESS', 'CLAIMED', 'BLOCKED'].includes(props.task.status))
 </script>
 
 <template>

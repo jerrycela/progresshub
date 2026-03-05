@@ -40,6 +40,10 @@ const handleSubmit = () => {
   emit('submit', { ...newMilestone.value })
   newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
 }
+
+const closeModal = () => {
+  showModal.value = false
+}
 </script>
 
 <template>
@@ -123,7 +127,7 @@ const handleSubmit = () => {
     </div>
 
     <template #footer>
-      <Button variant="secondary" @click="showModal = false">關閉</Button>
+      <Button variant="secondary" @click="closeModal">關閉</Button>
       <Button v-if="canManage" @click="handleSubmit">新增里程碑</Button>
     </template>
   </Modal>

@@ -119,6 +119,12 @@ const progressValue = ref(0)
 const progressNote = ref('')
 const isProgressLoading = ref(false)
 
+// 卡關確認對話框
+const showBlockedModal = ref(false)
+const taskToBlock = ref<Task | null>(null)
+const blockerReason = ref('')
+const isBlockedLoading = ref(false)
+
 const openProgressModal = (taskId: string) => {
   const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
   if (task) {
@@ -172,7 +178,7 @@ const confirmUnclaim = () =>
 const handleContinue = async (taskId: string) => {
   const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
   if (!task) return
-  if (['CLAIMED', 'PAUSED'].includes(task.status)) {
+  if (['CLAIMED', 'PAUSED', 'BLOCKED'].includes(task.status)) {
     const result = await taskStore.updateTaskStatus(taskId, 'IN_PROGRESS')
     if (result.success) {
       showSuccess(`「${task.title}」已開始進行`)
@@ -182,15 +188,37 @@ const handleContinue = async (taskId: string) => {
   }
 }
 
-// 快速回報：卡關（→ BLOCKED）
-const handleBlocked = async (taskId: string) => {
-  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
-  if (!task) return
-  const result = await taskStore.updateTaskStatus(taskId, 'BLOCKED')
-  if (result.success) {
-    showSuccess(`「${task.title}」已標記為卡關`)
-  } else {
-    showError(result.error?.message || '操作失敗')
+// 快速回報：卡關 — 開啟確認對話框
+const openBlockedModal = (taskId: string) => {
+  const task = taskStore.getTaskById(taskId)
+  if (task) {
+    taskToBlock.value = task
+    blockerReason.value = ''
+    showBlockedModal.value = true
+  }
+}
+
+// 提交卡關
+const submitBlocked = async () => {
+  if (!taskToBlock.value) return
+
+  isBlockedLoading.value = true
+  try {
+    const result = await taskStore.updateTaskStatus(taskToBlock.value.id, 'BLOCKED', {
+      blockerReason: blockerReason.value || undefined,
+    })
+    if (result.success) {
+      showSuccess(`「${taskToBlock.value.title}」已標記為卡關`)
+      showBlockedModal.value = false
+      taskToBlock.value = null
+      blockerReason.value = ''
+    } else {
+      showError(result.error?.message || '操作失敗')
+    }
+  } catch {
+    showError('操作失敗，請稍後再試')
+  } finally {
+    isBlockedLoading.value = false
   }
 }
 
@@ -266,7 +294,7 @@ const showCompleted = ref(false)
           @unclaim="openUnclaimModal"
           @update-progress="openProgressModal"
           @continue="handleContinue"
-          @blocked="handleBlocked"
+          @blocked="openBlockedModal"
           @complete="handleComplete"
         />
       </div>
@@ -382,6 +410,49 @@ const showCompleted = ref(false)
         <Button variant="secondary" @click="showProgressModal = false"> 取消 </Button>
         <Button variant="primary" :loading="isProgressLoading" @click="submitProgress">
           更新進度
+        </Button>
+      </template>
+    </Modal>
+
+    <!-- 卡關確認對話框 -->
+    <Modal v-model="showBlockedModal" title="標記任務卡關" size="md">
+      <div v-if="taskToBlock" class="space-y-4">
+        <div
+          class="p-4 rounded-lg"
+          style="background-color: var(--bg-secondary); border: 1px solid var(--border-primary)"
+        >
+          <h4 class="font-semibold" style="color: var(--text-primary)">{{ taskToBlock.title }}</h4>
+          <p class="text-sm mt-1" style="color: var(--text-tertiary)">
+            {{ getProjectById(taskToBlock.projectId)?.name || '未指定專案' }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
+            卡關原因
+          </label>
+          <textarea
+            v-model="blockerReason"
+            rows="3"
+            class="input"
+            placeholder="描述您遇到的問題..."
+          />
+        </div>
+
+        <div
+          class="p-3 rounded-lg"
+          style="background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2)"
+        >
+          <p class="text-sm" style="color: var(--text-secondary)">
+            標記卡關後，您可以隨時點擊「繼續」按鈕恢復任務。
+          </p>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button variant="secondary" @click="showBlockedModal = false"> 取消 </Button>
+        <Button variant="danger" :loading="isBlockedLoading" @click="submitBlocked">
+          確認卡關
         </Button>
       </template>
     </Modal>

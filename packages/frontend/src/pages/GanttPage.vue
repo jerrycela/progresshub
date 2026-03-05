@@ -151,10 +151,12 @@ const allProjectsCollapsed = computed(() => {
 
 // 導航
 const navigateToTask = (taskId: string) => {
-  const task = (taskStore.tasks as Task[]).find((t: Task) => t.id === taskId)
+  const task = taskStore.getTaskById(taskId)
   if (task) {
     selectedTask.value = task
     showTaskRelationModal.value = true
+  } else {
+    showWarning('找不到該任務，請重新整理頁面')
   }
 }
 

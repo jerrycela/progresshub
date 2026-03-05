@@ -10,6 +10,7 @@ import { useTaskStore } from '@/stores/tasks'
 import { useDepartmentStore } from '@/stores/departments'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useMilestoneStore } from '@/stores/milestones'
+import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 
 // ============================================
@@ -26,6 +27,7 @@ const taskStore = useTaskStore()
 const departmentStore = useDepartmentStore()
 const dashboardStore = useDashboardStore()
 const milestoneStore = useMilestoneStore()
+const authStore = useAuthStore()
 
 // 等待式初始化狀態
 const isInitializing = ref(true)
@@ -41,7 +43,11 @@ onMounted(async () => {
     { label: '任務池', fn: () => taskStore.fetchPoolTasks() },
     { label: '部門', fn: () => departmentStore.fetchDepartments() },
     { label: '統計', fn: () => dashboardStore.fetchStats() },
-    { label: '工作量', fn: () => dashboardStore.fetchWorkloads() },
+    {
+      label: '工作量',
+      fn: () =>
+        authStore.userRole !== 'EMPLOYEE' ? dashboardStore.fetchWorkloads() : Promise.resolve(),
+    },
     { label: '里程碑', fn: () => milestoneStore.fetchMilestones() },
   ]
 
