@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useEmployeeStore } from '@/stores/employees'
 import { useMilestoneStore } from '@/stores/milestones'
 import type { MilestoneData, FunctionType, Task } from 'shared/types'
+import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
@@ -178,9 +179,13 @@ const colorOptions = [
 
 const projectOptions = computed(() => getProjectOptions(true))
 const functionOptions = FUNCTION_OPTIONS
-const employeeOptions = computed(() => [
+const employeeOptions = computed<SearchableOption[]>(() => [
   { value: '', label: '全部員工' },
-  ...employeeStore.employees.map(emp => ({ value: emp.id, label: emp.name })),
+  ...employeeStore.employees.map(emp => ({
+    value: emp.id,
+    label: emp.name,
+    sublabel: emp.department,
+  })),
 ])
 
 // 資料邏輯抽取至 composable

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import Card from '@/components/common/Card.vue'
 import Select from '@/components/common/Select.vue'
+import SearchableSelect from '@/components/common/SearchableSelect.vue'
+import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 import Badge from '@/components/common/Badge.vue'
 import type { FunctionType } from 'shared/types'
 
@@ -19,7 +21,7 @@ interface GanttFilterPreset {
 defineProps<{
   projectOptions: Array<{ value: string; label: string }>
   functionOptions: Array<{ value: string; label: string }>
-  employeeOptions: Array<{ value: string; label: string }>
+  employeeOptions: SearchableOption[]
   statusOptions: Array<{ value: string; label: string }>
   taskStats: {
     total: number
@@ -64,7 +66,7 @@ const handleSavePreset = (): void => {
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
       <Select v-model="selectedProject" label="專案" :options="projectOptions" />
       <Select v-model="selectedFunction" label="職能" :options="functionOptions" />
-      <Select v-model="selectedEmployee" label="員工" :options="employeeOptions" />
+      <SearchableSelect v-model="selectedEmployee" :options="employeeOptions" label="員工" />
       <Select v-model="selectedStatus" label="狀態" :options="statusOptions" />
     </div>
 
