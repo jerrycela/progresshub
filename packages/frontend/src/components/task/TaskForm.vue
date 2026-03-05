@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { FunctionType, MockEmployee } from 'shared/types'
+import SearchableSelect from '@/components/common/SearchableSelect.vue'
+import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
+import MultiSearchSelect from '@/components/common/MultiSearchSelect.vue'
 
 export interface TaskFormData {
   title: string
@@ -54,20 +57,20 @@ const filteredEmployees = computed(() => {
   return props.employees.filter((emp: MockEmployee) => emp.department === props.form.department)
 })
 
+const filteredEmployeeOptions = computed<SearchableOption[]>(() =>
+  filteredEmployees.value.map(e => ({
+    value: e.id,
+    label: e.name,
+    sublabel: e.department,
+  })),
+)
+
 const toggleFunctionTag = (tag: FunctionType): void => {
   const current = props.form.functionTags
   const newTags = current.includes(tag)
     ? current.filter((t: FunctionType) => t !== tag)
     : [...current, tag]
   emit('update:functionTags', newTags)
-}
-
-const toggleCollaborator = (empId: string): void => {
-  const current = props.form.collaboratorIds
-  const newIds = current.includes(empId)
-    ? current.filter((id: string) => id !== empId)
-    : [...current, empId]
-  emit('update:collaboratorIds', newIds)
 }
 </script>
 
@@ -168,50 +171,25 @@ const toggleCollaborator = (empId: string): void => {
         {{ assigneeLabel }}
         <span v-if="assigneeRequired" style="color: var(--accent-primary)">*</span>
       </label>
-      <select v-model="form.assigneeId" class="input w-full cursor-pointer">
-        <option value="">{{ assigneeRequired ? '請選擇負責人' : '尚未指派' }}</option>
-        <option v-for="emp in filteredEmployees" :key="emp.id" :value="emp.id">
-          {{ emp.name }} ({{ emp.department }})
-        </option>
-      </select>
+      <SearchableSelect
+        :model-value="form.assigneeId"
+        :options="filteredEmployeeOptions"
+        :placeholder="assigneeRequired ? '搜尋負責人...' : '尚未指派'"
+        :required="assigneeRequired"
+        @update:model-value="form.assigneeId = $event"
+      />
     </div>
 
     <div>
       <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
         協作者（可多選）
       </label>
-      <div class="flex flex-wrap gap-2">
-        <button
-          v-for="emp in filteredEmployees"
-          :key="emp.id"
-          :class="[
-            'px-3 py-1.5 rounded-full text-sm transition-all duration-200 cursor-pointer flex items-center gap-2',
-            form.collaboratorIds.includes(emp.id)
-              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-              : 'bg-[var(--bg-tertiary)] hover:bg-[var(--bg-tertiary)]/80',
-          ]"
-          :style="{
-            color: form.collaboratorIds.includes(emp.id) ? undefined : 'var(--text-secondary)',
-          }"
-          @click="toggleCollaborator(emp.id)"
-        >
-          <svg
-            v-if="form.collaboratorIds.includes(emp.id)"
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-          {{ emp.name }}
-        </button>
-      </div>
+      <MultiSearchSelect
+        :model-value="form.collaboratorIds"
+        :options="filteredEmployeeOptions"
+        placeholder="搜尋協作者..."
+        @update:model-value="emit('update:collaboratorIds', $event)"
+      />
     </div>
   </div>
 </template>

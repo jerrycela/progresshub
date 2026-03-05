@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { MockEmployee, Department, ActionResult } from 'shared/types'
+import { DepartmentLabels } from 'shared/types'
+import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 import { createEmployeeService, type CreateEmployeeInput } from '@/services/employeeService'
 import { mockEmployees } from '@/mocks/unified'
 import { storeAction } from '@/utils/storeHelpers'
@@ -34,6 +36,14 @@ export const useEmployeeStore = defineStore('employees', () => {
     employees.value.map(e => ({
       value: e.id,
       label: `${e.name} (${e.department})`,
+    })),
+  )
+
+  const searchableEmployeeOptions = computed<SearchableOption[]>(() =>
+    employees.value.map(e => ({
+      value: e.id,
+      label: e.name,
+      sublabel: DepartmentLabels[e.department] || e.department,
     })),
   )
 
@@ -142,6 +152,7 @@ export const useEmployeeStore = defineStore('employees', () => {
     getEmployeeById,
     getEmployeeName,
     employeeOptions,
+    searchableEmployeeOptions,
     fetchEmployees,
     createEmployee,
     updateEmployee,
