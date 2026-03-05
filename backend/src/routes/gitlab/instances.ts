@@ -9,6 +9,7 @@ import {
   getSafeErrorMessage,
 } from "../../utils/response";
 
+import { ErrorCodes } from "../../types/shared-api";
 const router = Router();
 
 // 所有實例管理路由都需要管理員權限
@@ -45,7 +46,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -93,7 +100,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -128,7 +141,13 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -159,7 +178,13 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -187,7 +212,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -210,7 +241,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 

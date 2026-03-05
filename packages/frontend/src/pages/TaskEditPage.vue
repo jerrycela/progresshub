@@ -76,8 +76,10 @@ const canSubmit = computed(() => {
 })
 
 // 提交表單
+const isSubmitting = ref(false)
 const handleSubmit = async (): Promise<void> => {
-  if (!originalTask.value) return
+  if (!originalTask.value || isSubmitting.value) return
+  isSubmitting.value = true
   try {
     const result = await taskStore.updateTask(originalTask.value.id, {
       title: form.title.trim(),
@@ -96,6 +98,8 @@ const handleSubmit = async (): Promise<void> => {
     }
   } catch {
     showError('更新任務失敗，請稍後再試')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -186,14 +190,14 @@ const handleCancel = (): void => {
           取消
         </button>
         <button
-          :disabled="!canSubmit"
+          :disabled="!canSubmit || isSubmitting"
           :class="[
             'px-6 py-2.5 rounded-lg font-medium transition-colors',
             canSubmit ? 'btn-primary cursor-pointer' : 'opacity-50 cursor-not-allowed',
           ]"
           @click="handleSubmit"
         >
-          儲存變更
+          {{ isSubmitting ? '儲存中...' : '儲存變更' }}
         </button>
       </div>
     </template>

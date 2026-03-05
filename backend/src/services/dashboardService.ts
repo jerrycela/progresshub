@@ -21,6 +21,11 @@ export interface FunctionWorkload {
 }
 
 export class DashboardService {
+  /** Clear all dashboard caches (call after task state changes) */
+  invalidateCache(): void {
+    cache.flushAll();
+  }
+
   /**
    * 取得儀表板統計
    */

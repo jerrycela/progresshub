@@ -198,7 +198,12 @@ router.post(
       const isCollaborator = task.collaborators.includes(req.user.userId);
 
       if (!isAssigned && !isCollaborator) {
-        sendError(res, "FORBIDDEN", "You are not assigned to this task", 403);
+        sendError(
+          res,
+          ErrorCodes.AUTH_UNAUTHORIZED,
+          "You are not assigned to this task",
+          403,
+        );
         return;
       }
 

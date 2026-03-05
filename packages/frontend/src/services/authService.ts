@@ -37,20 +37,34 @@ class ApiAuthService implements AuthServiceInterface {
     code: string,
     state: string,
   ): Promise<ActionResult<{ user: User; token: string; refreshToken?: string }>> {
-    const data = await apiPostUnwrap<{ user: User; token: string; refreshToken?: string }>(
-      '/auth/slack',
-      { code, state },
-    )
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<{ user: User; token: string; refreshToken?: string }>(
+        '/auth/slack',
+        { code, state },
+      )
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '登入失敗'
+      return { success: false, error: { code: 'AUTH_LOGIN_FAILED', message } }
+    }
   }
 
   async getCurrentUser(): Promise<ActionResult<User>> {
-    const data = await apiGetUnwrap<User>('/auth/me')
-    return { success: true, data }
+    try {
+      const data = await apiGetUnwrap<User>('/auth/me')
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '取得使用者資訊失敗'
+      return { success: false, error: { code: 'AUTH_FETCH_FAILED', message } }
+    }
   }
 
   async logout(): Promise<void> {
-    await apiPostUnwrap('/auth/logout')
+    try {
+      await apiPostUnwrap('/auth/logout')
+    } catch (e) {
+      console.warn('Logout API failed, proceeding with local cleanup:', e)
+    }
     localStorage.removeItem('auth_token')
   }
 }

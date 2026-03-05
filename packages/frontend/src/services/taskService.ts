@@ -213,14 +213,19 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {
-    // Strip empty strings for optional date fields; backend isISO8601() rejects ""
-    const payload: CreateTaskInput = {
-      ...input,
-      startDate: input.startDate || undefined,
-      dueDate: input.dueDate || undefined,
+    try {
+      // Strip empty strings for optional date fields; backend isISO8601() rejects ""
+      const payload: CreateTaskInput = {
+        ...input,
+        startDate: input.startDate || undefined,
+        dueDate: input.dueDate || undefined,
+      }
+      const data = await apiPostUnwrap<Task>('/tasks', payload)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_CREATE_FAILED', message } }
     }
-    const data = await apiPostUnwrap<Task>('/tasks', payload)
-    return { success: true, data }
   }
 
   async updateTaskStatus(
@@ -228,8 +233,13 @@ class ApiTaskService implements TaskServiceInterface {
     status: TaskStatus,
     payload?: StatusUpdatePayload,
   ): Promise<ActionResult<Task>> {
-    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/status`, { status, ...payload })
-    return { success: true, data }
+    try {
+      const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/status`, { status, ...payload })
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_UPDATE_FAILED', message } }
+    }
   }
 
   async updateTaskProgress(
@@ -237,41 +247,66 @@ class ApiTaskService implements TaskServiceInterface {
     progress: number,
     notes?: string,
   ): Promise<ActionResult<Task>> {
-    const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/progress`, { progress, notes })
-    return { success: true, data }
+    try {
+      const data = await apiPatchUnwrap<Task>(`/tasks/${taskId}/progress`, { progress, notes })
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_UPDATE_FAILED', message } }
+    }
   }
 
   async claimTask(taskId: string, userId: string): Promise<ActionResult<Task>> {
-    const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/claim`, { userId })
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/claim`, { userId })
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_CLAIM_FAILED', message } }
+    }
   }
 
   async unclaimTask(taskId: string): Promise<ActionResult<Task>> {
-    const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/unclaim`)
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/unclaim`)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_UNCLAIM_FAILED', message } }
+    }
   }
 
   async deleteTask(taskId: string): Promise<ActionResult<void>> {
-    await apiDelete(`/tasks/${taskId}`)
-    return { success: true }
+    try {
+      await apiDelete(`/tasks/${taskId}`)
+      return { success: true }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_DELETE_FAILED', message } }
+    }
   }
 
   async updateTask(taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> {
-    // 前端欄位名 → 後端欄位名轉換
-    const backendPayload: Record<string, unknown> = {}
-    if (input.title !== undefined) backendPayload.name = input.title
-    if (input.description !== undefined) backendPayload.description = input.description
-    if (input.priority !== undefined) backendPayload.priority = input.priority
-    if (input.assigneeId !== undefined) backendPayload.assignedToId = input.assigneeId
-    if (input.functionTags !== undefined) backendPayload.functionTags = input.functionTags
-    if (input.startDate !== undefined) backendPayload.plannedStartDate = input.startDate
-    if (input.dueDate !== undefined) backendPayload.plannedEndDate = input.dueDate
-    if (input.estimatedHours !== undefined) backendPayload.estimatedHours = input.estimatedHours
-    if (input.progress !== undefined) backendPayload.progressPercentage = input.progress
-    if (input.status !== undefined) backendPayload.status = input.status
+    try {
+      // 前端欄位名 → 後端欄位名轉換
+      const backendPayload: Record<string, unknown> = {}
+      if (input.title !== undefined) backendPayload.name = input.title
+      if (input.description !== undefined) backendPayload.description = input.description
+      if (input.priority !== undefined) backendPayload.priority = input.priority
+      if (input.assigneeId !== undefined) backendPayload.assignedToId = input.assigneeId
+      if (input.functionTags !== undefined) backendPayload.functionTags = input.functionTags
+      if (input.startDate !== undefined) backendPayload.plannedStartDate = input.startDate
+      if (input.dueDate !== undefined) backendPayload.plannedEndDate = input.dueDate
+      if (input.estimatedHours !== undefined) backendPayload.estimatedHours = input.estimatedHours
+      if (input.progress !== undefined) backendPayload.progressPercentage = input.progress
+      if (input.status !== undefined) backendPayload.status = input.status
 
-    const data = await apiPutUnwrap<Task>(`/tasks/${taskId}`, backendPayload)
-    return { success: true, data }
+      const data = await apiPutUnwrap<Task>(`/tasks/${taskId}`, backendPayload)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'TASK_UPDATE_FAILED', message } }
+    }
   }
 }
 

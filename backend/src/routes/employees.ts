@@ -17,6 +17,7 @@ import {
 import { sanitizeBody } from "../middleware/sanitize";
 import { toUserDTO } from "../mappers";
 
+import { ErrorCodes } from "../types/shared-api";
 const router = Router();
 
 // 所有員工路由都需要認證
@@ -41,7 +42,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -78,7 +85,13 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -121,7 +134,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -177,7 +196,13 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -231,7 +256,13 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 

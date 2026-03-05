@@ -13,6 +13,7 @@ import {
   getSafeErrorMessage,
 } from "../../utils/response";
 
+import { ErrorCodes } from "../../types/shared-api";
 const router = Router();
 
 /**
@@ -25,7 +26,7 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -80,7 +81,7 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -122,13 +123,19 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -174,7 +181,7 @@ router.get(
       }
 
       // 驗證 state
-      const stateData = gitLabOAuthService.verifyState(String(state));
+      const stateData = await gitLabOAuthService.verifyState(String(state));
       if (!stateData) {
         res.redirect("/gitlab/connect/error?message=Invalid or expired state");
         return;
@@ -221,13 +228,19 @@ router.put(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -286,13 +299,19 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -347,13 +366,19 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 

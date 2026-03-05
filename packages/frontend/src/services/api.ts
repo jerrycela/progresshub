@@ -209,11 +209,12 @@ api.interceptors.response.use(
 
     // 403 權限不足
     if (status === 403) {
-      showErrorToast('您沒有權限執行此操作')
+      const msg = responseData?.message || '您沒有權限執行此操作'
+      showErrorToast(msg)
 
       return Promise.reject(
         new ApiError({
-          message: '您沒有權限執行此操作',
+          message: msg,
           statusCode: 403,
           errorCode: responseData?.code || 'PERM_DENIED',
         }),

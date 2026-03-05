@@ -7,30 +7,34 @@ import { toUserDTO } from "../mappers";
 import { env } from "../config/env";
 import { AppError } from "../middleware/errorHandler";
 
+import { ErrorCodes } from "../types/shared-api";
 const router = Router();
 
 /**
  * GET /api/auth/slack/authorize
  * 取得 Slack OAuth URL（包含 CSRF state）
  */
-router.get("/slack/authorize", (_req: AuthRequest, res: Response): void => {
-  try {
-    const state = authService.generateOAuthState();
-    const redirectUri = `${env.API_BASE_URL}/api/auth/slack/callback`;
-    const authUrl =
-      `https://slack.com/oauth/v2/authorize` +
-      `?client_id=${env.SLACK_CLIENT_ID}` +
-      `&scope=` +
-      `&user_scope=identity.basic,identity.email` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${state}`;
-    sendSuccess(res, { authUrl, state });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to generate OAuth URL";
-    sendError(res, "AUTH_OAUTH_URL_FAILED", message, 500);
-  }
-});
+router.get(
+  "/slack/authorize",
+  async (_req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const state = await authService.generateOAuthState();
+      const redirectUri = `${env.API_BASE_URL}/api/auth/slack/callback`;
+      const authUrl =
+        `https://slack.com/oauth/v2/authorize` +
+        `?client_id=${env.SLACK_CLIENT_ID}` +
+        `&scope=` +
+        `&user_scope=identity.basic,identity.email` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&state=${state}`;
+      sendSuccess(res, { authUrl, state });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to generate OAuth URL";
+      sendError(res, "AUTH_OAUTH_URL_FAILED", message, 500);
+    }
+  },
+);
 
 /**
  * GET /api/auth/slack/callback
@@ -74,14 +78,20 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
     try {
       const { code, state } = req.body;
 
-      if (!authService.verifyOAuthState(state)) {
+      if (!(await authService.verifyOAuthState(state))) {
         sendError(
           res,
           "AUTH_INVALID_STATE",
@@ -143,7 +153,12 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
     async (req: AuthRequest, res: Response): Promise<void> => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        sendError(res, "VALIDATION_ERROR", "Invalid credentials", 400);
+        sendError(
+          res,
+          ErrorCodes.VALIDATION_FAILED,
+          "Invalid credentials",
+          400,
+        );
         return;
       }
 
@@ -160,7 +175,7 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         if (!email && !employeeId) {
           sendError(
             res,
-            "VALIDATION_ERROR",
+            ErrorCodes.VALIDATION_FAILED,
             "Either email or employeeId is required",
             400,
           );
@@ -192,7 +207,7 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       if (!req.user) {
-        sendError(res, "UNAUTHORIZED", "Not authenticated", 401);
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
       }
 
@@ -225,7 +240,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 

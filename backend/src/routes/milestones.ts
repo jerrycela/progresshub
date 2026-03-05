@@ -7,6 +7,7 @@ import { milestoneService } from "../services/milestoneService";
 import { toMilestoneDTO } from "../mappers";
 import { sanitizeBody } from "../middleware/sanitize";
 
+import { ErrorCodes } from "../types/shared-api";
 const router = Router();
 
 router.use(authenticate);
@@ -64,7 +65,13 @@ router.post(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 
@@ -110,7 +117,13 @@ router.delete(
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      sendError(res, "VALIDATION_ERROR", "Invalid input", 400, errors.array());
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
       return;
     }
 

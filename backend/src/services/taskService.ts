@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { Task, TaskStatus, Prisma } from "@prisma/client";
 import { AppError } from "../middleware/errorHandler";
+import { dashboardService } from "./dashboardService";
 
 // 合法的 functionTags 值（對齊前端 FunctionType）
 const VALID_FUNCTION_TAGS = [
@@ -309,11 +310,13 @@ export class TaskService {
         : { disconnect: true };
     }
 
-    return prisma.task.update({
+    const updated = await prisma.task.update({
       where: { id },
       data: updateData,
       include: TASK_INCLUDE,
     });
+    dashboardService.invalidateCache();
+    return updated;
   }
 
   /**
@@ -323,15 +326,15 @@ export class TaskService {
     await prisma.task.delete({
       where: { id },
     });
+    dashboardService.invalidateCache();
   }
 
   /**
    * 認領任務（原子操作，防止並發）
    */
   async claimTask(taskId: string, userId: string): Promise<Task> {
-    return prisma.$transaction(async (tx: TransactionClient) => {
-      // 原子更新：只有 UNCLAIMED 才能被認領
-      const result = await tx.task.updateMany({
+    const claimed = await prisma.$transaction(async (tx: TransactionClient) => {
+      const updateResult = await tx.task.updateMany({
         where: { id: taskId, status: "UNCLAIMED" },
         data: {
           status: "CLAIMED",
@@ -340,7 +343,7 @@ export class TaskService {
         },
       });
 
-      if (result.count === 0) {
+      if (updateResult.count === 0) {
         throw new AppError(
           409,
           "Task cannot be claimed — it may already be claimed or in progress",
@@ -353,41 +356,46 @@ export class TaskService {
         include: TASK_INCLUDE,
       });
     });
+    dashboardService.invalidateCache();
+    return claimed;
   }
 
   /**
    * 取消認領任務
    */
   async unclaimTask(taskId: string, userId: string): Promise<Task> {
-    return prisma.$transaction(async (tx: TransactionClient) => {
-      // 只有負責人可以取消認領，且狀態必須是 CLAIMED 或 IN_PROGRESS
-      const result = await tx.task.updateMany({
-        where: {
-          id: taskId,
-          assignedToId: userId,
-          status: { in: ["CLAIMED", "IN_PROGRESS"] },
-        },
-        data: {
-          status: "UNCLAIMED",
-          assignedToId: null,
-          progressPercentage: 0,
-          updatedAt: new Date(),
-        },
-      });
+    const unclaimed = await prisma.$transaction(
+      async (tx: TransactionClient) => {
+        const updateResult = await tx.task.updateMany({
+          where: {
+            id: taskId,
+            assignedToId: userId,
+            status: { in: ["CLAIMED", "IN_PROGRESS"] },
+          },
+          data: {
+            status: "UNCLAIMED",
+            assignedToId: null,
+            progressPercentage: 0,
+            updatedAt: new Date(),
+          },
+        });
 
-      if (result.count === 0) {
-        throw new AppError(
-          409,
-          "Task cannot be unclaimed — you may not be the assignee or the task status does not allow unclaiming",
-          "TASK_NOT_UNCLAIMABLE",
-        );
-      }
+        if (updateResult.count === 0) {
+          throw new AppError(
+            409,
+            "Task cannot be unclaimed — you may not be the assignee or the task status does not allow unclaiming",
+            "TASK_NOT_UNCLAIMABLE",
+          );
+        }
 
-      return tx.task.findUniqueOrThrow({
-        where: { id: taskId },
-        include: TASK_INCLUDE,
-      });
-    });
+        return tx.task.findUniqueOrThrow({
+          where: { id: taskId },
+          include: TASK_INCLUDE,
+        });
+      },
+    );
+    dashboardService.invalidateCache();
+    return unclaimed;
   }
 
   /**
@@ -402,8 +410,7 @@ export class TaskService {
       blockerReason?: string;
     },
   ): Promise<Task> {
-    // 使用 $transaction 防止 read-then-write race condition
-    return prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx) => {
       const task = await tx.task.findUnique({ where: { id: taskId } });
       if (!task) {
         throw new AppError(404, "Task not found", "TASK_NOT_FOUND");
@@ -422,7 +429,6 @@ export class TaskService {
         status: newStatus,
       };
 
-      // PAUSED 需要 pauseReason
       if (newStatus === "PAUSED") {
         if (!payload?.pauseReason) {
           throw new AppError(
@@ -436,17 +442,14 @@ export class TaskService {
         updateData.pausedAt = new Date();
       }
 
-      // BLOCKED 需要 blockerReason
       if (newStatus === "BLOCKED") {
         updateData.blockerReason = payload?.blockerReason;
       }
 
-      // IN_PROGRESS 設定實際開始日期
       if (newStatus === "IN_PROGRESS" && !task.actualStartDate) {
         updateData.actualStartDate = new Date();
       }
 
-      // 從 PAUSED/BLOCKED 恢復時清除原因
       if (
         newStatus === "IN_PROGRESS" &&
         (task.status === "PAUSED" || task.status === "BLOCKED")
@@ -457,7 +460,6 @@ export class TaskService {
         updateData.blockerReason = null;
       }
 
-      // DONE 設定實際結束日期和進度
       if (newStatus === "DONE") {
         updateData.actualEndDate = new Date();
         updateData.closedAt = new Date();
@@ -470,6 +472,8 @@ export class TaskService {
         include: TASK_INCLUDE,
       });
     });
+    dashboardService.invalidateCache();
+    return updated;
   }
 
   /**
