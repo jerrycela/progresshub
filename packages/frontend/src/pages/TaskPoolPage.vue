@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTaskStore } from '@/stores/tasks'
 import { useProjectStore } from '@/stores/projects'
@@ -41,9 +41,17 @@ const searchQuery = ref('')
 // 快速篩選：只看待認領
 const showOnlyUnclaimed = ref(false)
 
+// 排序
+type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc'
+const selectedSort = ref<SortOption>('newest')
+
+// 分頁
+const ITEMS_PER_PAGE = 20
+const currentPage = ref(1)
+
 // 篩選後的任務
 const filteredTasks = computed(() => {
-  return taskStore.poolTasks.filter((task: PoolTask) => {
+  const filtered = taskStore.poolTasks.filter((task: PoolTask) => {
     // 快速篩選：只看待認領
     if (showOnlyUnclaimed.value && task.status !== 'UNCLAIMED') {
       return false
@@ -69,7 +77,50 @@ const filteredTasks = computed(() => {
     }
     return true
   })
+
+  // Sort (create new array to avoid mutating)
+  const sorted = [...filtered]
+  switch (selectedSort.value) {
+    case 'newest':
+      sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      break
+    case 'oldest':
+      sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      break
+    case 'name-asc':
+      sorted.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hant'))
+      break
+    case 'name-desc':
+      sorted.sort((a, b) => b.title.localeCompare(a.title, 'zh-Hant'))
+      break
+  }
+  return sorted
 })
+
+// Pagination computed
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filteredTasks.value.length / ITEMS_PER_PAGE)),
+)
+const paginatedTasks = computed(() => {
+  const start = (currentPage.value - 1) * ITEMS_PER_PAGE
+  return filteredTasks.value.slice(start, start + ITEMS_PER_PAGE)
+})
+
+// Reset to page 1 when filters or sort change
+watch(
+  [
+    selectedProject,
+    selectedDepartment,
+    selectedFunction,
+    selectedStatus,
+    searchQuery,
+    showOnlyUnclaimed,
+    selectedSort,
+  ],
+  () => {
+    currentPage.value = 1
+  },
+)
 
 // 任務統計
 const taskStats = computed(() => ({
@@ -103,6 +154,8 @@ const clearFilters = (): void => {
   selectedStatus.value = ''
   searchQuery.value = ''
   showOnlyUnclaimed.value = false
+  selectedSort.value = 'newest'
+  currentPage.value = 1
 }
 
 // 切換快速篩選
@@ -238,6 +291,14 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
           <option value="DONE">已完成</option>
         </select>
 
+        <!-- 排序 -->
+        <select v-model="selectedSort" class="input cursor-pointer">
+          <option value="newest">最新建立</option>
+          <option value="oldest">最早建立</option>
+          <option value="name-asc">名稱 A→Z</option>
+          <option value="name-desc">名稱 Z→A</option>
+        </select>
+
         <!-- 清除篩選 -->
         <button
           v-if="
@@ -289,7 +350,7 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
 
       <template v-else>
         <div
-          v-for="task in filteredTasks"
+          v-for="task in paginatedTasks"
           :key="task.id"
           class="card p-5 hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
           @click="viewTaskDetail(task)"
@@ -404,6 +465,32 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
           </div>
         </div>
       </template>
+
+      <!-- 分頁控制 -->
+      <div
+        v-if="filteredTasks.length > ITEMS_PER_PAGE"
+        class="flex items-center justify-center gap-4 pt-4"
+      >
+        <button
+          :disabled="currentPage <= 1"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="上一頁"
+          @click="currentPage--"
+        >
+          上一頁
+        </button>
+        <span class="text-sm text-[var(--text-secondary)]">
+          第 {{ currentPage }} / {{ totalPages }} 頁
+        </span>
+        <button
+          :disabled="currentPage >= totalPages"
+          class="px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="下一頁"
+          @click="currentPage++"
+        >
+          下一頁
+        </button>
+      </div>
     </div>
   </div>
 </template>

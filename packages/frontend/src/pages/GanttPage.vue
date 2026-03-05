@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
 import { useGantt, type TimeScale } from '@/composables/useGantt'
@@ -37,6 +37,106 @@ const showOverdueOnly = ref(false)
 const groupByProject = ref(false)
 const collapsedProjects = ref<Set<string>>(new Set())
 const timeScale = ref<TimeScale>('week')
+
+// Filter presets
+interface GanttFilterPreset {
+  name: string
+  filters: {
+    selectedProject: string
+    selectedFunction: string
+    selectedEmployee: string
+    selectedStatus: string
+    showOverdueOnly: boolean
+    groupByProject: boolean
+  }
+}
+
+const STORAGE_KEY_CURRENT = 'gantt-current-filters'
+const STORAGE_KEY_PRESETS = 'gantt-saved-presets'
+
+const savedPresets = ref<GanttFilterPreset[]>([])
+
+const currentFilterValues = computed(() => ({
+  selectedProject: selectedProject.value,
+  selectedFunction: selectedFunction.value,
+  selectedEmployee: selectedEmployee.value,
+  selectedStatus: selectedStatus.value,
+  showOverdueOnly: showOverdueOnly.value,
+  groupByProject: groupByProject.value,
+}))
+
+// Auto-persist current filters to localStorage
+watch(
+  currentFilterValues,
+  val => {
+    try {
+      localStorage.setItem(STORAGE_KEY_CURRENT, JSON.stringify(val))
+    } catch {
+      // Storage full or unavailable — silently ignore
+    }
+  },
+  { deep: true },
+)
+
+// Restore filters and presets on mount
+onMounted(() => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY_CURRENT)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (parsed.selectedProject) selectedProject.value = parsed.selectedProject
+      if (parsed.selectedFunction) selectedFunction.value = parsed.selectedFunction
+      if (parsed.selectedEmployee !== undefined) selectedEmployee.value = parsed.selectedEmployee
+      if (parsed.selectedStatus) selectedStatus.value = parsed.selectedStatus
+      if (typeof parsed.showOverdueOnly === 'boolean')
+        showOverdueOnly.value = parsed.showOverdueOnly
+      if (typeof parsed.groupByProject === 'boolean') groupByProject.value = parsed.groupByProject
+    }
+  } catch {
+    // Corrupted data — ignore
+  }
+  try {
+    const presets = localStorage.getItem(STORAGE_KEY_PRESETS)
+    if (presets) {
+      savedPresets.value = JSON.parse(presets)
+    }
+  } catch {
+    // Corrupted data — ignore
+  }
+})
+
+const savePreset = (name: string): void => {
+  const preset: GanttFilterPreset = {
+    name,
+    filters: { ...currentFilterValues.value },
+  }
+  const updated = [...savedPresets.value, preset]
+  savedPresets.value = updated
+  try {
+    localStorage.setItem(STORAGE_KEY_PRESETS, JSON.stringify(updated))
+  } catch {
+    // Storage full — silently ignore
+  }
+}
+
+const applyPreset = (preset: GanttFilterPreset): void => {
+  selectedProject.value = preset.filters.selectedProject
+  selectedFunction.value = preset.filters.selectedFunction as FunctionType | 'ALL'
+  selectedEmployee.value = preset.filters.selectedEmployee
+  selectedStatus.value = preset.filters.selectedStatus
+  showOverdueOnly.value = preset.filters.showOverdueOnly
+  groupByProject.value = preset.filters.groupByProject
+}
+
+const deletePreset = (index: number): void => {
+  const updated = savedPresets.value.filter((_, i) => i !== index)
+  savedPresets.value = updated
+  try {
+    localStorage.setItem(STORAGE_KEY_PRESETS, JSON.stringify(updated))
+  } catch {
+    // Storage full — silently ignore
+  }
+}
 const showMilestoneModal = ref(false)
 
 // 任務關聯 Modal 狀態
@@ -282,9 +382,13 @@ const deleteMilestone = async (msId: string): Promise<void> => {
       :tasks-outside-range="tasksOutsideRange"
       :has-filters="hasFilters"
       :all-projects-collapsed="allProjectsCollapsed"
+      :saved-presets="savedPresets"
       @clear-filters="clearFilters"
       @expand-all="expandAllProjects"
       @collapse-all="collapseAllProjects"
+      @save-preset="savePreset"
+      @apply-preset="applyPreset"
+      @delete-preset="deletePreset"
     />
 
     <!-- 甘特圖區域 -->

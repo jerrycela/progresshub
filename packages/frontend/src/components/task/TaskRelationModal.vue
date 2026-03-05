@@ -71,12 +71,16 @@ const dependedByTasks = computed((): Task[] => {
   )
 })
 
-// 處理任務跳轉
+// 處理任務跳轉（含循環偵測）
 const handleViewTask = (task: Task): void => {
-  navigationStack.value.push({
-    task,
-    title: task.title,
-  })
+  const existingIndex = navigationStack.value.findIndex(item => item.task.id === task.id)
+  if (existingIndex >= 0) {
+    // Cycle detected: truncate stack to existing position + 1
+    navigationStack.value = navigationStack.value.slice(0, existingIndex + 1)
+  } else {
+    // New task: push via immutable pattern
+    navigationStack.value = [...navigationStack.value, { task, title: task.title }]
+  }
   currentTask.value = task
 }
 

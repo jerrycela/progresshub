@@ -4,6 +4,18 @@ import Select from '@/components/common/Select.vue'
 import Badge from '@/components/common/Badge.vue'
 import type { FunctionType } from 'shared/types'
 
+interface GanttFilterPreset {
+  name: string
+  filters: {
+    selectedProject: string
+    selectedFunction: string
+    selectedEmployee: string
+    selectedStatus: string
+    showOverdueOnly: boolean
+    groupByProject: boolean
+  }
+}
+
 defineProps<{
   projectOptions: Array<{ value: string; label: string }>
   functionOptions: Array<{ value: string; label: string }>
@@ -19,6 +31,7 @@ defineProps<{
   tasksOutsideRange: { before: number; after: number; total: number }
   hasFilters: boolean
   allProjectsCollapsed: boolean
+  savedPresets: GanttFilterPreset[]
 }>()
 
 const selectedProject = defineModel<string>('selectedProject', { required: true })
@@ -32,7 +45,17 @@ const emit = defineEmits<{
   clearFilters: []
   expandAll: []
   collapseAll: []
+  savePreset: [name: string]
+  applyPreset: [preset: GanttFilterPreset]
+  deletePreset: [index: number]
 }>()
+
+const handleSavePreset = (): void => {
+  const name = window.prompt('請輸入篩選條件名稱：')
+  if (name?.trim()) {
+    emit('savePreset', name.trim())
+  }
+}
 </script>
 
 <template>
@@ -94,6 +117,38 @@ const emit = defineEmits<{
         @click="emit('clearFilters')"
       >
         清除篩選
+      </button>
+    </div>
+
+    <!-- 篩選條件預設 -->
+    <div
+      class="flex flex-wrap items-center gap-2 pt-3 border-t mt-3"
+      style="border-color: var(--border-primary)"
+    >
+      <span class="text-xs font-medium" style="color: var(--text-tertiary)">預設條件</span>
+      <button
+        class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer border border-dashed hover-bg"
+        style="color: var(--text-secondary); border-color: var(--border-primary)"
+        @click="handleSavePreset"
+      >
+        + 儲存目前條件
+      </button>
+      <button
+        v-for="(preset, index) in savedPresets"
+        :key="index"
+        class="group px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer border hover-bg flex items-center gap-1"
+        style="color: var(--text-secondary); border-color: var(--border-primary)"
+        @click="emit('applyPreset', preset)"
+      >
+        {{ preset.name }}
+        <span
+          class="opacity-0 group-hover:opacity-100 ml-1 text-danger hover:text-danger/80 transition-opacity"
+          role="button"
+          aria-label="刪除預設"
+          @click.stop="emit('deletePreset', index)"
+        >
+          &times;
+        </span>
       </button>
     </div>
 

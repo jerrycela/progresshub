@@ -47,7 +47,7 @@ describe('DashboardService', () => {
   });
 
   describe('getStats', () => {
-    it('快取命中時應直接回傳', async () => {
+    it('快取命中時應直接回傳（全域）', async () => {
       const cachedStats = {
         totalTasks: 100,
         completedTasks: 50,
@@ -60,10 +60,11 @@ describe('DashboardService', () => {
       const result = await service.getStats();
 
       expect(result).toEqual(cachedStats);
+      expect(mockCacheGet).toHaveBeenCalledWith('dashboard_stats_global');
       expect(mockedPrisma.task.count).not.toHaveBeenCalled();
     });
 
-    it('快取未命中時應查詢並設定快取', async () => {
+    it('快取未命中時應查詢並設定快取（全域）', async () => {
       mockCacheGet.mockReturnValue(undefined);
       (mockedPrisma.task.count as jest.Mock)
         .mockResolvedValueOnce(100) // totalTasks
@@ -79,7 +80,35 @@ describe('DashboardService', () => {
       expect(result.inProgressTasks).toBe(30);
       expect(result.unclaimedTasks).toBe(10);
       expect(result.overdueTasksCount).toBe(5);
-      expect(mockCacheSet).toHaveBeenCalledWith('dashboard_stats', result);
+      expect(mockCacheSet).toHaveBeenCalledWith('dashboard_stats_global', result);
+    });
+
+    it('傳入 userId 時應使用使用者專屬快取鍵', async () => {
+      mockCacheGet.mockReturnValue(undefined);
+      (mockedPrisma.task.count as jest.Mock).mockResolvedValue(0);
+
+      await service.getStats('user-123');
+
+      expect(mockCacheGet).toHaveBeenCalledWith('dashboard_stats_user-123');
+      expect(mockCacheSet).toHaveBeenCalledWith('dashboard_stats_user-123', expect.any(Object));
+    });
+
+    it('傳入 userId 時應加入使用者篩選條件', async () => {
+      mockCacheGet.mockReturnValue(undefined);
+      (mockedPrisma.task.count as jest.Mock).mockResolvedValue(0);
+
+      await service.getStats('user-123');
+
+      // Verify all count calls include user filter
+      const calls = (mockedPrisma.task.count as jest.Mock).mock.calls;
+      for (const call of calls) {
+        const where = call[0]?.where;
+        expect(where).toHaveProperty('OR');
+        expect(where.OR).toEqual([
+          { assignedToId: 'user-123' },
+          { creatorId: 'user-123' },
+        ]);
+      }
     });
 
     it('應執行 5 個平行計數查詢', async () => {

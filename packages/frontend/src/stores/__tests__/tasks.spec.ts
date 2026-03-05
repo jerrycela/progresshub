@@ -602,7 +602,9 @@ describe('useTaskStore', () => {
     it('should fail when task does not exist', async () => {
       const store = setupWithMockData()
 
-      const result = await store.updateTask('nonexistent-id', { title: 'Nope' })
+      const promise = store.updateTask('nonexistent-id', { title: 'Nope' })
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await promise
 
       expect(result.success).toBe(false)
       expect(result.error?.code).toBe('TASK_NOT_FOUND')

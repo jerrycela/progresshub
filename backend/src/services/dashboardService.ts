@@ -24,9 +24,15 @@ export class DashboardService {
   /**
    * 取得儀表板統計
    */
-  async getStats(): Promise<DashboardStats> {
-    const cached = cache.get<DashboardStats>("dashboard_stats");
+  async getStats(userId?: string): Promise<DashboardStats> {
+    const cacheKey = `dashboard_stats_${userId || "global"}`;
+    const cached = cache.get<DashboardStats>(cacheKey);
     if (cached) return cached;
+
+    // When userId is provided, scope to tasks assigned to or created by the user
+    const userFilter = userId
+      ? { OR: [{ assignedToId: userId }, { creatorId: userId }] }
+      : {};
 
     const [
       totalTasks,
@@ -35,16 +41,17 @@ export class DashboardService {
       unclaimedTasks,
       overdueTasksCount,
     ] = await Promise.all([
-      prisma.task.count(),
-      prisma.task.count({ where: { status: "DONE" } }),
+      prisma.task.count({ where: { ...userFilter } }),
+      prisma.task.count({ where: { status: "DONE", ...userFilter } }),
       prisma.task.count({
-        where: { status: { in: ["CLAIMED", "IN_PROGRESS"] } },
+        where: { status: { in: ["CLAIMED", "IN_PROGRESS"] }, ...userFilter },
       }),
-      prisma.task.count({ where: { status: "UNCLAIMED" } }),
+      prisma.task.count({ where: { status: "UNCLAIMED", ...userFilter } }),
       prisma.task.count({
         where: {
           plannedEndDate: { lt: new Date() },
           status: { notIn: ["DONE"] },
+          ...userFilter,
         },
       }),
     ]);
@@ -56,7 +63,7 @@ export class DashboardService {
       unclaimedTasks,
       overdueTasksCount,
     };
-    cache.set("dashboard_stats", stats);
+    cache.set(cacheKey, stats);
     return stats;
   }
 

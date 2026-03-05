@@ -13,23 +13,21 @@ router.use(authenticate);
  * GET /api/dashboard/stats
  * 取得儀表板統計資料
  */
-router.get(
-  "/stats",
-  async (_req: AuthRequest, res: Response): Promise<void> => {
-    try {
-      const stats = await dashboardService.getStats();
-      sendSuccess(res, stats);
-    } catch (error) {
-      logger.error("Dashboard stats error:", error);
-      sendError(
-        res,
-        "DASHBOARD_STATS_FAILED",
-        "Failed to get dashboard stats",
-        500,
-      );
-    }
-  },
-);
+router.get("/stats", async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const stats = await dashboardService.getStats(userId);
+    sendSuccess(res, stats);
+  } catch (error) {
+    logger.error("Dashboard stats error:", error);
+    sendError(
+      res,
+      "DASHBOARD_STATS_FAILED",
+      "Failed to get dashboard stats",
+      500,
+    );
+  }
+});
 
 /**
  * GET /api/dashboard/workloads

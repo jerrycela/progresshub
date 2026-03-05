@@ -6,6 +6,7 @@ import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import type { MilestoneData } from 'shared/types'
 import { useFormatDate } from '@/composables/useFormatDate'
+import { useProjectStore } from '@/stores/projects'
 
 defineProps<{
   milestones: MilestoneData[]
@@ -16,6 +17,7 @@ defineProps<{
 
 const showModal = defineModel<boolean>({ required: true })
 const { formatFull } = useFormatDate()
+const projectStore = useProjectStore()
 
 const emit = defineEmits<{
   submit: [
@@ -60,38 +62,52 @@ const closeModal = () => {
           <div
             v-for="ms in milestones"
             :key="ms.id"
-            class="flex items-center justify-between p-3 rounded-lg"
+            class="p-3 rounded-lg"
             style="background-color: var(--bg-tertiary)"
           >
-            <div class="flex items-center gap-3">
-              <div
-                class="w-3 h-3 rounded-full"
-                :style="{ backgroundColor: ms.color || '#F59E0B' }"
-              />
-              <div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-3 h-3 rounded-full flex-shrink-0"
+                  :style="{ backgroundColor: ms.color || '#F59E0B' }"
+                />
                 <div class="text-sm font-medium" style="color: var(--text-primary)">
                   {{ ms.name }}
                 </div>
-                <div class="text-xs" style="color: var(--text-tertiary)">
-                  {{ formatFull(ms.date) }}
-                </div>
               </div>
+              <button
+                v-if="canManage"
+                class="text-danger hover:text-danger/80 cursor-pointer"
+                aria-label="刪除里程碑"
+                @click="emit('delete', ms.id)"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
             </div>
-            <button
-              v-if="canManage"
-              class="text-danger hover:text-danger/80 cursor-pointer"
-              aria-label="刪除里程碑"
-              @click="emit('delete', ms.id)"
+            <div
+              v-if="ms.description"
+              class="mt-1 ml-6 text-xs"
+              style="color: var(--text-secondary)"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-            </button>
+              {{ ms.description }}
+            </div>
+            <div
+              class="mt-2 ml-6 flex flex-wrap gap-x-4 gap-y-1 text-xs"
+              style="color: var(--text-tertiary)"
+            >
+              <span>{{ formatFull(ms.date) }}</span>
+              <span v-if="projectStore.getProjectName(ms.projectId)">
+                {{ projectStore.getProjectName(ms.projectId) }}
+              </span>
+              <span v-if="ms.createdByName"> 建立者：{{ ms.createdByName }} </span>
+            </div>
           </div>
         </div>
       </div>

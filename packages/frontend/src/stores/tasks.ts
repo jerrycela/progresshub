@@ -519,31 +519,45 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const updateTask = async (taskId: string, input: Partial<Task>): Promise<ActionResult<Task>> => {
-    const idx = tasks.value.findIndex(t => t.id === taskId)
-    if (idx === -1) {
-      return {
-        success: false,
-        error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
-      }
-    }
+    const taskIdx = tasks.value.findIndex(t => t.id === taskId)
+    const poolIdx = poolTasks.value.findIndex(t => t.id === taskId)
 
-    // 樂觀更新
+    // 樂觀更新（若本地有資料才做）
     const tasksSnapshot = [...tasks.value]
     const poolSnapshot = [...poolTasks.value]
     const now = new Date().toISOString()
-    const updated = { ...tasks.value[idx], ...input, updatedAt: now }
-    tasks.value = tasks.value.map((t, i) => (i === idx ? updated : t))
-    syncPoolTask(taskId, { ...input, updatedAt: now })
+    const optimisticPatch = { ...input, updatedAt: now }
+
+    if (taskIdx !== -1) {
+      tasks.value = tasks.value.map((t, i) => (i === taskIdx ? { ...t, ...optimisticPatch } : t))
+    }
+    if (poolIdx !== -1) {
+      poolTasks.value = poolTasks.value.map((t, i) =>
+        i === poolIdx ? { ...t, ...optimisticPatch } : t,
+      )
+    }
 
     try {
+      // Always send API request; let backend handle 404/403
       const result = await service.updateTask(taskId, input)
 
-      if (result.success && result.data) {
+      if (!result.success) {
+        tasks.value = tasksSnapshot
+        poolTasks.value = poolSnapshot
+        return {
+          success: false,
+          error: result.error ?? { code: 'TASK_UPDATE_FAILED', message: '更新任務失敗' },
+        }
+      }
+
+      if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
         syncPoolTask(taskId, result.data)
       }
 
-      return { success: true, data: tasks.value.find(t => t.id === taskId)! }
+      const found =
+        tasks.value.find(t => t.id === taskId) ?? poolTasks.value.find(t => t.id === taskId)
+      return { success: true, data: (found ?? result.data) as Task }
     } catch (e) {
       // 回滾
       tasks.value = tasksSnapshot

@@ -27,10 +27,15 @@ defineProps<{
         class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-20"
       >
         <div
-          class="px-2 py-1 rounded text-xs whitespace-nowrap text-white"
+          class="px-2 py-1 rounded text-xs text-white"
           style="background-color: var(--bg-tooltip)"
         >
-          {{ ms.name }} - {{ formatShort(ms.date) }}
+          <div class="whitespace-nowrap font-medium">
+            {{ ms.name }} - {{ formatShort(ms.date) }}
+          </div>
+          <div v-if="ms.description" class="mt-0.5 whitespace-nowrap opacity-80">
+            {{ ms.description }}
+          </div>
         </div>
       </div>
     </div>
