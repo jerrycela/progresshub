@@ -4,6 +4,7 @@ import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useProjectStore } from '@/stores/projects'
+import { useFormatDate } from '@/composables/useFormatDate'
 import { reportTypeLabels } from '@/constants/labels'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
@@ -41,6 +42,7 @@ const myInProgressTasks = computed(() => {
 })
 
 const projectStore = useProjectStore()
+const { formatFull } = useFormatDate()
 
 // 取得專案
 const getProject = (projectId: string) => projectStore.getProjectById(projectId)
@@ -306,7 +308,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            截止日期：{{ task.dueDate || '未設定' }}
+            截止日期：{{ task.dueDate ? formatFull(task.dueDate) : '未設定' }}
           </div>
 
           <!-- 快速回報按鈕 -->

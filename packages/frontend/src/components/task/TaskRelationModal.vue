@@ -34,21 +34,22 @@ const currentTask = ref<Task | null>(null)
 
 // 當 Modal 打開時初始化導航堆疊
 watch(
-  () => props.modelValue,
-  (isOpen: boolean) => {
-    if (isOpen && props.task) {
+  () => [props.modelValue, props.task] as const,
+  ([isOpen, task]) => {
+    if (isOpen && task) {
       navigationStack.value = [
         {
-          task: props.task,
-          title: props.task.title,
+          task,
+          title: task.title,
         },
       ]
-      currentTask.value = props.task
-    } else {
+      currentTask.value = task
+    } else if (!isOpen) {
       navigationStack.value = []
       currentTask.value = null
     }
   },
+  { immediate: true },
 )
 
 // 計算前置任務（此任務依賴的任務）

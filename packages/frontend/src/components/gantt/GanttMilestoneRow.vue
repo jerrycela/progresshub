@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import type { MilestoneData } from 'shared/types'
+import { useFormatDate } from '@/composables/useFormatDate'
+
+const { formatShort } = useFormatDate()
 
 defineProps<{
   milestones: MilestoneData[]
@@ -27,7 +30,7 @@ defineProps<{
           class="px-2 py-1 rounded text-xs whitespace-nowrap text-white"
           style="background-color: var(--bg-tooltip)"
         >
-          {{ ms.name }} - {{ ms.date }}
+          {{ ms.name }} - {{ formatShort(ms.date) }}
         </div>
       </div>
     </div>

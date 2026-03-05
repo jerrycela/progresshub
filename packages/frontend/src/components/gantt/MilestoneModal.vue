@@ -5,6 +5,7 @@ import Button from '@/components/common/Button.vue'
 import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import type { MilestoneData } from 'shared/types'
+import { useFormatDate } from '@/composables/useFormatDate'
 
 defineProps<{
   milestones: MilestoneData[]
@@ -14,6 +15,7 @@ defineProps<{
 }>()
 
 const showModal = defineModel<boolean>({ required: true })
+const { formatFull } = useFormatDate()
 
 const emit = defineEmits<{
   submit: [
@@ -70,7 +72,9 @@ const closeModal = () => {
                 <div class="text-sm font-medium" style="color: var(--text-primary)">
                   {{ ms.name }}
                 </div>
-                <div class="text-xs" style="color: var(--text-tertiary)">{{ ms.date }}</div>
+                <div class="text-xs" style="color: var(--text-tertiary)">
+                  {{ formatFull(ms.date) }}
+                </div>
               </div>
             </div>
             <button

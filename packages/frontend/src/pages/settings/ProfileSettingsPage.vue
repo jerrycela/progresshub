@@ -4,6 +4,7 @@ import { useUserSettingsStore, type UserSettings } from '@/stores/userSettings'
 import { roleLabels, functionTypeLabels, departmentLabels } from '@/constants/labels'
 import Badge from '@/components/common/Badge.vue'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 
 // ============================================
 // 個人資料設定頁
@@ -11,8 +12,13 @@ import { useToast } from '@/composables/useToast'
 
 const { showSuccess, showError, showInfo } = useToast()
 const userSettingsStore = useUserSettingsStore()
+const authStore = useAuthStore()
 
-const user = ref<UserSettings>({ ...userSettingsStore.settings })
+const user = ref<UserSettings>({
+  ...userSettingsStore.settings,
+  name: userSettingsStore.settings.name || authStore.userName,
+  email: userSettingsStore.settings.email || authStore.user?.email || '',
+})
 const isEditing = ref(false)
 const isSaving = ref(false)
 
@@ -63,7 +69,11 @@ const saveChanges = async (): Promise<void> => {
       email: formData.value.email,
     })
     if (result.success) {
-      user.value = { ...userSettingsStore.settings }
+      user.value = {
+        ...userSettingsStore.settings,
+        name: userSettingsStore.settings.name || authStore.userName,
+        email: userSettingsStore.settings.email || authStore.user?.email || '',
+      }
       isEditing.value = false
       showSuccess('個人資料已更新')
     } else {
