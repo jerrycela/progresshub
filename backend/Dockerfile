@@ -49,12 +49,12 @@ RUN mkdir -p logs
 # Set environment
 ENV NODE_ENV=production
 
-# Expose port (must match PORT env var)
-EXPOSE 3000
+# Expose port (Zeabur sets WEB_PORT=8080; PORT env var must match)
+EXPOSE 8080
 
-# Health check
+# Health check (must match actual listening port)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health/ready || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health/ready || exit 1
 
 # Start application (auto migrate + start)
 CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node dist/index.js"]

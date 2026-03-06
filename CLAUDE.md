@@ -115,9 +115,11 @@ pnpm lint         # Lint all packages
 ## Deployment
 
 - **Frontend**: Zeabur static (Vue + Caddy) → `progresshub.zeabur.app`
-- **Backend**: Zeabur container (Express + Prisma) → `progresshub-api.zeabur.app`
+- **Backend**: Zeabur container (Express + Prisma) → `progresshubfortest.zeabur.app`
 - **Database**: Zeabur PostgreSQL Marketplace
 - `ENABLE_DEV_LOGIN=true` required on backend until Slack OAuth is production-ready
+- Port config must be consistent: Dockerfile EXPOSE, zeabur.json healthcheck.port, env PORT (all 8080; Zeabur sets WEB_PORT=8080)
+- Zeabur CLI: use `variable create` to set env vars (never `variable update` — it wipes all existing vars)
 
 ## Frontend Design System
 
