@@ -14,10 +14,37 @@ import { sanitizeBody } from "../middleware/sanitize";
 import { toProjectDTO } from "../mappers";
 import { ErrorCodes } from "../types/shared-api";
 import projectMembersRouter from "./projectMembers";
+import prisma from "../config/database";
 
 const router = Router();
 
-// 所有專案路由都需要認證
+/**
+ * GET /api/projects/names
+ * Public endpoint: returns only ACTIVE project id + name for login page
+ */
+router.get(
+  "/names",
+  async (_req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const projects = await prisma.project.findMany({
+        where: { status: "ACTIVE" },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+      sendSuccess(res, projects);
+    } catch (error) {
+      logger.error("Get project names error:", error);
+      sendError(
+        res,
+        "PROJECTS_FETCH_FAILED",
+        "Failed to get project names",
+        500,
+      );
+    }
+  },
+);
+
+// 所有以下路由都需要認證
 router.use(authenticate);
 router.use(sanitizeBody);
 

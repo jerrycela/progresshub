@@ -48,8 +48,8 @@ export class ProjectService {
       ];
     }
 
-    // Only EMPLOYEE sees filtered list; others see all projects
-    if (params.userId && params.userRole === "EMPLOYEE") {
+    // All non-ADMIN roles see only their member projects
+    if (params.userId && params.userRole !== "ADMIN") {
       where.members = { some: { employeeId: params.userId } };
     }
 

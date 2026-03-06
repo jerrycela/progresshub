@@ -149,6 +149,8 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         .optional()
         .isIn(["EMPLOYEE", "PM", "PRODUCER", "ADMIN"])
         .withMessage("Valid permission level is required"),
+      body("projectIds").optional().isArray(),
+      body("projectIds.*").optional().isString().trim().notEmpty(),
     ],
     async (req: AuthRequest, res: Response): Promise<void> => {
       const errors = validationResult(req);
@@ -167,7 +169,11 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
       try {
         // Demo login mode: name + permissionLevel
         if (name && permissionLevel) {
-          const result = await authService.demoLogin(name, permissionLevel);
+          const result = await authService.demoLogin(
+            name,
+            permissionLevel,
+            req.body.projectIds,
+          );
           sendSuccess(res, result);
           return;
         }

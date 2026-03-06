@@ -71,7 +71,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const demoLogin = async (name: string, role: UserRole): Promise<ActionResult<User>> => {
+  const demoLogin = async (
+    name: string,
+    role: UserRole,
+    projectIds?: string[],
+  ): Promise<ActionResult<User>> => {
     loading.value.login = true
     error.value = null
 
@@ -80,7 +84,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (import.meta.env.VITE_USE_MOCK !== 'true') {
         const data = await apiPostUnwrap<{ user: User; token: string; refreshToken: string }>(
           '/auth/dev-login',
-          { name, permissionLevel: role },
+          { name, permissionLevel: role, projectIds },
         )
         user.value = data.user
         localStorage.setItem('auth_token', data.token)

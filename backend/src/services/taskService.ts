@@ -93,6 +93,8 @@ export interface TaskListParams {
   status?: TaskStatus;
   page?: number;
   limit?: number;
+  userId?: string;
+  userRole?: string;
 }
 
 export class TaskService {
@@ -115,6 +117,13 @@ export class TaskService {
     }
     if (status) {
       where.status = status;
+    }
+
+    // Non-ADMIN: only show tasks from member projects
+    if (params.userId && params.userRole !== "ADMIN") {
+      where.project = {
+        members: { some: { employeeId: params.userId } },
+      };
     }
 
     const [data, total] = await Promise.all([

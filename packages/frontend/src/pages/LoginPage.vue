@@ -23,6 +23,13 @@ const demoRoleOptions: { label: string; value: UserRole }[] = [
   { label: '管理者', value: 'ADMIN' },
 ]
 
+interface ProjectName {
+  id: string
+  name: string
+}
+const projectOptions = ref<ProjectName[]>([])
+const selectedProjects = ref<string[]>([])
+
 const redirectAfterLogin = () => {
   const redirect = route.query.redirect as string
   // Prevent open redirect: only allow internal paths
@@ -60,6 +67,15 @@ onMounted(async () => {
       isLoading.value = false
     }
   }
+
+  // Load project names for demo login
+  if (isDemoEnvironment) {
+    try {
+      projectOptions.value = await apiGetUnwrap<ProjectName[]>('/projects/names')
+    } catch {
+      // Silently fail
+    }
+  }
 })
 
 // Slack OAuth 登入 — redirect to Slack authorization page
@@ -79,7 +95,11 @@ const handleSlackLogin = async () => {
 const handleDemoLogin = async () => {
   isLoading.value = true
   try {
-    const result = await authStore.demoLogin(demoName.value.trim(), demoRole.value)
+    const result = await authStore.demoLogin(
+      demoName.value.trim(),
+      demoRole.value,
+      selectedProjects.value,
+    )
     if (result.success) {
       redirectAfterLogin()
     } else {
@@ -204,6 +224,36 @@ const handleDemoLogin = async () => {
                 >
                   {{ option.label }}
                 </button>
+              </div>
+            </div>
+
+            <!-- 專案選擇 -->
+            <div v-if="projectOptions.length > 0">
+              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+                所屬專案（可複選）
+              </label>
+              <div class="space-y-2">
+                <label
+                  v-for="project in projectOptions"
+                  :key="project.id"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border"
+                  :class="
+                    selectedProjects.includes(project.id) ? 'border-samurai bg-samurai/10' : ''
+                  "
+                  :style="
+                    !selectedProjects.includes(project.id)
+                      ? 'border-color: var(--border-primary); color: var(--text-secondary)'
+                      : ''
+                  "
+                >
+                  <input
+                    v-model="selectedProjects"
+                    type="checkbox"
+                    :value="project.id"
+                    class="accent-samurai"
+                  />
+                  <span style="color: var(--text-primary)">{{ project.name }}</span>
+                </label>
               </div>
             </div>
 
