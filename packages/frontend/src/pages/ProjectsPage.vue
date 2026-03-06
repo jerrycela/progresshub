@@ -13,6 +13,8 @@ import Modal from '@/components/common/Modal.vue'
 import ProgressBar from '@/components/common/ProgressBar.vue'
 import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
+import ProjectMembersModal from '@/components/project/ProjectMembersModal.vue'
+import { useAuthStore } from '@/stores/auth'
 import type { Project } from 'shared/types'
 
 // ============================================
@@ -23,6 +25,7 @@ import type { Project } from 'shared/types'
 const projectStore = useProjectStore()
 const taskStore = useTaskStore()
 const employeeStore = useEmployeeStore()
+const authStore = useAuthStore()
 
 const projects = computed(() => projectStore.projects)
 const { showSuccess, showError } = useToast()
@@ -180,6 +183,20 @@ const saveProject = async () => {
 
 // 格式化日期
 const formatDate = (date?: string) => formatFull(date)
+
+// Members modal state
+const showMembersModal = ref(false)
+const selectedProjectForMembers = ref<{ id: string; name: string }>({ id: '', name: '' })
+
+const openMembersModal = (project: Project) => {
+  selectedProjectForMembers.value = { id: project.id, name: project.name }
+  showMembersModal.value = true
+}
+
+const canManageMembers = computed(() => {
+  const role = authStore.userRole
+  return role === 'ADMIN' || role === 'PM' || role === 'PRODUCER' || role === 'MANAGER'
+})
 </script>
 
 <template>
@@ -273,6 +290,13 @@ const formatDate = (date?: string) => formatFull(date)
             <span>負責人：{{ getProjectOwner(project.createdById) }}</span>
             <span>{{ formatDate(project.startDate) }} - {{ formatDate(project.endDate) }}</span>
           </div>
+
+          <!-- Action buttons -->
+          <div v-if="canManageMembers" class="flex gap-2">
+            <Button variant="secondary" size="sm" @click.stop="openMembersModal(project)">
+              成員
+            </Button>
+          </div>
         </div>
       </Card>
     </div>
@@ -319,5 +343,12 @@ const formatDate = (date?: string) => formatFull(date)
         </Button>
       </template>
     </Modal>
+
+    <!-- Members management modal -->
+    <ProjectMembersModal
+      v-model="showMembersModal"
+      :project-id="selectedProjectForMembers.id"
+      :project-name="selectedProjectForMembers.name"
+    />
   </div>
 </template>

@@ -22,6 +22,8 @@ export interface ProjectListParams {
   limit?: number;
   status?: ProjectStatus;
   search?: string;
+  userId?: string;
+  userRole?: string;
 }
 
 export class ProjectService {
@@ -44,6 +46,11 @@ export class ProjectService {
         { name: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
       ];
+    }
+
+    // Only EMPLOYEE sees filtered list; others see all projects
+    if (params.userId && params.userRole === "EMPLOYEE") {
+      where.members = { some: { employeeId: params.userId } };
     }
 
     const [data, total] = await Promise.all([

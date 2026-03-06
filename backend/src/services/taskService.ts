@@ -223,7 +223,7 @@ export class TaskService {
       status = "UNCLAIMED";
     }
 
-    return prisma.task.create({
+    const task = await prisma.task.create({
       data: {
         projectId: data.projectId,
         name: data.name,
@@ -246,6 +246,17 @@ export class TaskService {
       },
       include: TASK_INCLUDE,
     });
+
+    // Auto-upsert project membership for assignee and collaborators
+    const memberIds = [
+      ...(assignedToId ? [assignedToId] : []),
+      ...(data.collaborators || []),
+    ].filter(Boolean);
+    if (memberIds.length > 0) {
+      await this.ensureProjectMembership(data.projectId, memberIds);
+    }
+
+    return task;
   }
 
   /**
@@ -315,6 +326,18 @@ export class TaskService {
       data: updateData,
       include: TASK_INCLUDE,
     });
+
+    // Auto-upsert project membership when assignee or collaborators change
+    if (data.assignedToId !== undefined || data.collaborators !== undefined) {
+      const memberIds = [
+        data.assignedToId,
+        ...(data.collaborators || []),
+      ].filter(Boolean) as string[];
+      if (memberIds.length > 0) {
+        await this.ensureProjectMembership(updated.projectId, memberIds);
+      }
+    }
+
     dashboardService.invalidateCache();
     return updated;
   }
@@ -356,6 +379,8 @@ export class TaskService {
         include: TASK_INCLUDE,
       });
     });
+    // Auto-upsert project membership for the claiming user
+    await this.ensureProjectMembership(claimed.projectId, [userId]);
     dashboardService.invalidateCache();
     return claimed;
   }
@@ -536,6 +561,23 @@ export class TaskService {
         },
         include: TASK_INCLUDE,
       });
+    });
+  }
+
+  /**
+   * Ensure employees are members of a project (upsert, skip duplicates)
+   */
+  async ensureProjectMembership(
+    projectId: string,
+    employeeIds: string[],
+  ): Promise<void> {
+    const data = employeeIds.map((employeeId) => ({
+      projectId,
+      employeeId,
+    }));
+    await prisma.projectMember.createMany({
+      data,
+      skipDuplicates: true,
     });
   }
 

@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Project, ActionResult } from 'shared/types'
-import { createProjectService, type CreateProjectInput } from '@/services/projectService'
+import {
+  createProjectService,
+  type CreateProjectInput,
+  type ProjectMember,
+} from '@/services/projectService'
 import { mockProjects } from '@/mocks/unified'
 import { storeAction } from '@/utils/storeHelpers'
 
@@ -17,6 +21,43 @@ export const useProjectStore = defineStore('projects', () => {
     update: false,
     delete: false,
   })
+
+  // Project members
+  const projectMembers = ref<ProjectMember[]>([])
+  const loadingMembers = ref(false)
+
+  const fetchProjectMembers = async (projectId: string): Promise<ProjectMember[]> => {
+    loadingMembers.value = true
+    try {
+      projectMembers.value = await service.getProjectMembers(projectId)
+      return projectMembers.value
+    } catch {
+      projectMembers.value = []
+      return []
+    } finally {
+      loadingMembers.value = false
+    }
+  }
+
+  const addProjectMembers = async (projectId: string, employeeIds: string[]): Promise<boolean> => {
+    try {
+      await service.addProjectMembers(projectId, employeeIds)
+      await fetchProjectMembers(projectId)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const removeProjectMember = async (projectId: string, employeeId: string): Promise<boolean> => {
+    try {
+      await service.removeProjectMember(projectId, employeeId)
+      projectMembers.value = projectMembers.value.filter(m => m.employeeId !== employeeId)
+      return true
+    } catch {
+      return false
+    }
+  }
 
   const activeProjects = computed(() => projects.value.filter(p => p.status === 'ACTIVE'))
 
@@ -127,6 +168,8 @@ export const useProjectStore = defineStore('projects', () => {
   return {
     projects,
     loading,
+    projectMembers,
+    loadingMembers,
     activeProjects,
     projectOptions,
     getProjectById,
@@ -135,5 +178,8 @@ export const useProjectStore = defineStore('projects', () => {
     createProject,
     updateProject,
     deleteProject,
+    fetchProjectMembers,
+    addProjectMembers,
+    removeProjectMember,
   }
 })

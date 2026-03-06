@@ -13,6 +13,7 @@ import {
 import { sanitizeBody } from "../middleware/sanitize";
 import { toProjectDTO } from "../mappers";
 import { ErrorCodes } from "../types/shared-api";
+import projectMembersRouter from "./projectMembers";
 
 const router = Router();
 
@@ -54,6 +55,8 @@ router.get(
         limit,
         status: req.query.status as ProjectStatus | undefined,
         search: req.query.search as string,
+        userId: req.user!.userId,
+        userRole: req.user!.permissionLevel,
       });
 
       sendPaginatedSuccess(res, result.data.map(toProjectDTO), {
@@ -166,6 +169,9 @@ router.get(
     }
   },
 );
+
+// Mount project members sub-router
+router.use("/:projectId/members", projectMembersRouter);
 
 /**
  * POST /api/projects
