@@ -1,5 +1,5 @@
 import prisma from "../config/database";
-import { Task, TaskStatus, Prisma } from "@prisma/client";
+import { Task, TaskStatus, Prisma, PermissionLevel } from "@prisma/client";
 import { AppError } from "../middleware/errorHandler";
 import { dashboardService } from "./dashboardService";
 
@@ -143,8 +143,21 @@ export class TaskService {
   /**
    * 取得任務池（所有任務，前端負責篩選）
    */
-  async getPoolTasks(): Promise<Task[]> {
+  async getPoolTasks(
+    userId?: string,
+    userRole?: PermissionLevel,
+  ): Promise<Task[]> {
+    const where: Prisma.TaskWhereInput = {};
+
+    // Non-ADMIN: only show tasks from member projects
+    if (userId && userRole !== "ADMIN") {
+      where.project = {
+        members: { some: { employeeId: userId } },
+      };
+    }
+
     return prisma.task.findMany({
+      where,
       take: 500,
       orderBy: { createdAt: "desc" },
       include: {

@@ -38,6 +38,7 @@ const rootRef = ref<HTMLElement | null>(null)
 const searchInputRef = ref<HTMLInputElement | null>(null)
 const isOpen = ref(false)
 const search = ref('')
+const highlightedIndex = ref(-1)
 
 const selectedOption = computed(() => props.options.find(opt => opt.value === props.modelValue))
 
@@ -63,6 +64,7 @@ const toggleDropdown = () => {
 const openDropdown = () => {
   isOpen.value = true
   search.value = ''
+  highlightedIndex.value = -1
   nextTick(() => {
     searchInputRef.value?.focus()
   })
@@ -84,9 +86,37 @@ const clearSelection = (event: Event) => {
   emit('update:modelValue', '')
 }
 
+const activeDescendantId = computed(() => {
+  if (highlightedIndex.value < 0 || highlightedIndex.value >= filteredOptions.value.length) {
+    return undefined
+  }
+  return `searchable-opt-${filteredOptions.value[highlightedIndex.value].value}`
+})
+
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     closeDropdown()
+    return
+  }
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    if (filteredOptions.value.length === 0) return
+    highlightedIndex.value =
+      highlightedIndex.value < filteredOptions.value.length - 1 ? highlightedIndex.value + 1 : 0
+    return
+  }
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    if (filteredOptions.value.length === 0) return
+    highlightedIndex.value =
+      highlightedIndex.value > 0 ? highlightedIndex.value - 1 : filteredOptions.value.length - 1
+    return
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    if (highlightedIndex.value >= 0 && highlightedIndex.value < filteredOptions.value.length) {
+      selectOption(filteredOptions.value[highlightedIndex.value])
+    }
   }
 }
 
@@ -122,6 +152,10 @@ onBeforeUnmount(() => {
       <!-- Trigger button -->
       <button
         type="button"
+        role="combobox"
+        :aria-expanded="isOpen"
+        aria-haspopup="listbox"
+        :aria-activedescendant="activeDescendantId"
         class="input w-full text-left flex items-center justify-between"
         :class="[
           props.disabled ? 'opacity-50 cursor-not-allowed' : '',
@@ -199,20 +233,28 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Options list -->
-        <ul class="max-h-[240px] overflow-y-auto">
+        <ul role="listbox" class="max-h-[240px] overflow-y-auto">
           <li
-            v-for="option in filteredOptions"
+            v-for="(option, index) in filteredOptions"
+            :id="`searchable-opt-${option.value}`"
             :key="option.value"
+            role="option"
+            :aria-selected="option.value === props.modelValue"
             class="px-3 py-2 cursor-pointer text-sm"
             :class="[option.disabled ? 'opacity-50 cursor-not-allowed' : '']"
             :style="{
               backgroundColor:
-                option.value === props.modelValue ? 'var(--accent-light)' : undefined,
+                index === highlightedIndex
+                  ? 'var(--bg-tertiary)'
+                  : option.value === props.modelValue
+                    ? 'var(--accent-light)'
+                    : undefined,
               color: 'var(--text-primary)',
             }"
             @click="selectOption(option)"
             @mouseenter="
               $event => {
+                highlightedIndex = index
                 if (!option.disabled && option.value !== props.modelValue) {
                   ;($event.currentTarget as HTMLElement).style.backgroundColor =
                     'var(--bg-tertiary)'

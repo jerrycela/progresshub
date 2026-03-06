@@ -25,9 +25,12 @@ const router = Router();
  * 取得任務池（UNCLAIMED 任務）
  * 注意：此路由必須在 /:id 之前定義
  */
-router.get("/pool", async (_req: AuthRequest, res: Response): Promise<void> => {
+router.get("/pool", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const tasks = await taskService.getPoolTasks();
+    const tasks = await taskService.getPoolTasks(
+      req.user?.userId,
+      req.user?.permissionLevel,
+    );
     sendSuccess(
       res,
       tasks.map((t) => toTaskDTO(t)),

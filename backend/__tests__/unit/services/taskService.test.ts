@@ -151,13 +151,35 @@ describe('TaskService', () => {
   });
 
   describe('getPoolTasks', () => {
-    it('應回傳所有任務（不限狀態）', async () => {
+    it('ADMIN 應回傳所有任務（不限專案成員）', async () => {
+      (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPoolTasks('admin-001', 'ADMIN');
+
+      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.where).toEqual({});
+      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
+    });
+
+    it('非 ADMIN 應只回傳所屬專案的任務', async () => {
+      (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
+
+      await service.getPoolTasks('user-001', 'EMPLOYEE');
+
+      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
+      expect(callArg.where).toEqual({
+        project: { members: { some: { employeeId: 'user-001' } } },
+      });
+      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
+    });
+
+    it('未傳參數時應回傳所有任務', async () => {
       (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
 
       await service.getPoolTasks();
 
       const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
-      expect(callArg.where).toBeUndefined();
+      expect(callArg.where).toEqual({});
       expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
     });
   });

@@ -50,11 +50,13 @@ export const useProjectStore = defineStore('projects', () => {
   }
 
   const removeProjectMember = async (projectId: string, employeeId: string): Promise<boolean> => {
+    const snapshot = [...projectMembers.value]
+    projectMembers.value = projectMembers.value.filter(m => m.employeeId !== employeeId)
     try {
       await service.removeProjectMember(projectId, employeeId)
-      projectMembers.value = projectMembers.value.filter(m => m.employeeId !== employeeId)
       return true
     } catch {
+      projectMembers.value = snapshot
       return false
     }
   }

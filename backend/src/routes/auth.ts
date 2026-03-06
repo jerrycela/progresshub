@@ -147,7 +147,7 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         .withMessage("Name is required for demo login"),
       body("permissionLevel")
         .optional()
-        .isIn(["EMPLOYEE", "PM", "PRODUCER", "ADMIN"])
+        .isIn(["EMPLOYEE", "MANAGER", "PM", "PRODUCER", "ADMIN"])
         .withMessage("Valid permission level is required"),
       body("projectIds").optional().isArray(),
       body("projectIds.*").optional().isString().trim().notEmpty(),

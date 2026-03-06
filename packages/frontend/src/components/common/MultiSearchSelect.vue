@@ -86,20 +86,12 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
-function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') {
-    close()
-  }
-}
-
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  document.addEventListener('keydown', handleKeydown)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
-  document.removeEventListener('keydown', handleKeydown)
 })
 </script>
 
@@ -111,9 +103,16 @@ onBeforeUnmount(() => {
     <div class="relative">
       <!-- Trigger -->
       <div
+        tabindex="0"
+        role="combobox"
+        :aria-expanded="isOpen"
+        aria-haspopup="listbox"
         class="input min-h-[38px] w-full cursor-pointer flex flex-wrap items-center gap-1 py-1 px-2"
         :class="disabled ? 'opacity-50 cursor-not-allowed' : ''"
         @click="toggle"
+        @keydown.enter="toggle"
+        @keydown.space.prevent="toggle"
+        @keydown.escape="close"
       >
         <!-- Tags for selected items -->
         <span
@@ -145,12 +144,16 @@ onBeforeUnmount(() => {
             v-model="search"
             class="input w-full text-sm"
             placeholder="搜尋..."
+            @keydown.escape="close"
           />
         </div>
-        <ul class="max-h-[240px] overflow-y-auto">
+        <ul role="listbox" class="max-h-[240px] overflow-y-auto">
           <li
             v-for="option in filteredOptions"
+            :id="`multi-opt-${option.value}`"
             :key="option.value"
+            role="option"
+            :aria-selected="isSelected(option.value)"
             class="px-3 py-2 cursor-pointer flex items-center gap-2 text-sm hover:bg-[var(--bg-tertiary)]"
             @click="toggleOption(option.value)"
           >

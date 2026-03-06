@@ -239,6 +239,7 @@ export class AuthService {
     return jwt.sign(
       {
         userId: employee.id,
+        name: employee.name,
         email: employee.email,
         permissionLevel: employee.permissionLevel,
       },

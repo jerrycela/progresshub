@@ -42,6 +42,28 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 
 **Caution with DELETE endpoints:** If backend returns `204 No Content` (empty body), do NOT use `apiDeleteUnwrap` on the frontend — it will fail parsing. Use `apiDelete` instead, or have the backend return `sendSuccess(res, null)` with 200.
 
+### Frontend Route Permissions
+
+Routes use `meta.requiresRole` for role-gating. Pages without `requiresRole` are accessible to all authenticated users.
+
+| Route | Required Roles |
+|-------|---------------|
+| `/projects` | PM, PRODUCER, ADMIN |
+| `/pm/chase`, `/pm/workload` | PM, PRODUCER, MANAGER, ADMIN |
+| `/admin/users` | MANAGER, ADMIN |
+| `/dashboard`, `/my-tasks`, `/task-pool`, `/gantt`, `/report`, `/settings` | All authenticated |
+
+### API Client Helpers
+
+`services/api.ts` provides two sets of HTTP helpers:
+
+- `apiGet`/`apiPost`/`apiPut`/`apiPatch`/`apiDelete` — return raw Axios response data
+- `apiGetUnwrap`/`apiPostUnwrap`/etc. — auto-unwrap `{ success, data }` envelope, throw `ApiError` on failure
+
+**Use `*Unwrap` by default.** Use raw helpers only when the backend doesn't return the standard envelope (e.g., `204 No Content`).
+
+The client also handles **automatic token refresh**: on 401, it queues concurrent requests, refreshes via `/api/auth/refresh`, then retries all queued requests with the new token.
+
 ### Auth & Permissions
 
 - Backend: `authenticate` middleware attaches `req.user` (JwtPayload: userId, name, email, permissionLevel)
@@ -53,11 +75,13 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 
 Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
 
+Health check routes (`/health`, `/health/ready`, `/health/live`) are mounted outside `/api` — no auth required. The `/health/ready` endpoint checks database connectivity and is used by Docker HEALTHCHECK and Zeabur.
+
 ## Commands
 
 ```bash
 # Frontend
-pnpm --filter frontend dev          # Dev server
+pnpm --filter frontend dev          # Dev server (localhost:5173)
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
 pnpm --filter frontend exec vitest run         # All unit tests
 pnpm --filter frontend exec vitest run src/composables/__tests__/useFormatDate.test.ts  # Single test file
@@ -65,8 +89,13 @@ pnpm --filter frontend build        # Production build
 pnpm --filter frontend lint         # ESLint --fix
 pnpm --filter frontend format       # Prettier
 
+# Frontend E2E (Playwright)
+cd packages/frontend && npx playwright test                    # All E2E tests
+cd packages/frontend && npx playwright test --ui               # Interactive UI mode
+cd packages/frontend && npx playwright test e2e/example.spec.ts  # Single spec
+
 # Backend
-pnpm --filter backend dev           # Dev server
+pnpm --filter backend dev           # Dev server (localhost:3000)
 cd backend && npx jest --no-coverage              # All unit tests
 cd backend && npx jest --no-coverage -- taskService  # Single test (name match)
 cd backend && npx jest --no-coverage -- __tests__/services/taskService.test.ts  # Single test (path)
@@ -80,9 +109,15 @@ cd backend && npx prisma db seed     # Run seed
 pnpm dev          # Run frontend + backend in parallel
 pnpm build        # Build all packages
 pnpm lint         # Lint all packages
+
+# Docker (full-stack local)
+docker compose up -d postgres        # PostgreSQL only
+docker compose up -d                 # All services
 ```
 
 **Pre-commit hooks**: Husky + lint-staged auto-runs ESLint and Prettier on staged files. Do not bypass with `--no-verify`.
+
+**Testing caveat**: Local `backend/.env` is loaded by `dotenv.config()` and can cause tests to behave differently from CI. To simulate CI: `mv backend/.env backend/.env.bak` before running tests.
 
 ## Auth Modes
 
@@ -103,6 +138,7 @@ pnpm lint         # Lint all packages
 - `ENABLE_DEV_LOGIN=true` required on backend until Slack OAuth is production-ready
 - Port config must be consistent: Dockerfile EXPOSE, zeabur.json healthcheck.port, env PORT (all 8080; Zeabur sets WEB_PORT=8080)
 - Zeabur CLI: use `variable create` to set env vars (never `variable update` — it wipes all existing vars)
+- Container startup: `prisma migrate deploy` → `seed` → `node dist/index.js`.
 
 ## Frontend Design System
 
@@ -143,6 +179,11 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 | `ENABLE_DEV_LOGIN` | Backend `.env` | `true` enables demo/dev login endpoint |
 | `JWT_SECRET` | Backend `.env` | JWT signing secret |
 | `SLACK_BOT_TOKEN` | Backend `.env` | Enables Slack routes when present |
+| `JWT_REFRESH_SECRET` | Backend `.env` | JWT refresh token signing secret |
+| `PORT` | Backend `.env` | Server port (default: `3000`). Code reads `PORT`, not `BACKEND_PORT` |
+| `DIRECT_URL` | Backend `.env` | Prisma direct DB connection (bypasses connection pooler, used for migrations) |
+| `ALLOWED_ORIGINS` | Backend `.env` | Comma-separated CORS origins (e.g., `https://progresshub.zeabur.app`) |
+| `FRONTEND_URL` | Backend `.env` | Frontend URL, falls back to first `ALLOWED_ORIGINS` entry |
 
 Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
 

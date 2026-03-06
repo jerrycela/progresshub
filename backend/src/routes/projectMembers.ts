@@ -33,6 +33,15 @@ async function canManageMembers(
     });
     if (!manager?.department) return false;
 
+    // Verify MANAGER is a member of this project
+    const isMember = await prisma.projectMember.findUnique({
+      where: {
+        projectId_employeeId: { projectId, employeeId: user.userId },
+      },
+    });
+    if (!isMember) return false;
+
+    // Verify target employees are in the same department
     if (targetEmployeeIds && targetEmployeeIds.length > 0) {
       const targets = await prisma.employee.findMany({
         where: { id: { in: targetEmployeeIds } },
@@ -52,6 +61,21 @@ async function canManageMembers(
 router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { projectId } = req.params;
+    const user = req.user!;
+
+    // ADMIN, PM, PRODUCER, MANAGER can view any project's members
+    if (
+      !["ADMIN", "PM", "PRODUCER", "MANAGER"].includes(user.permissionLevel)
+    ) {
+      // EMPLOYEE can only view if they are a member
+      const isMember = await prisma.projectMember.findUnique({
+        where: { projectId_employeeId: { projectId, employeeId: user.userId } },
+      });
+      if (!isMember) {
+        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Permission denied", 403);
+        return;
+      }
+    }
 
     const members = await prisma.projectMember.findMany({
       where: { projectId },
@@ -153,6 +177,19 @@ router.delete(
       ]);
       if (!allowed) {
         sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Permission denied", 403);
+        return;
+      }
+
+      const existing = await prisma.projectMember.findUnique({
+        where: { projectId_employeeId: { projectId, employeeId } },
+      });
+      if (!existing) {
+        sendError(
+          res,
+          ErrorCodes.RESOURCE_NOT_FOUND,
+          "Member not found in project",
+          404,
+        );
         return;
       }
 
