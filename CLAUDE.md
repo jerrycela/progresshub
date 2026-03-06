@@ -36,10 +36,6 @@ services/xxxService.ts:
 
 Each Pinia store calls `createXxxService()` once at module top-level. When adding a new service method: update interface, implement in both Mock and Api classes.
 
-### Store Pattern
-
-Pinia stores use **setup syntax** (`defineStore('name', () => {})`). Composables in `packages/frontend/src/composables/` extract reusable logic (e.g., `useGantt`, `useTaskModal`, `useFormValidation`).
-
 ### API Response Contract
 
 Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, message } }`. Frontend uses `apiGetUnwrap`/`apiPostUnwrap`/etc. helpers that auto-unwrap this structure. Error codes are centralized in `backend/src/types/shared-api.ts` (`ErrorCodes` object).
@@ -52,27 +48,14 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 - `authorize(PermissionLevel.PM, PermissionLevel.ADMIN)` middleware for role-gating routes
 - Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
-- Frontend router guards use `meta.requiresAuth` and `meta.requiresRole: UserRole[]` for route protection
-- Resource-level auth: `authorizeTaskAccess` middleware checks creator/assignee/collaborator/PM access
-- Self-edit auth: `authorizeSelfOrAdmin` for employee profile edits
 
 ### Route Organization
 
-Backend routes are mounted in `backend/src/routes/index.ts`. All routes are under `/api/` prefix. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
-
-Task routes split into sub-routers: `taskCrudRoutes`, `taskActionRoutes`, `taskNoteRoutes` — all mounted under `/api/tasks`.
-
-### Import Aliases
-
-- Frontend: `@/` → `packages/frontend/src/`, `shared/types` → `packages/shared/types/`
-- Backend imports shared types from `backend/src/types/shared-api.ts` (internalized copy — shared package unavailable in Docker container)
+Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
 
 ## Commands
 
 ```bash
-# Both services simultaneously
-pnpm dev
-
 # Frontend
 pnpm --filter frontend dev          # Dev server
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
@@ -142,10 +125,8 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 
 - Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
 - Mappers in `backend/src/mappers/` transform Prisma models to API DTOs (task, employee, project, milestone, progressLog)
-- Response helpers: `sendSuccess(res, data)`, `sendPaginatedSuccess(res, data, meta)`, `sendError(res, code, message, status)`
 - Use `ErrorCodes.XXX` constants for error responses, never raw strings
 - Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
-- The `Employee` model is the user table (not a separate `User` model)
 - Middleware in `backend/src/middleware/` — `auth.ts` (authenticate/authorize), `errorHandler.ts`, `sanitize.ts`, `auditLog.ts`
 - Tests use Jest + Supertest, config in `backend/jest.config.js`, setup in `backend/__tests__/setup.ts`. Coverage threshold: 80% per tested module.
 - Task routes are split across `taskCrudRoutes.ts`, `taskActionRoutes.ts`, `taskNoteRoutes.ts` (all mounted under `/tasks`)
@@ -162,12 +143,6 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 | `SLACK_BOT_TOKEN` | Backend `.env` | Enables Slack routes when present |
 
 Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
-
-## Gotchas
-
-- **Local `.env` interferes with backend tests.** `dotenv.config()` loads it automatically. Move to `.env.bak` when debugging CI-like failures.
-- **Service Factory is immutable after init.** `createXxxService()` result never changes during app lifecycle. Switching mock/API requires env change + restart.
-- **Demo features must not depend on `VITE_USE_MOCK`.** Anything that works "without backend" needs its own independent code path.
 
 ## References
 
