@@ -1,121 +1,100 @@
-# ProgressHub 後端服務故障報告
+# ProgressHub 後端 404 故障報告
 
 **服務名稱：** progresshub-api
-**報告時間：** 2026-03-06 09:47 (GMT+8)
-**嚴重程度：** P0 — 所有 API 端點完全無法存取
+**報告時間：** 2026-03-06 10:42 (GMT+8)
+**狀態：** 已解決
 
 ---
 
-## 一、現況摘要
+## 一、事件摘要
 
-後端 API 服務（progresshub-api.zeabur.app）目前所有端點回傳 HTTP 404，包含根路徑 `/`、健康檢查 `/api/health`、以及所有業務 API。前端應用因此完全無法與後端通訊，等同於**系統全面癱瘓**。
+後端 API 在外部測試時回傳 HTTP 404（純文字 "Not Found"），導致誤判為「系統全面癱瘓」。經排查後發現包含兩個獨立問題：
+
+1. **測試域名錯誤**（根本原因）：一直測試 `progresshub-api.zeabur.app`，但後端服務實際綁定的域名是 `progresshubfortest.zeabur.app`
+2. **express-rate-limit IPv6 錯誤**（已修復）：`ERR_ERL_KEY_GEN_IPV6` 警告可能在某些環境下導致中介層異常
+
+**實際影響：** 前端 `.env.production` 配置了正確的 API URL（`progresshubfortest.zeabur.app`），因此前後端連線**一直是通的**。外部手動測試用了錯誤域名才產生 404。
 
 ---
 
 ## 二、問題時間線
 
-| 時間 (UTC) | 事件 |
-|------------|------|
-| 03/05 23:48 | 服務第一次啟動，日誌顯示正常運行於 port 8080 |
-| 03/06 00:26 | 服務重啟（執行 migration + seed），啟動成功 |
-| 03/06 01:40:33 | 服務收到 SIGTERM，優雅關閉 |
-| 03/06 01:40:35 | 服務重新啟動，日誌顯示 port 8080 正常監聽 |
-| 03/06 01:40:36 | 日誌確認「Database connected successfully」 |
-| 03/06 ~01:41+ | 透過 CLI 手動重啟服務，仍然 404 |
-| 03/06 09:47 | 所有端點持續回傳 404 |
+| 時間 (GMT+8) | 事件 |
+|-------------|------|
+| ~09:30 | 發現 `progresshub-api.zeabur.app` 所有端點回傳 404 |
+| 09:47 | 初步報告：判斷為 Zeabur 平台路由問題 |
+| 09:57 | 修復 express-rate-limit IPv6 錯誤（`validate: { keyGeneratorIpFallback: false }`） |
+| 10:00 | 提交修復並部署（PR #6 合併） |
+| 10:09 | 嘗試修改 Dockerfile port 從 3000 改為 8080（PR #7, #8） |
+| 10:14 | 修改 zeabur.json healthcheck port |
+| 10:20 | 意外用 `variable update` 清除所有環境變數，緊急用 `variable create` 恢復 |
+| 10:30 | 確認 PORT 需設為 3000，全面回退 port 配置（PR #10） |
+| 10:38 | 容器內部驗證：Express 在 port 3000 正常運行，健康端點正常回應 |
+| 10:41 | 發現根本原因：`zeabur domain list` 顯示服務綁定域名為 `progresshubfortest.zeabur.app` |
+| 10:42 | 驗證正確域名：所有端點回傳 200，後端完全正常 |
 
 ---
 
-## 三、診斷結果
+## 三、根本原因分析
 
-### 3.1 Express 應用本身正常啟動
+### 3.1 測試域名錯誤（主因）
 
-每次啟動日誌都完整顯示：
-- Prisma migrate deploy 成功
-- Seed 腳本執行完成
-- 「Slack integration disabled」（正常，未設定 Slack）
-- 「Dev login enabled」（正常，開發模式）
-- **「Server is running on port 8080」**
-- **「Database connected successfully」**
-
-結論：Express 應用程式本身啟動流程**沒有錯誤**。
-
-### 3.2 404 不是來自 Express
-
-關鍵證據：
-- 404 回應的 `content-type` 是 `text/plain`，內容僅為 "Not Found"
-- **缺少 `X-Powered-By: Express` header**（Express 預設會加上此 header）
-- Express 的 404 通常回傳 HTML 或 JSON 格式，而非純文字
-
-結論：**404 是 Zeabur 平台的反向代理/閘道層回傳的**，請求根本沒有到達 Express 應用。
-
-### 3.3 可疑的 rate-limit 警告
-
-每次啟動都出現以下警告：
-
-```
-ERR_ERL_KEY_GEN_IPV6 — ValidationError: Custom keyGenerator appears to use
-request IP without calling the ipKeyGenerator helper function for IPv6 addresses
-```
-
-這是 `express-rate-limit` 套件的 IPv6 驗證錯誤。雖然這個警告本身**不太可能**直接導致 404（因為它只是警告，不是致命錯誤），但需要排查是否造成了中介層異常。
-
-### 3.4 可能的根本原因
-
-依可能性排序：
-
-| 優先級 | 可能原因 | 說明 |
-|--------|---------|------|
-| **最高** | Zeabur 平台路由/閘道配置異常 | 平台的反向代理未正確轉發請求到容器的 port 8080。可能是部署配置、域名綁定、或平台側問題 |
-| **中** | 容器健康檢查失敗 | 如果 Zeabur 有健康檢查機制，而檢查端點或方式不匹配，平台可能判定容器「不健康」而不轉發流量 |
-| **中** | Port 綁定不匹配 | 容器監聽 8080，但 Zeabur 期望的端口不同（需確認 `zeabur.json` 配置） |
-| **低** | rate-limit IPv6 錯誤導致中介層崩潰 | 雖然是警告級別，但如果某個中介層因此拋出未捕捉的例外，可能影響請求處理 |
-
----
-
-## 四、已嘗試的修復
-
-| 動作 | 結果 |
+| 項目 | 值 |
 |------|------|
-| 透過 Zeabur CLI 手動重啟服務 | 服務重啟成功（日誌確認），但 404 持續 |
-| 等待 60+ 秒後重新測試 | 無改善 |
-| 檢查多個端點（`/`、`/api/`、`/api/health`） | 全部 404 |
+| 測試使用的域名 | `progresshub-api.zeabur.app` |
+| 實際綁定的域名 | `progresshubfortest.zeabur.app` |
+| 前端配置的 API URL | `https://progresshubfortest.zeabur.app/api`（正確） |
+
+`progresshub-api.zeabur.app` 這個域名並未綁定到任何服務，因此 Zeabur 閘道回傳 `text/plain "Not Found"`。這不是 Express 的 404，而是平台層的「找不到服務」回應。
+
+**驗證方式：**
+```
+zeabur domain list --id 69919980578031156931b2b5
+=> progresshubfortest.zeabur.app (PROVISIONED)
+```
+
+### 3.2 express-rate-limit IPv6 錯誤（已修復）
+
+`express-rate-limit` v8 在自訂 `keyGenerator` 使用 `req.ip` 但未使用 `ipKeyGenerator` 時拋出 `ERR_ERL_KEY_GEN_IPV6` 驗證錯誤。
+
+**修復方式：** 在 apiLimiter 設定中加入 `validate: { keyGeneratorIpFallback: false }`，因為我們的 keyGenerator 優先使用 userId，IP 只是備用。
 
 ---
 
-## 五、建議的下一步排查
+## 四、修復過程中的附帶問題
 
-### 立即行動（P0）
+### 4.1 環境變數被清除
 
-1. **檢查 Zeabur 後台的服務配置**
-   - 確認 port 設定是否為 8080
-   - 確認域名 `progresshub-api.zeabur.app` 是否正確綁定到此服務
-   - 確認服務狀態是否顯示為「Running」
+使用 `npx zeabur variable update` 時，該指令會**清除所有現有變數再重新設定**。僅設定了 PORT=3000，導致其餘 6 個變數（DATABASE_URL、JWT_SECRET 等）全部遺失。
 
-2. **檢查 `zeabur.json` 的端口配置**
-   - 確認 `start_command` 和 exposed port 是否一致
+**教訓：** Zeabur CLI 修改環境變數必須使用 `variable create`，絕不用 `variable update`。
 
-3. **嘗試重新部署（Redeploy）而非重啟（Restart）**
-   - Restart 只重啟容器，Redeploy 會重建映像檔
-   - 可能解決平台路由快取問題
+### 4.2 Port 配置來回修改
 
-### 進一步排查
-
-4. **修復 rate-limit IPv6 警告**
-   - 更新 `express-rate-limit` 的 keyGenerator 使用 `ipKeyGenerator` helper
-   - 排除此警告作為潛在干擾因素
-
-5. **聯繫 Zeabur 支援**
-   - 如果以上步驟無效，提供服務 ID（`69919980578031156931b2b5`）和專案 ID（`6981dcd8660671a403f1390a`）給 Zeabur 技術支援排查平台側問題
+因為誤判為 port 不匹配問題，Dockerfile 和 zeabur.json 的 port 配置在 3000 和 8080 之間反覆修改，產生了 4 個 PR。最終確認正確配置為 port 3000。
 
 ---
 
-## 六、影響範圍
+## 五、最終驗證結果
 
-- 前端所有需要後端 API 的功能**完全不可用**
-- 包含：登入、任務管理、專案管理、甘特圖、工時追蹤、GitLab 整合
-- Demo 登入功能也無法使用（依賴後端 API）
-- 唯一不受影響的是前端靜態頁面的載入本身
+| 端點 | 狀態碼 | 回應 |
+|------|--------|------|
+| `/health` | 200 | `{"status":"ok","uptime":...}` |
+| `/health/ready` | 200 | `{"status":"ready","database":"connected"}` |
+| `/api/` | 200 | `{"name":"ProgressHub API","version":"1.0.0"}` |
+| `/api/auth/dev-login` | 400 | 正確的驗證錯誤回應 |
+| 前端 | 200 | 正常載入 |
+
+---
+
+## 六、預防措施
+
+| 項目 | 行動 |
+|------|------|
+| 域名管理 | 在專案文件中明確記錄各服務的域名對應關係 |
+| 環境變數 | 禁用 `zeabur variable update`，一律使用 `variable create` |
+| 測試流程 | 排查前先用 `zeabur domain list` 確認正確域名 |
+| Port 配置 | Dockerfile EXPOSE、zeabur.json healthcheck、env PORT 三者必須一致（目前皆為 3000） |
 
 ---
 
@@ -125,9 +104,8 @@ request IP without calling the ipKeyGenerator helper function for IPv6 addresses
 |------|------|
 | Zeabur 專案 ID | `6981dcd8660671a403f1390a` |
 | 後端服務 ID | `69919980578031156931b2b5` |
-| 服務 URL | `progresshub-api.zeabur.app` |
-| 容器監聽端口 | 8080 |
-| 最後成功啟動 | 2026-03-06 01:40:36 UTC |
-| 資料庫連線 | 正常 |
-| Express 應用 | 正常啟動 |
-| 外部可達性 | 全部 404 |
+| 前端服務 ID | `6981dd90f9d3bc4cce7d1bf0` |
+| 後端域名 | `progresshubfortest.zeabur.app` |
+| 前端域名 | `progresshub.zeabur.app` |
+| 容器監聽端口 | 3000 |
+| 資料庫 | `postgresql.zeabur.internal:5432/zeabur` |
