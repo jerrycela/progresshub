@@ -78,7 +78,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 分鐘
-  max: 10, // 登入嘗試限制
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "10"),
   message: { error: "Too many login attempts, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
