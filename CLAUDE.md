@@ -25,6 +25,10 @@ services/xxxService.ts:
 
 Each Pinia store calls `createXxxService()` once at module top-level. When adding a new service method: update interface, implement in both Mock and Api classes.
 
+### Store Pattern
+
+Pinia stores use **setup syntax** (`defineStore('name', () => {})`). Composables in `packages/frontend/src/composables/` extract reusable logic (e.g., `useGantt`, `useTaskModal`, `useFormValidation`).
+
 ### API Response Contract
 
 Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, message } }`. Frontend uses `apiGetUnwrap`/`apiPostUnwrap`/etc. helpers that auto-unwrap this structure. Error codes are centralized in `backend/src/types/shared-api.ts` (`ErrorCodes` object).
@@ -37,10 +41,17 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 - `authorize(PermissionLevel.PM, PermissionLevel.ADMIN)` middleware for role-gating routes
 - Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
+- Frontend router guards use `meta.requiresAuth` and `meta.requiresRole: UserRole[]` for route protection
+- Resource-level auth: `authorizeTaskAccess` middleware checks creator/assignee/collaborator/PM access
 
 ### Route Organization
 
 Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+
+### Import Aliases
+
+- Frontend: `@/` → `packages/frontend/src/`, `shared/types` → `packages/shared/types/`
+- Backend imports shared types from `backend/src/types/shared-api.ts` (internalized copy — shared package unavailable in Docker container)
 
 ## Commands
 
@@ -48,17 +59,22 @@ Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., 
 # Frontend
 pnpm --filter frontend dev          # Dev server
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
-pnpm --filter frontend exec vitest run         # Unit tests
+pnpm --filter frontend exec vitest run         # All unit tests
+pnpm --filter frontend exec vitest run src/composables/__tests__/useConfirm.spec.ts  # Single test
 pnpm --filter frontend build        # Production build
 
 # Backend
 pnpm --filter backend dev           # Dev server
-cd backend && npx jest --no-coverage # Unit tests
+cd backend && npx jest --no-coverage           # All unit tests
+cd backend && npx jest --no-coverage -- src/services/taskService.test.ts  # Single test
 
 # Database
 cd backend && npx prisma migrate dev --name <name>  # Create migration
 cd backend && npx prisma generate    # Regenerate client after schema change
 cd backend && npx prisma db seed     # Run seed
+
+# Both (from root)
+pnpm dev                             # Run frontend + backend in parallel
 ```
 
 ## Auth Modes
@@ -102,8 +118,10 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 
 - Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
 - Mappers in `backend/src/mappers/` transform Prisma models to API DTOs
+- Response helpers: `sendSuccess(res, data)`, `sendPaginatedSuccess(res, data, meta)`, `sendError(res, code, message, status)`
 - Use `ErrorCodes.XXX` constants for error responses, never raw strings
 - Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
+- The `Employee` model is the user table (not a separate `User` model)
 
 ## References
 

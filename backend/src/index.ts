@@ -74,6 +74,7 @@ const apiLimiter = rateLimit({
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false }, // userId is primary key; IP is fallback only
 });
 
 const authLimiter = rateLimit({
