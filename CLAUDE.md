@@ -1,71 +1,111 @@
-# ProgressHub - 專案指令
+# CLAUDE.md
 
-## 架構概述
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-- **Frontend**: `packages/frontend/` (Vue 3 + TypeScript + Tailwind CSS)
-- **Backend**: `backend/` (Express + Prisma + PostgreSQL)
-- **Shared Types**: `packages/shared/types/`
+## Architecture
+
+ProgressHub is an internal project progress management system. Monorepo with pnpm workspaces.
+
+- **Frontend**: `packages/frontend/` — Vue 3 + TypeScript + Pinia + Tailwind CSS + Vite
+- **Backend**: `backend/` — Express + TypeScript + Prisma + PostgreSQL
+- **Shared Types**: `packages/shared/types/` — enums, interfaces shared between frontend and backend
 - **Mock Data**: `packages/frontend/src/mocks/`
 
-## 認證架構
+### Service Layer Pattern (Critical)
 
-`createAuthService()` 在模組頂層執行一次，根據 `VITE_USE_MOCK` 決定 Mock 或 API 模式。
+Frontend services use a **Factory + Interface** pattern for Mock/API dual-mode:
 
-| 模式 | 條件 | 行為 |
-|------|------|------|
-| Mock 登入 | `VITE_USE_MOCK=true` | 直接使用 mock 資料，不需後端 |
-| API 登入 | `VITE_USE_MOCK=false` | 呼叫後端 `POST /api/auth/dev-login`，需 `ENABLE_DEV_LOGIN=true` |
-| Slack 登入 | 透過 service 層 | 依環境變數選擇 mock 或真實 API |
-| Demo Token | `'demo-token'` | `initAuth()` 直接從 mock 恢復，不呼叫 API |
-
-## 部署架構
-
-- **Frontend**：Zeabur 靜態部署（Vue + Caddy）→ `progresshub.zeabur.app`
-- **Backend**：Zeabur 容器部署（Express + Prisma）→ `progresshub-api.zeabur.app`
-- **Database**：Zeabur PostgreSQL Marketplace
-- **關鍵環境變數**：`ENABLE_DEV_LOGIN=true`（暫時方案，Slack OAuth 就緒後移除）
-
-## 開發指令
-
-```bash
-# 前端開發
-pnpm --filter frontend dev
-
-# 型別檢查
-pnpm --filter frontend exec vue-tsc --noEmit
-
-# 前端測試
-pnpm --filter frontend exec vitest run
-
-# 後端測試
-cd backend && npx jest --no-coverage
-
-# 前端建置
-pnpm --filter frontend build
-
-# 後端開發
-pnpm --filter backend dev
+```
+services/xxxService.ts:
+  interface XxxServiceInterface { ... }
+  class MockXxxService implements XxxServiceInterface { ... }
+  class ApiXxxService implements XxxServiceInterface { ... }
+  export const createXxxService = () => VITE_USE_MOCK ? new MockXxxService() : new ApiXxxService()
 ```
 
-## 前端設計系統規範
+Each Pinia store calls `createXxxService()` once at module top-level. When adding a new service method: update interface, implement in both Mock and Api classes.
 
-- **表單元素**：所有 `<input>`、`<textarea>`、`<select>` 必須使用 `.input` class（定義於 `main.css`），禁止使用不存在的 `.input-field`
-- **卡片容器**：使用 `.card` class，自動支援深色模式
-- **文字顏色**：使用 CSS 變數 `var(--text-primary)`、`var(--text-secondary)`，禁止硬編碼 `text-gray-900`、`text-gray-500` 等
-- **背景顏色**：使用 CSS 變數 `var(--bg-primary)`、`var(--bg-secondary)`、`var(--bg-tertiary)`，禁止硬編碼 `bg-white` 等
-- **按鈕無障礙**：純圖示按鈕必須加 `aria-label` 屬性
+### API Response Contract
 
-## Mock Service 規範
+Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, message } }`. Frontend uses `apiGetUnwrap`/`apiPostUnwrap`/etc. helpers that auto-unwrap this structure. Error codes are centralized in `backend/src/types/shared-api.ts` (`ErrorCodes` object).
 
-Mock Service（`packages/frontend/src/services/` 中的 `MockXxxService`）只做資料模擬，禁止包含商業邏輯：
+**Caution with DELETE endpoints:** If backend returns `204 No Content` (empty body), do NOT use `apiDeleteUnwrap` on the frontend — it will fail parsing. Use `apiDelete` instead, or have the backend return `sendSuccess(res, null)` with 200.
 
-- **每個方法不超過 5 行**（建立假資料 → 回傳）
-- **禁止 if/else 條件判斷**（狀態計算、欄位映射、權限判斷等屬於後端邏輯）
-- **禁止狀態聯動**（如「進度 100% 時自動改狀態為 DONE」應由後端處理）
-- **違規檢測**：Mock 中出現 `if`/`switch`/三元運算子 = Mock 在做後端的事，應移到後端
+### Auth & Permissions
 
-> 背景：Mock 曾因包含過多商業邏輯而成為「影子後端」，導致 Mock 模式正常但 API 模式壞掉的問題大量出現。
+- Backend: `authenticate` middleware attaches `req.user` (JwtPayload: userId, name, email, permissionLevel)
+- `authorize(PermissionLevel.PM, PermissionLevel.ADMIN)` middleware for role-gating routes
+- Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
+- `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
 
-## 參考資源
+### Route Organization
 
-- `docs/lessons-learned.md` — 環境變數、Demo 功能、Service Factory 等教訓記錄
+Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+
+## Commands
+
+```bash
+# Frontend
+pnpm --filter frontend dev          # Dev server
+pnpm --filter frontend exec vue-tsc --noEmit  # Type check
+pnpm --filter frontend exec vitest run         # Unit tests
+pnpm --filter frontend build        # Production build
+
+# Backend
+pnpm --filter backend dev           # Dev server
+cd backend && npx jest --no-coverage # Unit tests
+
+# Database
+cd backend && npx prisma migrate dev --name <name>  # Create migration
+cd backend && npx prisma generate    # Regenerate client after schema change
+cd backend && npx prisma db seed     # Run seed
+```
+
+## Auth Modes
+
+`createAuthService()` runs once at module top-level, selecting Mock or API mode via `VITE_USE_MOCK`.
+
+| Mode | Condition | Behavior |
+|------|-----------|----------|
+| Mock | `VITE_USE_MOCK=true` | Uses mock data, no backend needed |
+| API  | `VITE_USE_MOCK=false` | Calls `POST /api/auth/dev-login`, needs `ENABLE_DEV_LOGIN=true` |
+| Slack | Via service layer | Env vars select mock or real API |
+| Demo Token | `'demo-token'` | `initAuth()` restores from mock without API call |
+
+## Deployment
+
+- **Frontend**: Zeabur static (Vue + Caddy) → `progresshub.zeabur.app`
+- **Backend**: Zeabur container (Express + Prisma) → `progresshub-api.zeabur.app`
+- **Database**: Zeabur PostgreSQL Marketplace
+- `ENABLE_DEV_LOGIN=true` required on backend until Slack OAuth is production-ready
+
+## Frontend Design System
+
+- **Form elements**: Must use `.input` class (defined in `main.css`). Never use `.input-field`.
+- **Cards**: Use `.card` class with automatic dark mode support.
+- **Colors**: Use CSS variables `var(--text-primary)`, `var(--bg-secondary)`, etc. Never hardcode `text-gray-*`, `bg-white`.
+- **Accessibility**: Icon-only buttons must have `aria-label`.
+- **Shared constants**: `DepartmentLabels`, `UserRoleLabels` in `shared/types` — always use these for display, never raw enum values.
+
+## Mock Service Rules
+
+Mock services (`MockXxxService`) are data stubs only — no business logic:
+
+- Each method ≤5 lines (create fake data → return)
+- No `if`/`switch`/ternary (those belong in backend)
+- No state coupling (e.g., "progress 100% → auto-set DONE")
+- Violation signal: conditional logic in Mock = backend logic leak
+
+> History: Mocks once became a "shadow backend", causing Mock-mode-works-but-API-mode-breaks bugs.
+
+## Backend Conventions
+
+- Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
+- Mappers in `backend/src/mappers/` transform Prisma models to API DTOs
+- Use `ErrorCodes.XXX` constants for error responses, never raw strings
+- Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
+
+## References
+
+- `docs/lessons-learned.md` — env vars, Demo feature, Service Factory lessons
+- `docs/plans/` — implementation plans for features in progress

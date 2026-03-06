@@ -16,6 +16,9 @@ jest.mock('../../../src/config/database', () => ({
       findMany: jest.fn(),
       create: jest.fn(),
     },
+    projectMember: {
+      createMany: jest.fn(),
+    },
     $transaction: jest.fn(),
   },
 }));

@@ -1,6 +1,6 @@
 import type { Project, ActionResult } from 'shared/types'
 import { mockProjects } from '@/mocks/unified'
-import { apiGetUnwrap, apiPostUnwrap, apiPutUnwrap, apiDelete } from './api'
+import { apiGetUnwrap, apiPostUnwrap, apiPutUnwrap, apiDelete, apiDeleteUnwrap } from './api'
 import { mockDelay } from '@/utils/mockDelay'
 
 export interface CreateProjectInput {
@@ -10,12 +10,23 @@ export interface CreateProjectInput {
   endDate: string
 }
 
+export interface ProjectMember {
+  id: string
+  employeeId: string
+  role: string
+  employee: { id: string; name: string; email: string; department: string; permissionLevel: string }
+  createdAt: string
+}
+
 export interface ProjectServiceInterface {
   fetchProjects(): Promise<Project[]>
   getProjectById(id: string): Promise<Project | undefined>
   createProject(input: CreateProjectInput): Promise<ActionResult<Project>>
   updateProject(id: string, input: Partial<Project>): Promise<ActionResult<Project>>
   deleteProject(id: string): Promise<ActionResult<void>>
+  getProjectMembers(projectId: string): Promise<ProjectMember[]>
+  addProjectMembers(projectId: string, employeeIds: string[]): Promise<{ count: number }>
+  removeProjectMember(projectId: string, employeeId: string): Promise<void>
 }
 
 class MockProjectService implements ProjectServiceInterface {
@@ -61,6 +72,16 @@ class MockProjectService implements ProjectServiceInterface {
     }
     return { success: true }
   }
+
+  async getProjectMembers(): Promise<ProjectMember[]> {
+    return []
+  }
+
+  async addProjectMembers(): Promise<{ count: number }> {
+    return { count: 0 }
+  }
+
+  async removeProjectMember(): Promise<void> {}
 }
 
 class ApiProjectService implements ProjectServiceInterface {
@@ -93,6 +114,18 @@ class ApiProjectService implements ProjectServiceInterface {
   async deleteProject(id: string): Promise<ActionResult<void>> {
     await apiDelete(`/projects/${id}`)
     return { success: true }
+  }
+
+  async getProjectMembers(projectId: string): Promise<ProjectMember[]> {
+    return apiGetUnwrap<ProjectMember[]>(`/projects/${projectId}/members`)
+  }
+
+  async addProjectMembers(projectId: string, employeeIds: string[]): Promise<{ count: number }> {
+    return apiPostUnwrap<{ count: number }>(`/projects/${projectId}/members`, { employeeIds })
+  }
+
+  async removeProjectMember(projectId: string, employeeId: string): Promise<void> {
+    await apiDeleteUnwrap(`/projects/${projectId}/members/${employeeId}`)
   }
 }
 
