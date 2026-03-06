@@ -9,22 +9,6 @@ import { env } from "../../config/env";
 import logger from "../../config/logger";
 import { AppError } from "../../middleware/errorHandler";
 
-// TODO: 將 OAuth state 存儲遷移到 Redis，目前使用記憶體 Map 在多進程/多節點部署時會導致驗證失敗
-// 當前為非生產就緒的實作，僅適用於單進程環境
-const OAUTH_STATE_MAX_COUNT = 1000; // 最大 state 數量限制
-const OAUTH_STATE_TTL_MS = 10 * 60 * 1000; // state 過期時間：10 分鐘
-const oauthStates = new Map<
-  string,
-  { employeeId: string; instanceId: string; expiresAt: number }
->();
-
-// 啟動時警告：此為非生產就緒的 OAuth state 存儲
-logger.warn(
-  "[GitLab OAuth] 警告：OAuth state 目前存儲在應用程式記憶體中，" +
-    "多進程或多節點部署時將無法正確驗證 state。" +
-    "請儘速遷移至 Redis 等共享存儲方案。",
-);
-
 export class GitLabOAuthService {
   /**
    * 產生 OAuth 授權 URL
@@ -43,20 +27,25 @@ export class GitLabOAuthService {
       throw new AppError(400, "GitLab instance is not active");
     }
 
-    // 生成 state token（防 CSRF）
-    const state = crypto.randomBytes(32).toString("hex");
-    const expiresAt = Date.now() + OAUTH_STATE_TTL_MS;
-
-    // 清理過期的 states（在新增之前先清理，確保不會超出上限）
-    this.cleanupExpiredStates();
-
-    // 檢查是否超出最大數量限制，若超出則拒絕新增
-    if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
-      throw new AppError(503, "OAuth state 存儲已滿，請稍後再試");
+    // 5% chance: clean up expired states
+    if (Math.random() < 0.05) {
+      await prisma.oAuthState.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
     }
 
-    // 儲存 state
-    oauthStates.set(state, { employeeId, instanceId, expiresAt });
+    // 生成 state token（防 CSRF）
+    const state = crypto.randomBytes(32).toString("hex");
+
+    // Persist state to database for multi-node compatibility
+    await prisma.oAuthState.create({
+      data: {
+        state,
+        provider: "gitlab",
+        payload: { employeeId, instanceId },
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
+    });
 
     const redirectUri = `${env.API_BASE_URL || "http://localhost:4000"}/api/gitlab/connections/oauth/callback`;
 
@@ -75,23 +64,31 @@ export class GitLabOAuthService {
   }
 
   /**
-   * 驗證 OAuth state
+   * Verify and consume a one-time OAuth state parameter.
+   * Deletes the state record on use (one-time consume).
    */
-  verifyState(
+  async verifyState(
     state: string,
-  ): { employeeId: string; instanceId: string } | null {
-    const data = oauthStates.get(state);
-    if (!data) {
+  ): Promise<{ employeeId: string; instanceId: string } | null> {
+    try {
+      const record = await prisma.oAuthState.delete({
+        where: { state },
+      });
+
+      // Check expiry after consuming
+      if (record.expiresAt < new Date()) {
+        return null;
+      }
+
+      const payload = record.payload as {
+        employeeId: string;
+        instanceId: string;
+      };
+      return { employeeId: payload.employeeId, instanceId: payload.instanceId };
+    } catch {
+      // Record not found — invalid or already consumed state
       return null;
     }
-
-    if (Date.now() > data.expiresAt) {
-      oauthStates.delete(state);
-      return null;
-    }
-
-    oauthStates.delete(state);
-    return { employeeId: data.employeeId, instanceId: data.instanceId };
   }
 
   /**
@@ -310,20 +307,6 @@ export class GitLabOAuthService {
           : undefined,
       },
     });
-  }
-
-  /**
-   * 清理過期的 states
-   * 遍歷所有 state，移除超過 TTL（10 分鐘）的條目
-   * TODO: 遷移至 Redis 後，可利用 Redis 的 TTL 機制自動過期，不需手動清理
-   */
-  private cleanupExpiredStates(): void {
-    const now = Date.now();
-    for (const [key, value] of oauthStates.entries()) {
-      if (now > value.expiresAt) {
-        oauthStates.delete(key);
-      }
-    }
   }
 
   /**

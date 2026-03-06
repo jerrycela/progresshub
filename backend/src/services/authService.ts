@@ -7,14 +7,6 @@ import { Employee, PermissionLevel } from "@prisma/client";
 import { toUserDTO, UserDTO } from "../mappers";
 import { AppError } from "../middleware/errorHandler";
 
-// FIXME: OAuth state 使用 In-Memory Map，在多進程/多節點/重啟時會失效。
-// 影響：使用者在節點 A 產生 state，但 callback 打到節點 B 時會驗證失敗。
-// 優先級：生產環境部署前必須遷移至 Redis 或資料庫。
-// 參考：https://github.com/your-org/progresshub/issues/XX
-const OAUTH_STATE_MAX_COUNT = 1000;
-const STATE_TTL = 10 * 60 * 1000; // 10 minutes
-const oauthStates = new Map<string, { expiresAt: number }>();
-
 export interface LoginResult {
   token: string;
   refreshToken: string;
@@ -24,26 +16,24 @@ export interface LoginResult {
 export class AuthService {
   /**
    * Generate a cryptographically random OAuth state parameter for CSRF protection.
-   * Cleans up expired states before generating a new one.
+   * Persists state to database for multi-node compatibility.
    */
-  generateOAuthState(): string {
-    // Cleanup expired states
-    const now = Date.now();
-    for (const [key, value] of oauthStates.entries()) {
-      if (now > value.expiresAt) {
-        oauthStates.delete(key);
-      }
+  async generateOAuthState(): Promise<string> {
+    // 5% chance: clean up expired states
+    if (Math.random() < 0.05) {
+      await prisma.oAuthState.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
     }
-
-    if (oauthStates.size >= OAUTH_STATE_MAX_COUNT) {
-      throw new AppError(
-        503,
-        "OAuth state storage is full, please try again later",
-      );
-    }
-
     const state = crypto.randomBytes(32).toString("hex");
-    oauthStates.set(state, { expiresAt: now + STATE_TTL });
+    await prisma.oAuthState.create({
+      data: {
+        state,
+        provider: "slack",
+        payload: {},
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+      },
+    });
     return state;
   }
 
@@ -51,12 +41,15 @@ export class AuthService {
    * Verify and consume a one-time OAuth state parameter.
    * Returns true if the state is valid and not expired.
    */
-  verifyOAuthState(state: string): boolean {
-    const data = oauthStates.get(state);
-    if (!data) return false;
-
-    oauthStates.delete(state); // One-time use
-    return Date.now() <= data.expiresAt;
+  async verifyOAuthState(state: string): Promise<boolean> {
+    try {
+      const record = await prisma.oAuthState.delete({
+        where: { state },
+      });
+      return record.expiresAt > new Date();
+    } catch {
+      return false; // Not found or already consumed
+    }
   }
 
   /**

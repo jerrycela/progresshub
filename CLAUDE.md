@@ -54,10 +54,13 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
 - Frontend router guards use `meta.requiresAuth` and `meta.requiresRole: UserRole[]` for route protection
 - Resource-level auth: `authorizeTaskAccess` middleware checks creator/assignee/collaborator/PM access
+- Self-edit auth: `authorizeSelfOrAdmin` for employee profile edits
 
 ### Route Organization
 
-Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+Backend routes are mounted in `backend/src/routes/index.ts`. All routes are under `/api/` prefix. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+
+Task routes split into sub-routers: `taskCrudRoutes`, `taskActionRoutes`, `taskNoteRoutes` — all mounted under `/api/tasks`.
 
 ### Import Aliases
 
@@ -67,6 +70,9 @@ Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., 
 ## Commands
 
 ```bash
+# Both services simultaneously
+pnpm dev
+
 # Frontend
 pnpm --filter frontend dev          # Dev server
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
@@ -156,6 +162,12 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 | `SLACK_BOT_TOKEN` | Backend `.env` | Enables Slack routes when present |
 
 Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
+
+## Gotchas
+
+- **Local `.env` interferes with backend tests.** `dotenv.config()` loads it automatically. Move to `.env.bak` when debugging CI-like failures.
+- **Service Factory is immutable after init.** `createXxxService()` result never changes during app lifecycle. Switching mock/API requires env change + restart.
+- **Demo features must not depend on `VITE_USE_MOCK`.** Anything that works "without backend" needs its own independent code path.
 
 ## References
 

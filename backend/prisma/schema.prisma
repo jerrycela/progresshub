@@ -468,3 +468,16 @@ model GitLabIssueMapping {
   @@index([taskId])
   @@map("gitlab_issue_mappings")
 }
+
+// OAuth State 暫存表（防 CSRF，支援多節點）
+model OAuthState {
+  id        String   @id @default(cuid())
+  state     String   @unique
+  provider  String   // "slack" | "gitlab"
+  payload   Json     // { codeVerifier, redirectUri, employeeId, instanceId, ... }
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([expiresAt])
+  @@map("oauth_states")
+}
