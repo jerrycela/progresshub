@@ -11,6 +11,8 @@ ProgressHub is an internal project progress management system. Monorepo with pnp
 - **Shared Types**: `packages/shared/types/` — enums, interfaces shared between frontend and backend
 - **Mock Data**: `packages/frontend/src/mocks/`
 
+Frontend path alias: `@/` maps to `packages/frontend/src/`.
+
 ### Service Layer Pattern (Critical)
 
 Frontend services use a **Factory + Interface** pattern for Mock/API dual-mode:
@@ -25,6 +27,17 @@ services/xxxService.ts:
 
 Each Pinia store calls `createXxxService()` once at module top-level. When adding a new service method: update interface, implement in both Mock and Api classes.
 
+### Frontend Composables
+
+Reusable logic lives in `packages/frontend/src/composables/`. Key composables:
+- `useTaskModal` — task detail modal open/close state
+- `useGantt` / `useGanttData` — Gantt chart rendering and data processing
+- `useFormValidation` — form validation helpers
+- `useToast` — toast notification (lazy-loaded to avoid circular deps with API layer)
+- `useConfirm` — confirmation dialog state
+
+Use existing composables before creating new ones. Check `composables/index.ts` for the full list.
+
 ### API Response Contract
 
 Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, message } }`. Frontend uses `apiGetUnwrap`/`apiPostUnwrap`/etc. helpers that auto-unwrap this structure. Error codes are centralized in `backend/src/types/shared-api.ts` (`ErrorCodes` object).
@@ -37,23 +50,32 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 - `authorize(PermissionLevel.PM, PermissionLevel.ADMIN)` middleware for role-gating routes
 - Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
+- Resource-level auth: `authorizeTaskAccess` checks task creator/assignee/collaborator + PM/ADMIN
+- Self-edit auth: `authorizeSelfOrAdmin` for employee profile edits
 
 ### Route Organization
 
-Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+Backend routes are mounted in `backend/src/routes/index.ts`. All routes are under `/api/` prefix. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+
+Task routes split into sub-routers: `taskCrudRoutes`, `taskActionRoutes`, `taskNoteRoutes` — all mounted under `/api/tasks`.
 
 ## Commands
 
 ```bash
+# Both services simultaneously
+pnpm dev
+
 # Frontend
 pnpm --filter frontend dev          # Dev server
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
 pnpm --filter frontend exec vitest run         # Unit tests
+pnpm --filter frontend exec vitest run src/composables/__tests__/useGantt.test.ts  # Single test
 pnpm --filter frontend build        # Production build
 
 # Backend
 pnpm --filter backend dev           # Dev server
-cd backend && npx jest --no-coverage # Unit tests
+cd backend && npx jest --no-coverage              # All unit tests
+cd backend && npx jest --no-coverage src/services/__tests__/taskService.test.ts  # Single test
 
 # Database
 cd backend && npx prisma migrate dev --name <name>  # Create migration
@@ -102,8 +124,17 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 
 - Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
 - Mappers in `backend/src/mappers/` transform Prisma models to API DTOs
+- Response helpers: `sendSuccess`, `sendPaginatedSuccess`, `sendError` in `backend/src/utils/response.ts`
 - Use `ErrorCodes.XXX` constants for error responses, never raw strings
 - Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
+- Backend errors use `AppError` class (from `middleware/errorHandler.ts`) for business logic errors
+
+## Gotchas
+
+- **Vite env vars are compile-time constants.** Changing `.env` requires dev server restart.
+- **Local `.env` interferes with backend tests.** `dotenv.config()` loads it automatically. Move to `.env.bak` when debugging CI-like failures.
+- **Service Factory is immutable after init.** `createXxxService()` result never changes during app lifecycle. Switching mock/API requires env change + restart.
+- **Demo features must not depend on `VITE_USE_MOCK`.** Anything that works "without backend" needs its own independent code path.
 
 ## References
 
