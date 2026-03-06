@@ -152,13 +152,27 @@ const toggleFunctionTag = (tag: FunctionType): void => {
         <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
           開始日期
         </label>
-        <input v-model="form.startDate" type="date" class="input w-full cursor-pointer" />
+        <input
+          v-model="form.startDate"
+          :type="form.startDate ? 'date' : 'text'"
+          placeholder="點選或輸入日期"
+          class="input w-full"
+          @focus="($event.target as HTMLInputElement).type = 'date'"
+          @blur="if (!form.startDate) ($event.target as HTMLInputElement).type = 'text'"
+        />
       </div>
       <div>
         <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
           截止日期
         </label>
-        <input v-model="form.dueDate" type="date" class="input w-full cursor-pointer" />
+        <input
+          v-model="form.dueDate"
+          :type="form.dueDate ? 'date' : 'text'"
+          placeholder="點選或輸入日期"
+          class="input w-full"
+          @focus="($event.target as HTMLInputElement).type = 'date'"
+          @blur="if (!form.dueDate) ($event.target as HTMLInputElement).type = 'text'"
+        />
       </div>
     </div>
   </div>
