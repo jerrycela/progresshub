@@ -177,6 +177,7 @@ export class AuthService {
   async demoLogin(
     name: string,
     permissionLevel: PermissionLevel,
+    projectIds?: string[],
   ): Promise<LoginResult> {
     const nameSlug = name
       .toLowerCase()
@@ -198,6 +199,20 @@ export class AuthService {
         functionType,
       },
     });
+
+    // Clear old project memberships and set new ones
+    await prisma.projectMember.deleteMany({
+      where: { employeeId: employee.id },
+    });
+    if (projectIds && projectIds.length > 0) {
+      await prisma.projectMember.createMany({
+        data: projectIds.map((projectId) => ({
+          projectId,
+          employeeId: employee.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
 
     return this.completeDevLogin(employee);
   }

@@ -144,6 +144,8 @@ router.get(
         limit: req.query.limit
           ? parseInt(req.query.limit as string)
           : undefined,
+        userId: req.user?.userId,
+        userRole: req.user?.permissionLevel,
       });
 
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
