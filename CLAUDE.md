@@ -75,7 +75,19 @@ The client also handles **automatic token refresh**: on 401, it queues concurren
 
 Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
 
+API route groups: `/auth`, `/employees`, `/projects`, `/tasks`, `/progress`, `/milestones`, `/time-entries`, `/time-categories`, `/time-stats`, `/gitlab`, `/dashboard`, `/user`. Slack routes (`/slack`) mount conditionally when `SLACK_BOT_TOKEN` is set.
+
 Health check routes (`/health`, `/health/ready`, `/health/live`) are mounted outside `/api` — no auth required. The `/health/ready` endpoint checks database connectivity and is used by Docker HEALTHCHECK and Zeabur.
+
+### Domain Models
+
+Core domain: Employee, Project, Task, Milestone, ProgressLog, TaskNote, ProjectMember.
+
+Time tracking: TimeEntry, TimeCategory, TimeEstimate — supports approval workflow (PENDING → APPROVED/REJECTED).
+
+GitLab integration: GitLabInstance, GitLabConnection, GitLabActivity, GitLabIssueMapping — OAuth-based, supports commit/MR/issue sync with bidirectional mapping.
+
+Auth: RefreshToken (persistent), OAuthState (CSRF-protected, multi-provider).
 
 ## Commands
 
@@ -132,8 +144,9 @@ docker compose up -d                 # All services
 
 ## Deployment
 
-- **Frontend**: Zeabur static (Vue + Caddy) → `progresshub.zeabur.app`
+- **Frontend**: Zeabur static (Vue + Caddy) → `progresshub.zeabur.app` (test: `progresshub-cb.zeabur.app`)
 - **Backend**: Zeabur container (Express + Prisma) → `progress-hub.zeabur.app`
+- Note: Frontend and backend have different domains; CORS `ALLOWED_ORIGINS` must include the frontend domain
 - **Database**: Zeabur PostgreSQL Marketplace
 - `ENABLE_DEV_LOGIN=true` required on backend until Slack OAuth is production-ready
 - Port config must be consistent: Dockerfile EXPOSE, zeabur.json healthcheck.port, env PORT (all 8080; Zeabur sets WEB_PORT=8080)
@@ -164,10 +177,12 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 - Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
 - Mappers in `backend/src/mappers/` transform Prisma models to API DTOs (task, employee, project, milestone, progressLog)
 - Use `ErrorCodes.XXX` constants for error responses, never raw strings
+- Response helpers in `backend/src/utils/response.ts`: `sendSuccess`, `sendPaginatedSuccess` (auto-calculates `hasMore`), `sendError`, `getSafeErrorMessage` (hides details in production)
 - Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
 - Middleware in `backend/src/middleware/` — `auth.ts` (authenticate/authorize), `errorHandler.ts`, `sanitize.ts`, `auditLog.ts`
 - Tests use Jest + Supertest, config in `backend/jest.config.js`, setup in `backend/__tests__/setup.ts`. Coverage threshold: 80% per tested module.
 - Task routes are split across `taskCrudRoutes.ts`, `taskActionRoutes.ts`, `taskNoteRoutes.ts` (all mounted under `/tasks`)
+- `backend/src/config/env.ts` validates required vars at startup; production crashes on missing `DATABASE_URL`/`JWT_SECRET`. JWT secrets use dev-only defaults in development with console warnings. Slack features auto-disable when `SLACK_BOT_TOKEN` is absent.
 
 ## Key Environment Variables
 

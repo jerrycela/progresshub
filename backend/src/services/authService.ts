@@ -200,18 +200,33 @@ export class AuthService {
       },
     });
 
-    // Clear old project memberships and set new ones
-    await prisma.projectMember.deleteMany({
-      where: { employeeId: employee.id },
-    });
-    if (projectIds && projectIds.length > 0) {
-      await prisma.projectMember.createMany({
-        data: projectIds.map((projectId) => ({
-          projectId,
-          employeeId: employee.id,
-        })),
-        skipDuplicates: true,
+    // ADMIN has global access — skip project membership entirely
+    if (permissionLevel !== PermissionLevel.ADMIN) {
+      await prisma.projectMember.deleteMany({
+        where: { employeeId: employee.id },
       });
+
+      // Auto-assign active projects for demo accounts when none selected
+      const effectiveProjectIds =
+        projectIds && projectIds.length > 0
+          ? projectIds
+          : (
+              await prisma.project.findMany({
+                where: { status: "ACTIVE" },
+                select: { id: true },
+                take: 5,
+              })
+            ).map((p) => p.id);
+
+      if (effectiveProjectIds.length > 0) {
+        await prisma.projectMember.createMany({
+          data: effectiveProjectIds.map((projectId) => ({
+            projectId,
+            employeeId: employee.id,
+          })),
+          skipDuplicates: true,
+        });
+      }
     }
 
     return this.completeDevLogin(employee);

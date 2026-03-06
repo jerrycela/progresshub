@@ -227,8 +227,8 @@ const handleDemoLogin = async () => {
               </div>
             </div>
 
-            <!-- 專案選擇 -->
-            <div v-if="projectOptions.length > 0">
+            <!-- 專案選擇 (ADMIN has global access, no project scoping needed) -->
+            <div v-if="projectOptions.length > 0 && demoRole !== 'ADMIN'">
               <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
                 所屬專案（可複選）
               </label>
