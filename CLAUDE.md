@@ -11,7 +11,16 @@ ProgressHub is an internal project progress management system. Monorepo with pnp
 - **Shared Types**: `packages/shared/types/` — enums, interfaces shared between frontend and backend
 - **Mock Data**: `packages/frontend/src/mocks/`
 
-Frontend path alias: `@/` maps to `packages/frontend/src/`.
+Note: `backend/` is a top-level workspace member (not under `packages/`). pnpm filter name is `backend`.
+
+### Frontend Layers
+
+Pages (`pages/`) → Components (`components/`) → Composables (`composables/`) → Services (`services/`) → Stores (`stores/`)
+
+- **Pages**: Route-level views (e.g., `GanttPage.vue`, `TaskPoolPage.vue`, `DashboardPage.vue`)
+- **Composables**: Reusable logic — `useToast`, `useFormatDate`, `useGantt`, `useTaskModal`, `useFormValidation`
+- **Components**: Organized by domain — `common/` (Modal, SearchableSelect, Toast), `task/`, `gantt/`, `project/`, `layout/`
+- **Router**: `src/router/index.ts` — uses `meta.requiresAuth` for route guards, lazy-loads all pages
 
 ### Service Layer Pattern (Critical)
 
@@ -27,16 +36,9 @@ services/xxxService.ts:
 
 Each Pinia store calls `createXxxService()` once at module top-level. When adding a new service method: update interface, implement in both Mock and Api classes.
 
-### Frontend Composables
+### Store Pattern
 
-Reusable logic lives in `packages/frontend/src/composables/`. Key composables:
-- `useTaskModal` — task detail modal open/close state
-- `useGantt` / `useGanttData` — Gantt chart rendering and data processing
-- `useFormValidation` — form validation helpers
-- `useToast` — toast notification (lazy-loaded to avoid circular deps with API layer)
-- `useConfirm` — confirmation dialog state
-
-Use existing composables before creating new ones. Check `composables/index.ts` for the full list.
+Pinia stores use **setup syntax** (`defineStore('name', () => {})`). Composables in `packages/frontend/src/composables/` extract reusable logic (e.g., `useGantt`, `useTaskModal`, `useFormValidation`).
 
 ### API Response Contract
 
@@ -50,7 +52,8 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 - `authorize(PermissionLevel.PM, PermissionLevel.ADMIN)` middleware for role-gating routes
 - Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
-- Resource-level auth: `authorizeTaskAccess` checks task creator/assignee/collaborator + PM/ADMIN
+- Frontend router guards use `meta.requiresAuth` and `meta.requiresRole: UserRole[]` for route protection
+- Resource-level auth: `authorizeTaskAccess` middleware checks creator/assignee/collaborator/PM access
 - Self-edit auth: `authorizeSelfOrAdmin` for employee profile edits
 
 ### Route Organization
@@ -58,6 +61,11 @@ Backend wraps all responses in `{ success: boolean, data?: T, error?: { code, me
 Backend routes are mounted in `backend/src/routes/index.ts`. All routes are under `/api/` prefix. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
 
 Task routes split into sub-routers: `taskCrudRoutes`, `taskActionRoutes`, `taskNoteRoutes` — all mounted under `/api/tasks`.
+
+### Import Aliases
+
+- Frontend: `@/` → `packages/frontend/src/`, `shared/types` → `packages/shared/types/`
+- Backend imports shared types from `backend/src/types/shared-api.ts` (internalized copy — shared package unavailable in Docker container)
 
 ## Commands
 
@@ -68,20 +76,30 @@ pnpm dev
 # Frontend
 pnpm --filter frontend dev          # Dev server
 pnpm --filter frontend exec vue-tsc --noEmit  # Type check
-pnpm --filter frontend exec vitest run         # Unit tests
-pnpm --filter frontend exec vitest run src/composables/__tests__/useGantt.test.ts  # Single test
+pnpm --filter frontend exec vitest run         # All unit tests
+pnpm --filter frontend exec vitest run src/composables/__tests__/useFormatDate.test.ts  # Single test file
 pnpm --filter frontend build        # Production build
+pnpm --filter frontend lint         # ESLint --fix
+pnpm --filter frontend format       # Prettier
 
 # Backend
 pnpm --filter backend dev           # Dev server
 cd backend && npx jest --no-coverage              # All unit tests
-cd backend && npx jest --no-coverage src/services/__tests__/taskService.test.ts  # Single test
+cd backend && npx jest --no-coverage -- taskService  # Single test (name match)
+cd backend && npx jest --no-coverage -- __tests__/services/taskService.test.ts  # Single test (path)
 
 # Database
 cd backend && npx prisma migrate dev --name <name>  # Create migration
 cd backend && npx prisma generate    # Regenerate client after schema change
 cd backend && npx prisma db seed     # Run seed
+
+# Monorepo
+pnpm dev          # Run frontend + backend in parallel
+pnpm build        # Build all packages
+pnpm lint         # Lint all packages
 ```
+
+**Pre-commit hooks**: Husky + lint-staged auto-runs ESLint and Prettier on staged files. Do not bypass with `--no-verify`.
 
 ## Auth Modes
 
@@ -123,15 +141,30 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 ## Backend Conventions
 
 - Services in `backend/src/services/` contain business logic; routes handle HTTP concerns only
-- Mappers in `backend/src/mappers/` transform Prisma models to API DTOs
-- Response helpers: `sendSuccess`, `sendPaginatedSuccess`, `sendError` in `backend/src/utils/response.ts`
+- Mappers in `backend/src/mappers/` transform Prisma models to API DTOs (task, employee, project, milestone, progressLog)
+- Response helpers: `sendSuccess(res, data)`, `sendPaginatedSuccess(res, data, meta)`, `sendError(res, code, message, status)`
 - Use `ErrorCodes.XXX` constants for error responses, never raw strings
 - Prisma schema uses `@@map("snake_case")` for table/column names, camelCase in code
-- Backend errors use `AppError` class (from `middleware/errorHandler.ts`) for business logic errors
+- The `Employee` model is the user table (not a separate `User` model)
+- Middleware in `backend/src/middleware/` — `auth.ts` (authenticate/authorize), `errorHandler.ts`, `sanitize.ts`, `auditLog.ts`
+- Tests use Jest + Supertest, config in `backend/jest.config.js`, setup in `backend/__tests__/setup.ts`. Coverage threshold: 80% per tested module.
+- Task routes are split across `taskCrudRoutes.ts`, `taskActionRoutes.ts`, `taskNoteRoutes.ts` (all mounted under `/tasks`)
+
+## Key Environment Variables
+
+| Variable | Where | Purpose |
+|----------|-------|---------|
+| `VITE_USE_MOCK` | Frontend `.env` | `true` = mock data, `false` = real API |
+| `VITE_API_BASE_URL` | Frontend `.env` | Backend API URL (default: `/api`) |
+| `DATABASE_URL` | Backend `.env` | PostgreSQL connection string |
+| `ENABLE_DEV_LOGIN` | Backend `.env` | `true` enables demo/dev login endpoint |
+| `JWT_SECRET` | Backend `.env` | JWT signing secret |
+| `SLACK_BOT_TOKEN` | Backend `.env` | Enables Slack routes when present |
+
+Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
 
 ## Gotchas
 
-- **Vite env vars are compile-time constants.** Changing `.env` requires dev server restart.
 - **Local `.env` interferes with backend tests.** `dotenv.config()` loads it automatically. Move to `.env.bak` when debugging CI-like failures.
 - **Service Factory is immutable after init.** `createXxxService()` result never changes during app lifecycle. Switching mock/API requires env change + restart.
 - **Demo features must not depend on `VITE_USE_MOCK`.** Anything that works "without backend" needs its own independent code path.
