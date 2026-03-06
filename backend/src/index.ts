@@ -5,7 +5,7 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import { env } from "./config/env";
-import prisma from "./config/database";
+import prisma, { connectWithRetry } from "./config/database";
 import logger, { httpLogStream } from "./config/logger";
 import { swaggerSpec } from "./config/swagger";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -69,7 +69,9 @@ const apiLimiter = rateLimit({
   max: 120, // 每位使用者 120 次/分
   keyGenerator: (req) => {
     const authReq = req as { user?: { userId: string } };
-    return authReq.user?.userId || req.ip || "anonymous";
+    return (
+      authReq.user?.userId || req.ip || req.socket.remoteAddress || "anonymous"
+    );
   },
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
@@ -126,8 +128,8 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Test database connection
-    await prisma.$connect();
+    // Test database connection with retry
+    await connectWithRetry();
     logger.info("Database connected successfully");
 
     // Start the scheduler (integrated mode)
@@ -136,7 +138,7 @@ const startServer = async () => {
       startScheduler();
     }
 
-    app.listen(env.PORT, () => {
+    const server = app.listen(env.PORT, () => {
       logger.info(`Server is running on port ${env.PORT}`);
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`Scheduler: ${enableScheduler ? "enabled" : "disabled"}`);
@@ -145,25 +147,45 @@ const startServer = async () => {
         logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
       }
     });
+
+    // Unified graceful shutdown
+    const shutdown = (signal: string) => {
+      logger.info(`[SHUTDOWN] Received ${signal}, closing gracefully...`);
+      server.close(() => {
+        prisma
+          .$disconnect()
+          .then(() => {
+            logger.info("[SHUTDOWN] Cleanup complete, exiting");
+            process.exit(0);
+          })
+          .catch(() => {
+            process.exit(1);
+          });
+      });
+      // Force exit after 10 seconds if graceful shutdown hangs
+      setTimeout(() => {
+        logger.error("[SHUTDOWN] Forced exit after timeout");
+        process.exit(1);
+      }, 10_000).unref();
+    };
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
   } catch (error) {
     logger.error("Failed to start server:", error);
     process.exit(1);
   }
 };
 
+// Global error handlers — catch unhandled errors to prevent silent crashes
+process.on("uncaughtException", (err) => {
+  logger.error("[FATAL] Uncaught exception:", err);
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  logger.error("[FATAL] Unhandled rejection:", reason);
+  process.exit(1);
+});
+
 startServer();
-
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  logger.info("Shutting down gracefully...");
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-  logger.info("Shutting down gracefully...");
-  await prisma.$disconnect();
-  process.exit(0);
-});
 
 export default app;

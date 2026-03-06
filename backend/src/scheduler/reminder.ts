@@ -22,6 +22,15 @@ const REMINDER_TIMEZONE = process.env.REMINDER_TIMEZONE || "Asia/Taipei";
  * Check which employees haven't reported progress today
  */
 async function checkUnreportedEmployees(): Promise<void> {
+  // Acquire advisory lock to prevent duplicate execution in multi-node deployments
+  const [{ locked }] = await prisma.$queryRaw<
+    [{ locked: boolean }]
+  >`SELECT pg_try_advisory_lock(1) as locked`;
+  if (!locked) {
+    logger.info("[Scheduler] Another instance holds the lock, skipping...");
+    return;
+  }
+
   try {
     logger.info(
       `[Scheduler] ${new Date().toISOString()} - Checking unreported employees...`,
@@ -65,6 +74,8 @@ async function checkUnreportedEmployees(): Promise<void> {
     );
   } catch (error) {
     logger.error("[Scheduler] Error checking unreported employees:", error);
+  } finally {
+    await prisma.$queryRaw`SELECT pg_advisory_unlock(1)`;
   }
 }
 

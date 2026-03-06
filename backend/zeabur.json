@@ -8,7 +8,7 @@
     "command": "npx prisma migrate deploy && node dist/index.js"
   },
   "healthcheck": {
-    "path": "/health",
+    "path": "/health/ready",
     "port": 3000
   }
 }
