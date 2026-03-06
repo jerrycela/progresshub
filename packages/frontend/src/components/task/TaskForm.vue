@@ -158,7 +158,7 @@ const toggleFunctionTag = (tag: FunctionType): void => {
           placeholder="點選或輸入日期"
           class="input w-full"
           @focus="($event.target as HTMLInputElement).type = 'date'"
-          @blur="if (!form.startDate) ($event.target as HTMLInputElement).type = 'text'"
+          @blur="!form.startDate && (($event.target as HTMLInputElement).type = 'text')"
         />
       </div>
       <div>
@@ -171,7 +171,7 @@ const toggleFunctionTag = (tag: FunctionType): void => {
           placeholder="點選或輸入日期"
           class="input w-full"
           @focus="($event.target as HTMLInputElement).type = 'date'"
-          @blur="if (!form.dueDate) ($event.target as HTMLInputElement).type = 'text'"
+          @blur="!form.dueDate && (($event.target as HTMLInputElement).type = 'text')"
         />
       </div>
     </div>
