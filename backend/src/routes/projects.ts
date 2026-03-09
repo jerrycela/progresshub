@@ -8,6 +8,7 @@ import {
   isProjectMember,
 } from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
+import { Prisma } from "@prisma/client";
 import { PermissionLevel, ProjectStatus } from "@prisma/client";
 import logger from "../config/logger";
 import {
@@ -388,6 +389,13 @@ router.put(
       );
       sendSuccess(res, project);
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
+        return;
+      }
       logger.error("Update project error:", error);
       sendError(
         res,
@@ -431,6 +439,13 @@ router.delete(
       await projectService.deleteProject(req.params.id);
       res.status(204).send();
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
+        return;
+      }
       logger.error("Delete project error:", error);
       sendError(
         res,

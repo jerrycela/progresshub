@@ -100,7 +100,7 @@ router.post(
       .trim()
       .notEmpty()
       .withMessage("Client Secret is required"),
-    body("webhookSecret").optional().isString(),
+    body("webhookSecret").optional().isString().trim(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -140,7 +140,7 @@ router.put(
     body("name").optional().isString().trim().notEmpty(),
     body("clientId").optional().isString().trim().notEmpty(),
     body("clientSecret").optional().isString().trim().notEmpty(),
-    body("webhookSecret").optional().isString(),
+    body("webhookSecret").optional().isString().trim(),
     body("isActive").optional().isBoolean(),
   ],
   async (req: AuthRequest, res: Response): Promise<void> => {

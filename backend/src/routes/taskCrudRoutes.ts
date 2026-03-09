@@ -8,7 +8,7 @@ import {
   isProjectMember,
 } from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
-import { PermissionLevel } from "@prisma/client";
+import { PermissionLevel, Prisma } from "@prisma/client";
 import logger from "../config/logger";
 import {
   sendSuccess,
@@ -382,6 +382,13 @@ router.put(
     } catch (error) {
       if (error instanceof AppError) {
         sendError(res, error.errorCode, error.message, error.statusCode);
+        return;
+      }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
       logger.error("Update task error:", error);

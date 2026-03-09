@@ -57,6 +57,7 @@ router.post(
     body("gitlabIssueIid").isInt().withMessage("GitLab Issue IID is required"),
     body("projectPath")
       .isString()
+      .trim()
       .notEmpty()
       .withMessage("Project path is required"),
     body("taskId")
@@ -300,6 +301,7 @@ router.post(
       .withMessage("Connection ID is required"),
     body("projectPath")
       .isString()
+      .trim()
       .notEmpty()
       .withMessage("Project path is required"),
     body("taskId")
