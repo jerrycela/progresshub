@@ -42,9 +42,14 @@ router.get(
     PermissionLevel.MANAGER,
     PermissionLevel.ADMIN,
   ),
-  async (_req: AuthRequest, res: Response): Promise<void> => {
+  async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const workloads = await dashboardService.getWorkloads();
+      const userId = req.user?.userId;
+      const permissionLevel = req.user?.permissionLevel;
+      const workloads = await dashboardService.getWorkloads(
+        userId,
+        permissionLevel,
+      );
       sendSuccess(res, workloads);
     } catch (error) {
       logger.error("Dashboard workloads error:", error);

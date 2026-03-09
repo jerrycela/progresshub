@@ -162,10 +162,15 @@ router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
   // 只在首次導航時嘗試恢復登入狀態
+  // Only mark initialized on success or when there's no token to retry
   if (!authInitialized) {
-    authInitialized = true
     if (!authStore.isAuthenticated) {
-      await authStore.initAuth()
+      const result = await authStore.initAuth()
+      if (result.success || !localStorage.getItem('auth_token')) {
+        authInitialized = true
+      }
+    } else {
+      authInitialized = true
     }
   }
 

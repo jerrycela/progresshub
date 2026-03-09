@@ -1,4 +1,5 @@
 import prisma from "../config/database";
+import { PermissionLevel } from "@prisma/client";
 import NodeCache from "node-cache";
 
 // 快取：TTL 60 秒，避免每次請求都做聚合查詢
@@ -74,10 +75,30 @@ export class DashboardService {
 
   /**
    * 取得職能負載統計
+   * ADMIN sees global data; non-ADMIN sees only tasks from their projects.
+   * Employee counts remain global (org capacity).
    */
-  async getWorkloads(): Promise<FunctionWorkload[]> {
-    const cached = cache.get<FunctionWorkload[]>("dashboard_workloads");
+  async getWorkloads(
+    userId?: string,
+    permissionLevel?: PermissionLevel,
+  ): Promise<FunctionWorkload[]> {
+    const isAdmin = !userId || permissionLevel === PermissionLevel.ADMIN;
+    const cacheKey = isAdmin
+      ? "dashboard_workloads"
+      : `dashboard_workloads_${userId}`;
+    const cached = cache.get<FunctionWorkload[]>(cacheKey);
     if (cached) return cached;
+
+    // For non-ADMIN, scope task counts to user's projects
+    let projectFilter: { projectId?: { in: string[] } } = {};
+    if (!isAdmin && userId) {
+      const memberProjects = await prisma.projectMember.findMany({
+        where: { employeeId: userId },
+        select: { projectId: true },
+      });
+      const projectIds = memberProjects.map((m) => m.projectId);
+      projectFilter = { projectId: { in: projectIds } };
+    }
 
     const functionTypes = [
       "PLANNING",
@@ -91,22 +112,25 @@ export class DashboardService {
 
     // 使用 $transaction 批次處理所有查詢，減少 DB round-trips
     const queries = functionTypes.flatMap((functionType) => [
+      // Employee counts remain global (org capacity)
       prisma.employee.count({
         where: { functionType, isActive: true },
       }),
       prisma.task.count({
-        where: { functionTags: { has: functionType } },
+        where: { functionTags: { has: functionType }, ...projectFilter },
       }),
       prisma.task.count({
         where: {
           functionTags: { has: functionType },
           status: "UNCLAIMED",
+          ...projectFilter,
         },
       }),
       prisma.task.count({
         where: {
           functionTags: { has: functionType },
           status: { in: ["CLAIMED", "IN_PROGRESS"] },
+          ...projectFilter,
         },
       }),
     ]);
@@ -121,7 +145,7 @@ export class DashboardService {
       inProgressTasks: results[i * 4 + 3] as number,
     }));
 
-    cache.set("dashboard_workloads", workloads);
+    cache.set(cacheKey, workloads);
     return workloads;
   }
 }
