@@ -196,8 +196,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     const newUser = mockUsers.find((u: User) => u.id === userId)
     if (newUser) {
-      user.value = newUser
-      return { success: true, data: newUser }
+      user.value = { ...newUser }
+      return { success: true, data: { ...newUser } }
     }
 
     return {

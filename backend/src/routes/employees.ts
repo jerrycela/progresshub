@@ -70,7 +70,12 @@ router.get(
         limit,
       });
     } catch (error) {
-      sendError(res, "EMPLOYEES_FETCH_FAILED", "Failed to get employees", 500);
+      sendError(
+        res,
+        ErrorCodes.EMPLOYEES_FETCH_FAILED,
+        "Failed to get employees",
+        500,
+      );
     }
   },
 );
@@ -98,12 +103,22 @@ router.get(
     try {
       const employee = await employeeService.getEmployeeById(req.params.id);
       if (!employee) {
-        sendError(res, "EMPLOYEE_NOT_FOUND", "Employee not found", 404);
+        sendError(
+          res,
+          ErrorCodes.EMPLOYEE_NOT_FOUND,
+          "Employee not found",
+          404,
+        );
         return;
       }
       sendSuccess(res, toUserDTO(employee));
     } catch (error) {
-      sendError(res, "EMPLOYEE_FETCH_FAILED", "Failed to get employee", 500);
+      sendError(
+        res,
+        ErrorCodes.EMPLOYEE_FETCH_FAILED,
+        "Failed to get employee",
+        500,
+      );
     }
   },
 );
@@ -149,7 +164,7 @@ router.post(
 
       // 檢查 Email 是否已存在
       if (await employeeService.emailExists(email)) {
-        sendError(res, "EMAIL_EXISTS", "Email already exists", 409);
+        sendError(res, ErrorCodes.EMAIL_EXISTS, "Email already exists", 409);
         return;
       }
 
@@ -158,7 +173,12 @@ router.post(
         slackUserId &&
         (await employeeService.slackUserIdExists(slackUserId))
       ) {
-        sendError(res, "SLACK_ID_EXISTS", "Slack User ID already exists", 409);
+        sendError(
+          res,
+          ErrorCodes.SLACK_ID_EXISTS,
+          "Slack User ID already exists",
+          409,
+        );
         return;
       }
 
@@ -167,7 +187,7 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "EMPLOYEE_CREATE_FAILED",
+        ErrorCodes.EMPLOYEE_CREATE_FAILED,
         "Failed to create employee",
         500,
       );
@@ -212,7 +232,12 @@ router.put(
       // 檢查員工是否存在
       const existing = await employeeService.getEmployeeById(id);
       if (!existing) {
-        sendError(res, "EMPLOYEE_NOT_FOUND", "Employee not found", 404);
+        sendError(
+          res,
+          ErrorCodes.EMPLOYEE_NOT_FOUND,
+          "Employee not found",
+          404,
+        );
         return;
       }
 
@@ -227,7 +252,7 @@ router.put(
         updateData.email &&
         (await employeeService.emailExists(updateData.email, id))
       ) {
-        sendError(res, "EMAIL_EXISTS", "Email already exists", 409);
+        sendError(res, ErrorCodes.EMAIL_EXISTS, "Email already exists", 409);
         return;
       }
 
@@ -236,7 +261,7 @@ router.put(
     } catch (error) {
       sendError(
         res,
-        "EMPLOYEE_UPDATE_FAILED",
+        ErrorCodes.EMPLOYEE_UPDATE_FAILED,
         "Failed to update employee",
         500,
       );
@@ -269,7 +294,12 @@ router.delete(
     try {
       const existing = await employeeService.getEmployeeById(req.params.id);
       if (!existing) {
-        sendError(res, "EMPLOYEE_NOT_FOUND", "Employee not found", 404);
+        sendError(
+          res,
+          ErrorCodes.EMPLOYEE_NOT_FOUND,
+          "Employee not found",
+          404,
+        );
         return;
       }
 
@@ -278,7 +308,7 @@ router.delete(
     } catch (error) {
       sendError(
         res,
-        "EMPLOYEE_DELETE_FAILED",
+        ErrorCodes.EMPLOYEE_DELETE_FAILED,
         "Failed to delete employee",
         500,
       );

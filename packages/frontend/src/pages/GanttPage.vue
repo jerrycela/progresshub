@@ -149,7 +149,7 @@ const selectedTask = ref<Task | null>(null)
 const milestones = computed(() => milestoneStore.allSorted())
 
 const canManageMilestones = computed(() =>
-  authStore.user ? ['PM', 'ADMIN'].includes(authStore.user.role) : false,
+  authStore.user ? ['PM', 'PRODUCER', 'ADMIN'].includes(authStore.user.role) : false,
 )
 
 // 篩選選項
@@ -310,6 +310,27 @@ const submitMilestone = async (data: {
     showSuccess(`已新增里程碑：${milestone.name}`)
   } catch {
     showError('新增里程碑失敗，請稍後再試')
+  }
+}
+
+const updateMilestone = async (
+  id: string,
+  data: { name: string; description: string; date: string; color: string },
+): Promise<void> => {
+  if (!data.name.trim()) {
+    showWarning('請輸入里程碑名稱')
+    return
+  }
+  if (!data.date) {
+    showWarning('請選擇里程碑日期')
+    return
+  }
+
+  try {
+    await milestoneStore.updateMilestone(id, data)
+    showSuccess('已更新里程碑')
+  } catch {
+    showError('更新里程碑失敗，請稍後再試')
   }
 }
 
@@ -591,6 +612,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
       :color-options="colorOptions"
       :can-manage="canManageMilestones"
       @submit="submitMilestone"
+      @update="updateMilestone"
       @delete="deleteMilestone"
     />
 

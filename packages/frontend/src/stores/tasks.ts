@@ -172,8 +172,8 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.claim[taskId] = true
 
     // 保存快照（用於回滾）
-    const tasksSnapshot = tasks.value
-    const poolSnapshot = poolTasks.value
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
 
     try {
       // 樂觀更新（不可變）
@@ -231,8 +231,8 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.unclaim[taskId] = true
 
     // 保存快照（用於回滾）
-    const tasksSnapshot = tasks.value
-    const poolSnapshot = poolTasks.value
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
 
     try {
       // 樂觀更新（不可變）
@@ -304,8 +304,8 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.update[taskId] = true
 
     // 保存快照（用於回滾）
-    const tasksSnapshot = tasks.value
-    const poolSnapshot = poolTasks.value
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
 
     try {
       // 計算新狀態（不可變）
@@ -370,8 +370,8 @@ export const useTaskStore = defineStore('tasks', () => {
     loading.value.update[taskId] = true
 
     // 保存快照（用於回滾）
-    const tasksSnapshot = tasks.value
-    const poolSnapshot = poolTasks.value
+    const tasksSnapshot = [...tasks.value]
+    const poolSnapshot = [...poolTasks.value]
     const originalStatus = task.status
 
     try {

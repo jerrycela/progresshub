@@ -39,7 +39,7 @@ router.get(
       logger.error("Get task notes error:", error);
       sendError(
         res,
-        "TASK_NOTES_FETCH_FAILED",
+        ErrorCodes.TASK_NOTES_FETCH_FAILED,
         "Failed to get task notes",
         500,
       );
@@ -96,7 +96,7 @@ router.post(
       logger.error("Create task note error:", error);
       sendError(
         res,
-        "TASK_NOTE_CREATE_FAILED",
+        ErrorCodes.TASK_NOTE_CREATE_FAILED,
         "Failed to create task note",
         500,
       );
@@ -131,7 +131,7 @@ router.get(
       logger.error("Get task progress logs error:", error);
       sendError(
         res,
-        "TASK_PROGRESS_FETCH_FAILED",
+        ErrorCodes.TASK_PROGRESS_FETCH_FAILED,
         "Failed to get task progress logs",
         500,
       );
@@ -186,7 +186,7 @@ router.post(
       logger.error("Report task progress error:", error);
       sendError(
         res,
-        "TASK_PROGRESS_CREATE_FAILED",
+        ErrorCodes.TASK_PROGRESS_CREATE_FAILED,
         "Failed to report task progress",
         500,
       );

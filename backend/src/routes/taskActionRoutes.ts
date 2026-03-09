@@ -68,7 +68,7 @@ router.patch(
       logger.error("Update task status error:", error);
       sendError(
         res,
-        "TASK_STATUS_UPDATE_FAILED",
+        ErrorCodes.TASK_STATUS_UPDATE_FAILED,
         "Failed to update task status",
         500,
       );
@@ -124,7 +124,7 @@ router.patch(
       logger.error("Update task progress error:", error);
       sendError(
         res,
-        "TASK_PROGRESS_UPDATE_FAILED",
+        ErrorCodes.TASK_PROGRESS_UPDATE_FAILED,
         "Failed to update task progress",
         500,
       );
@@ -166,7 +166,7 @@ router.post(
         return;
       }
       logger.error("Claim task error:", error);
-      sendError(res, "TASK_CLAIM_FAILED", "Failed to claim task", 500);
+      sendError(res, ErrorCodes.TASK_CLAIM_FAILED, "Failed to claim task", 500);
     }
   },
 );
@@ -208,7 +208,12 @@ router.post(
         return;
       }
       logger.error("Unclaim task error:", error);
-      sendError(res, "TASK_UNCLAIM_FAILED", "Failed to unclaim task", 500);
+      sendError(
+        res,
+        ErrorCodes.TASK_UNCLAIM_FAILED,
+        "Failed to unclaim task",
+        500,
+      );
     }
   },
 );

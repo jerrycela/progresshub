@@ -1,6 +1,7 @@
 import { Router } from "express";
 import prisma from "../config/database";
 import { sendSuccess, sendError } from "../utils/response";
+import { ErrorCodes } from "../types/shared-api";
 
 const router = Router();
 
@@ -45,7 +46,7 @@ router.get("/ready", async (_req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    sendError(res, "SERVICE_NOT_READY", "Service not ready", 503, {
+    sendError(res, ErrorCodes.SERVICE_NOT_READY, "Service not ready", 503, {
       database: "disconnected",
       timestamp: new Date().toISOString(),
     });

@@ -36,7 +36,7 @@ router.get(
       logger.error("Get project names error:", error);
       sendError(
         res,
-        "PROJECTS_FETCH_FAILED",
+        ErrorCodes.PROJECTS_FETCH_FAILED,
         "Failed to get project names",
         500,
       );
@@ -93,7 +93,12 @@ router.get(
       });
     } catch (error) {
       logger.error("Get projects error:", error);
-      sendError(res, "PROJECTS_FETCH_FAILED", "Failed to get projects", 500);
+      sendError(
+        res,
+        ErrorCodes.PROJECTS_FETCH_FAILED,
+        "Failed to get projects",
+        500,
+      );
     }
   },
 );
@@ -127,7 +132,12 @@ router.get(
       sendSuccess(res, toProjectDTO(project));
     } catch (error) {
       logger.error("Get project error:", error);
-      sendError(res, "PROJECT_FETCH_FAILED", "Failed to get project", 500);
+      sendError(
+        res,
+        ErrorCodes.PROJECT_FETCH_FAILED,
+        "Failed to get project",
+        500,
+      );
     }
   },
 );
@@ -159,7 +169,7 @@ router.get(
       logger.error("Get project stats error:", error);
       sendError(
         res,
-        "PROJECT_STATS_FAILED",
+        ErrorCodes.PROJECT_STATS_FAILED,
         "Failed to get project stats",
         500,
       );
@@ -192,7 +202,12 @@ router.get(
       sendSuccess(res, ganttData);
     } catch (error) {
       logger.error("Get gantt data error:", error);
-      sendError(res, "GANTT_FETCH_FAILED", "Failed to get gantt data", 500);
+      sendError(
+        res,
+        ErrorCodes.GANTT_FETCH_FAILED,
+        "Failed to get gantt data",
+        500,
+      );
     }
   },
 );
@@ -235,7 +250,7 @@ router.post(
       if (new Date(req.body.endDate) <= new Date(req.body.startDate)) {
         sendError(
           res,
-          "INVALID_DATE_RANGE",
+          ErrorCodes.INVALID_DATE_RANGE,
           "End date must be after start date",
           400,
         );
@@ -246,7 +261,12 @@ router.post(
       sendSuccess(res, project, 201);
     } catch (error) {
       logger.error("Create project error:", error);
-      sendError(res, "PROJECT_CREATE_FAILED", "Failed to create project", 500);
+      sendError(
+        res,
+        ErrorCodes.PROJECT_CREATE_FAILED,
+        "Failed to create project",
+        500,
+      );
     }
   },
 );
@@ -298,7 +318,7 @@ router.put(
       if (endDate <= startDate) {
         sendError(
           res,
-          "INVALID_DATE_RANGE",
+          ErrorCodes.INVALID_DATE_RANGE,
           "End date must be after start date",
           400,
         );
@@ -312,7 +332,12 @@ router.put(
       sendSuccess(res, project);
     } catch (error) {
       logger.error("Update project error:", error);
-      sendError(res, "PROJECT_UPDATE_FAILED", "Failed to update project", 500);
+      sendError(
+        res,
+        ErrorCodes.PROJECT_UPDATE_FAILED,
+        "Failed to update project",
+        500,
+      );
     }
   },
 );
@@ -350,7 +375,12 @@ router.delete(
       res.status(204).send();
     } catch (error) {
       logger.error("Delete project error:", error);
-      sendError(res, "PROJECT_DELETE_FAILED", "Failed to delete project", 500);
+      sendError(
+        res,
+        ErrorCodes.PROJECT_DELETE_FAILED,
+        "Failed to delete project",
+        500,
+      );
     }
   },
 );

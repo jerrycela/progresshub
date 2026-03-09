@@ -52,7 +52,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_PROJECT_FAILED",
+        ErrorCodes.TIME_STATS_PROJECT_FAILED,
         getSafeErrorMessage(error, "Failed to get project stats"),
         400,
       );
@@ -110,7 +110,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_EMPLOYEE_FAILED",
+        ErrorCodes.TIME_STATS_EMPLOYEE_FAILED,
         getSafeErrorMessage(error, "Failed to get employee stats"),
         400,
       );
@@ -151,7 +151,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_MY_FAILED",
+        ErrorCodes.TIME_STATS_MY_FAILED,
         getSafeErrorMessage(error, "Failed to get stats"),
         400,
       );
@@ -197,7 +197,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_MONTHLY_FAILED",
+        ErrorCodes.TIME_STATS_MONTHLY_FAILED,
         getSafeErrorMessage(error, "Failed to get monthly summary"),
         400,
       );
@@ -235,7 +235,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_DASHBOARD_FAILED",
+        ErrorCodes.TIME_STATS_DASHBOARD_FAILED,
         getSafeErrorMessage(error, "Failed to get dashboard stats"),
         500,
       );
@@ -264,7 +264,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_STATS_PENDING_FAILED",
+        ErrorCodes.TIME_STATS_PENDING_FAILED,
         getSafeErrorMessage(error, "Failed to get pending approval stats"),
         500,
       );

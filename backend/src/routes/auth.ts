@@ -31,7 +31,7 @@ router.get(
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to generate OAuth URL";
-      sendError(res, "AUTH_OAUTH_URL_FAILED", message, 500);
+      sendError(res, ErrorCodes.AUTH_OAUTH_URL_FAILED, message, 500);
     }
   },
 );
@@ -94,7 +94,7 @@ router.post(
       if (!(await authService.verifyOAuthState(state))) {
         sendError(
           res,
-          "AUTH_INVALID_STATE",
+          ErrorCodes.AUTH_INVALID_STATE,
           "Invalid or expired OAuth state",
           400,
         );
@@ -109,7 +109,7 @@ router.post(
         return;
       }
       const message = error instanceof Error ? error.message : "Login failed";
-      sendError(res, "AUTH_LOGIN_FAILED", message, 500);
+      sendError(res, ErrorCodes.AUTH_LOGIN_FAILED, message, 500);
     }
   },
 );
@@ -197,7 +197,12 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
           sendError(res, error.errorCode, error.message, error.statusCode);
           return;
         }
-        sendError(res, "AUTH_LOGIN_FAILED", "Invalid credentials", 401);
+        sendError(
+          res,
+          ErrorCodes.AUTH_LOGIN_FAILED,
+          "Invalid credentials",
+          401,
+        );
       }
     },
   );
@@ -219,13 +224,18 @@ router.get(
 
       const user = await authService.getUserById(req.user.userId);
       if (!user) {
-        sendError(res, "USER_NOT_FOUND", "User not found", 404);
+        sendError(res, ErrorCodes.USER_NOT_FOUND, "User not found", 404);
         return;
       }
 
       sendSuccess(res, toUserDTO(user));
     } catch (error) {
-      sendError(res, "AUTH_GET_USER_FAILED", "Failed to get user info", 500);
+      sendError(
+        res,
+        ErrorCodes.AUTH_GET_USER_FAILED,
+        "Failed to get user info",
+        500,
+      );
     }
   },
 );
@@ -267,7 +277,7 @@ router.post(
       }
       const message =
         error instanceof Error ? error.message : "Token refresh failed";
-      sendError(res, "AUTH_REFRESH_FAILED", message, 401);
+      sendError(res, ErrorCodes.AUTH_REFRESH_FAILED, message, 401);
     }
   },
 );
@@ -288,7 +298,7 @@ router.post(
       sendSuccess(res, { message: "Logged out successfully" });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Logout failed";
-      sendError(res, "AUTH_LOGOUT_FAILED", message, 500);
+      sendError(res, ErrorCodes.AUTH_LOGOUT_FAILED, message, 500);
     }
   },
 );

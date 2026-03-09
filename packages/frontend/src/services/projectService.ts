@@ -94,26 +94,41 @@ class ApiProjectService implements ProjectServiceInterface {
   }
 
   async createProject(input: CreateProjectInput): Promise<ActionResult<Project>> {
-    const data = await apiPostUnwrap<Project>('/projects', input)
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<Project>('/projects', input)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'PROJECT_CREATE_FAILED', message } }
+    }
   }
 
   async updateProject(id: string, input: Partial<Project>): Promise<ActionResult<Project>> {
-    // 只傳送後端 validator 允許的欄位
-    const payload: Record<string, unknown> = {}
-    if (input.name !== undefined) payload.name = input.name
-    if (input.description !== undefined) payload.description = input.description
-    if (input.startDate !== undefined) payload.startDate = input.startDate
-    if (input.endDate !== undefined) payload.endDate = input.endDate
-    if (input.status !== undefined) payload.status = input.status
+    try {
+      // 只傳送後端 validator 允許的欄位
+      const payload: Record<string, unknown> = {}
+      if (input.name !== undefined) payload.name = input.name
+      if (input.description !== undefined) payload.description = input.description
+      if (input.startDate !== undefined) payload.startDate = input.startDate
+      if (input.endDate !== undefined) payload.endDate = input.endDate
+      if (input.status !== undefined) payload.status = input.status
 
-    const data = await apiPutUnwrap<Project>(`/projects/${id}`, payload)
-    return { success: true, data }
+      const data = await apiPutUnwrap<Project>(`/projects/${id}`, payload)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'PROJECT_UPDATE_FAILED', message } }
+    }
   }
 
   async deleteProject(id: string): Promise<ActionResult<void>> {
-    await apiDelete(`/projects/${id}`)
-    return { success: true }
+    try {
+      await apiDelete(`/projects/${id}`)
+      return { success: true }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'PROJECT_DELETE_FAILED', message } }
+    }
   }
 
   async getProjectMembers(projectId: string): Promise<ProjectMember[]> {

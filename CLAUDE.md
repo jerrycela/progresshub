@@ -21,6 +21,7 @@ Pages (`pages/`) → Components (`components/`) → Composables (`composables/`)
 - **Composables**: Reusable logic — `useToast`, `useFormatDate`, `useGantt`, `useTaskModal`, `useFormValidation`
 - **Components**: Organized by domain — `common/` (Modal, SearchableSelect, Toast), `task/`, `gantt/`, `project/`, `layout/`
 - **Router**: `src/router/index.ts` — uses `meta.requiresAuth` for route guards, lazy-loads all pages
+- **Path aliases**: `@` → `src/`, `shared` → `../shared` (configured in `vite.config.ts`). Dev server proxies `/api` to `localhost:3000` automatically.
 
 ### Service Layer Pattern (Critical)
 

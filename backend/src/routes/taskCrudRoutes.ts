@@ -37,7 +37,12 @@ router.get("/pool", async (req: AuthRequest, res: Response): Promise<void> => {
     );
   } catch (error) {
     logger.error("Get pool tasks error:", error);
-    sendError(res, "TASK_FETCH_FAILED", "Failed to get pool tasks", 500);
+    sendError(
+      res,
+      ErrorCodes.TASK_FETCH_FAILED,
+      "Failed to get pool tasks",
+      500,
+    );
   }
 });
 
@@ -70,7 +75,7 @@ router.get(
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
       logger.error("Get pool task error:", error);
-      sendError(res, "TASK_FETCH_FAILED", "Failed to get task", 500);
+      sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get task", 500);
     }
   },
 );
@@ -97,7 +102,7 @@ router.get("/my", async (req: AuthRequest, res: Response): Promise<void> => {
     );
   } catch (error) {
     logger.error("Get my tasks error:", error);
-    sendError(res, "TASK_FETCH_FAILED", "Failed to get tasks", 500);
+    sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get tasks", 500);
   }
 });
 
@@ -161,7 +166,7 @@ router.get(
       );
     } catch (error) {
       logger.error("Get tasks error:", error);
-      sendError(res, "TASK_FETCH_FAILED", "Failed to get tasks", 500);
+      sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get tasks", 500);
     }
   },
 );
@@ -195,7 +200,7 @@ router.get(
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
       logger.error("Get task error:", error);
-      sendError(res, "TASK_FETCH_FAILED", "Failed to get task", 500);
+      sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get task", 500);
     }
   },
 );
@@ -383,7 +388,7 @@ router.delete(
       if (error instanceof AppError) {
         sendError(
           res,
-          error.errorCode || "TASK_DELETE_FAILED",
+          error.errorCode || ErrorCodes.TASK_DELETE_FAILED,
           error.message,
           error.statusCode,
         );

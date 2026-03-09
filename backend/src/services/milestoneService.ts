@@ -53,6 +53,24 @@ export class MilestoneService {
     });
   }
 
+  async updateMilestone(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      targetDate?: Date;
+      color?: string;
+    },
+  ): Promise<MilestoneWithCreator> {
+    return prisma.milestone.update({
+      where: { id },
+      data,
+      include: {
+        createdBy: { select: { id: true, name: true } },
+      },
+    });
+  }
+
   async deleteMilestone(id: string): Promise<void> {
     await prisma.milestone.delete({ where: { id } });
   }

@@ -112,7 +112,7 @@ export const useProjectStore = defineStore('projects', () => {
     }
 
     // 樂觀更新
-    const snapshot = projects.value
+    const snapshot = [...projects.value]
     const now = new Date().toISOString()
     const optimistic = { ...projects.value[idx], ...input, updatedAt: now }
     projects.value = projects.value.map((p, i) => (i === idx ? optimistic : p))
@@ -148,7 +148,7 @@ export const useProjectStore = defineStore('projects', () => {
     }
 
     // 樂觀更新
-    const snapshot = projects.value
+    const snapshot = [...projects.value]
     projects.value = projects.value.filter(p => p.id !== id)
 
     loading.value.delete = true

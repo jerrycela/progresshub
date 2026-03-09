@@ -33,7 +33,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "CATEGORIES_FETCH_FAILED",
+        ErrorCodes.CATEGORIES_FETCH_FAILED,
         "Failed to get categories",
         500,
       );
@@ -64,12 +64,22 @@ router.get(
     try {
       const category = await timeCategoryService.getCategoryById(req.params.id);
       if (!category) {
-        sendError(res, "CATEGORY_NOT_FOUND", "Category not found", 404);
+        sendError(
+          res,
+          ErrorCodes.CATEGORY_NOT_FOUND,
+          "Category not found",
+          404,
+        );
         return;
       }
       sendSuccess(res, category);
     } catch (error) {
-      sendError(res, "CATEGORY_FETCH_FAILED", "Failed to get category", 500);
+      sendError(
+        res,
+        ErrorCodes.CATEGORY_FETCH_FAILED,
+        "Failed to get category",
+        500,
+      );
     }
   },
 );
@@ -109,7 +119,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "CATEGORY_CREATE_FAILED",
+        ErrorCodes.CATEGORY_CREATE_FAILED,
         getSafeErrorMessage(error, "Failed to create category"),
         400,
       );
@@ -156,7 +166,7 @@ router.put(
     } catch (error: unknown) {
       sendError(
         res,
-        "CATEGORY_UPDATE_FAILED",
+        ErrorCodes.CATEGORY_UPDATE_FAILED,
         getSafeErrorMessage(error, "Failed to update category"),
         400,
       );
@@ -193,7 +203,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "CATEGORY_DEACTIVATE_FAILED",
+        ErrorCodes.CATEGORY_DEACTIVATE_FAILED,
         getSafeErrorMessage(error, "Failed to deactivate category"),
         400,
       );
@@ -230,7 +240,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "CATEGORY_ACTIVATE_FAILED",
+        ErrorCodes.CATEGORY_ACTIVATE_FAILED,
         getSafeErrorMessage(error, "Failed to activate category"),
         400,
       );
@@ -265,7 +275,7 @@ router.delete(
     } catch (error: unknown) {
       sendError(
         res,
-        "CATEGORY_DELETE_FAILED",
+        ErrorCodes.CATEGORY_DELETE_FAILED,
         getSafeErrorMessage(error, "Failed to delete category"),
         400,
       );
@@ -291,7 +301,7 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "CATEGORIES_INIT_FAILED",
+        ErrorCodes.CATEGORIES_INIT_FAILED,
         "Failed to initialize categories",
         500,
       );

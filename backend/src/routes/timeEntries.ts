@@ -81,7 +81,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "TIME_ENTRIES_FETCH_FAILED",
+        ErrorCodes.TIME_ENTRIES_FETCH_FAILED,
         "Failed to get time entries",
         500,
       );
@@ -107,7 +107,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "TIME_ENTRY_TODAY_FAILED",
+        ErrorCodes.TIME_ENTRY_TODAY_FAILED,
         "Failed to get today summary",
         500,
       );
@@ -142,7 +142,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "TIME_ENTRY_WEEK_FAILED",
+        ErrorCodes.TIME_ENTRY_WEEK_FAILED,
         "Failed to get weekly timesheet",
         500,
       );
@@ -173,7 +173,12 @@ router.get(
     try {
       const entry = await timeEntryService.getTimeEntryById(req.params.id);
       if (!entry) {
-        sendError(res, "TIME_ENTRY_NOT_FOUND", "Time entry not found", 404);
+        sendError(
+          res,
+          ErrorCodes.TIME_ENTRY_NOT_FOUND,
+          "Time entry not found",
+          404,
+        );
         return;
       }
 
@@ -190,7 +195,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "TIME_ENTRY_FETCH_FAILED",
+        ErrorCodes.TIME_ENTRY_FETCH_FAILED,
         "Failed to get time entry",
         500,
       );
@@ -249,7 +254,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_ENTRY_CREATE_FAILED",
+        ErrorCodes.TIME_ENTRY_CREATE_FAILED,
         getSafeErrorMessage(error, "Failed to create time entry"),
         400,
       );
@@ -299,7 +304,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_ENTRY_BATCH_FAILED",
+        ErrorCodes.TIME_ENTRY_BATCH_FAILED,
         getSafeErrorMessage(error, "Failed to create time entries"),
         400,
       );
@@ -338,7 +343,12 @@ router.put(
     try {
       const existing = await timeEntryService.getTimeEntryById(req.params.id);
       if (!existing) {
-        sendError(res, "TIME_ENTRY_NOT_FOUND", "Time entry not found", 404);
+        sendError(
+          res,
+          ErrorCodes.TIME_ENTRY_NOT_FOUND,
+          "Time entry not found",
+          404,
+        );
         return;
       }
 
@@ -359,7 +369,7 @@ router.put(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_ENTRY_UPDATE_FAILED",
+        ErrorCodes.TIME_ENTRY_UPDATE_FAILED,
         getSafeErrorMessage(error, "Failed to update time entry"),
         400,
       );
@@ -390,7 +400,12 @@ router.delete(
     try {
       const existing = await timeEntryService.getTimeEntryById(req.params.id);
       if (!existing) {
-        sendError(res, "TIME_ENTRY_NOT_FOUND", "Time entry not found", 404);
+        sendError(
+          res,
+          ErrorCodes.TIME_ENTRY_NOT_FOUND,
+          "Time entry not found",
+          404,
+        );
         return;
       }
 
@@ -407,7 +422,7 @@ router.delete(
     } catch (error: unknown) {
       sendError(
         res,
-        "TIME_ENTRY_DELETE_FAILED",
+        ErrorCodes.TIME_ENTRY_DELETE_FAILED,
         getSafeErrorMessage(error, "Failed to delete time entry"),
         400,
       );

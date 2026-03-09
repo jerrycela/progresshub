@@ -28,7 +28,7 @@ router.get(
 
       const settings = await userSettingsService.getSettings(req.user.userId);
       if (!settings) {
-        sendError(res, "USER_NOT_FOUND", "User not found", 404);
+        sendError(res, ErrorCodes.USER_NOT_FOUND, "User not found", 404);
         return;
       }
 
@@ -37,7 +37,7 @@ router.get(
       logger.error("Get user settings error:", error);
       sendError(
         res,
-        "USER_SETTINGS_FETCH_FAILED",
+        ErrorCodes.USER_SETTINGS_FETCH_FAILED,
         "Failed to get user settings",
         500,
       );
@@ -86,11 +86,16 @@ router.patch(
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === "P2002"
       ) {
-        sendError(res, "EMAIL_ALREADY_EXISTS", "此 Email 已被使用", 409);
+        sendError(
+          res,
+          ErrorCodes.EMAIL_ALREADY_EXISTS,
+          "此 Email 已被使用",
+          409,
+        );
       } else {
         sendError(
           res,
-          "USER_SETTINGS_UPDATE_FAILED",
+          ErrorCodes.USER_SETTINGS_UPDATE_FAILED,
           getSafeErrorMessage(error, "Failed to update settings"),
           500,
         );
@@ -140,7 +145,7 @@ router.post(
       logger.error("Link GitLab error:", error);
       sendError(
         res,
-        "GITLAB_LINK_FAILED",
+        ErrorCodes.GITLAB_LINK_FAILED,
         getSafeErrorMessage(error, "Failed to link GitLab"),
         400,
       );
@@ -165,7 +170,12 @@ router.delete(
       sendSuccess(res, settings);
     } catch (error) {
       logger.error("Unlink GitLab error:", error);
-      sendError(res, "GITLAB_UNLINK_FAILED", "Failed to unlink GitLab", 500);
+      sendError(
+        res,
+        ErrorCodes.GITLAB_UNLINK_FAILED,
+        "Failed to unlink GitLab",
+        500,
+      );
     }
   },
 );
@@ -211,7 +221,7 @@ router.post(
       logger.error("Link Slack error:", error);
       sendError(
         res,
-        "SLACK_LINK_FAILED",
+        ErrorCodes.SLACK_LINK_FAILED,
         getSafeErrorMessage(error, "Failed to link Slack"),
         400,
       );
@@ -236,7 +246,12 @@ router.delete(
       sendSuccess(res, settings);
     } catch (error) {
       logger.error("Unlink Slack error:", error);
-      sendError(res, "SLACK_UNLINK_FAILED", "Failed to unlink Slack", 500);
+      sendError(
+        res,
+        ErrorCodes.SLACK_UNLINK_FAILED,
+        "Failed to unlink Slack",
+        500,
+      );
     }
   },
 );

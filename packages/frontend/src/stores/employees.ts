@@ -90,7 +90,7 @@ export const useEmployeeStore = defineStore('employees', () => {
     }
 
     // 樂觀更新
-    const snapshot = employees.value
+    const snapshot = [...employees.value]
     const updated = { ...employees.value[idx], ...input }
     employees.value = employees.value.map((e, i) => (i === idx ? updated : e))
 
@@ -125,7 +125,7 @@ export const useEmployeeStore = defineStore('employees', () => {
     }
 
     // 樂觀更新
-    const snapshot = employees.value
+    const snapshot = [...employees.value]
     employees.value = employees.value.filter(e => e.id !== id)
 
     loading.value.delete = true

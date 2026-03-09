@@ -29,6 +29,16 @@ const emit = defineEmits<{
       color: string
     },
   ]
+  update: [
+    id: string,
+    data: {
+      name: string
+      description: string
+      date: string
+      projectId: string
+      color: string
+    },
+  ]
   delete: [id: string]
 }>()
 
@@ -40,12 +50,37 @@ const newMilestone = ref({
   color: '#F59E0B',
 })
 
+const editingMilestone = ref<string | null>(null)
+
+const startEdit = (ms: MilestoneData) => {
+  editingMilestone.value = ms.id
+  newMilestone.value = {
+    name: ms.name,
+    description: ms.description || '',
+    date: ms.date ? ms.date.substring(0, 10) : '',
+    projectId: ms.projectId,
+    color: ms.color || '#F59E0B',
+  }
+}
+
+const cancelEdit = () => {
+  editingMilestone.value = null
+  newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
+}
+
 const handleSubmit = () => {
-  emit('submit', { ...newMilestone.value })
+  if (editingMilestone.value) {
+    emit('update', editingMilestone.value, { ...newMilestone.value })
+    editingMilestone.value = null
+  } else {
+    emit('submit', { ...newMilestone.value })
+  }
   newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
 }
 
 const closeModal = () => {
+  editingMilestone.value = null
+  newMilestone.value = { name: '', description: '', date: '', projectId: '', color: '#F59E0B' }
   showModal.value = false
 }
 </script>
@@ -75,21 +110,37 @@ const closeModal = () => {
                   {{ ms.name }}
                 </div>
               </div>
-              <button
-                v-if="canManage"
-                class="text-danger hover:text-danger/80 cursor-pointer"
-                aria-label="刪除里程碑"
-                @click="emit('delete', ms.id)"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
+              <div v-if="canManage" class="flex items-center gap-2">
+                <button
+                  class="cursor-pointer hover:opacity-80"
+                  style="color: var(--text-secondary)"
+                  aria-label="編輯里程碑"
+                  @click="startEdit(ms)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="text-danger hover:text-danger/80 cursor-pointer"
+                  aria-label="刪除里程碑"
+                  @click="emit('delete', ms.id)"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div
               v-if="ms.description"
@@ -114,7 +165,9 @@ const closeModal = () => {
 
       <!-- 新增里程碑表單 -->
       <div v-if="canManage">
-        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary)">新增里程碑</h4>
+        <h4 class="text-sm font-medium mb-3" style="color: var(--text-secondary)">
+          {{ editingMilestone ? '編輯里程碑' : '新增里程碑' }}
+        </h4>
         <div class="space-y-3">
           <Input v-model="newMilestone.name" label="名稱" placeholder="輸入里程碑名稱" />
           <Input v-model="newMilestone.description" label="說明（選填）" placeholder="輸入說明" />
@@ -148,7 +201,12 @@ const closeModal = () => {
 
     <template #footer>
       <Button variant="secondary" @click="closeModal">關閉</Button>
-      <Button v-if="canManage" @click="handleSubmit">新增里程碑</Button>
+      <Button v-if="canManage && editingMilestone" variant="secondary" @click="cancelEdit"
+        >取消編輯</Button
+      >
+      <Button v-if="canManage" @click="handleSubmit">{{
+        editingMilestone ? '更新里程碑' : '新增里程碑'
+      }}</Button>
     </template>
   </Modal>
 </template>

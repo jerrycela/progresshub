@@ -70,7 +70,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "PROGRESS_FETCH_FAILED",
+        ErrorCodes.PROGRESS_FETCH_FAILED,
         "Failed to get progress logs",
         500,
       );
@@ -96,7 +96,7 @@ router.get("/today", async (req: AuthRequest, res: Response): Promise<void> => {
   } catch (error) {
     sendError(
       res,
-      "PROGRESS_TODAY_FAILED",
+      ErrorCodes.PROGRESS_TODAY_FAILED,
       "Failed to get today progress status",
       500,
     );
@@ -140,7 +140,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "PROGRESS_STATS_FAILED",
+        ErrorCodes.PROGRESS_STATS_FAILED,
         "Failed to get project progress stats",
         500,
       );
@@ -218,7 +218,7 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "PROGRESS_CREATE_FAILED",
+        ErrorCodes.PROGRESS_CREATE_FAILED,
         "Failed to create progress log",
         500,
       );

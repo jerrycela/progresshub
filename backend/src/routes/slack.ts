@@ -7,6 +7,7 @@ import prisma from "../config/database";
 import { env } from "../config/env";
 import logger from "../config/logger";
 import { sendError } from "../utils/response";
+import { ErrorCodes } from "../types/shared-api";
 import { getStartOfWeek } from "../utils/dateUtils";
 
 const router = Router();
@@ -79,7 +80,12 @@ router.post(
             "Skipping Slack signature verification in dev mode (no signing secret)",
           );
         } else {
-          sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
+          sendError(
+            res,
+            ErrorCodes.INVALID_SIGNATURE,
+            "Invalid signature",
+            401,
+          );
           return;
         }
       }
@@ -274,7 +280,12 @@ router.post(
             "Skipping Slack signature verification in dev mode (no signing secret)",
           );
         } else {
-          sendError(res, "INVALID_SIGNATURE", "Invalid signature", 401);
+          sendError(
+            res,
+            ErrorCodes.INVALID_SIGNATURE,
+            "Invalid signature",
+            401,
+          );
           return;
         }
       }
@@ -284,7 +295,7 @@ router.post(
       try {
         payload = JSON.parse(req.body.payload || "{}");
       } catch {
-        sendError(res, "INVALID_PAYLOAD", "Invalid JSON payload", 400);
+        sendError(res, ErrorCodes.INVALID_PAYLOAD, "Invalid JSON payload", 400);
         return;
       }
       const type = payload.type as string | undefined;
@@ -309,7 +320,12 @@ router.post(
       }
     } catch (error) {
       logger.error("Slack interaction error:", error);
-      sendError(res, "SLACK_INTERACTION_FAILED", "Internal error", 500);
+      sendError(
+        res,
+        ErrorCodes.SLACK_INTERACTION_FAILED,
+        "Internal error",
+        500,
+      );
     }
   },
 );

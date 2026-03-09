@@ -18,6 +18,7 @@ export const useMilestoneStore = defineStore('milestones', () => {
   const loading = ref({
     fetch: false,
     add: false,
+    update: false,
     remove: false,
   })
 
@@ -59,6 +60,23 @@ export const useMilestoneStore = defineStore('milestones', () => {
       },
     )
 
+  const updateMilestone = (id: string, data: Partial<MilestoneData>) =>
+    storeAction(
+      async () => {
+        const result = await service.updateMilestone(id, data)
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '更新里程碑失敗')
+        }
+        milestones.value = milestones.value.map(ms => (ms.id === id ? result.data! : ms))
+        return result.data
+      },
+      '更新里程碑失敗',
+      'UNKNOWN_ERROR',
+      isLoading => {
+        loading.value.update = isLoading
+      },
+    )
+
   const removeMilestone = (id: string) =>
     storeAction(
       async () => {
@@ -79,6 +97,7 @@ export const useMilestoneStore = defineStore('milestones', () => {
     allSorted,
     fetchMilestones,
     addMilestone,
+    updateMilestone,
     removeMilestone,
   }
 })

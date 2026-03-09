@@ -33,7 +33,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_MAPPINGS_FETCH_FAILED",
+        ErrorCodes.GITLAB_MAPPINGS_FETCH_FAILED,
         "Failed to get mappings",
         500,
       );
@@ -96,7 +96,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_MAPPING_CREATE_FAILED",
+        ErrorCodes.GITLAB_MAPPING_CREATE_FAILED,
         getSafeErrorMessage(error, "Failed to create mapping"),
         400,
       );
@@ -138,7 +138,7 @@ router.delete(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_MAPPING_DELETE_FAILED",
+        ErrorCodes.GITLAB_MAPPING_DELETE_FAILED,
         getSafeErrorMessage(error, "Failed to delete mapping"),
         400,
       );
@@ -180,7 +180,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_SYNC_FROM_FAILED",
+        ErrorCodes.GITLAB_SYNC_FROM_FAILED,
         getSafeErrorMessage(error, "Failed to sync"),
         400,
       );
@@ -222,7 +222,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_SYNC_TO_FAILED",
+        ErrorCodes.GITLAB_SYNC_TO_FAILED,
         getSafeErrorMessage(error, "Failed to sync"),
         400,
       );
@@ -278,7 +278,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_ISSUE_SEARCH_FAILED",
+        ErrorCodes.GITLAB_ISSUE_SEARCH_FAILED,
         getSafeErrorMessage(error, "Failed to search issues"),
         400,
       );
@@ -338,7 +338,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_ISSUE_CREATE_FAILED",
+        ErrorCodes.GITLAB_ISSUE_CREATE_FAILED,
         getSafeErrorMessage(error, "Failed to create issue"),
         400,
       );

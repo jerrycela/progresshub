@@ -1,13 +1,14 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { authenticate, authorize, AuthRequest } from "../middleware/auth";
-import { PermissionLevel } from "@prisma/client";
+import { PermissionLevel, Prisma } from "@prisma/client";
 import { sendSuccess, sendError } from "../utils/response";
 import { milestoneService } from "../services/milestoneService";
 import { toMilestoneDTO } from "../mappers";
 import { sanitizeBody } from "../middleware/sanitize";
 
 import { ErrorCodes } from "../types/shared-api";
+import prisma from "../config/database";
 const router = Router();
 
 router.use(authenticate);
@@ -28,7 +29,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "MILESTONES_FETCH_FAILED",
+        ErrorCodes.MILESTONES_FETCH_FAILED,
         "Failed to get milestones",
         500,
       );
@@ -88,8 +89,123 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "MILESTONE_CREATE_FAILED",
+        ErrorCodes.MILESTONE_CREATE_FAILED,
         "Failed to create milestone",
+        500,
+      );
+    }
+  },
+);
+
+/**
+ * PUT /api/milestones/:id
+ * 更新里程碑（PM, PRODUCER, ADMIN）
+ */
+router.put(
+  "/:id",
+  authorize(
+    PermissionLevel.PM,
+    PermissionLevel.PRODUCER,
+    PermissionLevel.ADMIN,
+  ),
+  [
+    param("id")
+      .isString()
+      .trim()
+      .notEmpty()
+      .withMessage("Invalid milestone ID"),
+    body("name")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 200 })
+      .withMessage("Name must be 1-200 characters"),
+    body("description").optional().isString().trim(),
+    body("date").optional().isISO8601().withMessage("Valid date is required"),
+    body("color").optional().isString().trim(),
+  ],
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      sendError(
+        res,
+        ErrorCodes.VALIDATION_FAILED,
+        "Invalid input",
+        400,
+        errors.array(),
+      );
+      return;
+    }
+
+    try {
+      const existing = await milestoneService.getMilestoneById(req.params.id);
+      if (!existing) {
+        sendError(
+          res,
+          ErrorCodes.MILESTONE_NOT_FOUND,
+          "Milestone not found",
+          404,
+        );
+        return;
+      }
+
+      // Project-level authorization: non-ADMIN must be a project member
+      if (req.user?.permissionLevel !== PermissionLevel.ADMIN) {
+        const isMember = await prisma.projectMember.findUnique({
+          where: {
+            projectId_employeeId: {
+              projectId: existing.projectId,
+              employeeId: req.user?.userId ?? "",
+            },
+          },
+        });
+        if (!isMember) {
+          sendError(
+            res,
+            ErrorCodes.PERM_DENIED,
+            "Not a member of this project",
+            403,
+          );
+          return;
+        }
+      }
+
+      const updateData: {
+        name?: string;
+        description?: string;
+        targetDate?: Date;
+        color?: string;
+      } = {};
+      if (req.body.name !== undefined) updateData.name = req.body.name;
+      if (req.body.description !== undefined)
+        updateData.description = req.body.description;
+      if (req.body.date !== undefined)
+        updateData.targetDate = new Date(req.body.date);
+      if (req.body.color !== undefined) updateData.color = req.body.color;
+
+      const updated = await milestoneService.updateMilestone(
+        req.params.id,
+        updateData,
+      );
+      sendSuccess(res, toMilestoneDTO(updated));
+    } catch (error: unknown) {
+      // Handle race condition: milestone deleted between check and update
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2025"
+      ) {
+        sendError(
+          res,
+          ErrorCodes.MILESTONE_NOT_FOUND,
+          "Milestone not found",
+          404,
+        );
+        return;
+      }
+      sendError(
+        res,
+        ErrorCodes.MILESTONE_UPDATE_FAILED,
+        "Failed to update milestone",
         500,
       );
     }
@@ -130,7 +246,12 @@ router.delete(
     try {
       const existing = await milestoneService.getMilestoneById(req.params.id);
       if (!existing) {
-        sendError(res, "MILESTONE_NOT_FOUND", "Milestone not found", 404);
+        sendError(
+          res,
+          ErrorCodes.MILESTONE_NOT_FOUND,
+          "Milestone not found",
+          404,
+        );
         return;
       }
 
@@ -139,7 +260,7 @@ router.delete(
     } catch (error) {
       sendError(
         res,
-        "MILESTONE_DELETE_FAILED",
+        ErrorCodes.MILESTONE_DELETE_FAILED,
         "Failed to delete milestone",
         500,
       );

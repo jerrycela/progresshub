@@ -76,7 +76,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_ACTIVITIES_FETCH_FAILED",
+        ErrorCodes.GITLAB_ACTIVITIES_FETCH_FAILED,
         "Failed to get activities",
         500,
       );
@@ -121,7 +121,12 @@ router.get(
 
       sendSuccess(res, summary);
     } catch (error) {
-      sendError(res, "GITLAB_SUMMARY_FAILED", "Failed to get summary", 500);
+      sendError(
+        res,
+        ErrorCodes.GITLAB_SUMMARY_FAILED,
+        "Failed to get summary",
+        500,
+      );
     }
   },
 );
@@ -174,7 +179,12 @@ router.get(
       });
 
       if (!activity || activity.connection.employeeId !== req.user.userId) {
-        sendError(res, "GITLAB_ACTIVITY_NOT_FOUND", "Activity not found", 404);
+        sendError(
+          res,
+          ErrorCodes.GITLAB_ACTIVITY_NOT_FOUND,
+          "Activity not found",
+          404,
+        );
         return;
       }
 
@@ -182,7 +192,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_ACTIVITY_FETCH_FAILED",
+        ErrorCodes.GITLAB_ACTIVITY_FETCH_FAILED,
         "Failed to get activity",
         500,
       );
@@ -242,7 +252,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_CONVERT_FAILED",
+        ErrorCodes.GITLAB_CONVERT_FAILED,
         getSafeErrorMessage(error, "Failed to convert activity"),
         400,
       );
@@ -298,7 +308,7 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_BATCH_CONVERT_FAILED",
+        ErrorCodes.GITLAB_BATCH_CONVERT_FAILED,
         "Failed to batch convert activities",
         500,
       );
@@ -349,7 +359,7 @@ router.put(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_LINK_TASK_FAILED",
+        ErrorCodes.GITLAB_LINK_TASK_FAILED,
         getSafeErrorMessage(error, "Failed to link task"),
         400,
       );

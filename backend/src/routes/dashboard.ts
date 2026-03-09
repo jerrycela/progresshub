@@ -4,6 +4,7 @@ import { authenticate, authorize, AuthRequest } from "../middleware/auth";
 import { PermissionLevel } from "@prisma/client";
 import { sendSuccess, sendError } from "../utils/response";
 import logger from "../config/logger";
+import { ErrorCodes } from "../types/shared-api";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get("/stats", async (req: AuthRequest, res: Response): Promise<void> => {
     logger.error("Dashboard stats error:", error);
     sendError(
       res,
-      "DASHBOARD_STATS_FAILED",
+      ErrorCodes.DASHBOARD_STATS_FAILED,
       "Failed to get dashboard stats",
       500,
     );
@@ -49,7 +50,7 @@ router.get(
       logger.error("Dashboard workloads error:", error);
       sendError(
         res,
-        "DASHBOARD_WORKLOADS_FAILED",
+        ErrorCodes.DASHBOARD_WORKLOADS_FAILED,
         "Failed to get workloads",
         500,
       );

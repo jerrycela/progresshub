@@ -63,7 +63,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_CONNECTIONS_FETCH_FAILED",
+        ErrorCodes.GITLAB_CONNECTIONS_FETCH_FAILED,
         "Failed to get connections",
         500,
       );
@@ -104,7 +104,7 @@ router.get(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_INSTANCES_FETCH_FAILED",
+        ErrorCodes.GITLAB_INSTANCES_FETCH_FAILED,
         "Failed to get available instances",
         500,
       );
@@ -148,7 +148,7 @@ router.get(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_OAUTH_URL_FAILED",
+        ErrorCodes.GITLAB_OAUTH_URL_FAILED,
         getSafeErrorMessage(error, "Failed to generate auth URL"),
         400,
       );
@@ -252,7 +252,7 @@ router.put(
       if (!connection || connection.employeeId !== req.user.userId) {
         sendError(
           res,
-          "GITLAB_CONNECTION_NOT_FOUND",
+          ErrorCodes.GITLAB_CONNECTION_NOT_FOUND,
           "Connection not found",
           404,
         );
@@ -280,7 +280,7 @@ router.put(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_SETTINGS_UPDATE_FAILED",
+        ErrorCodes.GITLAB_SETTINGS_UPDATE_FAILED,
         "Failed to update settings",
         500,
       );
@@ -323,7 +323,7 @@ router.delete(
       if (!connection || connection.employeeId !== req.user.userId) {
         sendError(
           res,
-          "GITLAB_CONNECTION_NOT_FOUND",
+          ErrorCodes.GITLAB_CONNECTION_NOT_FOUND,
           "Connection not found",
           404,
         );
@@ -347,7 +347,7 @@ router.delete(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_CONNECTION_DELETE_FAILED",
+        ErrorCodes.GITLAB_CONNECTION_DELETE_FAILED,
         "Failed to delete connection",
         500,
       );
@@ -390,7 +390,7 @@ router.post(
       if (!connection || connection.employeeId !== req.user.userId) {
         sendError(
           res,
-          "GITLAB_CONNECTION_NOT_FOUND",
+          ErrorCodes.GITLAB_CONNECTION_NOT_FOUND,
           "Connection not found",
           404,
         );
@@ -400,7 +400,7 @@ router.post(
       if (!connection.isActive) {
         sendError(
           res,
-          "GITLAB_CONNECTION_INACTIVE",
+          ErrorCodes.GITLAB_CONNECTION_INACTIVE,
           "Connection is not active",
           400,
         );
@@ -418,7 +418,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_SYNC_FAILED",
+        ErrorCodes.GITLAB_SYNC_FAILED,
         getSafeErrorMessage(error, "Failed to sync"),
         500,
       );

@@ -29,7 +29,7 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
   } catch (error) {
     sendError(
       res,
-      "GITLAB_INSTANCES_FETCH_FAILED",
+      ErrorCodes.GITLAB_INSTANCES_FETCH_FAILED,
       "Failed to get instances",
       500,
     );
@@ -61,14 +61,19 @@ router.get(
         req.params.id,
       );
       if (!instance) {
-        sendError(res, "GITLAB_INSTANCE_NOT_FOUND", "Instance not found", 404);
+        sendError(
+          res,
+          ErrorCodes.GITLAB_INSTANCE_NOT_FOUND,
+          "Instance not found",
+          404,
+        );
         return;
       }
       sendSuccess(res, instance);
     } catch (error) {
       sendError(
         res,
-        "GITLAB_INSTANCE_FETCH_FAILED",
+        ErrorCodes.GITLAB_INSTANCE_FETCH_FAILED,
         "Failed to get instance",
         500,
       );
@@ -116,7 +121,7 @@ router.post(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_INSTANCE_CREATE_FAILED",
+        ErrorCodes.GITLAB_INSTANCE_CREATE_FAILED,
         getSafeErrorMessage(error, "Failed to create instance"),
         400,
       );
@@ -160,7 +165,7 @@ router.put(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_INSTANCE_UPDATE_FAILED",
+        ErrorCodes.GITLAB_INSTANCE_UPDATE_FAILED,
         getSafeErrorMessage(error, "Failed to update instance"),
         400,
       );
@@ -194,7 +199,7 @@ router.delete(
     } catch (error: unknown) {
       sendError(
         res,
-        "GITLAB_INSTANCE_DELETE_FAILED",
+        ErrorCodes.GITLAB_INSTANCE_DELETE_FAILED,
         getSafeErrorMessage(error, "Failed to delete instance"),
         400,
       );
@@ -226,7 +231,12 @@ router.post(
       const result = await gitLabInstanceService.testConnection(req.params.id);
       sendSuccess(res, result);
     } catch (error) {
-      sendError(res, "GITLAB_TEST_FAILED", "Failed to test connection", 500);
+      sendError(
+        res,
+        ErrorCodes.GITLAB_TEST_FAILED,
+        "Failed to test connection",
+        500,
+      );
     }
   },
 );
@@ -259,7 +269,7 @@ router.post(
     } catch (error) {
       sendError(
         res,
-        "GITLAB_WEBHOOK_REGEN_FAILED",
+        ErrorCodes.GITLAB_WEBHOOK_REGEN_FAILED,
         "Failed to regenerate webhook secret",
         500,
       );
