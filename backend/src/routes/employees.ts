@@ -18,6 +18,7 @@ import { sanitizeBody } from "../middleware/sanitize";
 import { toUserDTO } from "../mappers";
 
 import { ErrorCodes } from "../types/shared-api";
+import logger from "../config/logger";
 const router = Router();
 
 // 所有員工路由都需要認證
@@ -70,6 +71,7 @@ router.get(
         limit,
       });
     } catch (error) {
+      logger.error("Get employees error:", error);
       sendError(
         res,
         ErrorCodes.EMPLOYEES_FETCH_FAILED,
@@ -113,6 +115,7 @@ router.get(
       }
       sendSuccess(res, toUserDTO(employee));
     } catch (error) {
+      logger.error("Get employee by ID error:", error);
       sendError(
         res,
         ErrorCodes.EMPLOYEE_FETCH_FAILED,
@@ -185,6 +188,7 @@ router.post(
       const employee = await employeeService.createEmployee(req.body);
       sendSuccess(res, toUserDTO(employee), 201);
     } catch (error) {
+      logger.error("Create employee error:", error);
       sendError(
         res,
         ErrorCodes.EMPLOYEE_CREATE_FAILED,
@@ -259,6 +263,7 @@ router.put(
       const employee = await employeeService.updateEmployee(id, updateData);
       sendSuccess(res, toUserDTO(employee));
     } catch (error) {
+      logger.error("Update employee error:", error);
       sendError(
         res,
         ErrorCodes.EMPLOYEE_UPDATE_FAILED,
@@ -306,6 +311,7 @@ router.delete(
       await employeeService.softDeleteEmployee(req.params.id);
       res.status(204).send();
     } catch (error) {
+      logger.error("Delete employee error:", error);
       sendError(
         res,
         ErrorCodes.EMPLOYEE_DELETE_FAILED,
