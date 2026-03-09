@@ -33,8 +33,13 @@ class ApiProgressService implements ProgressServiceInterface {
   }
 
   async addLog(log: Omit<ProgressLog, 'id' | 'reportedAt'>): Promise<ActionResult<ProgressLog>> {
-    const data = await apiPostUnwrap<ProgressLog>(`/tasks/${log.taskId}/progress`, log)
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<ProgressLog>(`/tasks/${log.taskId}/progress`, log)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'PROGRESS_CREATE_FAILED', message } }
+    }
   }
 }
 

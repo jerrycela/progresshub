@@ -1,6 +1,11 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import {
+  authenticate,
+  authorize,
+  AuthRequest,
+  isProjectMember,
+} from "../middleware/auth";
 import { PermissionLevel, Prisma } from "@prisma/client";
 import { sendSuccess, sendError } from "../utils/response";
 import { milestoneService } from "../services/milestoneService";
@@ -8,7 +13,6 @@ import { toMilestoneDTO } from "../mappers";
 import { sanitizeBody } from "../middleware/sanitize";
 
 import { ErrorCodes } from "../types/shared-api";
-import prisma from "../config/database";
 const router = Router();
 
 router.use(authenticate);
@@ -24,6 +28,26 @@ router.get(
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const projectId = req.query.projectId as string | undefined;
+
+      // Project membership check when projectId is specified
+      if (projectId) {
+        if (
+          !(await isProjectMember(
+            req.user?.userId ?? "",
+            projectId,
+            req.user?.permissionLevel!,
+          ))
+        ) {
+          sendError(
+            res,
+            ErrorCodes.PERM_DENIED,
+            "Not a member of this project",
+            403,
+          );
+          return;
+        }
+      }
+
       const milestones = await milestoneService.getMilestones(projectId);
       sendSuccess(res, milestones.map(toMilestoneDTO));
     } catch (error) {
@@ -149,25 +173,21 @@ router.put(
         return;
       }
 
-      // Project-level authorization: non-ADMIN must be a project member
-      if (req.user?.permissionLevel !== PermissionLevel.ADMIN) {
-        const isMember = await prisma.projectMember.findUnique({
-          where: {
-            projectId_employeeId: {
-              projectId: existing.projectId,
-              employeeId: req.user?.userId ?? "",
-            },
-          },
-        });
-        if (!isMember) {
-          sendError(
-            res,
-            ErrorCodes.PERM_DENIED,
-            "Not a member of this project",
-            403,
-          );
-          return;
-        }
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          existing.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
       }
 
       const updateData: {
@@ -251,6 +271,23 @@ router.delete(
           ErrorCodes.MILESTONE_NOT_FOUND,
           "Milestone not found",
           404,
+        );
+        return;
+      }
+
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          existing.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
         );
         return;
       }

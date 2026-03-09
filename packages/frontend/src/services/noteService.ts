@@ -33,8 +33,13 @@ class ApiNoteService implements NoteServiceInterface {
   }
 
   async addNote(note: Omit<TaskNote, 'id' | 'createdAt'>): Promise<ActionResult<TaskNote>> {
-    const data = await apiPostUnwrap<TaskNote>(`/tasks/${note.taskId}/notes`, note)
-    return { success: true, data }
+    try {
+      const data = await apiPostUnwrap<TaskNote>(`/tasks/${note.taskId}/notes`, note)
+      return { success: true, data }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : '操作失敗'
+      return { success: false, error: { code: 'NOTE_CREATE_FAILED', message } }
+    }
   }
 }
 

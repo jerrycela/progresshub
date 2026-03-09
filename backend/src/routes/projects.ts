@@ -1,7 +1,12 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { projectService } from "../services/projectService";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import {
+  authenticate,
+  authorize,
+  AuthRequest,
+  isProjectMember,
+} from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel, ProjectStatus } from "@prisma/client";
 import logger from "../config/logger";
@@ -129,6 +134,24 @@ router.get(
         sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
         return;
       }
+
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.params.id,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       sendSuccess(res, toProjectDTO(project));
     } catch (error) {
       logger.error("Get project error:", error);
@@ -163,6 +186,23 @@ router.get(
     }
 
     try {
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.params.id,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       const stats = await projectService.getProjectStats(req.params.id);
       sendSuccess(res, stats);
     } catch (error) {
@@ -198,6 +238,23 @@ router.get(
     }
 
     try {
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.params.id,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       const ganttData = await projectService.getGanttData(req.params.id);
       sendSuccess(res, ganttData);
     } catch (error) {

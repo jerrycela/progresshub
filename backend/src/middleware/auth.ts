@@ -146,6 +146,30 @@ export const authorizeTaskAccess = async (
 };
 
 /**
+ * Project Membership Check Utility
+ * Returns true if user is ADMIN or a member of the specified project.
+ * Use in route handlers (not middleware) for flexible per-endpoint logic.
+ */
+export const isProjectMember = async (
+  userId: string,
+  projectId: string,
+  permissionLevel: PermissionLevel,
+): Promise<boolean> => {
+  if (permissionLevel === PermissionLevel.ADMIN) return true;
+
+  const membership = await prisma.projectMember.findUnique({
+    where: {
+      projectId_employeeId: {
+        projectId,
+        employeeId: userId,
+      },
+    },
+  });
+
+  return !!membership;
+};
+
+/**
  * Employee Self-Edit Authorization Middleware
  * Allows ADMIN to edit anyone, or employee to edit their own profile
  */

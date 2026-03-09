@@ -2,7 +2,8 @@ import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { progressService } from "../services/progressService";
 import { taskService } from "../services/taskService";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, AuthRequest, isProjectMember } from "../middleware/auth";
+import { PermissionLevel } from "@prisma/client";
 import {
   sendSuccess,
   sendPaginatedSuccess,
@@ -49,9 +50,20 @@ router.get(
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 20;
 
+      // Non-ADMIN/PM/MANAGER users can only see their own progress logs
+      let employeeId = req.query.employeeId as string;
+      const role = req.user?.permissionLevel;
+      if (
+        role !== PermissionLevel.ADMIN &&
+        role !== PermissionLevel.PM &&
+        role !== PermissionLevel.MANAGER
+      ) {
+        employeeId = req.user?.userId ?? "";
+      }
+
       const result = await progressService.getProgressLogs({
         taskId: req.query.taskId as string,
-        employeeId: req.query.employeeId as string,
+        employeeId,
         startDate: req.query.startDate
           ? new Date(req.query.startDate as string)
           : undefined,
@@ -131,6 +143,23 @@ router.get(
     }
 
     try {
+      // Project membership check
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.params.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       const days = Number(req.query.days) || 7;
       const stats = await progressService.getProjectProgressStats(
         req.params.projectId,
