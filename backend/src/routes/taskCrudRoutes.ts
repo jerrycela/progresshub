@@ -5,6 +5,7 @@ import {
   authorize,
   AuthRequest,
   authorizeTaskAccess,
+  isProjectMember,
 } from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel } from "@prisma/client";
@@ -72,6 +73,24 @@ router.get(
         sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
         return;
       }
+
+      // IDOR protection: verify user is a member of the task's project
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          task.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
       logger.error("Get pool task error:", error);
@@ -250,6 +269,23 @@ router.post(
     }
 
     try {
+      // IDOR protection: verify user is a member of the target project
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.body.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       // 前端欄位名 → 後端欄位名轉換
       const task = await taskService.createTask({
         projectId: req.body.projectId,

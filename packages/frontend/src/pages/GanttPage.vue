@@ -304,12 +304,12 @@ const submitMilestone = async (data: {
     createdAt: new Date().toISOString(),
   }
 
-  try {
-    await milestoneStore.addMilestone(milestone)
+  const result = await milestoneStore.addMilestone(milestone)
+  if (result.success) {
     showMilestoneModal.value = false
     showSuccess(`已新增里程碑：${milestone.name}`)
-  } catch {
-    showError('新增里程碑失敗，請稍後再試')
+  } else {
+    showError(result.error?.message || '新增里程碑失敗，請稍後再試')
   }
 }
 
@@ -326,11 +326,11 @@ const updateMilestone = async (
     return
   }
 
-  try {
-    await milestoneStore.updateMilestone(id, data)
+  const result = await milestoneStore.updateMilestone(id, data)
+  if (result.success) {
     showSuccess('已更新里程碑')
-  } catch {
-    showError('更新里程碑失敗，請稍後再試')
+  } else {
+    showError(result.error?.message || '更新里程碑失敗，請稍後再試')
   }
 }
 
@@ -343,11 +343,11 @@ const deleteMilestone = async (msId: string): Promise<void> => {
   })
   if (!confirmed) return
 
-  try {
-    await milestoneStore.removeMilestone(msId)
+  const result = await milestoneStore.removeMilestone(msId)
+  if (result.success) {
     showSuccess('已刪除里程碑')
-  } catch {
-    showError('刪除里程碑失敗，請稍後再試')
+  } else {
+    showError(result.error?.message || '刪除里程碑失敗，請稍後再試')
   }
 }
 </script>

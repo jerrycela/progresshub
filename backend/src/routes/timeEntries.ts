@@ -1,7 +1,8 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { timeEntryService } from "../services/timeEntryService";
-import { authenticate, AuthRequest } from "../middleware/auth";
+import { authenticate, AuthRequest, isProjectMember } from "../middleware/auth";
+import { PermissionLevel } from "@prisma/client";
 import { getStartOfWeek, getStartOfDay } from "../utils/dateUtils";
 import {
   sendSuccess,
@@ -53,6 +54,25 @@ router.get(
       let employeeId = req.query.employeeId as string;
       if (req.user?.permissionLevel === "EMPLOYEE") {
         employeeId = req.user.userId;
+      }
+
+      // IDOR protection: if projectId is specified, verify membership
+      const projectId = req.query.projectId as string;
+      if (
+        projectId &&
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
       }
 
       const page = Number(req.query.page) || 1;
@@ -182,13 +202,21 @@ router.get(
         return;
       }
 
-      // 檢查權限
-      if (
-        req.user?.permissionLevel === "EMPLOYEE" &&
-        entry.employeeId !== req.user.userId
-      ) {
-        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
-        return;
+      // 檢查權限: owner always allowed, ADMIN always allowed
+      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      const isOwner = entry.employeeId === req.user?.userId;
+      if (!isAdmin && !isOwner) {
+        // PM needs project membership; EMPLOYEE denied for others' entries
+        if (
+          !(await isProjectMember(
+            req.user?.userId ?? "",
+            entry.projectId,
+            req.user?.permissionLevel!,
+          ))
+        ) {
+          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
+          return;
+        }
       }
 
       sendSuccess(res, entry);
@@ -246,6 +274,24 @@ router.post(
         return;
       }
 
+      // IDOR protection: verify membership on target project
+      if (
+        req.body.projectId &&
+        !(await isProjectMember(
+          req.user.userId,
+          req.body.projectId,
+          req.user.permissionLevel,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       const entry = await timeEntryService.createTimeEntry({
         employeeId: req.user.userId,
         ...req.body,
@@ -292,6 +338,32 @@ router.post(
       if (!req.user) {
         sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
+      }
+
+      // IDOR protection: verify membership for each entry's project
+      const uniqueProjectIds: string[] = [
+        ...new Set<string>(
+          req.body.entries.map((e: Record<string, unknown>) =>
+            String(e.projectId),
+          ),
+        ),
+      ];
+      for (const projectId of uniqueProjectIds) {
+        if (
+          !(await isProjectMember(
+            req.user.userId,
+            projectId,
+            req.user.permissionLevel,
+          ))
+        ) {
+          sendError(
+            res,
+            ErrorCodes.PERM_DENIED,
+            `Not a member of project ${projectId}`,
+            403,
+          );
+          return;
+        }
       }
 
       const entries = req.body.entries.map((e: Record<string, unknown>) => ({
@@ -352,13 +424,20 @@ router.put(
         return;
       }
 
-      // ADMIN/PM 可修改任何人的記錄，一般員工只能修改自己的
-      const isPrivileged =
-        req.user?.permissionLevel === "ADMIN" ||
-        req.user?.permissionLevel === "PM";
-      if (!isPrivileged && existing.employeeId !== req.user?.userId) {
-        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
-        return;
+      // Authorization: ADMIN always, owner always, PM only if project member
+      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      const isOwner = existing.employeeId === req.user?.userId;
+      if (!isAdmin && !isOwner) {
+        if (
+          !(await isProjectMember(
+            req.user?.userId ?? "",
+            existing.projectId,
+            req.user?.permissionLevel!,
+          ))
+        ) {
+          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
+          return;
+        }
       }
 
       const updated = await timeEntryService.updateTimeEntry(
@@ -409,12 +488,20 @@ router.delete(
         return;
       }
 
-      const isPrivileged =
-        req.user?.permissionLevel === "ADMIN" ||
-        req.user?.permissionLevel === "PM";
-      if (!isPrivileged && existing.employeeId !== req.user?.userId) {
-        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
-        return;
+      // Authorization: ADMIN always, owner always, PM only if project member
+      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      const isOwner = existing.employeeId === req.user?.userId;
+      if (!isAdmin && !isOwner) {
+        if (
+          !(await isProjectMember(
+            req.user?.userId ?? "",
+            existing.projectId,
+            req.user?.permissionLevel!,
+          ))
+        ) {
+          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
+          return;
+        }
       }
 
       await timeEntryService.deleteTimeEntry(req.params.id);
