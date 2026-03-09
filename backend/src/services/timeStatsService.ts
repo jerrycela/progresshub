@@ -246,11 +246,19 @@ export class TimeStatsService {
   /**
    * 取得團隊儀表板統計
    */
-  async getTeamDashboard(dateRange: DateRangeParams): Promise<TeamDashboard> {
+  async getTeamDashboard(
+    dateRange: DateRangeParams,
+    projectIds?: string[],
+  ): Promise<TeamDashboard> {
+    const where: Record<string, unknown> = {
+      date: { gte: dateRange.startDate, lte: dateRange.endDate },
+    };
+    if (projectIds) {
+      where.projectId = { in: projectIds };
+    }
+
     const entries = await prisma.timeEntry.findMany({
-      where: {
-        date: { gte: dateRange.startDate, lte: dateRange.endDate },
-      },
+      where,
       include: {
         project: { select: { id: true, name: true } },
         employee: { select: { id: true, name: true } },

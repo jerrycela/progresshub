@@ -1,7 +1,13 @@
 import { Router, Response } from "express";
 import { param, query, validationResult } from "express-validator";
 import { timeStatsService } from "../services/timeStatsService";
-import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import {
+  authenticate,
+  authorize,
+  AuthRequest,
+  isProjectMember,
+} from "../middleware/auth";
+import prisma from "../config/database";
 import { PermissionLevel } from "@prisma/client";
 import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
 
@@ -36,6 +42,23 @@ router.get(
     }
 
     try {
+      // Verify project membership for non-ADMIN
+      if (
+        !(await isProjectMember(
+          req.user?.userId ?? "",
+          req.params.projectId,
+          req.user?.permissionLevel!,
+        ))
+      ) {
+        sendError(
+          res,
+          ErrorCodes.PERM_DENIED,
+          "Not a member of this project",
+          403,
+        );
+        return;
+      }
+
       const dateRange =
         req.query.startDate && req.query.endDate
           ? {
@@ -85,13 +108,37 @@ router.get(
     }
 
     try {
-      // 一般員工只能查看自己的統計
-      if (
-        req.user?.permissionLevel === "EMPLOYEE" &&
-        req.params.employeeId !== req.user.userId
-      ) {
-        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
-        return;
+      // Users can only view stats for employees they share projects with
+      if (req.params.employeeId !== req.user?.userId) {
+        if (req.user?.permissionLevel === PermissionLevel.ADMIN) {
+          // ADMIN can view anyone
+        } else if (
+          req.user?.permissionLevel === PermissionLevel.PM ||
+          req.user?.permissionLevel === PermissionLevel.MANAGER ||
+          req.user?.permissionLevel === PermissionLevel.PRODUCER
+        ) {
+          // Check if requester shares at least one project with target employee
+          const sharedProject = await prisma.projectMember.findFirst({
+            where: {
+              employeeId: req.params.employeeId,
+              project: {
+                members: { some: { employeeId: req.user.userId } },
+              },
+            },
+          });
+          if (!sharedProject) {
+            sendError(
+              res,
+              ErrorCodes.PERM_DENIED,
+              "No shared project with this employee",
+              403,
+            );
+            return;
+          }
+        } else {
+          sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
+          return;
+        }
       }
 
       const dateRange =
@@ -227,10 +274,23 @@ router.get(
     }
 
     try {
-      const dashboard = await timeStatsService.getTeamDashboard({
-        startDate: new Date(req.query.startDate as string),
-        endDate: new Date(req.query.endDate as string),
-      });
+      // For non-ADMIN, get user's project IDs for scoping
+      let projectIds: string[] | undefined;
+      if (req.user?.permissionLevel !== PermissionLevel.ADMIN) {
+        const memberProjects = await prisma.projectMember.findMany({
+          where: { employeeId: req.user?.userId ?? "" },
+          select: { projectId: true },
+        });
+        projectIds = memberProjects.map((m) => m.projectId);
+      }
+
+      const dashboard = await timeStatsService.getTeamDashboard(
+        {
+          startDate: new Date(req.query.startDate as string),
+          endDate: new Date(req.query.endDate as string),
+        },
+        projectIds,
+      );
       sendSuccess(res, dashboard);
     } catch (error: unknown) {
       sendError(
