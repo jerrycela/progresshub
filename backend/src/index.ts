@@ -25,23 +25,38 @@ app.use(helmet()); // Security headers
 // 生產環境必須設定 ALLOWED_ORIGINS 環境變數（逗號分隔多個 origin）
 // 開發環境允許 localhost 存取
 const getCorsOrigin = (): cors.CorsOptions["origin"] => {
-  if (env.NODE_ENV === "production") {
-    if (env.ALLOWED_ORIGINS.length === 0) {
-      logger.warn("生產環境未設定 ALLOWED_ORIGINS，僅允許同源請求");
-      // 允許同源請求（origin 為 undefined 時表示同源或非瀏覽器請求）
+  // If ALLOWED_ORIGINS is configured, always use it (production or development)
+  if (env.ALLOWED_ORIGINS.length > 0) {
+    if (env.NODE_ENV !== "production") {
+      // In development, also allow localhost in addition to ALLOWED_ORIGINS
       return (origin, callback) => {
-        if (!origin) {
+        if (
+          !origin ||
+          env.ALLOWED_ORIGINS.includes(origin) ||
+          /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+          /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+        ) {
           callback(null, true);
         } else {
-          callback(
-            new Error("CORS not allowed: ALLOWED_ORIGINS not configured"),
-          );
+          callback(new Error("CORS policy: origin not allowed"));
         }
       };
     }
     return env.ALLOWED_ORIGINS;
   }
-  // 開發環境：允許 localhost 的各種埠號
+
+  if (env.NODE_ENV === "production") {
+    logger.warn("生產環境未設定 ALLOWED_ORIGINS，僅允許同源請求");
+    return (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed: ALLOWED_ORIGINS not configured"));
+      }
+    };
+  }
+
+  // Development without ALLOWED_ORIGINS: allow localhost only
   return (origin, callback) => {
     if (
       !origin ||
