@@ -8,9 +8,10 @@ WORKDIR /app
 # Install OpenSSL for Prisma generate (CRITICAL for Alpine)
 RUN apk add --no-cache openssl
 
-# Install dependencies (no lockfile — monorepo root only)
+# Install ALL dependencies including devDependencies for build
+# (NODE_ENV=production from Zeabur env would skip devDeps, so override here)
 COPY package.json ./
-RUN npm install
+RUN NODE_ENV=development npm install
 
 # Copy source code
 COPY . .
