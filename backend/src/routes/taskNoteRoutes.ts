@@ -3,6 +3,7 @@ import { body, param, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
 import { taskNoteService } from "../services/taskNoteService";
 import { AuthRequest } from "../middleware/auth";
+import { requireResourceOwner } from "../middleware/projectAuth";
 import logger from "../config/logger";
 import { sendSuccess, sendError } from "../utils/response";
 import { toTaskDTO } from "../mappers";
@@ -18,6 +19,7 @@ const router = Router();
  */
 router.get(
   "/:taskId/notes",
+  requireResourceOwner("task", "taskId"),
   [param("taskId").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -53,6 +55,7 @@ router.get(
  */
 router.post(
   "/:taskId/notes",
+  requireResourceOwner("task", "taskId"),
   [
     param("taskId").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("content")
@@ -110,6 +113,7 @@ router.post(
  */
 router.get(
   "/:taskId/progress",
+  requireResourceOwner("task", "taskId"),
   [param("taskId").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -145,6 +149,7 @@ router.get(
  */
 router.post(
   "/:taskId/progress",
+  requireResourceOwner("task", "taskId"),
   [
     param("taskId").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("progress")

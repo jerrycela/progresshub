@@ -2,6 +2,7 @@ import { Router, Response } from "express";
 import { body, param, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
 import { AuthRequest, authorizeTaskAccess } from "../middleware/auth";
+import { requireResourceOwner } from "../middleware/projectAuth";
 import { auditLog } from "../middleware/auditLog";
 import { TaskStatus } from "@prisma/client";
 import logger from "../config/logger";
@@ -138,6 +139,7 @@ router.patch(
  */
 router.post(
   "/:id/claim",
+  requireResourceOwner("task", "id"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -177,6 +179,7 @@ router.post(
  */
 router.post(
   "/:id/unclaim",
+  requireResourceOwner("task", "id"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);

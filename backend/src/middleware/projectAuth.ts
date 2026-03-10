@@ -7,7 +7,7 @@ import { PermissionLevel } from "@prisma/client";
 import { logger } from "../config/logger";
 
 // Type-safe whitelist of resources that support ownership checks
-type AuthzResource = "task" | "timeEntry" | "progressLog";
+type AuthzResource = "task" | "timeEntry" | "progressLog" | "milestone";
 
 // ---------------------------------------------------------------------------
 // 404 Enumeration Detection (sliding window)
@@ -289,6 +289,8 @@ async function findResource(resource: AuthzResource, id: string) {
       return prisma.timeEntry.findUnique({ where: { id } });
     case "progressLog":
       return prisma.progressLog.findUnique({ where: { id } });
+    case "milestone":
+      return prisma.milestone.findUnique({ where: { id } });
   }
 }
 
@@ -323,6 +325,11 @@ async function findResourceWithMembership(
         where: { id },
         include: { task: { include: { project: memberInclude } } },
       });
+    case "milestone":
+      return prisma.milestone.findUnique({
+        where: { id },
+        include: { project: memberInclude },
+      });
   }
 }
 
@@ -338,5 +345,7 @@ function hasProjectMembership(resource: AuthzResource, record: any): boolean {
       return (record.project?.members?.length ?? 0) > 0;
     case "progressLog":
       return (record.task?.project?.members?.length ?? 0) > 0;
+    case "milestone":
+      return (record.project?.members?.length ?? 0) > 0;
   }
 }

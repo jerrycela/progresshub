@@ -1,12 +1,9 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
-import {
-  authenticate,
-  authorize,
-  AuthRequest,
-  isProjectMember,
-} from "../middleware/auth";
+import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { requireResourceOwner } from "../middleware/projectAuth";
 import { PermissionLevel, Prisma } from "@prisma/client";
+import prisma from "../config/database";
 import { sendSuccess, sendError } from "../utils/response";
 import { milestoneService } from "../services/milestoneService";
 import { toMilestoneDTO } from "../mappers";
@@ -29,21 +26,18 @@ router.get(
     try {
       const projectId = req.query.projectId as string | undefined;
 
-      // Project membership check when projectId is specified
-      if (projectId) {
-        if (
-          !(await isProjectMember(
-            req.user?.userId ?? "",
-            projectId,
-            req.user?.permissionLevel!,
-          ))
-        ) {
-          sendError(
-            res,
-            ErrorCodes.PERM_DENIED,
-            "Not a member of this project",
-            403,
-          );
+      // Project membership check when projectId is specified (ADMIN bypasses)
+      if (projectId && req.user?.permissionLevel !== PermissionLevel.ADMIN) {
+        const membership = await prisma.projectMember.findUnique({
+          where: {
+            projectId_employeeId: {
+              projectId,
+              employeeId: req.user?.userId ?? "",
+            },
+          },
+        });
+        if (!membership) {
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
           return;
         }
       }
@@ -106,6 +100,22 @@ router.post(
     }
 
     try {
+      // Project membership check (ADMIN bypasses)
+      if (req.user?.permissionLevel !== PermissionLevel.ADMIN) {
+        const membership = await prisma.projectMember.findUnique({
+          where: {
+            projectId_employeeId: {
+              projectId: req.body.projectId,
+              employeeId: req.user?.userId ?? "",
+            },
+          },
+        });
+        if (!membership) {
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+          return;
+        }
+      }
+
       const milestone = await milestoneService.createMilestone({
         projectId: req.body.projectId,
         name: req.body.name,
@@ -137,6 +147,7 @@ router.put(
     PermissionLevel.PRODUCER,
     PermissionLevel.ADMIN,
   ),
+  requireResourceOwner("milestone", "id"),
   [
     param("id")
       .isString()
@@ -172,34 +183,7 @@ router.put(
     }
 
     try {
-      const existing = await milestoneService.getMilestoneById(req.params.id);
-      if (!existing) {
-        sendError(
-          res,
-          ErrorCodes.MILESTONE_NOT_FOUND,
-          "Milestone not found",
-          404,
-        );
-        return;
-      }
-
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          existing.projectId,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
+      // Existence and membership already verified by requireResourceOwner middleware
       const updateData: {
         name?: string;
         description?: string;
@@ -253,6 +237,7 @@ router.delete(
     PermissionLevel.PRODUCER,
     PermissionLevel.ADMIN,
   ),
+  requireResourceOwner("milestone", "id"),
   [
     param("id")
       .isString()
@@ -274,34 +259,7 @@ router.delete(
     }
 
     try {
-      const existing = await milestoneService.getMilestoneById(req.params.id);
-      if (!existing) {
-        sendError(
-          res,
-          ErrorCodes.MILESTONE_NOT_FOUND,
-          "Milestone not found",
-          404,
-        );
-        return;
-      }
-
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          existing.projectId,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
+      // Existence and membership already verified by requireResourceOwner middleware
       await milestoneService.deleteMilestone(req.params.id);
       res.status(204).send();
     } catch (error) {
