@@ -9,6 +9,89 @@ import { logger } from "../config/logger";
 // Type-safe whitelist of resources that support ownership checks
 type AuthzResource = "task" | "timeEntry" | "progressLog";
 
+// ---------------------------------------------------------------------------
+// 404 Enumeration Detection (sliding window)
+// ---------------------------------------------------------------------------
+
+interface EnumCounter {
+  count: number;
+  firstSeen: number;
+  lastAlerted: number;
+  paths: Set<string>;
+}
+
+const enumCounters = new Map<string, EnumCounter>();
+const ENUM_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+const ENUM_THRESHOLD = 10;
+const ENUM_SUPPRESS_MS = 10 * 60 * 1000; // 10 minutes
+const ENUM_MAX_ENTRIES = 10000;
+
+function trackEnumerationAttempt(key: string, path: string): void {
+  const now = Date.now();
+  let entry = enumCounters.get(key);
+
+  if (!entry || now - entry.firstSeen > ENUM_WINDOW_MS) {
+    entry = { count: 0, firstSeen: now, lastAlerted: 0, paths: new Set() };
+    enumCounters.set(key, entry);
+  }
+
+  entry.count++;
+  if (entry.paths.size < 5) entry.paths.add(path);
+
+  if (
+    entry.count >= ENUM_THRESHOLD &&
+    now - entry.lastAlerted > ENUM_SUPPRESS_MS
+  ) {
+    entry.lastAlerted = now;
+    logger.warn("suspicious_enumeration", {
+      event: "suspicious_enumeration",
+      key,
+      count: entry.count,
+      window: "5m",
+      paths: [...entry.paths],
+    });
+  }
+
+  // Evict oldest entry if map exceeds capacity
+  if (enumCounters.size > ENUM_MAX_ENTRIES) {
+    let oldest: string | null = null;
+    let oldestTime = Infinity;
+    for (const [k, v] of enumCounters) {
+      if (v.firstSeen < oldestTime) {
+        oldestTime = v.firstSeen;
+        oldest = k;
+      }
+    }
+    if (oldest) enumCounters.delete(oldest);
+  }
+}
+
+// Periodic cleanup of stale entries
+setInterval(
+  () => {
+    const cutoff = Date.now() - 15 * 60 * 1000;
+    for (const [key, entry] of enumCounters) {
+      if (entry.firstSeen < cutoff) enumCounters.delete(key);
+    }
+  },
+  10 * 60 * 1000,
+).unref();
+
+/**
+ * Log an authorization 404 event and track enumeration attempts.
+ */
+function logAuthzNotFound(req: AuthRequest, userId: string): void {
+  logger.warn("authz_not_found", {
+    event: "authz_not_found",
+    userId,
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+  });
+  trackEnumerationAttempt(`user:${userId}`, req.originalUrl);
+  trackEnumerationAttempt(`ip:${req.ip}`, req.originalUrl);
+}
+
 /**
  * Require the authenticated user to be a member of the project
  * identified by req.params[paramName]. ADMIN bypasses the check.
@@ -53,6 +136,7 @@ export const requireProjectMember = (paramName: string) => {
       });
 
       if (!membership) {
+        logAuthzNotFound(req, user.userId);
         sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
@@ -102,6 +186,7 @@ export const requireResourceOwner = (
         // ADMIN: just verify the resource exists
         const record = await findResource(resource, resourceId);
         if (!record) {
+          logAuthzNotFound(req, user.userId);
           sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
           return;
         }
@@ -118,11 +203,13 @@ export const requireResourceOwner = (
       );
 
       if (!record) {
+        logAuthzNotFound(req, user.userId);
         sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
 
       if (!hasProjectMembership(resource, record)) {
+        logAuthzNotFound(req, user.userId);
         sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }

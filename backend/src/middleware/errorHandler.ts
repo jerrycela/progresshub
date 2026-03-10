@@ -54,6 +54,17 @@ export const errorHandler = (
 
   // 處理 AppError（預期的業務錯誤，訊息由我們控制，可安全返回）
   if (err instanceof AppError) {
+    // Log 403 authorization denials for audit (deduplicate via flag)
+    if (err.statusCode === 403 && !(_req as any).authzLogged) {
+      (_req as any).authzLogged = true;
+      logger.warn("authz_denied", {
+        event: "authz_denied",
+        method: _req.method,
+        path: _req.originalUrl,
+        ip: _req.ip,
+        errorCode: err.errorCode,
+      });
+    }
     sendError(res, err.errorCode, err.message, err.statusCode);
     return;
   }

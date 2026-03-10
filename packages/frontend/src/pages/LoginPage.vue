@@ -17,8 +17,9 @@ const demoName = ref('')
 const demoRole = ref<UserRole>('EMPLOYEE')
 
 const demoRoleOptions: { label: string; value: UserRole }[] = [
-  { label: 'PM', value: 'PM' },
   { label: '一般同仁', value: 'EMPLOYEE' },
+  { label: '經理', value: 'MANAGER' },
+  { label: 'PM', value: 'PM' },
   { label: '製作人', value: 'PRODUCER' },
   { label: '管理者', value: 'ADMIN' },
 ]
