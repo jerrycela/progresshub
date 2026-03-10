@@ -35,14 +35,15 @@ router.get(
   requireProjectScope,
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const tasks = await taskService.getPoolTasks(
+      const { tasks, total } = await taskService.getPoolTasks(
         req.user?.userId,
         req.user?.permissionLevel,
         (req as any).authorizedProjectIds,
       );
-      sendSuccess(
+      sendPaginatedSuccess(
         res,
         tasks.map((t) => toTaskDTO(t)),
+        { total, page: 1, limit: 500 },
       );
     } catch (error) {
       logger.error("Get pool tasks error:", error);

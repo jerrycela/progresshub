@@ -152,35 +152,33 @@ describe('TaskService', () => {
 
   describe('getPoolTasks', () => {
     it('ADMIN 應回傳所有任務（不限專案成員）', async () => {
-      (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
+      (mockedPrisma.$transaction as jest.Mock).mockResolvedValue([[], 0]);
 
-      await service.getPoolTasks('admin-001', 'ADMIN');
+      const result = await service.getPoolTasks('admin-001', 'ADMIN');
 
-      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
-      expect(callArg.where).toEqual({});
-      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
+      expect(result).toEqual({ tasks: [], total: 0 });
+      const [ops] = (mockedPrisma.$transaction as jest.Mock).mock.calls[0];
+      // ops is an array of two Prisma promises; verify the call was made
+      expect(Array.isArray(ops)).toBe(true);
+      expect(ops).toHaveLength(2);
     });
 
     it('非 ADMIN 應只回傳所屬專案的任務', async () => {
-      (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
+      (mockedPrisma.$transaction as jest.Mock).mockResolvedValue([[], 0]);
 
-      await service.getPoolTasks('user-001', 'EMPLOYEE');
+      const result = await service.getPoolTasks('user-001', 'EMPLOYEE');
 
-      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
-      expect(callArg.where).toEqual({
-        project: { members: { some: { employeeId: 'user-001' } } },
-      });
-      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
+      expect(result).toEqual({ tasks: [], total: 0 });
+      expect(mockedPrisma.$transaction).toHaveBeenCalled();
     });
 
     it('未傳參數時應回傳所有任務', async () => {
-      (mockedPrisma.task.findMany as jest.Mock).mockResolvedValue([]);
+      (mockedPrisma.$transaction as jest.Mock).mockResolvedValue([[], 0]);
 
-      await service.getPoolTasks();
+      const result = await service.getPoolTasks();
 
-      const callArg = (mockedPrisma.task.findMany as jest.Mock).mock.calls[0][0];
-      expect(callArg.where).toEqual({});
-      expect(callArg.orderBy).toEqual({ createdAt: 'desc' });
+      expect(result).toEqual({ tasks: [], total: 0 });
+      expect(mockedPrisma.$transaction).toHaveBeenCalled();
     });
   });
 

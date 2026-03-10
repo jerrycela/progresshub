@@ -156,7 +156,7 @@ export class TaskService {
     userId?: string,
     userRole?: PermissionLevel,
     authorizedProjectIds?: string[],
-  ): Promise<Task[]> {
+  ): Promise<{ tasks: Task[]; total: number }> {
     const where: Prisma.TaskWhereInput = {};
 
     // Non-ADMIN: filter by authorized projects
@@ -169,15 +169,20 @@ export class TaskService {
       };
     }
 
-    return prisma.task.findMany({
-      where,
-      take: 500,
-      orderBy: { createdAt: "desc" },
-      include: {
-        ...TASK_INCLUDE,
-        taskNotes: { select: { id: true } },
-      },
-    });
+    const [tasks, total] = await prisma.$transaction([
+      prisma.task.findMany({
+        where,
+        take: 500,
+        orderBy: { createdAt: "desc" },
+        include: {
+          ...TASK_INCLUDE,
+          taskNotes: { select: { id: true } },
+        },
+      }),
+      prisma.task.count({ where }),
+    ]);
+
+    return { tasks, total };
   }
 
   /**

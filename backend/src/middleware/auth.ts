@@ -13,6 +13,23 @@ export interface JwtPayload {
   permissionLevel: PermissionLevel;
 }
 
+// Simple auth cache to avoid DB lookup on every request
+const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const authCache = new Map<
+  string,
+  { user: JwtPayload & { isActive: boolean }; cachedAt: number }
+>();
+
+// Clean expired entries periodically (unref so it doesn't block process exit)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of authCache) {
+    if (now - entry.cachedAt > AUTH_CACHE_TTL) {
+      authCache.delete(key);
+    }
+  }
+}, 60_000).unref();
+
 export interface AuthRequest extends Request {
   user?: JwtPayload;
 }
@@ -38,7 +55,25 @@ export const authenticate = async (
 
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
-    // Verify user still exists
+    const cached = authCache.get(decoded.userId);
+    const now = Date.now();
+
+    if (cached && now - cached.cachedAt < AUTH_CACHE_TTL) {
+      if (!cached.user.isActive) {
+        sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
+        return;
+      }
+      req.user = {
+        userId: decoded.userId,
+        name: cached.user.name,
+        email: cached.user.email,
+        permissionLevel: cached.user.permissionLevel,
+      };
+      next();
+      return;
+    }
+
+    // Cache miss — query DB
     const user = await prisma.employee.findUnique({
       where: { id: decoded.userId },
     });
@@ -47,6 +82,18 @@ export const authenticate = async (
       sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
     }
+
+    // Update cache
+    authCache.set(decoded.userId, {
+      user: {
+        userId: user.id,
+        name: user.name,
+        email: user.email,
+        permissionLevel: user.permissionLevel,
+        isActive: user.isActive,
+      },
+      cachedAt: now,
+    });
 
     req.user = {
       userId: user.id,
