@@ -224,6 +224,7 @@ export class TaskService {
 
     return prisma.task.findMany({
       where,
+      take: 500,
       include: TASK_INCLUDE,
       orderBy: { plannedEndDate: "asc" },
     });

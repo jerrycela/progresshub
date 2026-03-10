@@ -15,6 +15,7 @@ export interface JwtPayload {
 
 // Simple auth cache to avoid DB lookup on every request
 const AUTH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const AUTH_CACHE_MAX_ENTRIES = 500;
 const authCache = new Map<
   string,
   { user: JwtPayload & { isActive: boolean }; cachedAt: number }
@@ -81,6 +82,15 @@ export const authenticate = async (
     if (!user || !user.isActive) {
       sendError(res, ErrorCodes.AUTH_INVALID_TOKEN, "無效的認證 Token", 401);
       return;
+    }
+
+    // Evict oldest entries if cache is full
+    if (authCache.size >= AUTH_CACHE_MAX_ENTRIES) {
+      const entries = Array.from(authCache.entries());
+      entries.sort((a, b) => a[1].cachedAt - b[1].cachedAt);
+      for (let i = 0; i < 100; i++) {
+        authCache.delete(entries[i][0]);
+      }
     }
 
     // Update cache
