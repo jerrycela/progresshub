@@ -52,7 +52,7 @@ router.get(
 router.patch(
   "/settings",
   [
-    body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
+    body("name").optional().isString().trim().isLength({ min: 1, max: 50 }),
     body("email").optional().isEmail().normalizeEmail(),
     body("avatar").optional().isString().trim(),
   ],

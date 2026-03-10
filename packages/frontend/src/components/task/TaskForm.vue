@@ -5,6 +5,7 @@ import { DepartmentLabels } from 'shared/types'
 import SearchableSelect from '@/components/common/SearchableSelect.vue'
 import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 import MultiSearchSelect from '@/components/common/MultiSearchSelect.vue'
+import { VALIDATION } from '@/constants/pageSettings'
 
 export interface TaskFormData {
   title: string
@@ -66,6 +67,14 @@ const filteredEmployeeOptions = computed<SearchableOption[]>(() =>
   })),
 )
 
+const isPastDate = (dateStr: string): boolean => {
+  if (!dateStr) return false
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const date = new Date(dateStr + 'T00:00:00')
+  return date < today
+}
+
 const toggleFunctionTag = (tag: FunctionType): void => {
   const current = props.form.functionTags
   const newTags = current.includes(tag)
@@ -84,7 +93,16 @@ const toggleFunctionTag = (tag: FunctionType): void => {
       <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
         任務標題 <span style="color: var(--accent-primary)">*</span>
       </label>
-      <input v-model="form.title" type="text" placeholder="輸入任務標題" class="input w-full" />
+      <input
+        v-model="form.title"
+        type="text"
+        placeholder="輸入任務標題"
+        class="input w-full"
+        :maxlength="VALIDATION.TASK_TITLE_MAX_LENGTH"
+      />
+      <div class="text-xs text-right" style="color: var(--text-muted)">
+        {{ form.title.length }}/{{ VALIDATION.TASK_TITLE_MAX_LENGTH }}
+      </div>
     </div>
 
     <div>
@@ -96,7 +114,11 @@ const toggleFunctionTag = (tag: FunctionType): void => {
         rows="4"
         placeholder="輸入任務描述..."
         class="input w-full resize-none"
+        :maxlength="VALIDATION.DESCRIPTION_MAX_LENGTH"
       ></textarea>
+      <div class="text-xs text-right" style="color: var(--text-muted)">
+        {{ form.description.length }}/{{ VALIDATION.DESCRIPTION_MAX_LENGTH }}
+      </div>
     </div>
 
     <div>
@@ -160,6 +182,9 @@ const toggleFunctionTag = (tag: FunctionType): void => {
           @focus="($event.target as HTMLInputElement).type = 'date'"
           @blur="!form.startDate && (($event.target as HTMLInputElement).type = 'text')"
         />
+        <span v-if="isPastDate(form.startDate)" class="text-orange-500 text-xs mt-1 block">
+          此日期已過去
+        </span>
       </div>
       <div>
         <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
@@ -173,6 +198,9 @@ const toggleFunctionTag = (tag: FunctionType): void => {
           @focus="($event.target as HTMLInputElement).type = 'date'"
           @blur="!form.dueDate && (($event.target as HTMLInputElement).type = 'text')"
         />
+        <span v-if="isPastDate(form.dueDate)" class="text-orange-500 text-xs mt-1 block">
+          此日期已過去
+        </span>
       </div>
     </div>
   </div>

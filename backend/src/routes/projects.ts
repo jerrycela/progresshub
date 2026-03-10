@@ -232,9 +232,14 @@ router.post(
     body("name")
       .isString()
       .trim()
-      .isLength({ min: 1, max: 200 })
-      .withMessage("Name is required (max 200 chars)"),
-    body("description").optional().isString().trim(),
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Name is required (max 100 chars)"),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("startDate").isISO8601().withMessage("Valid start date is required"),
     body("endDate").isISO8601().withMessage("Valid end date is required"),
   ],
@@ -287,8 +292,13 @@ router.put(
   auditLog("UPDATE_PROJECT"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid project ID"),
-    body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
-    body("description").optional().isString().trim(),
+    body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("startDate").optional().isISO8601(),
     body("endDate").optional().isISO8601(),
     body("status").optional().isIn(["ACTIVE", "COMPLETED", "PAUSED"]),

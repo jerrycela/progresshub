@@ -12,6 +12,7 @@ import Select from '@/components/common/Select.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import type { User, UserRole, FunctionType, Department } from 'shared/types'
 import { validateField, commonRules } from '@/composables/useFormValidation'
+import { VALIDATION } from '@/constants/pageSettings'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -336,7 +337,12 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
     <!-- 編輯使用者對話框 (迭代 28: 使用 Input/Select 元件) -->
     <Modal v-model="showEditModal" title="編輯成員資料" size="md">
       <div class="space-y-4">
-        <Input v-model="editingUser.name" label="姓名" :error="formErrors.name" />
+        <Input
+          v-model="editingUser.name"
+          label="姓名"
+          :maxlength="VALIDATION.EMPLOYEE_NAME_MAX_LENGTH"
+          :error="formErrors.name"
+        />
         <Input v-model="editingUser.email" type="email" label="信箱" :error="formErrors.email" />
         <Select v-model="editingUser.role" label="角色" :options="roleFormOptions" />
         <Select v-model="editingUser.functionType" label="職能" :options="functionFormOptions" />
@@ -357,6 +363,7 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
           v-model="newUser.name"
           label="姓名"
           placeholder="輸入成員姓名"
+          :maxlength="VALIDATION.EMPLOYEE_NAME_MAX_LENGTH"
           :error="formErrors.name"
         />
         <Input

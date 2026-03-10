@@ -146,8 +146,8 @@ if (
         .optional()
         .isString()
         .trim()
-        .notEmpty()
-        .withMessage("Name is required for demo login"),
+        .isLength({ min: 1, max: 50 })
+        .withMessage("Name is required for demo login (max 50 chars)"),
       body("permissionLevel")
         .optional()
         .isIn(["EMPLOYEE", "MANAGER", "PM", "PRODUCER", "ADMIN"])

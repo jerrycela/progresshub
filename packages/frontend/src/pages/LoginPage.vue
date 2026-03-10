@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -14,6 +14,7 @@ const { showError } = useToast()
 const isLoading = ref(false)
 
 const demoName = ref('')
+const demoNameInput = ref<HTMLInputElement | null>(null)
 const demoRole = ref<UserRole>('EMPLOYEE')
 
 const demoRoleOptions: { label: string; value: UserRole }[] = [
@@ -76,6 +77,10 @@ onMounted(async () => {
     } catch {
       // Silently fail
     }
+    // Autofocus the demo name input field
+    nextTick(() => {
+      demoNameInput.value?.focus()
+    })
   }
 })
 
@@ -189,12 +194,19 @@ const handleDemoLogin = async () => {
           <div class="space-y-4">
             <!-- 姓名輸入 -->
             <div>
-              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+              <label
+                for="demo-name"
+                class="block text-sm font-medium mb-1"
+                style="color: var(--text-secondary)"
+              >
                 姓名
               </label>
               <input
+                id="demo-name"
+                ref="demoNameInput"
                 v-model="demoName"
                 type="text"
+                maxlength="50"
                 class="input w-full"
                 placeholder="請輸入您的姓名"
               />
@@ -202,14 +214,24 @@ const handleDemoLogin = async () => {
 
             <!-- 角色選擇 -->
             <div>
-              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+              <label
+                id="demo-role-label"
+                class="block text-sm font-medium mb-1"
+                style="color: var(--text-secondary)"
+              >
                 角色
               </label>
-              <div class="grid grid-cols-2 gap-2">
+              <div
+                class="grid grid-cols-2 gap-2"
+                role="radiogroup"
+                aria-labelledby="demo-role-label"
+              >
                 <button
                   v-for="option in demoRoleOptions"
                   :key="option.value"
                   type="button"
+                  role="radio"
+                  :aria-checked="demoRole === option.value"
                   class="px-3 py-2 rounded-lg text-sm font-medium transition-colors border"
                   :class="
                     demoRole === option.value
@@ -230,13 +252,18 @@ const handleDemoLogin = async () => {
 
             <!-- 專案選擇 (ADMIN has global access, no project scoping needed) -->
             <div v-if="projectOptions.length > 0 && demoRole !== 'ADMIN'">
-              <label class="block text-sm font-medium mb-1" style="color: var(--text-secondary)">
+              <label
+                id="demo-projects-label"
+                class="block text-sm font-medium mb-1"
+                style="color: var(--text-secondary)"
+              >
                 所屬專案（可複選）
               </label>
               <div class="space-y-2">
                 <label
                   v-for="project in projectOptions"
                   :key="project.id"
+                  :for="`demo-project-${project.id}`"
                   class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors border"
                   :class="
                     selectedProjects.includes(project.id) ? 'border-samurai bg-samurai/10' : ''
@@ -248,6 +275,7 @@ const handleDemoLogin = async () => {
                   "
                 >
                   <input
+                    :id="`demo-project-${project.id}`"
                     v-model="selectedProjects"
                     type="checkbox"
                     :value="project.id"

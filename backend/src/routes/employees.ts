@@ -137,8 +137,8 @@ router.post(
     body("name")
       .isString()
       .trim()
-      .isLength({ min: 1, max: 100 })
-      .withMessage("Name is required"),
+      .isLength({ min: 1, max: 50 })
+      .withMessage("Name is required (max 50 chars)"),
     body("email")
       .isEmail()
       .normalizeEmail()
@@ -209,7 +209,7 @@ router.put(
   auditLog("UPDATE_EMPLOYEE"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid employee ID"),
-    body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
+    body("name").optional().isString().trim().isLength({ min: 1, max: 50 }),
     body("email").optional().isEmail().normalizeEmail(),
     body("department").optional().isString().trim(),
     body("permissionLevel")

@@ -7,6 +7,7 @@ import Select from '@/components/common/Select.vue'
 import type { MilestoneData } from 'shared/types'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { useProjectStore } from '@/stores/projects'
+import { VALIDATION } from '@/constants/pageSettings'
 
 defineProps<{
   milestones: MilestoneData[]
@@ -169,8 +170,18 @@ const closeModal = () => {
           {{ editingMilestone ? '編輯里程碑' : '新增里程碑' }}
         </h4>
         <div class="space-y-3">
-          <Input v-model="newMilestone.name" label="名稱" placeholder="輸入里程碑名稱" />
-          <Input v-model="newMilestone.description" label="說明（選填）" placeholder="輸入說明" />
+          <Input
+            v-model="newMilestone.name"
+            label="名稱"
+            placeholder="輸入里程碑名稱"
+            :maxlength="VALIDATION.PROJECT_NAME_MAX_LENGTH"
+          />
+          <Input
+            v-model="newMilestone.description"
+            label="說明（選填）"
+            placeholder="輸入說明"
+            :maxlength="VALIDATION.DESCRIPTION_MAX_LENGTH"
+          />
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input v-model="newMilestone.date" type="date" label="日期" />
             <Select v-model="newMilestone.projectId" label="專案" :options="projectOptions" />
@@ -184,6 +195,8 @@ const closeModal = () => {
               <button
                 v-for="color in colorOptions"
                 :key="color.value"
+                :aria-label="`選擇顏色：${color.label}`"
+                :aria-pressed="newMilestone.color === color.value"
                 class="w-8 h-8 rounded-full border-2 transition-all cursor-pointer"
                 :class="
                   newMilestone.color === color.value

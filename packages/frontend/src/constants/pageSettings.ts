@@ -51,7 +51,11 @@ export const VALIDATION = {
   /** 專案名稱最小長度 */
   PROJECT_NAME_MIN_LENGTH: 2,
   /** 專案名稱最大長度 */
-  PROJECT_NAME_MAX_LENGTH: 50,
+  PROJECT_NAME_MAX_LENGTH: 100,
+  /** 員工姓名最大長度 */
+  EMPLOYEE_NAME_MAX_LENGTH: 50,
+  /** 說明/描述最大長度 */
+  DESCRIPTION_MAX_LENGTH: 5000,
 } as const
 
 /**

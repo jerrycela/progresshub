@@ -81,9 +81,14 @@ router.post(
     body("name")
       .isString()
       .trim()
-      .isLength({ min: 1, max: 200 })
-      .withMessage("Name is required"),
-    body("description").optional().isString().trim(),
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Name is required (max 100 chars)"),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("date").isISO8601().withMessage("Valid date is required"),
     body("color").optional().isString().trim(),
   ],
@@ -142,9 +147,14 @@ router.put(
       .optional()
       .isString()
       .trim()
-      .isLength({ min: 1, max: 200 })
-      .withMessage("Name must be 1-200 characters"),
-    body("description").optional().isString().trim(),
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Name must be 1-100 characters"),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("date").optional().isISO8601().withMessage("Valid date is required"),
     body("color").optional().isString().trim(),
   ],

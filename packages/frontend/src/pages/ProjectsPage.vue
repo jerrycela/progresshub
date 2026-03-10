@@ -6,6 +6,7 @@ import { useEmployeeStore } from '@/stores/employees'
 import { useToast } from '@/composables/useToast'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { commonRules, validateField } from '@/composables/useFormValidation'
+import { VALIDATION } from '@/constants/pageSettings'
 import Card from '@/components/common/Card.vue'
 import Button from '@/components/common/Button.vue'
 import Badge from '@/components/common/Badge.vue'
@@ -14,6 +15,7 @@ import ProgressBar from '@/components/common/ProgressBar.vue'
 import Input from '@/components/common/Input.vue'
 import Select from '@/components/common/Select.vue'
 import ProjectMembersModal from '@/components/project/ProjectMembersModal.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Project } from 'shared/types'
 
@@ -222,8 +224,30 @@ const canManageMembers = computed(() => {
       </Button>
     </div>
 
+    <!-- 空狀態 -->
+    <Card v-if="projects.length === 0">
+      <EmptyState
+        icon="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+        title="目前沒有專案"
+        description="建立第一個專案來開始管理任務與進度"
+        icon-size="lg"
+      >
+        <Button class="mt-4" @click="openCreateModal">
+          <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+          建立專案
+        </Button>
+      </EmptyState>
+    </Card>
+
     <!-- 專案列表 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card
         v-for="project in projects"
         :key="project.id"
@@ -310,6 +334,7 @@ const canManageMembers = computed(() => {
           label="專案名稱"
           placeholder="輸入專案名稱"
           required
+          :maxlength="VALIDATION.PROJECT_NAME_MAX_LENGTH"
           :error="formErrors.name"
         />
         <div>
@@ -321,7 +346,11 @@ const canManageMembers = computed(() => {
             rows="3"
             class="input"
             placeholder="輸入專案說明"
+            :maxlength="VALIDATION.DESCRIPTION_MAX_LENGTH"
           />
+          <div class="text-xs text-right mt-1" style="color: var(--text-muted)">
+            {{ (editingProject.description || '').length }}/{{ VALIDATION.DESCRIPTION_MAX_LENGTH }}
+          </div>
         </div>
         <!-- 日期選擇 (RWD: 迭代 27 - 行動裝置堆疊) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

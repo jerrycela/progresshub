@@ -235,9 +235,14 @@ router.post(
     body("title")
       .isString()
       .trim()
-      .isLength({ min: 1, max: 200 })
-      .withMessage("Title is required"),
-    body("description").optional().isString().trim(),
+      .isLength({ min: 1, max: 100 })
+      .withMessage("Title is required (max 100 chars)"),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("priority").optional().isIn(["LOW", "MEDIUM", "HIGH", "URGENT"]),
     body("assigneeId").optional().isString().trim().notEmpty(),
     body("functionTags").optional().isArray(),
@@ -324,8 +329,13 @@ router.put(
   authorizeTaskAccess,
   auditLog("UPDATE_TASK"),
   [
-    body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
-    body("description").optional().isString().trim(),
+    body("name").optional().isString().trim().isLength({ min: 1, max: 100 }),
+    body("description")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ max: 5000 })
+      .withMessage("Description must be at most 5000 chars"),
     body("priority").optional().isIn(["LOW", "MEDIUM", "HIGH", "URGENT"]),
     body("assignedToId").optional().isString().trim().notEmpty(),
     body("collaborators").optional().isArray(),

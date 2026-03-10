@@ -5,6 +5,7 @@ import { roleLabels, functionTypeLabels, departmentLabels } from '@/constants/la
 import Badge from '@/components/common/Badge.vue'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
+import { VALIDATION } from '@/constants/pageSettings'
 
 // ============================================
 // 個人資料設定頁
@@ -156,7 +157,11 @@ const changeAvatar = (): void => {
               type="text"
               class="input w-full"
               placeholder="請輸入姓名"
+              :maxlength="VALIDATION.EMPLOYEE_NAME_MAX_LENGTH"
             />
+            <div v-if="isEditing" class="text-xs text-right mt-1" style="color: var(--text-muted)">
+              {{ formData.name.length }}/{{ VALIDATION.EMPLOYEE_NAME_MAX_LENGTH }}
+            </div>
             <p v-else class="py-2" style="color: var(--text-primary)">
               {{ user.name }}
             </p>

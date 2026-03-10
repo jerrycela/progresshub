@@ -122,7 +122,12 @@ onBeforeUnmount(() => {
           style="background: var(--accent-light); color: var(--accent)"
         >
           {{ tag.label }}
-          <button type="button" class="hover:opacity-70" @click.stop="remove(tag.value)">
+          <button
+            type="button"
+            class="hover:opacity-70"
+            :aria-label="`移除 ${tag.label}`"
+            @click.stop="remove(tag.value)"
+          >
             &times;
           </button>
         </span>
