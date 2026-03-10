@@ -48,11 +48,11 @@ router.get(
           select: { projectId: true },
         });
         const projectIds = memberships.map((m) => m.projectId);
-        const allMilestones = await milestoneService.getMilestones(undefined);
-        const filtered = allMilestones.filter((m) =>
-          projectIds.includes(m.projectId),
+        const milestones = await milestoneService.getMilestones(
+          undefined,
+          projectIds,
         );
-        sendSuccess(res, filtered.map(toMilestoneDTO));
+        sendSuccess(res, milestones.map(toMilestoneDTO));
         return;
       }
 

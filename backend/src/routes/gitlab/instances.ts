@@ -89,7 +89,41 @@ router.post(
   "/",
   [
     body("name").isString().trim().notEmpty().withMessage("Name is required"),
-    body("baseUrl").isURL().withMessage("Valid URL is required"),
+    body("baseUrl")
+      .isURL({ protocols: ["https"], require_protocol: true })
+      .withMessage("Valid HTTPS URL is required")
+      .custom((value: string) => {
+        const url = new URL(value);
+        const hostname = url.hostname.toLowerCase();
+        // Block internal/private network addresses
+        const blocked = [
+          "localhost",
+          "127.0.0.1",
+          "0.0.0.0",
+          "::1",
+          "169.254.169.254", // cloud metadata
+          "metadata.google.internal",
+        ];
+        if (blocked.includes(hostname)) {
+          throw new Error("Internal network addresses are not allowed");
+        }
+        // Block private IP ranges
+        const parts = hostname.split(".");
+        if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
+          const first = parseInt(parts[0]);
+          const second = parseInt(parts[1]);
+          if (
+            first === 10 ||
+            first === 127 ||
+            (first === 172 && second >= 16 && second <= 31) ||
+            (first === 192 && second === 168) ||
+            first === 0
+          ) {
+            throw new Error("Private network addresses are not allowed");
+          }
+        }
+        return true;
+      }),
     body("clientId")
       .isString()
       .trim()

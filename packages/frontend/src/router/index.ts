@@ -155,6 +155,8 @@ const getRequiredRoles = (to: RouteLocationNormalized): UserRole[] | null => {
 }
 
 let authInitialized = false
+let authInitRetries = 0
+const MAX_AUTH_RETRIES = 3
 
 router.beforeEach(async (to, _from, next) => {
   // 動態導入 auth store（避免循環依賴）
@@ -168,6 +170,12 @@ router.beforeEach(async (to, _from, next) => {
       const result = await authStore.initAuth()
       if (result.success || !localStorage.getItem('auth_token')) {
         authInitialized = true
+        authInitRetries = 0
+      } else {
+        authInitRetries++
+        if (authInitRetries >= MAX_AUTH_RETRIES) {
+          authInitialized = true
+        }
       }
     } else {
       authInitialized = true

@@ -90,7 +90,11 @@ class ApiProjectService implements ProjectServiceInterface {
   }
 
   async getProjectById(id: string): Promise<Project | undefined> {
-    return apiGetUnwrap<Project>(`/projects/${id}`)
+    try {
+      return await apiGetUnwrap<Project>(`/projects/${id}`)
+    } catch {
+      return undefined
+    }
   }
 
   async createProject(input: CreateProjectInput): Promise<ActionResult<Project>> {

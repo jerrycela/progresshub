@@ -204,12 +204,20 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async getTaskById(id: string): Promise<Task | undefined> {
-    return apiGetUnwrap<Task>(`/tasks/${id}`)
+    try {
+      return await apiGetUnwrap<Task>(`/tasks/${id}`)
+    } catch {
+      return undefined
+    }
   }
 
   async getPoolTaskById(id: string): Promise<PoolTask | undefined> {
-    const task = await apiGetUnwrap<Task>(`/tasks/pool/${id}`)
-    return this.toPoolTask(task)
+    try {
+      const task = await apiGetUnwrap<Task>(`/tasks/pool/${id}`)
+      return this.toPoolTask(task)
+    } catch {
+      return undefined
+    }
   }
 
   async createTask(input: CreateTaskInput): Promise<ActionResult<Task>> {

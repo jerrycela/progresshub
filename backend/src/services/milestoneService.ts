@@ -6,14 +6,19 @@ type MilestoneWithCreator = Milestone & {
 };
 
 export class MilestoneService {
-  async getMilestones(projectId?: string): Promise<MilestoneWithCreator[]> {
+  async getMilestones(
+    projectId?: string,
+    projectIds?: string[],
+  ): Promise<MilestoneWithCreator[]> {
     const where: Prisma.MilestoneWhereInput = {};
     if (projectId) {
       where.projectId = projectId;
+    } else if (projectIds) {
+      where.projectId = { in: projectIds };
     }
 
     return prisma.milestone.findMany({
-      where,
+      where: Object.keys(where).length > 0 ? where : undefined,
       orderBy: { targetDate: "asc" },
       include: {
         createdBy: { select: { id: true, name: true } },

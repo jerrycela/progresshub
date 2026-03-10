@@ -54,7 +54,7 @@ describe('MilestoneService', () => {
 
       expect(result).toEqual([mockMilestone]);
       expect(mockedPrisma.milestone.findMany).toHaveBeenCalledWith({
-        where: {},
+        where: undefined,
         orderBy: { targetDate: 'asc' },
         include: { createdBy: { select: { id: true, name: true } } },
       });
