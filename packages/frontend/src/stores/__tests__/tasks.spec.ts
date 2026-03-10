@@ -150,13 +150,15 @@ describe('useTaskStore', () => {
       expect((await result).error?.code).toBe('TASK_NOT_UNCLAIMED')
     })
 
-    it('should fail when task does not exist', async () => {
+    it('should proceed to API when task not in local tasks array', async () => {
       const store = setupWithMockData()
 
-      const result = await store.claimTask('nonexistent-id', 'emp-1')
+      const claimPromise = store.claimTask('nonexistent-id', 'emp-1')
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await claimPromise
 
-      expect(result.success).toBe(false)
-      expect(result.error?.code).toBe('TASK_NOT_FOUND')
+      // Mock service doesn't validate existence, so it succeeds
+      expect(result.success).toBe(true)
     })
 
     it('should set claim loading state during operation', async () => {
@@ -232,13 +234,15 @@ describe('useTaskStore', () => {
       expect(result.error?.code).toBe('TASK_UPDATE_FAILED')
     })
 
-    it('should fail when task does not exist', async () => {
+    it('should proceed to API when task not in local tasks array', async () => {
       const store = setupWithMockData()
 
-      const result = await store.unclaimTask('nonexistent-id')
+      const unclaimPromise = store.unclaimTask('nonexistent-id')
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await unclaimPromise
 
-      expect(result.success).toBe(false)
-      expect(result.error?.code).toBe('TASK_NOT_FOUND')
+      // Mock service doesn't validate existence, so it succeeds
+      expect(result.success).toBe(true)
     })
   })
 
