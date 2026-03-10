@@ -95,6 +95,7 @@ export interface TaskListParams {
   limit?: number;
   userId?: string;
   userRole?: string;
+  authorizedProjectIds?: string[];
 }
 
 export class TaskService {
@@ -110,20 +111,28 @@ export class TaskService {
     const where: Prisma.TaskWhereInput = {};
 
     if (projectId) {
+      // If scope filtering is active, verify the requested project is authorized
+      if (
+        params.authorizedProjectIds &&
+        !params.authorizedProjectIds.includes(projectId)
+      ) {
+        return { data: [], total: 0 };
+      }
       where.projectId = projectId;
+    } else if (params.authorizedProjectIds) {
+      where.projectId = { in: params.authorizedProjectIds };
+    } else if (params.userId && params.userRole !== "ADMIN") {
+      // Fallback: query project membership inline
+      where.project = {
+        members: { some: { employeeId: params.userId } },
+      };
     }
+
     if (assignedToId) {
       where.assignedToId = assignedToId;
     }
     if (status) {
       where.status = status;
-    }
-
-    // Non-ADMIN: only show tasks from member projects
-    if (params.userId && params.userRole !== "ADMIN") {
-      where.project = {
-        members: { some: { employeeId: params.userId } },
-      };
     }
 
     const [data, total] = await Promise.all([
@@ -146,11 +155,15 @@ export class TaskService {
   async getPoolTasks(
     userId?: string,
     userRole?: PermissionLevel,
+    authorizedProjectIds?: string[],
   ): Promise<Task[]> {
     const where: Prisma.TaskWhereInput = {};
 
-    // Non-ADMIN: only show tasks from member projects
-    if (userId && userRole !== "ADMIN") {
+    // Non-ADMIN: filter by authorized projects
+    if (authorizedProjectIds) {
+      where.projectId = { in: authorizedProjectIds };
+    } else if (userId && userRole !== "ADMIN") {
+      // Fallback: query project membership inline
       where.project = {
         members: { some: { employeeId: userId } },
       };

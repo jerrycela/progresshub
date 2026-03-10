@@ -3,6 +3,10 @@ import { body, param, query, validationResult } from "express-validator";
 import { progressService } from "../services/progressService";
 import { taskService } from "../services/taskService";
 import { authenticate, AuthRequest, isProjectMember } from "../middleware/auth";
+import {
+  requireProjectMember,
+  requireProjectScope,
+} from "../middleware/projectAuth";
 import { PermissionLevel } from "@prisma/client";
 import {
   sendSuccess,
@@ -25,6 +29,7 @@ router.use(sanitizeBody);
  */
 router.get(
   "/",
+  requireProjectScope,
   [
     query("taskId").optional().isString().trim().notEmpty(),
     query("employeeId").optional().isString().trim().notEmpty(),
@@ -72,6 +77,7 @@ router.get(
           : undefined,
         page,
         limit,
+        authorizedProjectIds: (req as any).authorizedProjectIds,
       });
 
       sendPaginatedSuccess(res, result.data, {
@@ -121,6 +127,7 @@ router.get("/today", async (req: AuthRequest, res: Response): Promise<void> => {
  */
 router.get(
   "/project/:projectId/stats",
+  requireProjectMember("projectId"),
   [
     param("projectId")
       .isString()
@@ -143,23 +150,6 @@ router.get(
     }
 
     try {
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          req.params.projectId,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
       const days = Number(req.query.days) || 7;
       const stats = await progressService.getProjectProgressStats(
         req.params.projectId,
@@ -215,24 +205,25 @@ router.post(
 
       const { taskId, progressPercentage, notes } = req.body;
 
-      // 驗證任務存在
+      // Load task and verify project membership in one logical step
+      // Return uniform 404 for: task not found, not a project member, not assignee/collaborator
       const task = await taskService.getTaskById(taskId);
-      if (!task) {
-        sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
+      if (
+        !task ||
+        !(await isProjectMember(
+          req.user.userId,
+          task.projectId,
+          req.user.permissionLevel,
+        ))
+      ) {
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
 
-      // 驗證使用者是任務的負責人或協作者
       const isAssigned = task.assignedToId === req.user.userId;
       const isCollaborator = task.collaborators.includes(req.user.userId);
-
       if (!isAssigned && !isCollaborator) {
-        sendError(
-          res,
-          ErrorCodes.AUTH_UNAUTHORIZED,
-          "You are not assigned to this task",
-          403,
-        );
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
 

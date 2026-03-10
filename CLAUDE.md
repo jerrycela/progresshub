@@ -154,6 +154,23 @@ docker compose up -d                 # All services
 - Zeabur CLI: use `variable create` to set env vars (never `variable update` — it wipes all existing vars)
 - Container startup: `prisma migrate deploy` → `seed` → `node dist/index.js`.
 
+### Zeabur 部署流程 (CRITICAL — 每次部署前必讀)
+
+**部署前必須先讀取踩坑文件：**
+1. 讀取 Obsidian: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/SG-Arts Group/SG-Arts Group/Zeabur 部署踩坑紀錄.md`
+2. 讀取 memory: `~/.claude/projects/-Users-admin-progresshub-claude/memory/zeabur-deployment.md`
+
+**部署腳本 (永遠使用腳本，不要手動 CLI):**
+- 後端: `./scripts/deploy-backend.sh` (type check → zeabur deploy → health verify)
+- 前端: `./scripts/deploy-frontend.sh` (type check → vite build → zeabur deploy → verify)
+
+**致命陷阱速查:**
+- `zeabur variable delete` 會清空所有變數 → 永遠不用
+- `${VAR}` 在 CLI 會被 shell 展開 → Dashboard 設定
+- Dockerfile build stage 用 `NODE_ENV=development npm install` → 防 devDeps 被跳過
+- Git push 會觸發 nodejs 自動部署覆蓋 Docker → 後端已斷開 GitHub 自動部署
+- 所有服務必須監聽 8080 (Zeabur 注入 WEB_PORT=8080)
+
 ## Frontend Design System
 
 - **Form elements**: Must use `.input` class (defined in `main.css`). Never use `.input-field`.
@@ -202,6 +219,17 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 | `FRONTEND_URL` | Backend `.env` | Frontend URL, falls back to first `ALLOWED_ORIGINS` entry |
 
 Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
+
+## Quality Gate: Wave 完成後聯合 Review (標準流程)
+
+每個 Wave/Batch 完成後，必須執行以下流程才能進入下一輪：
+
+1. **Claude Opus 自審**: 審查所有變更的程式碼品質、安全性、與計畫一致性
+2. **Codex GPT-5.3 Review**: `codex exec --full-auto -c 'model="gpt-5.3-codex"'` 對變更做獨立審查
+3. **辯證整合**: 若兩方有分歧，以更嚴格的意見為準，修正後重新驗證
+4. **通過條件**: 兩方都無 P0/P1 finding → 進入下一輪
+
+不可跳過此流程。每輪結果記錄在 commit message 或 PR description 中。
 
 ## References
 

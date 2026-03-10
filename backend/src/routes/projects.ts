@@ -1,12 +1,8 @@
 import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { projectService } from "../services/projectService";
-import {
-  authenticate,
-  authorize,
-  AuthRequest,
-  isProjectMember,
-} from "../middleware/auth";
+import { authenticate, authorize, AuthRequest } from "../middleware/auth";
+import { requireProjectMember } from "../middleware/projectAuth";
 import { auditLog } from "../middleware/auditLog";
 import { Prisma } from "@prisma/client";
 import { PermissionLevel, ProjectStatus } from "@prisma/client";
@@ -115,6 +111,7 @@ router.get(
  */
 router.get(
   "/:id",
+  requireProjectMember("id"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -133,23 +130,6 @@ router.get(
       const project = await projectService.getProjectById(req.params.id);
       if (!project) {
         sendError(res, ErrorCodes.PROJECT_NOT_FOUND, "Project not found", 404);
-        return;
-      }
-
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          req.params.id,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
         return;
       }
 
@@ -172,6 +152,7 @@ router.get(
  */
 router.get(
   "/:id/stats",
+  requireProjectMember("id"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -187,23 +168,6 @@ router.get(
     }
 
     try {
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          req.params.id,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
       const stats = await projectService.getProjectStats(req.params.id);
       sendSuccess(res, stats);
     } catch (error) {
@@ -224,6 +188,7 @@ router.get(
  */
 router.get(
   "/:id/gantt",
+  requireProjectMember("id"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
@@ -239,23 +204,6 @@ router.get(
     }
 
     try {
-      // Project membership check
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          req.params.id,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
       const ganttData = await projectService.getGanttData(req.params.id);
       sendSuccess(res, ganttData);
     } catch (error) {

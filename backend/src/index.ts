@@ -78,35 +78,49 @@ const corsOptions: cors.CorsOptions = {
 };
 app.use(cors(corsOptions));
 
-// Rate Limiting: 每使用者 120 req/min（支援 200 人同時在線）
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 分鐘
-  max: 120, // 每位使用者 120 次/分
-  keyGenerator: (req) => {
-    const authReq = req as { user?: { userId: string } };
-    return (
-      authReq.user?.userId || req.ip || req.socket.remoteAddress || "anonymous"
-    );
-  },
-  message: { error: "Too many requests, please try again later." },
-  standardHeaders: true,
-  legacyHeaders: false,
-  validate: { keyGeneratorIpFallback: false }, // userId is primary key; IP is fallback only
-});
+// Rate Limiting
 
+// Auth rate limiter (IP-based, before authenticate)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 分鐘
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || "10"),
-  message: { error: "Too many login attempts, please try again later." },
+  max:
+    parseInt(
+      process.env.RATE_LIMIT_AUTH_MAX ||
+        process.env.AUTH_RATE_LIMIT_MAX ||
+        "10",
+    ) || 10,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: { code: "RATE_LIMITED", message: "請求過於頻繁，請稍後再試" },
+    });
+  },
 });
 
-app.use("/api/", apiLimiter);
+// Global API rate limiter (IP-based DDoS protection layer)
+// Note: userId-based fine-grained limiting should be added at router level after authenticate
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 分鐘
+  max: parseInt(process.env.RATE_LIMIT_API_MAX || "300") || 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: { code: "RATE_LIMITED", message: "請求過於頻繁，請稍後再試" },
+    });
+  },
+});
+
+// Auth rate limiter on sensitive endpoints (IP-based, before authenticate)
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/dev-login", authLimiter);
 app.use("/api/auth/slack", authLimiter);
 app.use("/api/auth/refresh", authLimiter);
+// Global API rate limiter (IP-based, high threshold for DDoS protection)
+app.use("/api/", globalLimiter);
 
 // Preserve raw body for Slack signature verification
 const preserveRawBody = (req: any, _res: any, buf: Buffer) => {
@@ -159,6 +173,10 @@ const startServer = async () => {
       logger.info(`Environment: ${env.NODE_ENV}`);
       logger.info(`Scheduler: ${enableScheduler ? "enabled" : "disabled"}`);
       logger.info(`Health check: http://localhost:${env.PORT}/health`);
+      logger.info("Trust proxy config", {
+        trustProxy: app.get("trust proxy"),
+        note: "Expects 1 for Zeabur single-layer reverse proxy",
+      });
       if (env.NODE_ENV !== "production") {
         logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
       }

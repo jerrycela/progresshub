@@ -1,6 +1,7 @@
 import { Router, Response } from "express";
 import { body, validationResult } from "express-validator";
 import { AuthRequest, JwtPayload } from "../middleware/auth";
+import { requireProjectMember } from "../middleware/projectAuth";
 import prisma from "../config/database";
 import logger from "../config/logger";
 import { sendSuccess, sendError } from "../utils/response";
@@ -58,58 +59,48 @@ async function canManageMembers(
 /**
  * GET /api/projects/:projectId/members
  */
-router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { projectId } = req.params;
-    const user = req.user!;
+router.get(
+  "/",
+  requireProjectMember("projectId"),
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const { projectId } = req.params;
 
-    // ADMIN, PM, PRODUCER, MANAGER can view any project's members
-    if (
-      !["ADMIN", "PM", "PRODUCER", "MANAGER"].includes(user.permissionLevel)
-    ) {
-      // EMPLOYEE can only view if they are a member
-      const isMember = await prisma.projectMember.findUnique({
-        where: { projectId_employeeId: { projectId, employeeId: user.userId } },
-      });
-      if (!isMember) {
-        sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Permission denied", 403);
-        return;
-      }
-    }
-
-    const members = await prisma.projectMember.findMany({
-      where: { projectId },
-      include: {
-        employee: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            department: true,
-            permissionLevel: true,
+      const members = await prisma.projectMember.findMany({
+        where: { projectId },
+        include: {
+          employee: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              department: true,
+              permissionLevel: true,
+            },
           },
         },
-      },
-      orderBy: { createdAt: "asc" },
-    });
+        orderBy: { createdAt: "asc" },
+      });
 
-    sendSuccess(res, members);
-  } catch (error) {
-    logger.error("List project members error:", error);
-    sendError(
-      res,
-      ErrorCodes.SERVER_ERROR,
-      "Failed to list project members",
-      500,
-    );
-  }
-});
+      sendSuccess(res, members);
+    } catch (error) {
+      logger.error("List project members error:", error);
+      sendError(
+        res,
+        ErrorCodes.SERVER_ERROR,
+        "Failed to list project members",
+        500,
+      );
+    }
+  },
+);
 
 /**
  * POST /api/projects/:projectId/members
  */
 router.post(
   "/",
+  requireProjectMember("projectId"),
   [
     body("employeeIds")
       .isArray({ min: 1 })
@@ -168,6 +159,7 @@ router.post(
  */
 router.delete(
   "/:employeeId",
+  requireProjectMember("projectId"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     try {
       const { projectId, employeeId } = req.params;

@@ -24,6 +24,7 @@ export interface ProgressListParams {
   endDate?: Date;
   page?: number;
   limit?: number;
+  authorizedProjectIds?: string[];
 }
 
 export class ProgressService {
@@ -50,6 +51,13 @@ export class ProgressService {
     }
     if (employeeId) {
       where.employeeId = employeeId;
+    }
+    // Scope to authorized projects (ProgressLog → task → projectId)
+    if (params.authorizedProjectIds) {
+      where.task = {
+        ...((where.task as Prisma.TaskWhereInput) ?? {}),
+        projectId: { in: params.authorizedProjectIds },
+      };
     }
     if (startDate || endDate) {
       where.reportedAt = {};

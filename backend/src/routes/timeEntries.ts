@@ -2,7 +2,10 @@ import { Router, Response } from "express";
 import { body, param, query, validationResult } from "express-validator";
 import { timeEntryService } from "../services/timeEntryService";
 import { authenticate, AuthRequest, isProjectMember } from "../middleware/auth";
-import { PermissionLevel } from "@prisma/client";
+import {
+  requireProjectScope,
+  requireResourceOwner,
+} from "../middleware/projectAuth";
 import { getStartOfWeek, getStartOfDay } from "../utils/dateUtils";
 import {
   sendSuccess,
@@ -25,6 +28,7 @@ router.use(sanitizeBody);
  */
 router.get(
   "/",
+  requireProjectScope,
   [
     query("employeeId").optional().isString().trim().notEmpty(),
     query("projectId").optional().isString().trim().notEmpty(),
@@ -56,25 +60,6 @@ router.get(
         employeeId = req.user.userId;
       }
 
-      // IDOR protection: if projectId is specified, verify membership
-      const projectId = req.query.projectId as string;
-      if (
-        projectId &&
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          projectId,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
-        return;
-      }
-
       const page = Number(req.query.page) || 1;
       const limit = Number(req.query.limit) || 50;
 
@@ -91,6 +76,7 @@ router.get(
           : undefined,
         page,
         limit,
+        authorizedProjectIds: (req as any).authorizedProjectIds,
       });
 
       sendPaginatedSuccess(res, result.data, {
@@ -177,6 +163,7 @@ router.get(
 router.get(
   "/:id",
   [param("id").isString().trim().notEmpty()],
+  requireResourceOwner("timeEntry", "id"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -200,23 +187,6 @@ router.get(
           404,
         );
         return;
-      }
-
-      // 檢查權限: owner always allowed, ADMIN always allowed
-      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
-      const isOwner = entry.employeeId === req.user?.userId;
-      if (!isAdmin && !isOwner) {
-        // PM needs project membership; EMPLOYEE denied for others' entries
-        if (
-          !(await isProjectMember(
-            req.user?.userId ?? "",
-            entry.projectId,
-            req.user?.permissionLevel!,
-          ))
-        ) {
-          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
-          return;
-        }
       }
 
       sendSuccess(res, entry);
@@ -283,12 +253,7 @@ router.post(
           req.user.permissionLevel,
         ))
       ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
 
@@ -356,12 +321,7 @@ router.post(
             req.user.permissionLevel,
           ))
         ) {
-          sendError(
-            res,
-            ErrorCodes.PERM_DENIED,
-            `Not a member of project ${projectId}`,
-            403,
-          );
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
           return;
         }
       }
@@ -399,6 +359,7 @@ router.put(
     body("hours").optional().isFloat({ min: 0.25, max: 12 }),
     body("description").optional().isString().trim().isLength({ max: 1000 }),
   ],
+  requireResourceOwner("timeEntry", "id"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -424,18 +385,28 @@ router.put(
         return;
       }
 
-      // Authorization: ADMIN always, owner always, PM only if project member
-      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      // Owner or ADMIN can edit; project members can view but not edit others' entries
+      const isAdmin = req.user?.permissionLevel === "ADMIN";
       const isOwner = existing.employeeId === req.user?.userId;
       if (!isAdmin && !isOwner) {
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+        return;
+      }
+
+      // If moving to a different project, verify membership on the new project
+      if (
+        req.body.projectId &&
+        req.body.projectId !== existing.projectId &&
+        !isAdmin
+      ) {
         if (
           !(await isProjectMember(
             req.user?.userId ?? "",
-            existing.projectId,
+            req.body.projectId,
             req.user?.permissionLevel!,
           ))
         ) {
-          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
           return;
         }
       }
@@ -463,6 +434,7 @@ router.put(
 router.delete(
   "/:id",
   [param("id").isString().trim().notEmpty()],
+  requireResourceOwner("timeEntry", "id"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -488,20 +460,12 @@ router.delete(
         return;
       }
 
-      // Authorization: ADMIN always, owner always, PM only if project member
-      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
+      // Owner or ADMIN can delete; project members can view but not delete others' entries
+      const isAdmin = req.user?.permissionLevel === "ADMIN";
       const isOwner = existing.employeeId === req.user?.userId;
       if (!isAdmin && !isOwner) {
-        if (
-          !(await isProjectMember(
-            req.user?.userId ?? "",
-            existing.projectId,
-            req.user?.permissionLevel!,
-          ))
-        ) {
-          sendError(res, ErrorCodes.PERM_DENIED, "Access denied", 403);
-          return;
-        }
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+        return;
       }
 
       await timeEntryService.deleteTimeEntry(req.params.id);

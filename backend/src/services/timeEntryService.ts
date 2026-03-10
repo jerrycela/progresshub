@@ -36,6 +36,7 @@ export interface TimeEntryListParams {
   endDate?: Date;
   page?: number;
   limit?: number;
+  authorizedProjectIds?: string[];
 }
 
 export interface WeeklyTimesheet {
@@ -73,7 +74,18 @@ export class TimeEntryService {
     const where: Prisma.TimeEntryWhereInput = {};
 
     if (employeeId) where.employeeId = employeeId;
-    if (projectId) where.projectId = projectId;
+    if (projectId) {
+      // If scope filtering is active, verify the requested project is authorized
+      if (
+        params.authorizedProjectIds &&
+        !params.authorizedProjectIds.includes(projectId)
+      ) {
+        return { data: [], total: 0 };
+      }
+      where.projectId = projectId;
+    } else if (params.authorizedProjectIds) {
+      where.projectId = { in: params.authorizedProjectIds };
+    }
     if (taskId) where.taskId = taskId;
     if (categoryId) where.categoryId = categoryId;
     if (startDate || endDate) {

@@ -3,10 +3,14 @@ import { body, param, query, validationResult } from "express-validator";
 import { taskService } from "../services/taskService";
 import {
   authorize,
-  AuthRequest,
   authorizeTaskAccess,
+  AuthRequest,
   isProjectMember,
 } from "../middleware/auth";
+import {
+  requireResourceOwner,
+  requireProjectScope,
+} from "../middleware/projectAuth";
 import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel, Prisma } from "@prisma/client";
 import logger from "../config/logger";
@@ -26,26 +30,31 @@ const router = Router();
  * 取得任務池（UNCLAIMED 任務）
  * 注意：此路由必須在 /:id 之前定義
  */
-router.get("/pool", async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const tasks = await taskService.getPoolTasks(
-      req.user?.userId,
-      req.user?.permissionLevel,
-    );
-    sendSuccess(
-      res,
-      tasks.map((t) => toTaskDTO(t)),
-    );
-  } catch (error) {
-    logger.error("Get pool tasks error:", error);
-    sendError(
-      res,
-      ErrorCodes.TASK_FETCH_FAILED,
-      "Failed to get pool tasks",
-      500,
-    );
-  }
-});
+router.get(
+  "/pool",
+  requireProjectScope,
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const tasks = await taskService.getPoolTasks(
+        req.user?.userId,
+        req.user?.permissionLevel,
+        (req as any).authorizedProjectIds,
+      );
+      sendSuccess(
+        res,
+        tasks.map((t) => toTaskDTO(t)),
+      );
+    } catch (error) {
+      logger.error("Get pool tasks error:", error);
+      sendError(
+        res,
+        ErrorCodes.TASK_FETCH_FAILED,
+        "Failed to get pool tasks",
+        500,
+      );
+    }
+  },
+);
 
 /**
  * GET /pool/:id
@@ -54,6 +63,7 @@ router.get("/pool", async (req: AuthRequest, res: Response): Promise<void> => {
 router.get(
   "/pool/:id",
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
+  requireResourceOwner("task", "id"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -71,23 +81,6 @@ router.get(
       const task = await taskService.getTaskById(req.params.id);
       if (!task) {
         sendError(res, ErrorCodes.TASK_NOT_FOUND, "Task not found", 404);
-        return;
-      }
-
-      // IDOR protection: verify user is a member of the task's project
-      if (
-        !(await isProjectMember(
-          req.user?.userId ?? "",
-          task.projectId,
-          req.user?.permissionLevel!,
-        ))
-      ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
         return;
       }
 
@@ -131,6 +124,7 @@ router.get("/my", async (req: AuthRequest, res: Response): Promise<void> => {
  */
 router.get(
   "/",
+  requireProjectScope,
   [
     query("projectId").optional().isString().trim().notEmpty(),
     query("assignedToId").optional().isString().trim().notEmpty(),
@@ -173,6 +167,7 @@ router.get(
           : undefined,
         userId: req.user?.userId,
         userRole: req.user?.permissionLevel,
+        authorizedProjectIds: (req as any).authorizedProjectIds,
       });
 
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
@@ -197,6 +192,7 @@ router.get(
 router.get(
   "/:id",
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
+  requireResourceOwner("task", "id"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -277,12 +273,7 @@ router.post(
           req.user?.permissionLevel!,
         ))
       ) {
-        sendError(
-          res,
-          ErrorCodes.PERM_DENIED,
-          "Not a member of this project",
-          403,
-        );
+        sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
         return;
       }
 
@@ -328,10 +319,11 @@ router.post(
  */
 router.put(
   "/:id",
+  [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
+  requireResourceOwner("task", "id"),
   authorizeTaskAccess,
   auditLog("UPDATE_TASK"),
   [
-    param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
     body("name").optional().isString().trim().isLength({ min: 1, max: 200 }),
     body("description").optional().isString().trim(),
     body("priority").optional().isIn(["LOW", "MEDIUM", "HIGH", "URGENT"]),
@@ -409,8 +401,9 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
-  auditLog("DELETE_TASK"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
+  requireResourceOwner("task", "id"),
+  auditLog("DELETE_TASK"),
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
