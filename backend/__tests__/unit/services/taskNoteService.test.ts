@@ -52,6 +52,7 @@ describe('TaskNoteService', () => {
       expect(mockedPrisma.taskNote.findMany).toHaveBeenCalledWith({
         where: { taskId: 'task-001' },
         orderBy: { createdAt: 'desc' },
+        take: 200,
       });
     });
 

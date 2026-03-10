@@ -13,6 +13,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import type { User, UserRole, FunctionType, Department } from 'shared/types'
 import { validateField, commonRules } from '@/composables/useFormValidation'
 import { VALIDATION } from '@/constants/pageSettings'
+import { useToast } from '@/composables/useToast'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -20,6 +21,7 @@ import { VALIDATION } from '@/constants/pageSettings'
 // ============================================
 
 const employeeStore = useEmployeeStore()
+const { showError } = useToast()
 
 // 將員工資料轉為 User 格式供頁面使用
 const users = computed<User[]>(() =>
@@ -128,6 +130,8 @@ const saveUser = async () => {
     if (result.success) {
       showEditModal.value = false
     }
+  } catch {
+    showError('儲存失敗，請稍後再試')
   } finally {
     isSaving.value = false
   }
@@ -178,6 +182,8 @@ const createUser = async () => {
     if (result.success) {
       showCreateModal.value = false
     }
+  } catch {
+    showError('儲存失敗，請稍後再試')
   } finally {
     isSaving.value = false
   }

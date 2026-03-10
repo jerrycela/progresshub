@@ -16,6 +16,7 @@ export class TaskNoteService {
     return prisma.taskNote.findMany({
       where: { taskId },
       orderBy: { createdAt: "desc" },
+      take: 200,
     });
   }
 

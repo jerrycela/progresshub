@@ -63,6 +63,15 @@ const cancelEditing = (): void => {
 
 // 儲存變更
 const saveChanges = async (): Promise<void> => {
+  if (!formData.value.name.trim()) {
+    showError('姓名不可為空')
+    return
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.value.email)) {
+    showError('請輸入有效的 Email 格式')
+    return
+  }
   isSaving.value = true
   try {
     const result = await userSettingsStore.updateSettings({

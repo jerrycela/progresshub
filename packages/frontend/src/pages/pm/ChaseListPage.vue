@@ -238,7 +238,11 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
     </Card>
 
     <!-- 久未認領 -->
-    <Card v-if="longUnclaimedTasks.length > 0" title="超過 3 天未認領" class="border-warning/30">
+    <Card
+      v-if="longUnclaimedTasks.length > 0"
+      :title="`超過 ${CHASE_LIST.UNCLAIMED_DAYS_THRESHOLD} 天未認領`"
+      class="border-warning/30"
+    >
       <template #header-actions>
         <Badge variant="warning">{{ longUnclaimedTasks.length }}</Badge>
       </template>
