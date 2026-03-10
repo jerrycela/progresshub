@@ -222,9 +222,19 @@ router.post(
         });
       } else if (command === "log") {
         // 開啟工時登記對話框
-        // 取得可用的專案和類別
+        // 取得可用的專案和類別（依權限過濾）
+        const isPrivileged =
+          employee.permissionLevel === "ADMIN" ||
+          employee.permissionLevel === "PM" ||
+          employee.permissionLevel === "PRODUCER";
+
         const projects = await prisma.project.findMany({
-          where: { status: "ACTIVE" },
+          where: {
+            status: "ACTIVE",
+            ...(isPrivileged
+              ? {}
+              : { members: { some: { employeeId: employee.id } } }),
+          },
           select: { id: true, name: true },
           orderBy: { name: "asc" },
         });

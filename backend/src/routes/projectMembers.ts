@@ -103,8 +103,10 @@ router.post(
   requireProjectMember("projectId"),
   [
     body("employeeIds")
-      .isArray({ min: 1 })
-      .withMessage("employeeIds must be a non-empty array"),
+      .isArray({ min: 1, max: 50 })
+      .withMessage(
+        "employeeIds must be a non-empty array with at most 50 items",
+      ),
     body("employeeIds.*")
       .isString()
       .withMessage("Each employeeId must be a string"),

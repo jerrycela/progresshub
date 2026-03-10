@@ -1,4 +1,5 @@
 import { Router, Request, Response } from "express";
+import { param, validationResult } from "express-validator";
 import prisma from "../../config/database";
 import { gitLabInstanceService } from "../../services/gitlab";
 import { verifyWebhookSignature } from "../../utils/gitlab/webhookVerifier";
@@ -19,7 +20,14 @@ const router = Router();
  */
 router.post(
   "/:instanceId",
+  [param("instanceId").isString().trim().notEmpty().isLength({ max: 36 })],
   async (req: Request, res: Response): Promise<void> => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ error: "Invalid instanceId" });
+      return;
+    }
+
     const { instanceId } = req.params;
     const token = req.headers["x-gitlab-token"] as string;
     const eventType = req.headers["x-gitlab-event"] as string;

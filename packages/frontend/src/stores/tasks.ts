@@ -129,7 +129,9 @@ export const useTaskStore = defineStore('tasks', () => {
     }
   }
 
-  const fetchPoolTasks = async (): Promise<ActionResult<PoolTask[]>> => {
+  let _poolTasksPromise: Promise<ActionResult<PoolTask[]>> | null = null
+
+  const _fetchPoolTasks = async (): Promise<ActionResult<PoolTask[]>> => {
     loading.value.fetchPoolTasks = true
     error.value = null
 
@@ -150,6 +152,14 @@ export const useTaskStore = defineStore('tasks', () => {
     } finally {
       loading.value.fetchPoolTasks = false
     }
+  }
+
+  const fetchPoolTasks = (): Promise<ActionResult<PoolTask[]>> => {
+    if (_poolTasksPromise) return _poolTasksPromise
+    _poolTasksPromise = _fetchPoolTasks().finally(() => {
+      _poolTasksPromise = null
+    })
+    return _poolTasksPromise
   }
 
   const claimTask = async (taskId: string, userId: string): Promise<ActionResult<Task>> => {

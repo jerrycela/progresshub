@@ -90,9 +90,8 @@ const submitContinue = async (task: Task) => {
         showError(result.error?.message || '恢復任務失敗')
         return
       }
+      showSuccess(`已回報「${task.title}」繼續進行中`)
     }
-
-    showSuccess(`已回報「${task.title}」繼續進行中`)
   } catch {
     showError('回報失敗，請稍後再試')
   } finally {
