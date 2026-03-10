@@ -196,7 +196,15 @@ export const useTaskStore = defineStore('tasks', () => {
       // 呼叫 service
       const result = await service.claimTask(taskId, userId)
 
-      if (result.success && result.data) {
+      // Service 回傳失敗（未拋出例外）：回滾樂觀更新
+      if (!result.success) {
+        tasks.value = tasksSnapshot
+        poolTasks.value = poolSnapshot
+        fetchPoolTasks().catch(() => {})
+        return result
+      }
+
+      if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
         syncPoolTask(taskId, result.data)
       }
@@ -261,7 +269,15 @@ export const useTaskStore = defineStore('tasks', () => {
 
       const result = await service.unclaimTask(taskId)
 
-      if (result.success && result.data) {
+      // Service 回傳失敗（未拋出例外）：回滾樂觀更新
+      if (!result.success) {
+        tasks.value = tasksSnapshot
+        poolTasks.value = poolSnapshot
+        fetchPoolTasks().catch(() => {})
+        return result
+      }
+
+      if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
@@ -338,7 +354,14 @@ export const useTaskStore = defineStore('tasks', () => {
 
       const result = await service.updateTaskProgress(taskId, progress, notes)
 
-      if (result.success && result.data) {
+      // Service 回傳失敗（未拋出例外）：回滾樂觀更新
+      if (!result.success) {
+        tasks.value = tasksSnapshot
+        poolTasks.value = poolSnapshot
+        return result
+      }
+
+      if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 
@@ -408,7 +431,14 @@ export const useTaskStore = defineStore('tasks', () => {
 
       const result = await service.updateTaskStatus(taskId, status, payload)
 
-      if (result.success && result.data) {
+      // Service 回傳失敗（未拋出例外）：回滾樂觀更新
+      if (!result.success) {
+        tasks.value = tasksSnapshot
+        poolTasks.value = poolSnapshot
+        return result
+      }
+
+      if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
       }
 

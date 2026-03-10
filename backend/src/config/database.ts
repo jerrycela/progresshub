@@ -5,7 +5,9 @@ function getDatabaseUrl(): string {
   if (!url) return url;
   const separator = url.includes("?") ? "&" : "?";
   if (!url.includes("connection_limit")) {
-    return `${url}${separator}connection_limit=20&pool_timeout=30`;
+    const poolSize = parseInt(process.env.DB_POOL_SIZE || "50") || 50;
+    const poolTimeout = parseInt(process.env.DB_POOL_TIMEOUT || "30") || 30;
+    return `${url}${separator}connection_limit=${poolSize}&pool_timeout=${poolTimeout}`;
   }
   return url;
 }

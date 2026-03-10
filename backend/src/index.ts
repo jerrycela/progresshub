@@ -87,8 +87,8 @@ const authLimiter = rateLimit({
     parseInt(
       process.env.RATE_LIMIT_AUTH_MAX ||
         process.env.AUTH_RATE_LIMIT_MAX ||
-        "200",
-    ) || 200,
+        "1000",
+    ) || 1000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
@@ -103,7 +103,7 @@ const authLimiter = rateLimit({
 // Note: userId-based fine-grained limiting should be added at router level after authenticate
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 分鐘
-  max: parseInt(process.env.RATE_LIMIT_API_MAX || "300") || 300,
+  max: parseInt(process.env.RATE_LIMIT_API_MAX || "2000") || 2000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {

@@ -3,6 +3,173 @@ import { useTaskStore } from '../tasks'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
 import type { CreateTaskInput } from 'shared/types'
 
+// ---------------------------------------------------------------------------
+// Module-level mock: intercept createTaskService so we can control the service
+// instance that the store captures at module load time.
+// vi.hoisted ensures mockServiceInstance is available when vi.mock runs.
+// ---------------------------------------------------------------------------
+
+const { mockServiceInstance } = vi.hoisted(() => {
+  const delay = () => new Promise<void>(r => setTimeout(r, 100))
+
+  const mockServiceInstance = {
+    fetchTasks: vi.fn(async () => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      return [...mockTasks]
+    }),
+    fetchPoolTasks: vi.fn(async () => {
+      await delay()
+      const { mockPoolTasks } = await import('@/mocks/unified')
+      return { tasks: [...mockPoolTasks], total: mockPoolTasks.length }
+    }),
+    getTaskById: vi.fn(async (id: string) => {
+      const { mockTasks } = await import('@/mocks/unified')
+      return mockTasks.find(t => t.id === id)
+    }),
+    getPoolTaskById: vi.fn(async (id: string) => {
+      const { mockPoolTasks } = await import('@/mocks/unified')
+      return mockPoolTasks.find(t => t.id === id)
+    }),
+    createTask: vi.fn(async (input: import('shared/types').CreateTaskInput) => {
+      await delay()
+      const now = new Date().toISOString()
+      const isAssigned = input.sourceType === 'ASSIGNED' && input.assigneeId
+      const isSelfCreated = input.sourceType === 'SELF_CREATED' && input.createdBy
+      const status = isAssigned || isSelfCreated ? 'CLAIMED' : 'UNCLAIMED'
+      const assigneeId = isAssigned
+        ? input.assigneeId
+        : isSelfCreated
+          ? input.createdBy?.id
+          : undefined
+      const newTask: import('shared/types').Task = {
+        id: String(Date.now()),
+        title: input.title.trim(),
+        description: input.description,
+        status: status as import('shared/types').TaskStatus,
+        priority: input.priority || 'MEDIUM',
+        progress: 0,
+        projectId: input.projectId,
+        assigneeId,
+        functionTags: input.functionTags || [],
+        startDate: input.startDate,
+        dueDate: input.dueDate,
+        estimatedHours: input.estimatedHours,
+        createdAt: now,
+        updatedAt: now,
+      }
+      return { success: true, data: newTask }
+    }),
+    updateTaskStatus: vi.fn(async (taskId: string, status: import('shared/types').TaskStatus) => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      const task = mockTasks.find(t => t.id === taskId)
+      const now = new Date().toISOString()
+      const data = {
+        ...(task ?? {
+          id: taskId,
+          title: '',
+          description: '',
+          priority: 'MEDIUM',
+          progress: 0,
+          projectId: '',
+          functionTags: [],
+          createdAt: now,
+          updatedAt: now,
+        }),
+        status,
+        updatedAt: now,
+        ...(status === 'DONE' ? { progress: 100, closedAt: now } : {}),
+        ...(status === 'PAUSED' ? { pausedAt: now } : {}),
+      }
+      return { success: true, data }
+    }),
+    updateTaskProgress: vi.fn(async (taskId: string, progress: number) => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      const task = mockTasks.find(t => t.id === taskId)
+      if (!task) return { success: false, error: { code: 'TASK_NOT_FOUND', message: 'Not found' } }
+      const now = new Date().toISOString()
+      const newStatus =
+        progress >= 100
+          ? 'DONE'
+          : progress > 0 && task.status === 'CLAIMED'
+            ? 'IN_PROGRESS'
+            : task.status
+      const data = {
+        ...task,
+        progress,
+        status: newStatus,
+        updatedAt: now,
+        ...(progress >= 100 ? { closedAt: now } : {}),
+      }
+      return { success: true, data }
+    }),
+    deleteTask: vi.fn(async () => {
+      await delay()
+      return { success: true }
+    }),
+    updateTask: vi.fn(async (taskId: string, input: Partial<import('shared/types').Task>) => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      const task = mockTasks.find(t => t.id === taskId)
+      if (!task) return { success: false, error: { code: 'TASK_NOT_FOUND', message: 'Not found' } }
+      const data = { ...task, ...input, updatedAt: new Date().toISOString() }
+      return { success: true, data }
+    }),
+    claimTask: vi.fn(async (taskId: string, userId: string) => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      const task = mockTasks.find(t => t.id === taskId)
+      const now = new Date().toISOString()
+      const data = task
+        ? { ...task, status: 'CLAIMED', assigneeId: userId, updatedAt: now }
+        : {
+            id: taskId,
+            title: '',
+            description: '',
+            status: 'CLAIMED',
+            priority: 'MEDIUM',
+            progress: 0,
+            projectId: '',
+            assigneeId: userId,
+            functionTags: [],
+            createdAt: now,
+            updatedAt: now,
+          }
+      return { success: true, data }
+    }),
+    unclaimTask: vi.fn(async (taskId: string) => {
+      await delay()
+      const { mockTasks } = await import('@/mocks/unified')
+      const task = mockTasks.find(t => t.id === taskId)
+      const now = new Date().toISOString()
+      const data = task
+        ? { ...task, status: 'UNCLAIMED', assigneeId: undefined, progress: 0, updatedAt: now }
+        : {
+            id: taskId,
+            title: '',
+            description: '',
+            status: 'UNCLAIMED',
+            priority: 'MEDIUM',
+            progress: 0,
+            projectId: '',
+            assigneeId: undefined,
+            functionTags: [],
+            createdAt: now,
+            updatedAt: now,
+          }
+      return { success: true, data }
+    }),
+  }
+
+  return { mockServiceInstance }
+})
+
+vi.mock('@/services/taskService', () => ({
+  createTaskService: () => mockServiceInstance,
+}))
+
 describe('useTaskStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -181,6 +348,34 @@ describe('useTaskStore', () => {
       await claimPromise
 
       expect(store.loading.claim[taskId]).toBeUndefined()
+    })
+
+    it('should rollback optimistic update when service returns failure', async () => {
+      const store = setupWithMockData()
+      const unclaimedTask = store.tasks.find(t => t.status === 'UNCLAIMED')!
+      const taskId = unclaimedTask.id
+      const originalStatus = unclaimedTask.status
+      const originalAssigneeId = unclaimedTask.assigneeId
+
+      // Override claimTask on the shared mock instance to return failure
+      const spy = vi.spyOn(mockServiceInstance, 'claimTask').mockResolvedValue({
+        success: false,
+        error: { code: 'TASK_ALREADY_CLAIMED', message: 'Already claimed' },
+      })
+
+      const claimPromise = store.claimTask(taskId, 'emp-1')
+      await vi.advanceTimersByTimeAsync(200)
+      const result = await claimPromise
+
+      expect(result.success).toBe(false)
+      expect(result.error?.code).toBe('TASK_ALREADY_CLAIMED')
+
+      // Store should have been rolled back to original state
+      const task = store.tasks.find(t => t.id === taskId)
+      expect(task?.status).toBe(originalStatus)
+      expect(task?.assigneeId).toBe(originalAssigneeId)
+
+      spy.mockRestore()
     })
   })
 
