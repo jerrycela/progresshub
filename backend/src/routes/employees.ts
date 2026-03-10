@@ -248,7 +248,13 @@ router.put(
       // 非 ADMIN 使用者不能修改權限相關欄位
       const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { permissionLevel, managedProjects, ...safeBody } = req.body;
+      const {
+        permissionLevel,
+        managedProjects,
+        slackUserId,
+        isActive,
+        ...safeBody
+      } = req.body;
       const updateData = isAdmin ? req.body : safeBody;
 
       // 檢查 Email 是否已被其他人使用

@@ -153,16 +153,8 @@ export const useTaskStore = defineStore('tasks', () => {
   const claimTask = async (taskId: string, userId: string): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
-    // 驗證任務存在
-    if (!task) {
-      return {
-        success: false,
-        error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
-      }
-    }
-
-    // 驗證任務狀態
-    if (task.status !== 'UNCLAIMED') {
+    // 驗證任務狀態（僅在本地有該任務時才做前端驗證，直接進入 TaskDetailPage 時 tasks[] 可能為空）
+    if (task && task.status !== 'UNCLAIMED') {
       return {
         success: false,
         error: { code: 'TASK_NOT_UNCLAIMED', message: '此任務已被認領或不可認領' },
@@ -176,13 +168,15 @@ export const useTaskStore = defineStore('tasks', () => {
     const poolSnapshot = [...poolTasks.value]
 
     try {
-      // 樂觀更新（不可變）
+      // 樂觀更新（不可變，僅在 tasks[] 中有此任務時才更新）
       const now = new Date().toISOString()
-      tasks.value = tasks.value.map(t =>
-        t.id === taskId
-          ? { ...t, status: 'CLAIMED' as const, assigneeId: userId, updatedAt: now }
-          : t,
-      )
+      if (task) {
+        tasks.value = tasks.value.map(t =>
+          t.id === taskId
+            ? { ...t, status: 'CLAIMED' as const, assigneeId: userId, updatedAt: now }
+            : t,
+        )
+      }
 
       // 同步 poolTasks
       syncPoolTask(taskId, { status: 'CLAIMED', assigneeId: userId, updatedAt: now })
@@ -214,14 +208,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const unclaimTask = async (taskId: string): Promise<ActionResult<Task>> => {
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
-    if (!task) {
-      return {
-        success: false,
-        error: { code: 'TASK_NOT_FOUND', message: '找不到指定的任務' },
-      }
-    }
-
-    if (!['CLAIMED', 'IN_PROGRESS'].includes(task.status)) {
+    if (task && !['CLAIMED', 'IN_PROGRESS'].includes(task.status)) {
       return {
         success: false,
         error: { code: 'TASK_UPDATE_FAILED', message: '無法放棄此狀態的任務' },

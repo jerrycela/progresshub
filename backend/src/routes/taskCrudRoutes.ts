@@ -96,27 +96,49 @@ router.get(
  * GET /my
  * 取得目前使用者的任務
  */
-router.get("/my", async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
-      return;
-    }
+router.get(
+  "/my",
+  [
+    query("status")
+      .optional()
+      .isIn([
+        "UNCLAIMED",
+        "CLAIMED",
+        "IN_PROGRESS",
+        "PAUSED",
+        "DONE",
+        "BLOCKED",
+      ])
+      .withMessage("Invalid status"),
+  ],
+  async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        sendError(res, ErrorCodes.VALIDATION_ERROR, errors.array()[0].msg, 400);
+        return;
+      }
 
-    const statusFilter = req.query.status as string | undefined;
-    const tasks = await taskService.getTasksByEmployee(
-      req.user.userId,
-      statusFilter as import("@prisma/client").TaskStatus | undefined,
-    );
-    sendSuccess(
-      res,
-      tasks.map((t) => toTaskDTO(t)),
-    );
-  } catch (error) {
-    logger.error("Get my tasks error:", error);
-    sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get tasks", 500);
-  }
-});
+      if (!req.user) {
+        sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
+        return;
+      }
+
+      const statusFilter = req.query.status as string | undefined;
+      const tasks = await taskService.getTasksByEmployee(
+        req.user.userId,
+        statusFilter as import("@prisma/client").TaskStatus | undefined,
+      );
+      sendSuccess(
+        res,
+        tasks.map((t) => toTaskDTO(t)),
+      );
+    } catch (error) {
+      logger.error("Get my tasks error:", error);
+      sendError(res, ErrorCodes.TASK_FETCH_FAILED, "Failed to get tasks", 500);
+    }
+  },
+);
 
 /**
  * GET /

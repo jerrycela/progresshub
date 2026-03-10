@@ -7,7 +7,7 @@ export interface CreateProjectInput {
   name: string
   description?: string
   startDate: string
-  endDate: string
+  endDate?: string
 }
 
 export interface ProjectMember {

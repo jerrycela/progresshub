@@ -171,7 +171,7 @@ const saveProject = async () => {
       name: editingProject.value.name || '',
       description: editingProject.value.description,
       startDate: editingProject.value.startDate || new Date().toISOString().split('T')[0],
-      endDate: editingProject.value.endDate || '',
+      endDate: editingProject.value.endDate || undefined,
     })
     if (result.success) {
       showSuccess('專案已建立')

@@ -280,7 +280,9 @@ router.post(
 router.post(
   "/batch",
   [
-    body("entries").isArray({ min: 1 }).withMessage("Entries array required"),
+    body("entries")
+      .isArray({ min: 1, max: 50 })
+      .withMessage("Entries array required (max 50)"),
     body("entries.*.projectId").isString().trim().notEmpty(),
     body("entries.*.categoryId").isString().trim().notEmpty(),
     body("entries.*.date").isISO8601(),

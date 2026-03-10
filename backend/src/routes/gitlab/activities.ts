@@ -268,8 +268,8 @@ router.post(
   "/batch-convert",
   [
     body("activityIds")
-      .isArray({ min: 1 })
-      .withMessage("At least one activity ID is required"),
+      .isArray({ min: 1, max: 50 })
+      .withMessage("At least one activity ID is required (max 50)"),
     body("activityIds.*").isString().trim().notEmpty(),
     body("categoryId")
       .isString()
