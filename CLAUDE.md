@@ -65,6 +65,8 @@ Routes use `meta.requiresRole` for role-gating. Pages without `requiresRole` are
 
 The client also handles **automatic token refresh**: on 401, it queues concurrent requests, refreshes via `/api/auth/refresh`, then retries all queued requests with the new token.
 
+**Escape hatches**: Pass `skipAuth: true` in request config to omit the Authorization header; `skipErrorHandler: true` to bypass global error toast. Use `createCancelToken()` for AbortController-based request cancellation on component unmount.
+
 ### Auth & Permissions
 
 - Backend: `authenticate` middleware attaches `req.user` (JwtPayload: userId, name, email, permissionLevel)
@@ -72,9 +74,19 @@ The client also handles **automatic token refresh**: on 401, it queues concurren
 - Roles hierarchy: `EMPLOYEE < MANAGER < PM/PRODUCER < ADMIN`
 - `req.user.permissionLevel` maps to Prisma `PermissionLevel` enum
 
+### Authorization Middleware (projectAuth.ts)
+
+Centralized authorization in `backend/src/middleware/projectAuth.ts` provides three middleware functions:
+
+- `requireProjectMember(paramName)` — verifies user is a member of the project specified by route param. ADMIN bypasses membership check.
+- `requireResourceOwner(resource, idParam)` — verifies user has access to a specific resource (`"task" | "timeEntry" | "progressLog" | "milestone"`). On success, attaches the DB record to `(req as any).authorizedResource` so handlers can reuse it without re-querying.
+- `requireProjectScope` — populates `req.authorizedProjectIds` with user's accessible project IDs. Use with `buildProjectScopeFilter()` for list queries.
+
+**Security pattern**: All authorization failures return `404 NOT_FOUND` (never 403) to prevent resource enumeration. Built-in sliding window counter logs warnings when a user/IP triggers >10 authz 404s in 5 minutes.
+
 ### Route Organization
 
-Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params.
+Backend routes are mounted in `backend/src/routes/index.ts`. Sub-routers (e.g., `projectMembers`) use `mergeParams: true` to access parent route params. `GET /api/` shows full route list only in development; production returns only name and version.
 
 API route groups: `/auth`, `/employees`, `/projects`, `/tasks`, `/progress`, `/milestones`, `/time-entries`, `/time-categories`, `/time-stats`, `/gitlab`, `/dashboard`, `/user`. Slack routes (`/slack`) mount conditionally when `SLACK_BOT_TOKEN` is set.
 

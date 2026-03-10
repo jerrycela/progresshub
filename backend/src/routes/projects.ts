@@ -289,6 +289,7 @@ router.post(
 router.put(
   "/:id",
   authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  requireProjectMember("id"),
   auditLog("UPDATE_PROJECT"),
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid project ID"),
@@ -372,6 +373,7 @@ router.put(
 router.delete(
   "/:id",
   authorize(PermissionLevel.ADMIN),
+  requireProjectMember("id"),
   auditLog("DELETE_PROJECT"),
   [param("id").isString().trim().notEmpty().withMessage("Invalid project ID")],
   async (req: AuthRequest, res: Response): Promise<void> => {

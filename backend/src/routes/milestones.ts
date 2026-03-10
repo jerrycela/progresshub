@@ -42,6 +42,20 @@ router.get(
         }
       }
 
+      if (!projectId && req.user?.permissionLevel !== PermissionLevel.ADMIN) {
+        const memberships = await prisma.projectMember.findMany({
+          where: { employeeId: req.user?.userId ?? "" },
+          select: { projectId: true },
+        });
+        const projectIds = memberships.map((m) => m.projectId);
+        const allMilestones = await milestoneService.getMilestones(undefined);
+        const filtered = allMilestones.filter((m) =>
+          projectIds.includes(m.projectId),
+        );
+        sendSuccess(res, filtered.map(toMilestoneDTO));
+        return;
+      }
+
       const milestones = await milestoneService.getMilestones(projectId);
       sendSuccess(res, milestones.map(toMilestoneDTO));
     } catch (error) {

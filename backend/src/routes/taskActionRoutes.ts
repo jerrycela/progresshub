@@ -19,6 +19,7 @@ const router = Router();
  */
 router.patch(
   "/:id/status",
+  requireResourceOwner("task", "id"),
   authorizeTaskAccess,
   auditLog("UPDATE_TASK_STATUS"),
   [
@@ -83,6 +84,7 @@ router.patch(
  */
 router.patch(
   "/:id/progress",
+  requireResourceOwner("task", "id"),
   authorizeTaskAccess,
   [
     param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),

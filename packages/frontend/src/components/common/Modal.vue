@@ -1,3 +1,8 @@
+<script lang="ts">
+// Module-level counter to track how many modals are open simultaneously
+let openModalCount = 0
+</script>
+
 <script setup lang="ts">
 import { watch, onUnmounted } from 'vue'
 
@@ -39,16 +44,20 @@ const handleEsc = (e: KeyboardEvent) => {
   }
 }
 
-// 監聽 ESC 鍵關閉 + 管理背景滾動
+// 監聽 ESC 鍵關閉 + 管理背景滾動（支援多個 modal 同時開啟）
 watch(
   () => props.modelValue,
   isOpen => {
     if (isOpen) {
       document.addEventListener('keydown', handleEsc)
+      openModalCount++
       document.body.style.overflow = 'hidden'
     } else {
       document.removeEventListener('keydown', handleEsc)
-      document.body.style.overflow = ''
+      openModalCount = Math.max(0, openModalCount - 1)
+      if (openModalCount === 0) {
+        document.body.style.overflow = ''
+      }
     }
   },
 )
@@ -56,7 +65,12 @@ watch(
 // 元件卸載時確保清理
 onUnmounted(() => {
   document.removeEventListener('keydown', handleEsc)
-  document.body.style.overflow = ''
+  if (props.modelValue) {
+    openModalCount = Math.max(0, openModalCount - 1)
+    if (openModalCount === 0) {
+      document.body.style.overflow = ''
+    }
+  }
 })
 
 const sizeClasses: Record<string, string> = {
