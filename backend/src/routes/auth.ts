@@ -2,7 +2,7 @@ import { Router, Response } from "express";
 import { body, validationResult } from "express-validator";
 import { authService } from "../services/authService";
 import { authenticate, AuthRequest } from "../middleware/auth";
-import { sendSuccess, sendError } from "../utils/response";
+import { sendSuccess, sendError, getSafeErrorMessage } from "../utils/response";
 import { toUserDTO } from "../mappers";
 import { env } from "../config/env";
 import { AppError } from "../middleware/errorHandler";
@@ -29,9 +29,12 @@ router.get(
         `&state=${state}`;
       sendSuccess(res, { authUrl, state });
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to generate OAuth URL";
-      sendError(res, ErrorCodes.AUTH_OAUTH_URL_FAILED, message, 500);
+      sendError(
+        res,
+        ErrorCodes.AUTH_OAUTH_URL_FAILED,
+        getSafeErrorMessage(error, "Failed to generate OAuth URL"),
+        500,
+      );
     }
   },
 );
@@ -108,8 +111,12 @@ router.post(
         sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-      const message = error instanceof Error ? error.message : "Login failed";
-      sendError(res, ErrorCodes.AUTH_LOGIN_FAILED, message, 500);
+      sendError(
+        res,
+        ErrorCodes.AUTH_LOGIN_FAILED,
+        getSafeErrorMessage(error, "Login failed"),
+        500,
+      );
     }
   },
 );
@@ -278,9 +285,12 @@ router.post(
         sendError(res, error.errorCode, error.message, error.statusCode);
         return;
       }
-      const message =
-        error instanceof Error ? error.message : "Token refresh failed";
-      sendError(res, ErrorCodes.AUTH_REFRESH_FAILED, message, 401);
+      sendError(
+        res,
+        ErrorCodes.AUTH_REFRESH_FAILED,
+        getSafeErrorMessage(error, "Token refresh failed"),
+        401,
+      );
     }
   },
 );
@@ -300,8 +310,12 @@ router.post(
       }
       sendSuccess(res, { message: "Logged out successfully" });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Logout failed";
-      sendError(res, ErrorCodes.AUTH_LOGOUT_FAILED, message, 500);
+      sendError(
+        res,
+        ErrorCodes.AUTH_LOGOUT_FAILED,
+        getSafeErrorMessage(error, "Logout failed"),
+        500,
+      );
     }
   },
 );
