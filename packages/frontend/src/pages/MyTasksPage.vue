@@ -254,7 +254,7 @@ const showCompleted = ref(false)
         </p>
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
-        <Badge variant="primary" size="md"> {{ myTasks.length }} 個進行中 </Badge>
+        <Badge variant="primary" size="md"> {{ myTasks.length }} 個待處理 </Badge>
         <Badge variant="success" size="md"> {{ completedTasks.length }} 個已完成 </Badge>
       </div>
     </div>

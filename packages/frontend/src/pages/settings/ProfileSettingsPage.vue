@@ -205,8 +205,10 @@ const changeAvatar = (): void => {
               角色
             </label>
             <div class="flex items-center gap-2 py-1">
-              <Badge variant="primary">{{ roleLabel }}</Badge>
-              <span class="text-xs" style="color: var(--text-muted)">（由管理員設定）</span>
+              <template v-if="user.role">
+                <Badge variant="primary">{{ roleLabel }}</Badge>
+              </template>
+              <span v-else class="text-xs" style="color: var(--text-muted)">（由管理員設定）</span>
             </div>
           </div>
 
@@ -216,8 +218,10 @@ const changeAvatar = (): void => {
               職能
             </label>
             <div class="flex items-center gap-2 py-1">
-              <Badge variant="info">{{ functionLabel }}</Badge>
-              <span class="text-xs" style="color: var(--text-muted)">（由管理員設定）</span>
+              <template v-if="user.functionType">
+                <Badge variant="info">{{ functionLabel }}</Badge>
+              </template>
+              <span v-else class="text-xs" style="color: var(--text-muted)">（由管理員設定）</span>
             </div>
           </div>
 
@@ -227,8 +231,8 @@ const changeAvatar = (): void => {
               部門
             </label>
             <p class="py-2" style="color: var(--text-primary)">
-              {{ departmentLabel }}
-              <span class="text-xs ml-2" style="color: var(--text-muted)">（由管理員設定）</span>
+              <template v-if="user.department">{{ departmentLabel }}</template>
+              <span v-else class="text-xs" style="color: var(--text-muted)">（由管理員設定）</span>
             </p>
           </div>
         </div>

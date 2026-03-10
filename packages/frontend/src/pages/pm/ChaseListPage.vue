@@ -64,8 +64,10 @@ const staleTasks = computed(() => {
 // 取得負責人
 const employeeStore = useEmployeeStore()
 
-const getAssigneeName = (assigneeId?: string) =>
-  assigneeId ? employeeStore.getEmployeeName(assigneeId) || '未指派' : '未認領'
+const getAssigneeName = (task: Task) =>
+  task.assigneeId
+    ? task.assignee?.name || employeeStore.getEmployeeName(task.assigneeId) || '未知'
+    : '未認領'
 
 // 格式化日期
 const formatDate = (date?: string) => formatShort(date)
@@ -196,7 +198,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
             >
               <span>{{ getProjectName(task.projectId) }}</span>
               <span class="hidden sm:inline">•</span>
-              <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
+              <span>負責人：{{ getAssigneeName(task) }}</span>
             </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
@@ -227,7 +229,7 @@ const getOverdueDays = (dueDate: string) => Math.abs(getRelativeDays(dueDate))
             <div class="flex items-center gap-3 mt-1 text-sm" style="color: var(--text-tertiary)">
               <span>{{ getProjectName(task.projectId) }}</span>
               <span>•</span>
-              <span>負責人：{{ getAssigneeName(task.assigneeId) }}</span>
+              <span>負責人：{{ getAssigneeName(task) }}</span>
             </div>
           </div>
           <Button variant="ghost" size="sm" @click.stop="router.push(`/task-pool/${task.id}`)">

@@ -250,8 +250,10 @@ const handleDemoLogin = async () => {
               </div>
             </div>
 
-            <!-- 專案選擇 (ADMIN has global access, no project scoping needed) -->
-            <div v-if="projectOptions.length > 0 && demoRole !== 'ADMIN'">
+            <!-- 專案選擇 (ADMIN/EMPLOYEE have global or no project scoping needed) -->
+            <div
+              v-if="projectOptions.length > 0 && demoRole !== 'ADMIN' && demoRole !== 'EMPLOYEE'"
+            >
               <label
                 id="demo-projects-label"
                 class="block text-sm font-medium mb-1"

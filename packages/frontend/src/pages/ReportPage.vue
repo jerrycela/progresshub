@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -23,6 +23,10 @@ import type { Task, ReportType } from 'shared/types'
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useToast()
+
+onMounted(async () => {
+  await taskStore.fetchTasks()
+})
 
 // 暫停原因選項
 const pauseReasonOptions = [

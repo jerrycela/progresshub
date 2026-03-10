@@ -92,7 +92,7 @@ const icons = {
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- 我的進行中任務 -->
       <div class="lg:col-span-2">
-        <Card title="我的進行中任務" subtitle="點擊任務查看詳情">
+        <Card title="我的進行中任務">
           <template #header-actions>
             <RouterLink
               to="/my-tasks"

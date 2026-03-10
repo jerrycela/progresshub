@@ -305,6 +305,20 @@ router.post(
         return;
       }
 
+      // EMPLOYEE role cannot create ASSIGNED tasks
+      if (
+        req.body.sourceType === "ASSIGNED" &&
+        req.user?.permissionLevel === PermissionLevel.EMPLOYEE
+      ) {
+        sendError(
+          res,
+          ErrorCodes.AUTH_UNAUTHORIZED,
+          "Employees cannot assign tasks to others",
+          403,
+        );
+        return;
+      }
+
       // 前端欄位名 → 後端欄位名轉換
       const task = await taskService.createTask({
         projectId: req.body.projectId,

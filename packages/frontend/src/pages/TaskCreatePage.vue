@@ -29,8 +29,8 @@ const authStore = useAuthStore()
 const sourceType = ref<TaskSourceType>('POOL')
 const isSubmitting = ref(false)
 
-// 來源類型選項
-const sourceTypeOptions: {
+// 來源類型選項（EMPLOYEE 不可建立指派任務）
+const allSourceTypeOptions: {
   value: TaskSourceType
   label: string
   description: string
@@ -55,6 +55,13 @@ const sourceTypeOptions: {
     icon: 'M12 4v16m8-8H4',
   },
 ]
+
+const sourceTypeOptions = computed(() => {
+  if (authStore.user?.role === 'EMPLOYEE') {
+    return allSourceTypeOptions.filter(opt => opt.value !== 'ASSIGNED')
+  }
+  return allSourceTypeOptions
+})
 
 // 表單狀態（reactive 物件傳給 TaskForm）
 const form = reactive<TaskFormData>({

@@ -229,7 +229,7 @@ const {
 // 負責人名稱
 const getAssigneeName = (task: Task): string => {
   if (!task.assigneeId) return '未指派'
-  return employeeStore.getEmployeeById(task.assigneeId)?.name || '未知'
+  return task.assignee?.name || employeeStore.getEmployeeById(task.assigneeId)?.name || '未知'
 }
 
 const toggleProjectCollapse = (projectId: string): void => {

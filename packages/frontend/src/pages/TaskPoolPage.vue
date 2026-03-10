@@ -140,7 +140,10 @@ const viewTaskDetail = (task: PoolTask): void => {
 
 // 認領任務
 const claimTask = async (task: PoolTask): Promise<void> => {
-  if (!authStore.user) return
+  if (!authStore.user) {
+    showError('請先登入才能認領任務')
+    return
+  }
   const result = await taskStore.claimTask(task.id, authStore.user.id)
   if (result.success) {
     showSuccess(`已認領任務：${task.title}`)
@@ -486,9 +489,10 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
               <button
                 v-if="task.status === 'UNCLAIMED'"
                 class="btn-primary text-sm px-4 py-1.5"
+                :disabled="taskStore.loading.claim[task.id]"
                 @click.stop="claimTask(task)"
               >
-                認領任務
+                {{ taskStore.loading.claim[task.id] ? '認領中...' : '認領任務' }}
               </button>
             </div>
           </div>
