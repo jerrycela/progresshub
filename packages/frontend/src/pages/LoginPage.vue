@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -31,6 +31,10 @@ interface ProjectName {
 }
 const projectOptions = ref<ProjectName[]>([])
 const selectedProjects = ref<string[]>([])
+
+watch(demoRole, () => {
+  selectedProjects.value = []
+})
 
 const redirectAfterLogin = () => {
   const redirect = route.query.redirect as string

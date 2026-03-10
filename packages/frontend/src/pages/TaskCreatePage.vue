@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useProjectStore } from '@/stores/projects'
 import { useDepartmentStore } from '@/stores/departments'
@@ -25,6 +25,14 @@ const departmentStore = useDepartmentStore()
 const employeeStore = useEmployeeStore()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+
+// Ensure employees are loaded (safety net: MainLayout loads them on first mount,
+// but if that fetch failed silently or the page is accessed in isolation, this guarantees data)
+onMounted(async () => {
+  if (employeeStore.employees.length === 0) {
+    await employeeStore.fetchEmployees()
+  }
+})
 
 const sourceType = ref<TaskSourceType>('POOL')
 const isSubmitting = ref(false)

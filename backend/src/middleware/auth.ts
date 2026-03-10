@@ -228,7 +228,9 @@ export const isProjectMember = async (
 
 /**
  * Employee Self-Edit Authorization Middleware
- * Allows ADMIN to edit anyone, or employee to edit their own profile
+ * Allows ADMIN to edit anyone, MANAGER to attempt editing others (business logic
+ * in the route handler enforces MANAGER can only edit EMPLOYEE-level accounts),
+ * or employee to edit their own profile.
  */
 export const authorizeSelfOrAdmin = (
   req: AuthRequest,
@@ -241,6 +243,12 @@ export const authorizeSelfOrAdmin = (
   }
 
   if (req.user.permissionLevel === PermissionLevel.ADMIN) {
+    next();
+    return;
+  }
+
+  // MANAGER can pass through; the route handler enforces target-account restrictions
+  if (req.user.permissionLevel === PermissionLevel.MANAGER) {
     next();
     return;
   }

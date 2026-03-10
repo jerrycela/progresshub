@@ -305,10 +305,15 @@ router.post(
         return;
       }
 
-      // EMPLOYEE role cannot create ASSIGNED tasks
+      // Only privileged roles can create ASSIGNED tasks (whitelist approach)
+      const canAssignTasks: PermissionLevel[] = [
+        PermissionLevel.PM,
+        PermissionLevel.PRODUCER,
+        PermissionLevel.ADMIN,
+      ];
       if (
         req.body.sourceType === "ASSIGNED" &&
-        req.user?.permissionLevel === PermissionLevel.EMPLOYEE
+        !canAssignTasks.includes(req.user?.permissionLevel as PermissionLevel)
       ) {
         sendError(
           res,

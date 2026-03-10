@@ -245,8 +245,54 @@ router.put(
         return;
       }
 
+      const requesterLevel = req.user?.permissionLevel;
+      const isAdmin = requesterLevel === PermissionLevel.ADMIN;
+      const isManager = requesterLevel === PermissionLevel.MANAGER;
+
+      // Role hierarchy numeric mapping for comparison
+      const ROLE_RANK: Record<PermissionLevel, number> = {
+        [PermissionLevel.EMPLOYEE]: 1,
+        [PermissionLevel.MANAGER]: 2,
+        [PermissionLevel.PRODUCER]: 3,
+        [PermissionLevel.PM]: 3,
+        [PermissionLevel.ADMIN]: 4,
+      };
+
+      // MANAGER can only edit accounts strictly below their own level (EMPLOYEE only),
+      // plus their own profile (self-edit)
+      const isSelfEdit = req.user?.userId === id;
+      if (isManager && !isSelfEdit) {
+        const targetRank =
+          ROLE_RANK[existing.permissionLevel as PermissionLevel];
+        const managerRank = ROLE_RANK[PermissionLevel.MANAGER];
+        if (targetRank >= managerRank) {
+          sendError(
+            res,
+            ErrorCodes.AUTH_UNAUTHORIZED,
+            "MANAGER 只能編輯 EMPLOYEE 層級的帳號",
+            403,
+          );
+          return;
+        }
+      }
+
+      // MANAGER cannot set permissionLevel to anything above EMPLOYEE
+      if (isManager && req.body.permissionLevel) {
+        const requestedRank =
+          ROLE_RANK[req.body.permissionLevel as PermissionLevel];
+        const managerRank = ROLE_RANK[PermissionLevel.MANAGER];
+        if (requestedRank >= managerRank) {
+          sendError(
+            res,
+            ErrorCodes.AUTH_UNAUTHORIZED,
+            "MANAGER 無法將帳號權限提升至 MANAGER 或以上層級",
+            403,
+          );
+          return;
+        }
+      }
+
       // 非 ADMIN 使用者不能修改權限相關欄位
-      const isAdmin = req.user?.permissionLevel === PermissionLevel.ADMIN;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const {
         permissionLevel,
