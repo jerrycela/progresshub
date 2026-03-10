@@ -195,7 +195,7 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async fetchTasks(): Promise<Task[]> {
-    return apiGetUnwrap<Task[]>('/tasks')
+    return apiGetUnwrap<Task[]>('/tasks?limit=100&page=1')
   }
 
   async fetchPoolTasks(): Promise<PoolTask[]> {

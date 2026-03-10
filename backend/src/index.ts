@@ -87,8 +87,8 @@ const authLimiter = rateLimit({
     parseInt(
       process.env.RATE_LIMIT_AUTH_MAX ||
         process.env.AUTH_RATE_LIMIT_MAX ||
-        "10",
-    ) || 10,
+        "200",
+    ) || 200,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {

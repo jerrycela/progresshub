@@ -195,6 +195,9 @@ export const useTaskStore = defineStore('tasks', () => {
       tasks.value = tasksSnapshot
       poolTasks.value = poolSnapshot
 
+      // 從伺服器重新整理，確保顯示最新狀態（例如他人已搶先認領）
+      fetchPoolTasks().catch(() => {})
+
       const message = e instanceof Error ? e.message : '認領任務失敗'
       return {
         success: false,
@@ -255,6 +258,9 @@ export const useTaskStore = defineStore('tasks', () => {
       // 回滾：還原快照
       tasks.value = tasksSnapshot
       poolTasks.value = poolSnapshot
+
+      // 從伺服器重新整理，確保顯示最新狀態
+      fetchPoolTasks().catch(() => {})
 
       const message = e instanceof Error ? e.message : '放棄認領失敗'
       return {
