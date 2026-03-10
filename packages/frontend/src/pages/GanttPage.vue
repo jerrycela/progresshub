@@ -100,7 +100,10 @@ onMounted(() => {
   try {
     const presets = localStorage.getItem(STORAGE_KEY_PRESETS)
     if (presets) {
-      savedPresets.value = JSON.parse(presets)
+      const parsed = JSON.parse(presets)
+      if (Array.isArray(parsed)) {
+        savedPresets.value = parsed
+      }
     }
   } catch {
     // Corrupted data — ignore

@@ -34,7 +34,8 @@ const filteredTasks = computed(() => {
   const query = searchQuery.value.toLowerCase()
   return availableTasks.value.filter(
     (task: Task) =>
-      task.title.toLowerCase().includes(query) || task.project?.name.toLowerCase().includes(query),
+      task.title?.toLowerCase().includes(query) ||
+      task.project?.name?.toLowerCase()?.includes(query),
   )
 })
 

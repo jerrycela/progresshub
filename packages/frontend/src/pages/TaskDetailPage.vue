@@ -145,6 +145,8 @@ const submitProgress = async (): Promise<void> => {
   )
   if (result.success) {
     task.value = taskStore.getPoolTaskById(task.value.id) || null
+    await progressLogStore.fetchByTaskId(task.value?.id ?? (route.params.id as string))
+    progressLogs.value = progressLogStore.byTaskId(task.value?.id ?? (route.params.id as string))
     showSuccess(`已提交進度：${newProgress.value.percentage}%`)
   } else {
     showError(result.error?.message || '提交進度失敗')

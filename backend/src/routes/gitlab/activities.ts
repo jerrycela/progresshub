@@ -216,7 +216,11 @@ router.post(
       .trim()
       .notEmpty()
       .withMessage("Category ID is required"),
-    body("description").optional().isString(),
+    body("description")
+      .optional()
+      .isString()
+      .isLength({ max: 1000 })
+      .withMessage("Description too long"),
     body("taskId")
       .isString()
       .trim()
