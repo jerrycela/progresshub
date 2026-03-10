@@ -124,11 +124,14 @@ watch(
 
 // 任務統計
 const taskStats = computed(() => ({
-  total: taskStore.poolTasks.length,
+  total: taskStore.poolTasksTotal > 0 ? taskStore.poolTasksTotal : taskStore.poolTasks.length,
   available: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'UNCLAIMED').length,
   inProgress: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'IN_PROGRESS').length,
   completed: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'DONE').length,
 }))
+
+// 截斷警告：當後端回報的總數大於本地已載入的數量時
+const isTruncated = computed(() => taskStore.poolTasksTotal > taskStore.poolTasks.length)
 
 // 點擊任務卡片
 const viewTaskDetail = (task: PoolTask): void => {
@@ -213,6 +216,32 @@ const functionOptions = FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL')
         <p class="text-sm text-secondary">已完成</p>
         <p class="text-2xl font-bold mt-1 text-green-500">{{ taskStats.completed }}</p>
       </div>
+    </div>
+
+    <!-- 截斷警告 -->
+    <div
+      v-if="isTruncated"
+      class="flex items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+      role="alert"
+    >
+      <svg
+        class="h-5 w-5 shrink-0"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+        />
+      </svg>
+      <span>
+        顯示 {{ taskStore.poolTasks.length }} /
+        {{ taskStore.poolTasksTotal }} 筆任務，請使用篩選條件縮小範圍
+      </span>
     </div>
 
     <!-- 快速篩選按鈕 -->

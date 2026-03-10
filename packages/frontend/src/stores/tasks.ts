@@ -24,6 +24,7 @@ const service = createTaskService()
 export const useTaskStore = defineStore('tasks', () => {
   const tasks = ref<Task[]>(isMock ? [...mockTasks] : [])
   const poolTasks = ref<PoolTask[]>(isMock ? [...mockPoolTasks] : [])
+  const poolTasksTotal = ref<number>(isMock ? mockPoolTasks.length : 0)
   const error = ref<string | null>(null)
 
   // Loading 狀態（細粒度）
@@ -133,8 +134,9 @@ export const useTaskStore = defineStore('tasks', () => {
     error.value = null
 
     try {
-      const data = await service.fetchPoolTasks()
-      poolTasks.value = data
+      const { tasks: fetchedTasks, total } = await service.fetchPoolTasks()
+      poolTasks.value = fetchedTasks
+      poolTasksTotal.value = total
 
       return { success: true, data: poolTasks.value }
     } catch (e) {
@@ -571,6 +573,7 @@ export const useTaskStore = defineStore('tasks', () => {
     // State
     tasks,
     poolTasks,
+    poolTasksTotal,
     error,
     loading,
     isLoading,

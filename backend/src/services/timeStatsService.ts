@@ -89,9 +89,10 @@ export class TimeStatsService {
       where.date = { gte: dateRange.startDate, lte: dateRange.endDate };
     }
 
-    // 取得所有工時記錄
+    // 取得所有工時記錄（safety limit to prevent memory explosion）
     const entries = await prisma.timeEntry.findMany({
       where,
+      take: 5000,
       include: {
         category: { select: { id: true, name: true, billable: true } },
       },
@@ -171,6 +172,7 @@ export class TimeStatsService {
 
     const entries = await prisma.timeEntry.findMany({
       where,
+      take: 5000,
       include: {
         project: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
@@ -259,6 +261,7 @@ export class TimeStatsService {
 
     const entries = await prisma.timeEntry.findMany({
       where,
+      take: 10000,
       include: {
         project: { select: { id: true, name: true } },
         employee: { select: { id: true, name: true } },
@@ -359,6 +362,7 @@ export class TimeStatsService {
         employeeId,
         date: { gte: startDate, lte: endDate },
       },
+      take: 2000,
       include: {
         project: { select: { name: true } },
         category: { select: { name: true, billable: true } },
@@ -453,6 +457,7 @@ export class TimeStatsService {
         status: "PENDING",
         ...(projectFilter && { projectId: projectFilter }),
       },
+      take: 5000,
       include: {
         employee: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },

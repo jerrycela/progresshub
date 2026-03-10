@@ -159,28 +159,29 @@ export class ProgressService {
     const today = getStartOfToday();
     const tomorrow = getStartOfTomorrow();
 
-    // 取得今日回報數量
-    const todayLogs = await prisma.progressLog.findMany({
-      where: {
-        employeeId,
-        reportedAt: {
-          gte: today,
-          lt: tomorrow,
+    // 取得今日回報（只選 taskId 欄位，避免載入全部欄位）並與 inProgressTasks 並行查詢
+    const [todayLogs, inProgressTasks] = await Promise.all([
+      prisma.progressLog.findMany({
+        where: {
+          employeeId,
+          reportedAt: {
+            gte: today,
+            lt: tomorrow,
+          },
         },
-      },
-      select: { taskId: true },
-    });
-
-    // 取得進行中的任務數量
-    const inProgressTasks = await prisma.task.count({
-      where: {
-        OR: [
-          { assignedToId: employeeId },
-          { collaborators: { has: employeeId } },
-        ],
-        status: "IN_PROGRESS",
-      },
-    });
+        select: { taskId: true },
+      }),
+      // 取得進行中的任務數量
+      prisma.task.count({
+        where: {
+          OR: [
+            { assignedToId: employeeId },
+            { collaborators: { has: employeeId } },
+          ],
+          status: "IN_PROGRESS",
+        },
+      }),
+    ]);
 
     const uniqueTasksReported = new Set(todayLogs.map((log) => log.taskId))
       .size;

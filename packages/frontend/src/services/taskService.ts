@@ -1,6 +1,7 @@
 import type { Task, PoolTask, TaskStatus, ActionResult, CreateTaskInput } from 'shared/types'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
-import { apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPutUnwrap, apiDelete } from './api'
+import { apiGet, apiGetUnwrap, apiPostUnwrap, apiPatchUnwrap, apiPutUnwrap, apiDelete } from './api'
+import type { ApiResponse } from './types'
 import { mockDelay } from '@/utils/mockDelay'
 
 export interface StatusUpdatePayload {
@@ -9,9 +10,14 @@ export interface StatusUpdatePayload {
   blockerReason?: string
 }
 
+export interface PoolTasksResult {
+  tasks: PoolTask[]
+  total: number
+}
+
 export interface TaskServiceInterface {
   fetchTasks(): Promise<Task[]>
-  fetchPoolTasks(): Promise<PoolTask[]>
+  fetchPoolTasks(): Promise<PoolTasksResult>
   getTaskById(id: string): Promise<Task | undefined>
   getPoolTaskById(id: string): Promise<PoolTask | undefined>
   createTask(input: CreateTaskInput): Promise<ActionResult<Task>>
@@ -33,9 +39,10 @@ class MockTaskService implements TaskServiceInterface {
     return [...mockTasks]
   }
 
-  async fetchPoolTasks(): Promise<PoolTask[]> {
+  async fetchPoolTasks(): Promise<PoolTasksResult> {
     await mockDelay(300)
-    return [...mockPoolTasks]
+    const tasks = [...mockPoolTasks]
+    return { tasks, total: tasks.length }
   }
 
   async getTaskById(id: string): Promise<Task | undefined> {
@@ -198,9 +205,14 @@ class ApiTaskService implements TaskServiceInterface {
     return apiGetUnwrap<Task[]>('/tasks?limit=100&page=1')
   }
 
-  async fetchPoolTasks(): Promise<PoolTask[]> {
-    const tasks = await apiGetUnwrap<Task[]>('/tasks/pool')
-    return tasks.map(t => this.toPoolTask(t))
+  async fetchPoolTasks(): Promise<PoolTasksResult> {
+    const response = await apiGet<ApiResponse<Task[]>>('/tasks/pool')
+    if (!response.success || !response.data) {
+      return { tasks: [], total: 0 }
+    }
+    const tasks = response.data.map(t => this.toPoolTask(t))
+    const total = response.meta?.total ?? tasks.length
+    return { tasks, total }
   }
 
   async getTaskById(id: string): Promise<Task | undefined> {

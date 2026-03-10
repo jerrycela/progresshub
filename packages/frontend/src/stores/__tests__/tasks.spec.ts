@@ -37,6 +37,12 @@ describe('useTaskStore', () => {
       expect(store.poolTasks.length).toBe(mockPoolTasks.length)
     })
 
+    it('should initialise poolTasksTotal to mockPoolTasks.length in mock mode', () => {
+      const store = useTaskStore()
+
+      expect(store.poolTasksTotal).toBe(mockPoolTasks.length)
+    })
+
     it('should have no error initially', () => {
       const store = useTaskStore()
 
