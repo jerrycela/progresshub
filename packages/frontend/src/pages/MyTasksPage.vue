@@ -266,7 +266,7 @@ const showCompleted = ref(false)
           <Select v-model="selectedStatus" label="狀態篩選" :options="statusOptions" />
         </div>
         <div class="flex items-center sm:ml-auto">
-          <label class="flex items-center gap-2 cursor-pointer">
+          <label class="flex items-center gap-2 cursor-pointer min-h-[44px] py-2">
             <input
               v-model="showCompleted"
               type="checkbox"
@@ -378,7 +378,7 @@ const showCompleted = ref(false)
             min="0"
             max="100"
             step="5"
-            class="w-full h-2 rounded-lg appearance-none cursor-pointer accent-samurai"
+            class="w-full h-2 min-h-[44px] rounded-lg appearance-none cursor-pointer accent-samurai"
             style="background-color: var(--bg-tertiary)"
           />
           <div class="flex justify-between text-xs mt-1" style="color: var(--text-muted)">

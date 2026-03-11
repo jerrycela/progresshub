@@ -30,15 +30,25 @@ export class DashboardService {
   /**
    * 取得儀表板統計
    */
-  async getStats(userId?: string): Promise<DashboardStats> {
-    const cacheKey = `dashboard_stats_${userId || "global"}`;
+  async getStats(
+    userId?: string,
+    permissionLevel?: PermissionLevel,
+  ): Promise<DashboardStats> {
+    const isGlobalRole =
+      permissionLevel === PermissionLevel.ADMIN ||
+      permissionLevel === PermissionLevel.PM ||
+      permissionLevel === PermissionLevel.PRODUCER;
+    const cacheKey = isGlobalRole
+      ? "dashboard_stats"
+      : `dashboard_stats_${userId || "global"}`;
     const cached = cache.get<DashboardStats>(cacheKey);
     if (cached) return cached;
 
-    // When userId is provided, scope to tasks assigned to or created by the user
-    const userFilter = userId
-      ? { OR: [{ assignedToId: userId }, { creatorId: userId }] }
-      : {};
+    // Global roles (ADMIN/PM/PRODUCER) see all tasks; others see only their own
+    const userFilter =
+      isGlobalRole || !userId
+        ? {}
+        : { OR: [{ assignedToId: userId }, { creatorId: userId }] };
 
     const [
       totalTasks,

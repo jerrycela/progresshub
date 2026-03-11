@@ -229,6 +229,8 @@ const {
 // 負責人名稱
 const getAssigneeName = (task: Task): string => {
   if (!task.assigneeId) return '未指派'
+  // Gantt API may return assignee as a plain string (the name directly)
+  if (typeof task.assignee === 'string') return task.assignee
   return task.assignee?.name || employeeStore.getEmployeeById(task.assigneeId)?.name || '未知'
 }
 
@@ -441,7 +443,7 @@ const deleteMilestone = async (msId: string): Promise<void> => {
                 v-for="scale in timeScaleOptions"
                 :key="scale.value"
                 :class="[
-                  'px-3 py-1 text-sm rounded-md transition-all cursor-pointer',
+                  'px-3 py-2 min-h-[44px] text-sm rounded-md transition-all cursor-pointer',
                   timeScale === scale.value
                     ? 'bg-white dark:bg-gray-700 shadow-sm font-medium'
                     : 'hover:bg-white/50 dark:hover:bg-gray-600/50',

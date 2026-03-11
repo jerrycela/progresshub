@@ -11,6 +11,8 @@ import type {
 } from 'shared/types'
 import { createTaskService } from '@/services/taskService'
 import { mockTasks, mockPoolTasks } from '@/mocks/unified'
+import { useAuthStore } from '@/stores/auth'
+import { useEmployeeStore } from '@/stores/employees'
 
 // ============================================
 // Tasks Store - Service Layer 重構
@@ -182,10 +184,21 @@ export const useTaskStore = defineStore('tasks', () => {
     try {
       // 樂觀更新（不可變，僅在 tasks[] 中有此任務時才更新）
       const now = new Date().toISOString()
+      const authStore = useAuthStore()
+      const assigneeName =
+        userId === authStore.user?.id
+          ? authStore.user?.name || ''
+          : useEmployeeStore().getEmployeeName(userId) || ''
       if (task) {
         tasks.value = tasks.value.map(t =>
           t.id === taskId
-            ? { ...t, status: 'CLAIMED' as const, assigneeId: userId, updatedAt: now }
+            ? {
+                ...t,
+                status: 'CLAIMED' as const,
+                assigneeId: userId,
+                assignee: { id: userId, name: assigneeName } as Task['assignee'],
+                updatedAt: now,
+              }
             : t,
         )
       }

@@ -22,7 +22,7 @@ import type { Task, ReportType } from 'shared/types'
 // ============================================
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
-const { showSuccess, showError } = useToast()
+const { showSuccess, showError, showInfo } = useToast()
 
 onMounted(async () => {
   await taskStore.fetchTasks()
@@ -95,6 +95,8 @@ const submitContinue = async (task: Task) => {
         return
       }
       showSuccess(`已回報「${task.title}」繼續進行中`)
+    } else {
+      showInfo('任務已在進行中')
     }
   } catch {
     showError('回報失敗，請稍後再試')
@@ -404,7 +406,7 @@ const today = new Date().toLocaleDateString('zh-TW', {
                 type="range"
                 min="0"
                 max="100"
-                class="flex-1 h-2 rounded-lg appearance-none cursor-pointer accent-samurai bg-elevated"
+                class="flex-1 h-2 min-h-[44px] rounded-lg appearance-none cursor-pointer accent-samurai bg-elevated"
               />
               <span class="w-16 text-center font-semibold text-primary">{{ newProgress }}%</span>
             </div>

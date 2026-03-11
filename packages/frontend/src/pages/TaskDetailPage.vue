@@ -225,7 +225,7 @@ const submitNote = async (): Promise<void> => {
   <div class="space-y-6">
     <!-- 返回按鈕 -->
     <button
-      class="flex items-center gap-2 transition-colors cursor-pointer text-secondary"
+      class="flex items-center gap-2 transition-colors cursor-pointer text-secondary min-h-[44px]"
       @click="goBack"
     >
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

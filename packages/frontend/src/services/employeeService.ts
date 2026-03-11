@@ -88,7 +88,7 @@ class MockEmployeeService implements EmployeeServiceInterface {
 
 class ApiEmployeeService implements EmployeeServiceInterface {
   async fetchEmployees(): Promise<MockEmployee[]> {
-    const raw = await apiGetUnwrap<Record<string, unknown>[]>('/employees')
+    const raw = await apiGetUnwrap<Record<string, unknown>[]>('/employees?limit=200')
     return raw.map(mapBackendEmployee)
   }
 

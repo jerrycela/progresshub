@@ -46,8 +46,8 @@ const getProjectStats = (projectId: string) => {
 }
 
 // 取得專案負責人
-const getProjectOwner = (createdById: string) =>
-  employeeStore.getEmployeeName(createdById) || '未知'
+const getProjectOwner = (project: Project) =>
+  project.createdByName || employeeStore.getEmployeeName(project.createdById) || '未知'
 
 // 專案狀態徽章樣式
 // 專案狀態徽章樣式（與 Prisma schema 一致，使用 PAUSED）
@@ -311,7 +311,7 @@ const canManageMembers = computed(() => {
             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 text-sm pt-3 border-t"
             style="color: var(--text-tertiary); border-color: var(--border-primary)"
           >
-            <span>負責人：{{ getProjectOwner(project.createdById) }}</span>
+            <span>負責人：{{ getProjectOwner(project) }}</span>
             <span>{{ formatDate(project.startDate) }} - {{ formatDate(project.endDate) }}</span>
           </div>
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useEmployeeStore } from '@/stores/employees'
+import { useAuthStore } from '@/stores/auth'
 import { functionTypeLabels, roleLabels } from '@/constants/labels'
 import { FUNCTION_OPTIONS, ROLE_OPTIONS } from '@/constants/filterOptions'
 import Card from '@/components/common/Card.vue'
@@ -21,6 +22,7 @@ import { useToast } from '@/composables/useToast'
 // ============================================
 
 const employeeStore = useEmployeeStore()
+const authStore = useAuthStore()
 const { showError } = useToast()
 
 // 將員工資料轉為 User 格式供頁面使用
@@ -193,8 +195,15 @@ const createUser = async () => {
 const roleOptions = ROLE_OPTIONS
 const functionOptions = FUNCTION_OPTIONS
 
-// 表單專用選項（排除 ALL）
-const roleFormOptions = computed(() => ROLE_OPTIONS.filter(opt => opt.value !== 'ALL'))
+// 表單專用選項（排除 ALL；MANAGER 只能指派 EMPLOYEE 角色）
+const roleFormOptions = computed(() => {
+  const isManager = authStore.userRole === 'MANAGER'
+  return ROLE_OPTIONS.filter(opt => {
+    if (opt.value === 'ALL') return false
+    if (isManager) return opt.value === 'EMPLOYEE'
+    return true
+  })
+})
 const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.value !== 'ALL'))
 </script>
 
@@ -290,7 +299,18 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 </Badge>
               </td>
               <td class="py-3 px-4 text-right">
-                <Button variant="ghost" size="sm" @click="openEditModal(user)"> 編輯 </Button>
+                <Button
+                  v-if="
+                    authStore.userRole !== 'MANAGER' ||
+                    user.role === 'EMPLOYEE' ||
+                    user.id === authStore.user?.id
+                  "
+                  variant="ghost"
+                  size="sm"
+                  @click="openEditModal(user)"
+                >
+                  編輯
+                </Button>
               </td>
             </tr>
           </tbody>
@@ -318,7 +338,18 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 <p class="text-sm" style="color: var(--text-tertiary)">{{ user.email }}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" @click="openEditModal(user)"> 編輯 </Button>
+            <Button
+              v-if="
+                authStore.userRole !== 'MANAGER' ||
+                user.role === 'EMPLOYEE' ||
+                user.id === authStore.user?.id
+              "
+              variant="ghost"
+              size="sm"
+              @click="openEditModal(user)"
+            >
+              編輯
+            </Button>
           </div>
           <div class="flex items-center gap-2">
             <Badge :variant="roleBadgeVariant(user.role)" size="sm">

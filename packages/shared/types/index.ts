@@ -84,6 +84,7 @@ export interface Project {
   startDate: string
   endDate?: string
   createdById: string
+  createdByName?: string
   createdBy?: User
   createdAt: string
   updatedAt: string

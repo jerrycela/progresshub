@@ -307,6 +307,7 @@ router.post(
 
       // Only privileged roles can create ASSIGNED tasks (whitelist approach)
       const canAssignTasks: PermissionLevel[] = [
+        PermissionLevel.MANAGER,
         PermissionLevel.PM,
         PermissionLevel.PRODUCER,
         PermissionLevel.ADMIN,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useTaskStore } from '@/stores/tasks'
 import { useProject } from '@/composables/useProject'
@@ -15,6 +16,7 @@ import type { Task } from 'shared/types'
 // 個人任務總覽 + Dark mode 支援
 // ============================================
 
+const router = useRouter()
 const authStore = useAuthStore()
 const taskStore = useTaskStore()
 const dashboardStore = useDashboardStore()
@@ -110,6 +112,7 @@ const icons = {
               :task="task"
               :project="getProjectById(task.projectId)"
               :show-actions="false"
+              @click="t => router.push(`/task-pool/${t.id}`)"
             />
           </div>
           <EmptyState

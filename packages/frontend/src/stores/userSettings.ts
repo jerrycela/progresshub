@@ -42,9 +42,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     storeAction(
       async () => {
         const result = await service.updateSettings(updates)
-        if (result.success && result.data) {
-          settings.value = result.data
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '更新設定失敗')
         }
+        settings.value = result.data
         return settings.value
       },
       '更新設定失敗',
@@ -58,9 +59,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     storeAction(
       async () => {
         const result = await service.linkGitLab(gitlabUsername)
-        if (result.success && result.data) {
-          settings.value = result.data
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '連結 GitLab 失敗')
         }
+        settings.value = result.data
         return settings.value
       },
       '連結 GitLab 失敗',
@@ -74,9 +76,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     storeAction(
       async () => {
         const result = await service.unlinkGitLab()
-        if (result.success && result.data) {
-          settings.value = result.data
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '解除連結 GitLab 失敗')
         }
+        settings.value = result.data
         return settings.value
       },
       '解除連結 GitLab 失敗',
@@ -90,9 +93,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     storeAction(
       async () => {
         const result = await service.linkSlack(slackUsername)
-        if (result.success && result.data) {
-          settings.value = result.data
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '連結 Slack 失敗')
         }
+        settings.value = result.data
         return settings.value
       },
       '連結 Slack 失敗',
@@ -106,9 +110,10 @@ export const useUserSettingsStore = defineStore('userSettings', () => {
     storeAction(
       async () => {
         const result = await service.unlinkSlack()
-        if (result.success && result.data) {
-          settings.value = result.data
+        if (!result.success || !result.data) {
+          throw new Error(result.error?.message || '解除連結 Slack 失敗')
         }
+        settings.value = result.data
         return settings.value
       },
       '解除連結 Slack 失敗',

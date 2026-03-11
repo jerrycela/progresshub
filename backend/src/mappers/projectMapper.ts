@@ -8,6 +8,7 @@ export interface ProjectDTO {
   startDate: string;
   endDate?: string;
   createdById?: string;
+  createdByName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -21,6 +22,7 @@ export function toProjectDTO(proj: Project): ProjectDTO {
     startDate: proj.startDate.toISOString(),
     endDate: proj.endDate?.toISOString(),
     createdById: proj.createdById ?? undefined,
+    createdByName: undefined,
     createdAt: proj.createdAt.toISOString(),
     updatedAt: proj.updatedAt.toISOString(),
   };

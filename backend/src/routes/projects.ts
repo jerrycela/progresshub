@@ -88,7 +88,31 @@ router.get(
         userRole: req.user!.permissionLevel,
       });
 
-      sendPaginatedSuccess(res, result.data.map(toProjectDTO), {
+      // Batch-resolve createdByName since Project model has no createdBy relation
+      const creatorIds = [
+        ...new Set(
+          result.data
+            .map((p) => p.createdById)
+            .filter((id): id is string => id !== null),
+        ),
+      ];
+      const creators =
+        creatorIds.length > 0
+          ? await prisma.employee.findMany({
+              where: { id: { in: creatorIds } },
+              select: { id: true, name: true },
+            })
+          : [];
+      const creatorMap = new Map(creators.map((c) => [c.id, c.name]));
+
+      const dtos = result.data.map((p) => ({
+        ...toProjectDTO(p),
+        createdByName: p.createdById
+          ? creatorMap.get(p.createdById)
+          : undefined,
+      }));
+
+      sendPaginatedSuccess(res, dtos, {
         total: result.total,
         page,
         limit,

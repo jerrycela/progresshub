@@ -17,7 +17,8 @@ router.use(authenticate);
 router.get("/stats", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
-    const stats = await dashboardService.getStats(userId);
+    const permissionLevel = req.user?.permissionLevel;
+    const stats = await dashboardService.getStats(userId, permissionLevel);
     sendSuccess(res, stats);
   } catch (error) {
     logger.error("Dashboard stats error:", error);
