@@ -168,11 +168,13 @@ router.post(
         return;
       }
 
-      const canAssignToOthers = [
-        PermissionLevel.PM,
-        PermissionLevel.PRODUCER,
-        PermissionLevel.ADMIN,
-      ].includes(req.user.permissionLevel);
+      const canAssignToOthers = (
+        [
+          PermissionLevel.PM,
+          PermissionLevel.PRODUCER,
+          PermissionLevel.ADMIN,
+        ] as PermissionLevel[]
+      ).includes(req.user.permissionLevel);
 
       const targetUserId =
         req.body.assigneeId && canAssignToOthers
