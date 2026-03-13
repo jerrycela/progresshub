@@ -45,13 +45,20 @@ const showNoteModal = ref(false)
 const gitlabIssueUrl = ref('')
 const newNoteContent = ref('')
 
-// 檢查是否有新增註記權限（PM、製作人、部門主管）
+// 檢查是否有新增註記權限（PM、製作人、部門主管、系統管理員）
 const canAddNote = computed(() => {
-  return authStore.user ? ['PM', 'PRODUCER', 'MANAGER'].includes(authStore.user.role) : false
+  return authStore.user
+    ? ['PM', 'PRODUCER', 'MANAGER', 'ADMIN'].includes(authStore.user.role)
+    : false
 })
 
 // 檢查是否有刪除任務權限（PM、製作人、系統管理員）
 const canDeleteTask = computed(() => {
+  return authStore.user ? ['PM', 'PRODUCER', 'ADMIN'].includes(authStore.user.role) : false
+})
+
+// 檢查是否有指派任務權限（PM、製作人、系統管理員）
+const canAssign = computed(() => {
   return authStore.user ? ['PM', 'PRODUCER', 'ADMIN'].includes(authStore.user.role) : false
 })
 
@@ -325,13 +332,17 @@ const submitNote = async (): Promise<void> => {
               回報進度
             </button>
             <button
-              v-if="task.assigneeId && task.status !== 'DONE'"
+              v-if="
+                task.assigneeId && task.status !== 'DONE' && task.assigneeId === authStore.user?.id
+              "
               class="btn-secondary"
               @click="returnTask"
             >
               退回任務
             </button>
-            <button class="btn-secondary" @click="showAssignModal = true">指派任務</button>
+            <button v-if="canAssign" class="btn-secondary" @click="showAssignModal = true">
+              指派任務
+            </button>
             <button v-if="task.canEdit" class="btn-ghost" @click="editTask">編輯</button>
             <button v-if="canDeleteTask" class="btn-danger" @click="deleteTask">刪除</button>
           </div>

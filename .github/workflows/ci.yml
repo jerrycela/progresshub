@@ -121,6 +121,35 @@ jobs:
           JWT_SECRET: test-jwt-secret-for-ci
           NODE_ENV: test
 
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: frontend
+    continue-on-error: true # Non-blocking until test environment stabilized
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Browsers
+        run: cd packages/frontend && npx playwright install --with-deps chromium
+
+      - name: Run E2E Tests
+        run: cd packages/frontend && npx playwright test --workers=1
+        env:
+          E2E_API_BASE: ${{ secrets.E2E_API_BASE }}
+
   build:
     name: Build Backend
     runs-on: ubuntu-latest

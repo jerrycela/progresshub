@@ -6,6 +6,7 @@ import {
   authorize,
   AuthRequest,
   authorizeSelfOrAdmin,
+  invalidateAuthCache,
 } from "../middleware/auth";
 import { auditLog } from "../middleware/auditLog";
 import { PermissionLevel } from "@prisma/client";
@@ -313,6 +314,13 @@ router.put(
       }
 
       const employee = await employeeService.updateEmployee(id, updateData);
+
+      // Immediately evict from auth cache when an account is disabled,
+      // so the 5-minute TTL cannot be exploited for continued access.
+      if (isAdmin && isActive === false) {
+        invalidateAuthCache(id);
+      }
+
       sendSuccess(res, toUserDTO(employee));
     } catch (error) {
       logger.error("Update employee error:", error);

@@ -21,6 +21,14 @@ const authCache = new Map<
   { user: JwtPayload & { isActive: boolean }; cachedAt: number }
 >();
 
+/**
+ * Immediately removes a user from the auth cache.
+ * Call this after disabling an account so the 5-minute TTL is not a window for continued access.
+ */
+export const invalidateAuthCache = (userId: string): void => {
+  authCache.delete(userId);
+};
+
 // Clean expired entries periodically (unref so it doesn't block process exit)
 setInterval(() => {
   const now = Date.now();
@@ -190,8 +198,9 @@ export const authorizeTaskAccess = async (
     const isAssignee = task.assignedToId === userId;
     const isCollaborator = task.collaborators.includes(userId);
     const isPM = req.user.permissionLevel === PermissionLevel.PM;
+    const isProducer = req.user.permissionLevel === PermissionLevel.PRODUCER;
 
-    if (isCreator || isAssignee || isCollaborator || isPM) {
+    if (isCreator || isAssignee || isCollaborator || isPM || isProducer) {
       next();
       return;
     }

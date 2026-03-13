@@ -114,4 +114,31 @@ if (missingSlackVars.length > 0) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// GitLab feature detection
+// ---------------------------------------------------------------------------
+// GitLab integration requires GITLAB_ENCRYPTION_KEY to store OAuth tokens.
+// If any GitLab-related instance vars are partially set, warn at startup so the
+// server doesn't silently start and then crash with 500 on the first GitLab API
+// call.
+
+const gitlabInstanceVars = ["GITLAB_ENCRYPTION_KEY"];
+
+const missingGitlabVars = gitlabInstanceVars.filter((v) => !process.env[v]);
+
+/**
+ * True when all required GitLab environment variables are present.
+ * Use this flag to guard GitLab-dependent code paths instead of letting them
+ * crash with an obscure 500 at runtime.
+ */
+export const gitlabEnabled = missingGitlabVars.length === 0;
+
+if (!gitlabEnabled) {
+  console.warn(
+    `[GitLab] Required GitLab variables not set: ${missingGitlabVars.join(", ")}. ` +
+      "GitLab features will return errors when accessed. " +
+      "Set GITLAB_ENCRYPTION_KEY to enable GitLab integration.",
+  );
+}
+
 export default env;

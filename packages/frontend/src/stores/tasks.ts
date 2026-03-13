@@ -622,6 +622,13 @@ export const useTaskStore = defineStore('tasks', () => {
     error.value = null
   }
 
+  // 清除 computed 快取（登出或重置時呼叫，防止 Map 無限增長）
+  const clearComputedCache = () => {
+    _projectComputedCache.clear()
+    _functionComputedCache.clear()
+    _statusComputedCache.clear()
+  }
+
   return {
     // State
     tasks,
@@ -653,5 +660,6 @@ export const useTaskStore = defineStore('tasks', () => {
     deleteTask,
     updateTask,
     clearError,
+    clearComputedCache,
   }
 })

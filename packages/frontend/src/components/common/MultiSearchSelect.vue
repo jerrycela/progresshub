@@ -25,8 +25,10 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const search = ref('')
+const highlightedIndex = ref(-1)
 const rootRef = ref<HTMLDivElement | null>(null)
 const searchInput = ref<HTMLInputElement | null>(null)
+const optionListRef = ref<HTMLUListElement | null>(null)
 
 const selectedOptions = computed(() =>
   props.options.filter(o => props.modelValue.includes(o.value)),
@@ -46,11 +48,19 @@ function isSelected(value: string): boolean {
   return props.modelValue.includes(value)
 }
 
+const activeDescendantId = computed(() => {
+  if (highlightedIndex.value < 0 || highlightedIndex.value >= filteredOptions.value.length) {
+    return undefined
+  }
+  return `multi-opt-${filteredOptions.value[highlightedIndex.value].value}`
+})
+
 function toggle() {
   if (props.disabled) return
   isOpen.value = !isOpen.value
   if (isOpen.value) {
     search.value = ''
+    highlightedIndex.value = -1
     nextTick(() => {
       searchInput.value?.focus()
     })
@@ -80,6 +90,43 @@ function remove(value: string) {
   )
 }
 
+function handleSearchKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    close()
+    return
+  }
+  if (event.key === 'ArrowDown') {
+    event.preventDefault()
+    if (filteredOptions.value.length === 0) return
+    highlightedIndex.value =
+      highlightedIndex.value < filteredOptions.value.length - 1 ? highlightedIndex.value + 1 : 0
+    scrollHighlightedIntoView()
+    return
+  }
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    if (filteredOptions.value.length === 0) return
+    highlightedIndex.value =
+      highlightedIndex.value > 0 ? highlightedIndex.value - 1 : filteredOptions.value.length - 1
+    scrollHighlightedIntoView()
+    return
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    if (highlightedIndex.value >= 0 && highlightedIndex.value < filteredOptions.value.length) {
+      toggleOption(filteredOptions.value[highlightedIndex.value].value)
+    }
+  }
+}
+
+function scrollHighlightedIntoView() {
+  nextTick(() => {
+    if (!optionListRef.value || highlightedIndex.value < 0) return
+    const el = optionListRef.value.children[highlightedIndex.value] as HTMLElement | undefined
+    el?.scrollIntoView({ block: 'nearest' })
+  })
+}
+
 function handleClickOutside(event: MouseEvent) {
   if (rootRef.value && !rootRef.value.contains(event.target as Node)) {
     close()
@@ -107,6 +154,7 @@ onBeforeUnmount(() => {
         role="combobox"
         :aria-expanded="isOpen"
         aria-haspopup="listbox"
+        :aria-activedescendant="activeDescendantId"
         class="input min-h-[38px] w-full cursor-pointer flex flex-wrap items-center gap-1 py-1 px-2"
         :class="disabled ? 'opacity-50 cursor-not-allowed' : ''"
         @click="toggle"
@@ -149,18 +197,22 @@ onBeforeUnmount(() => {
             v-model="search"
             class="input w-full text-sm"
             placeholder="搜尋..."
-            @keydown.escape="close"
+            @keydown="handleSearchKeydown"
           />
         </div>
-        <ul role="listbox" class="max-h-[240px] overflow-y-auto">
+        <ul ref="optionListRef" role="listbox" class="max-h-[240px] overflow-y-auto">
           <li
-            v-for="option in filteredOptions"
+            v-for="(option, index) in filteredOptions"
             :id="`multi-opt-${option.value}`"
             :key="option.value"
             role="option"
             :aria-selected="isSelected(option.value)"
-            class="px-3 py-2 cursor-pointer flex items-center gap-2 text-sm hover:bg-[var(--bg-tertiary)]"
+            class="px-3 py-2 cursor-pointer flex items-center gap-2 text-sm"
+            :style="{
+              backgroundColor: index === highlightedIndex ? 'var(--bg-tertiary)' : undefined,
+            }"
             @click="toggleOption(option.value)"
+            @mouseenter="highlightedIndex = index"
           >
             <!-- Checkmark for selected -->
             <svg

@@ -202,7 +202,25 @@ class ApiTaskService implements TaskServiceInterface {
   }
 
   async fetchTasks(): Promise<Task[]> {
-    return apiGetUnwrap<Task[]>('/tasks?limit=100&page=1')
+    // TODO: replace with cursor-based pagination when task count grows beyond this limit
+    const FETCH_LIMIT = 500
+    const response = await apiGet<{
+      success: boolean
+      data: Task[]
+      meta?: { total?: number; hasMore?: boolean }
+      error?: { code: string; message: string }
+    }>(`/tasks?limit=${FETCH_LIMIT}&page=1`)
+    if (!response.success) {
+      throw new Error(response.error?.message ?? 'Failed to fetch tasks')
+    }
+    const tasks: Task[] = response.data ?? []
+    const meta = response.meta
+    if (meta?.hasMore || (meta?.total != null && meta.total > FETCH_LIMIT)) {
+      console.warn(
+        `[taskService] fetchTasks: returned ${tasks.length} tasks but total=${meta?.total ?? '?'} — results are truncated. Pagination required.`,
+      )
+    }
+    return tasks
   }
 
   async fetchPoolTasks(): Promise<PoolTasksResult> {

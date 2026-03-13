@@ -15,6 +15,7 @@ import type { User, UserRole, FunctionType, Department } from 'shared/types'
 import { validateField, commonRules } from '@/composables/useFormValidation'
 import { VALIDATION } from '@/constants/pageSettings'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 // ============================================
 // 員工管理頁面 - Admin 專用
@@ -24,6 +25,7 @@ import { useToast } from '@/composables/useToast'
 const employeeStore = useEmployeeStore()
 const authStore = useAuthStore()
 const { showError } = useToast()
+const { showConfirm } = useConfirm()
 
 // 將員工資料轉為 User 格式供頁面使用
 const users = computed<User[]>(() =>
@@ -136,6 +138,32 @@ const saveUser = async () => {
     showError('儲存失敗，請稍後再試')
   } finally {
     isSaving.value = false
+  }
+}
+
+// 刪除使用者
+const isDeleting = ref(false)
+
+const deleteUser = async (user: User) => {
+  const confirmed = await showConfirm({
+    title: '刪除成員',
+    message: `確定要刪除「${user.name}」嗎？此操作無法復原。`,
+    type: 'danger',
+    confirmText: '刪除',
+    cancelText: '取消',
+  })
+  if (!confirmed) return
+  if (isDeleting.value) return
+  isDeleting.value = true
+  try {
+    const result = await employeeStore.deleteEmployee(user.id)
+    if (!result.success) {
+      showError(result.error?.message || '刪除失敗，請稍後再試')
+    }
+  } catch {
+    showError('刪除失敗，請稍後再試')
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -299,18 +327,38 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 </Badge>
               </td>
               <td class="py-3 px-4 text-right">
-                <Button
-                  v-if="
-                    authStore.userRole !== 'MANAGER' ||
-                    user.role === 'EMPLOYEE' ||
-                    user.id === authStore.user?.id
-                  "
-                  variant="ghost"
-                  size="sm"
-                  @click="openEditModal(user)"
-                >
-                  編輯
-                </Button>
+                <div class="flex items-center justify-end gap-1">
+                  <Button
+                    v-if="
+                      authStore.userRole !== 'MANAGER' ||
+                      user.role === 'EMPLOYEE' ||
+                      user.id === authStore.user?.id
+                    "
+                    variant="ghost"
+                    size="sm"
+                    @click="openEditModal(user)"
+                  >
+                    編輯
+                  </Button>
+                  <Button
+                    v-if="authStore.userRole === 'ADMIN' && user.id !== authStore.user?.id"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="isDeleting"
+                    aria-label="刪除成員"
+                    class="text-red-500 hover:text-red-700"
+                    @click="deleteUser(user)"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </Button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -338,18 +386,38 @@ const functionFormOptions = computed(() => FUNCTION_OPTIONS.filter(opt => opt.va
                 <p class="text-sm" style="color: var(--text-tertiary)">{{ user.email }}</p>
               </div>
             </div>
-            <Button
-              v-if="
-                authStore.userRole !== 'MANAGER' ||
-                user.role === 'EMPLOYEE' ||
-                user.id === authStore.user?.id
-              "
-              variant="ghost"
-              size="sm"
-              @click="openEditModal(user)"
-            >
-              編輯
-            </Button>
+            <div class="flex items-center gap-1">
+              <Button
+                v-if="
+                  authStore.userRole !== 'MANAGER' ||
+                  user.role === 'EMPLOYEE' ||
+                  user.id === authStore.user?.id
+                "
+                variant="ghost"
+                size="sm"
+                @click="openEditModal(user)"
+              >
+                編輯
+              </Button>
+              <Button
+                v-if="authStore.userRole === 'ADMIN' && user.id !== authStore.user?.id"
+                variant="ghost"
+                size="sm"
+                :disabled="isDeleting"
+                aria-label="刪除成員"
+                class="text-red-500 hover:text-red-700"
+                @click="deleteUser(user)"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </Button>
+            </div>
           </div>
           <div class="flex items-center gap-2">
             <Badge :variant="roleBadgeVariant(user.role)" size="sm">

@@ -159,6 +159,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       await service.logout()
+      // Clear task store computed caches to prevent memory leak (P1-9)
+      const { useTaskStore } = await import('./tasks')
+      useTaskStore().clearComputedCache()
       user.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_refresh_token')
@@ -169,6 +172,8 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = message
 
       // 即使後端 API 失敗，仍清除本地狀態確保使用者能成功登出
+      const { useTaskStore } = await import('./tasks')
+      useTaskStore().clearComputedCache()
       user.value = null
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_refresh_token')

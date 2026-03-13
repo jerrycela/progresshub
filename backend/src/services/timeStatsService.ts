@@ -2,6 +2,12 @@ import prisma from "../config/database";
 import { Prisma } from "@prisma/client";
 import { getStartOfWeek } from "../utils/dateUtils";
 import { AppError } from "../middleware/errorHandler";
+import logger from "../config/logger";
+
+// Safety caps for in-memory aggregation queries.
+// TODO: convert these queries to cursor-based pagination when data volume grows.
+const MAX_TIME_ENTRIES_QUERY = 5000;
+const MAX_TIME_ENTRIES_TEAM_QUERY = 10000;
 
 export interface DateRangeParams {
   startDate: Date;
@@ -92,11 +98,17 @@ export class TimeStatsService {
     // 取得所有工時記錄（safety limit to prevent memory explosion）
     const entries = await prisma.timeEntry.findMany({
       where,
-      take: 5000,
+      take: MAX_TIME_ENTRIES_QUERY,
       include: {
         category: { select: { id: true, name: true, billable: true } },
       },
     });
+    if (entries.length === MAX_TIME_ENTRIES_QUERY) {
+      logger.warn("Time entries query hit limit, results may be incomplete", {
+        projectId,
+        limit: MAX_TIME_ENTRIES_QUERY,
+      });
+    }
 
     // 計算統計數據
     let totalHours = 0;
@@ -172,12 +184,18 @@ export class TimeStatsService {
 
     const entries = await prisma.timeEntry.findMany({
       where,
-      take: 5000,
+      take: MAX_TIME_ENTRIES_QUERY,
       include: {
         project: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
       },
     });
+    if (entries.length === MAX_TIME_ENTRIES_QUERY) {
+      logger.warn("Time entries query hit limit, results may be incomplete", {
+        employeeId,
+        limit: MAX_TIME_ENTRIES_QUERY,
+      });
+    }
 
     let totalHours = 0;
     let approvedHours = 0;
@@ -261,13 +279,20 @@ export class TimeStatsService {
 
     const entries = await prisma.timeEntry.findMany({
       where,
-      take: 10000,
+      take: MAX_TIME_ENTRIES_TEAM_QUERY,
       include: {
         project: { select: { id: true, name: true } },
         employee: { select: { id: true, name: true } },
         category: { select: { billable: true } },
       },
     });
+    if (entries.length === MAX_TIME_ENTRIES_TEAM_QUERY) {
+      logger.warn("Time entries query hit limit, results may be incomplete", {
+        dateRange,
+        projectIds,
+        limit: MAX_TIME_ENTRIES_TEAM_QUERY,
+      });
+    }
 
     let totalHours = 0;
     let billableHours = 0;
@@ -457,12 +482,18 @@ export class TimeStatsService {
         status: "PENDING",
         ...(projectFilter && { projectId: projectFilter }),
       },
-      take: 5000,
+      take: MAX_TIME_ENTRIES_QUERY,
       include: {
         employee: { select: { id: true, name: true } },
         project: { select: { id: true, name: true } },
       },
     });
+    if (pendingEntries.length === MAX_TIME_ENTRIES_QUERY) {
+      logger.warn("Time entries query hit limit, results may be incomplete", {
+        approverId,
+        limit: MAX_TIME_ENTRIES_QUERY,
+      });
+    }
 
     const employeeMap = new Map<
       string,
