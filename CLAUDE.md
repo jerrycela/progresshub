@@ -18,8 +18,8 @@ Note: `backend/` is a top-level workspace member (not under `packages/`). pnpm f
 Pages (`pages/`) → Components (`components/`) → Composables (`composables/`) → Services (`services/`) → Stores (`stores/`)
 
 - **Pages**: Route-level views (e.g., `GanttPage.vue`, `TaskPoolPage.vue`, `DashboardPage.vue`)
-- **Composables**: Reusable logic — `useToast`, `useFormatDate`, `useGantt`, `useGanttData`, `useTaskModal`, `useFormValidation`, `useConfirm`, `useProject`, `useStatusUtils`, `useTheme`
-- **Components**: Organized by domain — `common/` (Modal, SearchableSelect, MultiSearchSelect, ConfirmDialog, Toast, Avatar, Badge, Button, Card, EmptyState, Input, ProgressBar, Select), `task/`, `gantt/`, `project/`, `layout/`
+- **Composables**: Reusable logic in `composables/` — use `ls` to discover available hooks (e.g., `useToast`, `useGantt`, `useFormValidation`)
+- **Components**: Organized by domain — `common/`, `task/`, `gantt/`, `project/`, `layout/` (use `ls` per directory)
 - **Layouts**: `layouts/MainLayout.vue` (app shell), `pages/settings/SettingsLayout.vue` (settings sub-routes)
 - **Router**: `src/router/index.ts` — uses `meta.requiresAuth` for route guards, lazy-loads all pages
 - **Path aliases**: `@` → `src/`, `shared` → `../shared` (configured in `vite.config.ts`). Dev server proxies `/api` to `localhost:3000` automatically.
@@ -119,10 +119,11 @@ pnpm --filter frontend build        # Production build
 pnpm --filter frontend lint         # ESLint --fix
 pnpm --filter frontend format       # Prettier
 
-# Frontend E2E (Playwright)
-cd packages/frontend && npx playwright test                    # All E2E tests
-cd packages/frontend && npx playwright test --ui               # Interactive UI mode
-cd packages/frontend && npx playwright test e2e/example.spec.ts  # Single spec
+# Frontend E2E (Playwright) — 89 tests across 14 spec files
+cd packages/frontend && npx playwright test                              # All E2E tests (use --workers=1 to avoid rate limiting)
+cd packages/frontend && npx playwright test --ui                         # Interactive UI mode
+cd packages/frontend && npx playwright test e2e/auth.spec.ts             # Single spec
+cd packages/frontend && npx playwright test --grep "sidebar"             # Run by test name pattern
 
 # Backend
 pnpm --filter backend dev           # Dev server (localhost:3000)
@@ -148,6 +149,17 @@ docker compose up -d                 # All services
 **Pre-commit hooks**: Husky + lint-staged auto-runs ESLint and Prettier on staged files. Do not bypass with `--no-verify`.
 
 **Testing caveat**: Local `backend/.env` is loaded by `dotenv.config()` and can cause tests to behave differently from CI. To simulate CI: `mv backend/.env backend/.env.bak` before running tests.
+
+### E2E Auth Helper
+
+`e2e/helpers/auth.ts` provides `loginAs(page, role)` and `logout(page)`. `loginAs` calls dev-login API, injects token into localStorage, then reloads. All spec files use this — never re-implement auth logic in individual tests.
+
+```
+import { loginAs, ROLES } from './helpers/auth'
+await loginAs(page, ROLES.PM)
+```
+
+**E2E config notes**: Tests target Zeabur production (`E2E_API_BASE`). Use `--workers=1` to avoid backend rate limiter (10 req/15min on auth endpoints).
 
 ## Auth Modes
 
