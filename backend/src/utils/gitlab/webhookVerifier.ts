@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 /**
  * 驗證 GitLab Webhook 簽章
@@ -6,42 +6,38 @@ import crypto from 'crypto';
  */
 export function verifyWebhookSignature(
   token: string | undefined,
-  webhookSecret: string
+  webhookSecret: string,
 ): boolean {
   if (!token || !webhookSecret) {
     return false;
   }
 
-  // GitLab 直接比較 token 值
-  return crypto.timingSafeEqual(
-    Buffer.from(token),
-    Buffer.from(webhookSecret)
-  );
+  // 先 hash 為固定長度再比較，避免長度差異洩漏資訊（timing side-channel）
+  const hashToken = crypto.createHash("sha256").update(token).digest();
+  const hashSecret = crypto.createHash("sha256").update(webhookSecret).digest();
+  return crypto.timingSafeEqual(hashToken, hashSecret);
 }
 
 /**
  * 生成 Webhook Secret
  */
 export function generateWebhookSecret(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString("hex");
 }
 
 /**
  * 解析 GitLab Webhook 事件類型
  */
-export function parseEventType(
-  objectKind: string,
-  action?: string
-): string {
+export function parseEventType(objectKind: string, action?: string): string {
   switch (objectKind) {
-    case 'push':
-      return 'push';
-    case 'merge_request':
-      return action ? `merge_request_${action}` : 'merge_request';
-    case 'issue':
-      return action ? `issue_${action}` : 'issue';
-    case 'note':
-      return 'comment';
+    case "push":
+      return "push";
+    case "merge_request":
+      return action ? `merge_request_${action}` : "merge_request";
+    case "issue":
+      return action ? `issue_${action}` : "issue";
+    case "note":
+      return "comment";
     default:
       return objectKind;
   }

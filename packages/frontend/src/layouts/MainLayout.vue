@@ -104,6 +104,13 @@ watch(
 
   <!-- 主佈局 -->
   <div v-else class="min-h-screen flex" style="background-color: var(--bg-primary)">
+    <!-- Skip navigation link (WCAG 2.4.1) -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-blue-600 focus:rounded focus:shadow-lg"
+    >
+      跳到主要內容
+    </a>
     <!-- 側邊選單 -->
     <AppSidebar :is-open="isSidebarOpen" @close="closeSidebar" />
 
@@ -113,7 +120,11 @@ watch(
       <AppHeader @toggle-sidebar="toggleSidebar" />
 
       <!-- 頁面內容 -->
-      <main class="flex-1 p-4 md:p-6 overflow-auto" style="background-color: var(--bg-secondary)">
+      <main
+        id="main-content"
+        class="flex-1 p-4 md:p-6 overflow-auto"
+        style="background-color: var(--bg-secondary)"
+      >
         <router-view />
       </main>
     </div>

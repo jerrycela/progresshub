@@ -4,7 +4,7 @@ let openModalCount = 0
 </script>
 
 <script setup lang="ts">
-import { watch, onUnmounted } from 'vue'
+import { watch, onUnmounted, ref, nextTick } from 'vue'
 
 // 對話框元件 - 用於顯示彈出視窗
 interface Props {
@@ -26,6 +26,19 @@ const emit = defineEmits<{
   close: []
 }>()
 
+// Ref to the dialog element for focus trap
+const dialogRef = ref<HTMLElement | null>(null)
+// Previously focused element, restored on close
+let previouslyFocused: HTMLElement | null = null
+
+const FOCUSABLE_SELECTORS =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+const getFocusableElements = (): HTMLElement[] => {
+  if (!dialogRef.value) return []
+  return Array.from(dialogRef.value.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS))
+}
+
 const close = () => {
   emit('update:modelValue', false)
   emit('close')
@@ -37,34 +50,71 @@ const handleOverlayClick = () => {
   }
 }
 
-// ESC 鍵處理函式（提取為具名函式以便正確 cleanup）
-const handleEsc = (e: KeyboardEvent) => {
+// ESC 鍵 + Tab focus trap 處理
+const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && props.closable) {
     close()
+    return
+  }
+
+  if (e.key === 'Tab') {
+    const focusable = getFocusableElements()
+    if (focusable.length === 0) {
+      e.preventDefault()
+      return
+    }
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (e.shiftKey) {
+      // Shift+Tab: if on first element, wrap to last
+      if (document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      }
+    } else {
+      // Tab: if on last element, wrap to first
+      if (document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    }
   }
 }
 
-// 監聽 ESC 鍵關閉 + 管理背景滾動（支援多個 modal 同時開啟）
+// 監聽開關 + 管理背景滾動 + focus 管理（支援多個 modal 同時開啟）
 watch(
   () => props.modelValue,
   isOpen => {
     if (isOpen) {
-      document.addEventListener('keydown', handleEsc)
+      previouslyFocused = document.activeElement as HTMLElement
+      document.addEventListener('keydown', handleKeydown)
       openModalCount++
       document.body.style.overflow = 'hidden'
+      // Focus first focusable element in dialog after render
+      nextTick(() => {
+        const focusable = getFocusableElements()
+        if (focusable.length > 0) {
+          focusable[0].focus()
+        } else {
+          dialogRef.value?.focus()
+        }
+      })
     } else {
-      document.removeEventListener('keydown', handleEsc)
+      document.removeEventListener('keydown', handleKeydown)
       openModalCount = Math.max(0, openModalCount - 1)
       if (openModalCount === 0) {
         document.body.style.overflow = ''
       }
+      // Restore focus to the element that triggered the modal
+      previouslyFocused?.focus()
+      previouslyFocused = null
     }
   },
 )
 
 // 元件卸載時確保清理
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleEsc)
+  document.removeEventListener('keydown', handleKeydown)
   if (props.modelValue) {
     openModalCount = Math.max(0, openModalCount - 1)
     if (openModalCount === 0) {
@@ -90,9 +140,11 @@ const sizeClasses: Record<string, string> = {
 
         <!-- 對話框內容 -->
         <div
+          ref="dialogRef"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="title ? 'modal-title' : undefined"
+          tabindex="-1"
           :class="[
             'relative w-full rounded-xl shadow-xl flex flex-col max-h-[calc(100vh-2rem)]',
             sizeClasses[size],

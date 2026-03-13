@@ -42,13 +42,17 @@ async function canManageMembers(
     });
     if (!isMember) return false;
 
-    // Verify target employees are in the same department
+    // Verify target employees are in the same department.
+    // t.department must be non-null — a null department on either side
+    // must never grant access (null === null would otherwise pass).
     if (targetEmployeeIds && targetEmployeeIds.length > 0) {
       const targets = await prisma.employee.findMany({
         where: { id: { in: targetEmployeeIds } },
         select: { department: true },
       });
-      return targets.every((t) => t.department === manager.department);
+      return targets.every(
+        (t) => t.department !== null && t.department === manager.department,
+      );
     }
     return true;
   }

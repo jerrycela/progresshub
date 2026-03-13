@@ -65,10 +65,11 @@ export function decrypt(encryptedText: string): string {
 
 /**
  * 安全比較兩個字串（防止 timing attack）
+ * 使用 SHA-256 將兩個值 hash 為固定長度後再比較，
+ * 避免因長度不同導致提早回傳而洩漏長度資訊。
  */
 export function secureCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+  const hashA = crypto.createHash("sha256").update(a).digest();
+  const hashB = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(hashA, hashB);
 }

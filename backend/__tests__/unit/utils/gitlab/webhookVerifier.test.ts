@@ -29,12 +29,10 @@ describe('GitLab Webhook Verifier', () => {
       expect(verifyWebhookSignature('token', '')).toBe(false);
     });
 
-    it('長度不同的 token 和 secret 應拋出錯誤（crypto.timingSafeEqual 限制）', () => {
-      // 注意：原始碼在長度不同時會拋出 RangeError
-      // 因為 crypto.timingSafeEqual 要求相同長度的 buffer
-      expect(() => verifyWebhookSignature('short', 'much-longer-secret')).toThrow(
-        'Input buffers must have the same byte length',
-      );
+    it('長度不同的 token 和 secret 不應拋出錯誤（已改為 hash 後固定長度比較）', () => {
+      // P2-S3 修復：先 SHA-256 hash 再 timingSafeEqual，不再因長度不同而拋錯
+      expect(() => verifyWebhookSignature('short', 'much-longer-secret')).not.toThrow();
+      expect(verifyWebhookSignature('short', 'much-longer-secret')).toBe(false);
     });
   });
 

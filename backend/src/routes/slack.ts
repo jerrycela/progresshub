@@ -47,10 +47,10 @@ function verifySlackSignature(req: Request): boolean {
       .update(sigBasestring)
       .digest("hex");
 
-  return crypto.timingSafeEqual(
-    Buffer.from(mySignature),
-    Buffer.from(signature),
-  );
+  // hash 兩個值為固定長度後比較，避免長度差異洩漏資訊（timing side-channel）
+  const hashMine = crypto.createHash("sha256").update(mySignature).digest();
+  const hashReceived = crypto.createHash("sha256").update(signature).digest();
+  return crypto.timingSafeEqual(hashMine, hashReceived);
 }
 
 /**
@@ -74,10 +74,16 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       // 驗證 Slack 簽名
+      // 在 production 環境中，簽名驗證失敗一律拒絕。
+      // 僅在明確為 development 且未設定 signing secret 時跳過（方便本地開發）。
       if (!verifySlackSignature(req)) {
-        if (env.NODE_ENV === "development" && !env.SLACK_SIGNING_SECRET) {
+        if (
+          process.env.NODE_ENV === "development" &&
+          env.NODE_ENV === "development" &&
+          !env.SLACK_SIGNING_SECRET
+        ) {
           logger.warn(
-            "Skipping Slack signature verification in dev mode (no signing secret)",
+            "Skipping Slack signature verification in dev mode (no signing secret configured)",
           );
         } else {
           sendError(

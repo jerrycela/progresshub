@@ -171,33 +171,27 @@ const toggleFunctionTag = (tag: FunctionType): void => {
 
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
+        <label
+          for="task-start-date"
+          class="block text-sm font-medium mb-2"
+          style="color: var(--text-secondary)"
+        >
           開始日期
         </label>
-        <input
-          v-model="form.startDate"
-          :type="form.startDate ? 'date' : 'text'"
-          placeholder="點選或輸入日期"
-          class="input w-full"
-          @focus="($event.target as HTMLInputElement).type = 'date'"
-          @blur="!form.startDate && (($event.target as HTMLInputElement).type = 'text')"
-        />
+        <input id="task-start-date" v-model="form.startDate" type="date" class="input w-full" />
         <span v-if="isPastDate(form.startDate)" class="text-orange-500 text-xs mt-1 block">
           此日期已過去
         </span>
       </div>
       <div>
-        <label class="block text-sm font-medium mb-2" style="color: var(--text-secondary)">
+        <label
+          for="task-due-date"
+          class="block text-sm font-medium mb-2"
+          style="color: var(--text-secondary)"
+        >
           截止日期
         </label>
-        <input
-          v-model="form.dueDate"
-          :type="form.dueDate ? 'date' : 'text'"
-          placeholder="點選或輸入日期"
-          class="input w-full"
-          @focus="($event.target as HTMLInputElement).type = 'date'"
-          @blur="!form.dueDate && (($event.target as HTMLInputElement).type = 'text')"
-        />
+        <input id="task-due-date" v-model="form.dueDate" type="date" class="input w-full" />
         <span v-if="isPastDate(form.dueDate)" class="text-orange-500 text-xs mt-1 block">
           此日期已過去
         </span>

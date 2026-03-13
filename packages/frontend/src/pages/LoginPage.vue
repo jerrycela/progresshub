@@ -126,19 +126,14 @@ const handleDemoLogin = async () => {
   <!-- SG-Arts 精品金屬質感登入頁 -->
   <div
     class="min-h-screen flex items-center justify-center p-4"
-    style="background: linear-gradient(135deg, #1a1a1a 0%, #262626 50%, #1a1a1a 100%)"
+    style="background: var(--bg-primary)"
   >
     <div class="w-full max-w-md">
       <!-- Logo 與標題 - 金屬質感 -->
       <div class="text-center mb-8">
         <div
           class="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
-          style="
-            background: linear-gradient(145deg, #303030, #262626);
-            box-shadow:
-              4px 4px 8px #1a1a1a,
-              -4px -4px 8px #333333;
-          "
+          style="background-color: var(--bg-secondary); box-shadow: var(--card-shadow)"
         >
           <!-- 侍魂赤紅圖示 -->
           <svg class="w-10 h-10 text-samurai" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +145,7 @@ const handleDemoLogin = async () => {
             />
           </svg>
         </div>
-        <h1 class="text-3xl font-bold text-white mb-2">ProgressHub</h1>
+        <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary)">ProgressHub</h1>
         <p class="text-ink-muted">專案進度管理系統</p>
       </div>
 
