@@ -278,7 +278,7 @@ class ApiTaskService implements TaskServiceInterface {
 
   async claimTask(taskId: string, userId: string): Promise<ActionResult<Task>> {
     try {
-      const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/claim`, { userId })
+      const data = await apiPostUnwrap<Task>(`/tasks/${taskId}/claim`, { assigneeId: userId })
       return { success: true, data }
     } catch (e) {
       const message = e instanceof Error ? e.message : '操作失敗'

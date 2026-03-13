@@ -4,7 +4,7 @@ import { taskService } from "../services/taskService";
 import { AuthRequest, authorizeTaskAccess } from "../middleware/auth";
 import { requireResourceOwner } from "../middleware/projectAuth";
 import { auditLog } from "../middleware/auditLog";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus, PermissionLevel } from "@prisma/client";
 import logger from "../config/logger";
 import { sendSuccess, sendError } from "../utils/response";
 import { toTaskDTO } from "../mappers";
@@ -142,7 +142,13 @@ router.patch(
 router.post(
   "/:id/claim",
   requireResourceOwner("task", "id"),
-  [param("id").isString().trim().notEmpty().withMessage("Invalid task ID")],
+  [
+    param("id").isString().trim().notEmpty().withMessage("Invalid task ID"),
+    body("assigneeId")
+      .optional()
+      .isUUID()
+      .withMessage("assigneeId must be a valid UUID"),
+  ],
   async (req: AuthRequest, res: Response): Promise<void> => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -162,7 +168,18 @@ router.post(
         return;
       }
 
-      const task = await taskService.claimTask(req.params.id, req.user.userId);
+      const canAssignToOthers = [
+        PermissionLevel.PM,
+        PermissionLevel.PRODUCER,
+        PermissionLevel.ADMIN,
+      ].includes(req.user.permissionLevel);
+
+      const targetUserId =
+        req.body.assigneeId && canAssignToOthers
+          ? req.body.assigneeId
+          : req.user.userId;
+
+      const task = await taskService.claimTask(req.params.id, targetUserId);
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {
       if (error instanceof AppError) {

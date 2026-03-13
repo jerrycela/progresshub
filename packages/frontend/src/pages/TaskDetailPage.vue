@@ -50,6 +50,11 @@ const canAddNote = computed(() => {
   return authStore.user ? ['PM', 'PRODUCER', 'MANAGER'].includes(authStore.user.role) : false
 })
 
+// 檢查是否有刪除任務權限（PM、製作人、系統管理員）
+const canDeleteTask = computed(() => {
+  return authStore.user ? ['PM', 'PRODUCER', 'ADMIN'].includes(authStore.user.role) : false
+})
+
 // 格式化當前使用者（供 modal 使用）
 const currentUserForModal = computed(() => ({
   id: authStore.user?.id || '',
@@ -328,7 +333,7 @@ const submitNote = async (): Promise<void> => {
             </button>
             <button class="btn-secondary" @click="showAssignModal = true">指派任務</button>
             <button v-if="task.canEdit" class="btn-ghost" @click="editTask">編輯</button>
-            <button v-if="task.canDelete" class="btn-danger" @click="deleteTask">刪除</button>
+            <button v-if="canDeleteTask" class="btn-danger" @click="deleteTask">刪除</button>
           </div>
         </div>
 

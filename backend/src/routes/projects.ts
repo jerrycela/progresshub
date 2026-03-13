@@ -22,7 +22,9 @@ const router = Router();
 
 /**
  * GET /api/projects/names
- * Public endpoint: returns only ACTIVE project id + name for login page
+ * Public endpoint — returns only ACTIVE project id + name.
+ * Intentionally unauthenticated: used by demo login page before user has a token.
+ * Data is minimal (id + name only) so information leakage risk is low.
  */
 router.get(
   "/names",
@@ -46,7 +48,7 @@ router.get(
   },
 );
 
-// 所有以下路由都需要認證
+// 以下所有路由都需要認證
 router.use(authenticate);
 router.use(sanitizeBody);
 
@@ -251,7 +253,11 @@ router.use("/:projectId/members", projectMembersRouter);
  */
 router.post(
   "/",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  authorize(
+    PermissionLevel.PM,
+    PermissionLevel.PRODUCER,
+    PermissionLevel.ADMIN,
+  ),
   [
     body("name")
       .isString()
@@ -312,7 +318,11 @@ router.post(
  */
 router.put(
   "/:id",
-  authorize(PermissionLevel.PM, PermissionLevel.ADMIN),
+  authorize(
+    PermissionLevel.PM,
+    PermissionLevel.PRODUCER,
+    PermissionLevel.ADMIN,
+  ),
   requireProjectMember("id"),
   auditLog("UPDATE_PROJECT"),
   [

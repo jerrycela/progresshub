@@ -34,7 +34,9 @@ export function useGantt(
       return { start: idealStart, end: idealEnd }
     }
 
-    const taskDates = tasks.flatMap((t: Task) => [new Date(t.startDate!), new Date(t.dueDate!)])
+    const taskDates = tasks
+      .filter((t: Task) => t.startDate && t.dueDate)
+      .flatMap((t: Task) => [new Date(t.startDate!), new Date(t.dueDate!)])
     const msDates = msArr.map((ms: MilestoneData) => new Date(ms.date))
     const allDates = [...taskDates, ...msDates]
 
