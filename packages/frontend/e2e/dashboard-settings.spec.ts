@@ -31,7 +31,10 @@ test.describe('Settings page', () => {
   test('theme toggle button exists in navbar', async ({ page }) => {
     await loginAs(page, ROLES.EMPLOYEE)
     await page.waitForURL('**/dashboard', { timeout: 10000 })
-    const themeButton = page.locator('nav button').filter({ has: page.locator('svg') }).first()
+    const themeButton = page
+      .locator('nav button')
+      .filter({ has: page.locator('svg') })
+      .first()
     await expect(themeButton).toBeVisible({ timeout: 10000 })
   })
 })

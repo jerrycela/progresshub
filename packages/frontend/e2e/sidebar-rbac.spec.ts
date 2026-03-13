@@ -10,7 +10,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
-import { loginAs, type Role } from './helpers/auth'
+import { loginAs } from './helpers/auth'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

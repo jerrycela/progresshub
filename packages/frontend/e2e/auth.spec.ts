@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loginAs, logout, ROLES } from './helpers/auth'
+import { loginAs, ROLES } from './helpers/auth'
 
 test.describe('登入流程', () => {
   test('未登入時重導至 /login', async ({ page }) => {

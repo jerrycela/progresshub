@@ -22,9 +22,10 @@ test.describe('Gantt Chart Page', () => {
     const weekBtn = page.getByRole('button', { name: '週' })
     const monthBtn = page.getByRole('button', { name: '月' })
 
-    const atLeastOne = await dayBtn.isVisible().catch(() => false)
-      || await weekBtn.isVisible().catch(() => false)
-      || await monthBtn.isVisible().catch(() => false)
+    const atLeastOne =
+      (await dayBtn.isVisible().catch(() => false)) ||
+      (await weekBtn.isVisible().catch(() => false)) ||
+      (await monthBtn.isVisible().catch(() => false))
 
     expect(atLeastOne).toBe(true)
   })
@@ -46,8 +47,8 @@ test.describe('Gantt Chart Page', () => {
     const byText = page.getByText('管理里程碑').first()
     const byName = page.getByRole('button', { name: /里程碑/ }).first()
 
-    const visible = await byText.isVisible().catch(() => false)
-      || await byName.isVisible().catch(() => false)
+    const visible =
+      (await byText.isVisible().catch(() => false)) || (await byName.isVisible().catch(() => false))
 
     expect(visible).toBe(true)
   })

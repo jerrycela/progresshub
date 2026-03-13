@@ -20,11 +20,13 @@ export default defineConfig({
     },
   ],
   // Only start local server when testing against localhost
-  ...(baseURL.includes('localhost') ? {
-    webServer: {
-      command: 'pnpm dev',
-      url: baseURL,
-      reuseExistingServer: !process.env.CI,
-    },
-  } : {}),
+  ...(baseURL.includes('localhost')
+    ? {
+        webServer: {
+          command: 'pnpm dev',
+          url: baseURL,
+          reuseExistingServer: !process.env.CI,
+        },
+      }
+    : {}),
 })

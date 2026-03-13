@@ -10,7 +10,9 @@ test.describe('Task Pool Page', () => {
     await expect(page.locator('body')).toContainText('任務池')
   })
 
-  test('search function — non-matching string hides tasks or shows empty state', async ({ page }) => {
+  test('search function — non-matching string hides tasks or shows empty state', async ({
+    page,
+  }) => {
     await loginAs(page, 'PM')
     await page.goto('/task-pool')
     await page.waitForLoadState('networkidle')
@@ -54,7 +56,9 @@ test.describe('Task Pool Page', () => {
     await page.waitForLoadState('networkidle')
 
     // The create button is a router-link rendered as <a href="/task-pool/create">
-    const createLink = page.locator('a[href*="/task-pool/create"], a[href="/task-pool/create"]').first()
+    const createLink = page
+      .locator('a[href*="/task-pool/create"], a[href="/task-pool/create"]')
+      .first()
     const fallbackLink = page.locator('a, button').filter({ hasText: '建立任務' }).first()
 
     const hasDirectLink = await createLink.isVisible({ timeout: 3000 }).catch(() => false)

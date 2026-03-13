@@ -10,13 +10,7 @@ const EMPLOYEE_BLOCKED_ROUTES = [
 ]
 
 // Routes accessible to all authenticated users
-const ALL_ROLES_ROUTES = [
-  '/dashboard',
-  '/task-pool',
-  '/my-tasks',
-  '/gantt',
-  '/settings/profile',
-]
+const ALL_ROLES_ROUTES = ['/dashboard', '/task-pool', '/my-tasks', '/gantt', '/settings/profile']
 
 // Each test uses a unique display name to avoid DB upsert race conditions
 // when parallel workers try to update the same demo account simultaneously.
@@ -31,7 +25,7 @@ test.describe('Route Permission Control', () => {
         const slug = path.replace(/\//g, '-').replace(/^-/, '')
         await loginAs(page, 'EMPLOYEE', uniqueName('EMPLOYEE', slug))
         await page.goto(path)
-        await page.waitForURL((url) => !url.pathname.startsWith(path), { timeout: 5000 })
+        await page.waitForURL(url => !url.pathname.startsWith(path), { timeout: 5000 })
         expect(page.url()).not.toContain(path)
       })
     }

@@ -39,10 +39,13 @@ export async function loginAs(page: Page, role: Role, name?: string) {
   await page.goto('/')
 
   // Inject tokens
-  await page.evaluate(({ token, refreshToken }) => {
-    localStorage.setItem('auth_token', token)
-    localStorage.setItem('auth_refresh_token', refreshToken)
-  }, { token, refreshToken })
+  await page.evaluate(
+    ({ token, refreshToken }) => {
+      localStorage.setItem('auth_token', token)
+      localStorage.setItem('auth_refresh_token', refreshToken)
+    },
+    { token, refreshToken },
+  )
 
   // Reload so auth store picks up the token
   await page.reload()
