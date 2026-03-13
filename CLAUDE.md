@@ -18,8 +18,9 @@ Note: `backend/` is a top-level workspace member (not under `packages/`). pnpm f
 Pages (`pages/`) → Components (`components/`) → Composables (`composables/`) → Services (`services/`) → Stores (`stores/`)
 
 - **Pages**: Route-level views (e.g., `GanttPage.vue`, `TaskPoolPage.vue`, `DashboardPage.vue`)
-- **Composables**: Reusable logic — `useToast`, `useFormatDate`, `useGantt`, `useTaskModal`, `useFormValidation`
-- **Components**: Organized by domain — `common/` (Modal, SearchableSelect, Toast), `task/`, `gantt/`, `project/`, `layout/`
+- **Composables**: Reusable logic — `useToast`, `useFormatDate`, `useGantt`, `useGanttData`, `useTaskModal`, `useFormValidation`, `useConfirm`, `useProject`, `useStatusUtils`, `useTheme`
+- **Components**: Organized by domain — `common/` (Modal, SearchableSelect, MultiSearchSelect, ConfirmDialog, Toast, Avatar, Badge, Button, Card, EmptyState, Input, ProgressBar, Select), `task/`, `gantt/`, `project/`, `layout/`
+- **Layouts**: `layouts/MainLayout.vue` (app shell), `pages/settings/SettingsLayout.vue` (settings sub-routes)
 - **Router**: `src/router/index.ts` — uses `meta.requiresAuth` for route guards, lazy-loads all pages
 - **Path aliases**: `@` → `src/`, `shared` → `../shared` (configured in `vite.config.ts`). Dev server proxies `/api` to `localhost:3000` automatically.
 
@@ -94,7 +95,7 @@ Health check routes (`/health`, `/health/ready`, `/health/live`) are mounted out
 
 ### Domain Models
 
-Core domain: Employee, Project, Task, Milestone, ProgressLog, TaskNote, ProjectMember.
+Core domain: Employee, Project, Task, Milestone, ProgressLog, TaskNote, ProjectMember, UserSettings.
 
 Time tracking: TimeEntry, TimeCategory, TimeEstimate — supports approval workflow (PENDING → APPROVED/REJECTED).
 
@@ -102,14 +103,18 @@ GitLab integration: GitLabInstance, GitLabConnection, GitLabActivity, GitLabIssu
 
 Auth: RefreshToken (persistent), OAuthState (CSRF-protected, multi-provider).
 
+### Backend Scheduler
+
+`backend/src/scheduler/` — uses `node-cron` for recurring tasks (e.g., `reminder.ts`). Runs in-process with the Express server.
+
 ## Commands
 
 ```bash
 # Frontend
 pnpm --filter frontend dev          # Dev server (localhost:5173)
-pnpm --filter frontend exec vue-tsc --noEmit  # Type check
-pnpm --filter frontend exec vitest run         # All unit tests
-pnpm --filter frontend exec vitest run src/composables/__tests__/useFormatDate.test.ts  # Single test file
+pnpm --filter frontend typecheck    # Type check (vue-tsc --noEmit)
+pnpm --filter frontend test         # All unit tests (vitest)
+pnpm --filter frontend test -- src/composables/__tests__/useFormatDate.test.ts  # Single test file
 pnpm --filter frontend build        # Production build
 pnpm --filter frontend lint         # ESLint --fix
 pnpm --filter frontend format       # Prettier
@@ -157,7 +162,7 @@ docker compose up -d                 # All services
 
 ## Deployment
 
-- **Frontend**: Zeabur static (Vue + Caddy) → `progresshub.zeabur.app` (test: `progresshub-cb.zeabur.app`)
+- **Frontend**: Zeabur static (Vue + Caddy) → `progresshub-cb.zeabur.app`
 - **Backend**: Zeabur container (Express + Prisma) → `progress-hub.zeabur.app`
 - Note: Frontend and backend have different domains; CORS `ALLOWED_ORIGINS` must include the frontend domain
 - **Database**: Zeabur PostgreSQL Marketplace
@@ -229,6 +234,9 @@ Mock services (`MockXxxService`) are data stubs only — no business logic:
 | `DIRECT_URL` | Backend `.env` | Prisma direct DB connection (bypasses connection pooler, used for migrations) |
 | `ALLOWED_ORIGINS` | Backend `.env` | Comma-separated CORS origins (e.g., `https://progresshub.zeabur.app`) |
 | `FRONTEND_URL` | Backend `.env` | Frontend URL, falls back to first `ALLOWED_ORIGINS` entry |
+| `SLACK_CLIENT_ID` | Backend `.env` | Slack OAuth app client ID |
+| `SLACK_CLIENT_SECRET` | Backend `.env` | Slack OAuth app client secret |
+| `SLACK_SIGNING_SECRET` | Backend `.env` | Slack request signature verification |
 
 Vite env vars are **compile-time constants** — restart dev server after `.env` changes.
 
