@@ -54,16 +54,14 @@ onMounted(async () => {
 
   isInitializing.value = false
 
-  // Phase 2: 次要資料延遲載入，分散伺服器壓力
-  setTimeout(() => {
-    Promise.allSettled([
-      taskStore.fetchPoolTasks(),
-      departmentStore.fetchDepartments(),
-      dashboardStore.fetchStats(),
-      authStore.userRole !== 'EMPLOYEE' ? dashboardStore.fetchWorkloads() : Promise.resolve(),
-      milestoneStore.fetchMilestones(),
-    ])
-  }, 1000)
+  // Phase 2: 次要資料，與 Phase 1 並行（不阻塞渲染）
+  Promise.allSettled([
+    taskStore.fetchPoolTasks(),
+    departmentStore.fetchDepartments(),
+    dashboardStore.fetchStats(),
+    authStore.userRole !== 'EMPLOYEE' ? dashboardStore.fetchWorkloads() : Promise.resolve(),
+    milestoneStore.fetchMilestones(),
+  ])
 })
 
 // 側邊欄展開狀態（行動裝置）

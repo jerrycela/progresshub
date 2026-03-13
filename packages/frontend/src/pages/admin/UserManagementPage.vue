@@ -24,7 +24,7 @@ import { useConfirm } from '@/composables/useConfirm'
 
 const employeeStore = useEmployeeStore()
 const authStore = useAuthStore()
-const { showError } = useToast()
+const { showError, showSuccess } = useToast()
 const { showConfirm } = useConfirm()
 
 // 將員工資料轉為 User 格式供頁面使用
@@ -39,8 +39,8 @@ const users = computed<User[]>(() =>
       : e.department === 'MANAGEMENT'
         ? 'PLANNING'
         : e.department) as FunctionType,
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-01-01T00:00:00Z',
+    createdAt: (e as { createdAt?: string }).createdAt ?? '',
+    updatedAt: (e as { updatedAt?: string }).updatedAt ?? '',
   })),
 )
 
@@ -132,6 +132,7 @@ const saveUser = async () => {
       userRole: editingUser.value.role,
     })
     if (result.success) {
+      showSuccess('員工資料已更新')
       showEditModal.value = false
     }
   } catch {

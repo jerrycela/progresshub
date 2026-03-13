@@ -6,6 +6,7 @@ import { useDepartmentStore } from '@/stores/departments'
 import { useEmployeeStore } from '@/stores/employees'
 import { useTaskStore } from '@/stores/tasks'
 import { useAuthStore } from '@/stores/auth'
+import { useDashboardStore } from '@/stores/dashboard'
 import type { TaskSourceType } from 'shared/types'
 import { useToast } from '@/composables/useToast'
 import { roleLabels } from '@/constants/labels'
@@ -25,6 +26,7 @@ const departmentStore = useDepartmentStore()
 const employeeStore = useEmployeeStore()
 const taskStore = useTaskStore()
 const authStore = useAuthStore()
+const dashboardStore = useDashboardStore()
 
 // Ensure employees are loaded (safety net: MainLayout loads them on first mount,
 // but if that fetch failed silently or the page is accessed in isolation, this guarantees data)
@@ -125,6 +127,7 @@ const handleSubmit = async (): Promise<void> => {
 
     if (result.success) {
       showSuccess(`任務「${form.title}」已建立`)
+      dashboardStore.fetchStats().catch(() => {})
       router.push('/task-pool')
     } else {
       showError(result.error?.message || '建立任務失敗')

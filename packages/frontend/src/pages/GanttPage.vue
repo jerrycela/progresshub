@@ -101,8 +101,18 @@ onMounted(() => {
     const presets = localStorage.getItem(STORAGE_KEY_PRESETS)
     if (presets) {
       const parsed = JSON.parse(presets)
-      if (Array.isArray(parsed)) {
-        savedPresets.value = parsed
+      if (
+        Array.isArray(parsed) &&
+        parsed.every(
+          (p: unknown) =>
+            typeof p === 'object' &&
+            p !== null &&
+            typeof (p as Record<string, unknown>).name === 'string' &&
+            typeof (p as Record<string, unknown>).filters === 'object' &&
+            (p as Record<string, unknown>).filters !== null,
+        )
+      ) {
+        savedPresets.value = parsed as GanttFilterPreset[]
       }
     }
   } catch {

@@ -64,6 +64,8 @@ model Project {
   timeEntries TimeEntry[]
   members     ProjectMember[]
 
+  @@index([status])
+  @@index([startDate])
   @@map("projects")
 }
 

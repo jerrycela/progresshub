@@ -4,6 +4,7 @@ import { useProjectStore } from '@/stores/projects'
 import { useTaskStore } from '@/stores/tasks'
 import { useEmployeeStore } from '@/stores/employees'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { useFormatDate } from '@/composables/useFormatDate'
 import { commonRules, validateField } from '@/composables/useFormValidation'
 import { VALIDATION } from '@/constants/pageSettings'
@@ -31,6 +32,7 @@ const authStore = useAuthStore()
 
 const projects = computed(() => projectStore.projects)
 const { showSuccess, showError } = useToast()
+const { showConfirm } = useConfirm()
 const { formatFull } = useFormatDate()
 
 // 計算專案統計
@@ -199,6 +201,36 @@ const canManageMembers = computed(() => {
   const role = authStore.userRole
   return role === 'ADMIN' || role === 'PM' || role === 'PRODUCER' || role === 'MANAGER'
 })
+
+const isAdmin = computed(() => authStore.userRole === 'ADMIN')
+
+// 刪除專案（僅 ADMIN）
+const deletingProjectId = ref<string | null>(null)
+
+const handleDeleteProject = async (project: Project) => {
+  const confirmed = await showConfirm({
+    title: '刪除專案',
+    message: `確定要刪除「${project.name}」嗎？此操作將一併刪除所有相關任務，無法復原。`,
+    type: 'danger',
+    confirmText: '刪除',
+    cancelText: '取消',
+  })
+  if (!confirmed) return
+  if (deletingProjectId.value) return
+  deletingProjectId.value = project.id
+  try {
+    const result = await projectStore.deleteProject(project.id)
+    if (result.success) {
+      showSuccess(`已刪除專案：${project.name}`)
+    } else {
+      showError(result.error?.message || '刪除專案失敗')
+    }
+  } catch {
+    showError('刪除失敗，請稍後再試')
+  } finally {
+    deletingProjectId.value = null
+  }
+}
 </script>
 
 <template>
@@ -319,6 +351,15 @@ const canManageMembers = computed(() => {
           <div v-if="canManageMembers" class="flex gap-2">
             <Button variant="secondary" size="sm" @click.stop="openMembersModal(project)">
               成員
+            </Button>
+            <Button
+              v-if="isAdmin"
+              variant="danger"
+              size="sm"
+              :disabled="deletingProjectId === project.id"
+              @click.stop="handleDeleteProject(project)"
+            >
+              刪除
             </Button>
           </div>
         </div>
