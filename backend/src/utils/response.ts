@@ -59,9 +59,10 @@ export const sendError = (
   statusCode = 400,
   details?: unknown,
 ): Response => {
+  const includeDetails = env.NODE_ENV !== "production" && details !== undefined;
   return res.status(statusCode).json({
     success: false,
-    error: { code, message, ...(details !== undefined && { details }) },
+    error: { code, message, ...(includeDetails && { details }) },
   });
 };
 

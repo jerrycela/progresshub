@@ -12,6 +12,23 @@ export class GitLabApiClient {
   private baseUrl: string;
 
   constructor(baseUrl: string, accessToken: string) {
+    // Validate baseUrl to prevent SSRF
+    const parsed = new URL(baseUrl);
+    if (parsed.protocol !== "https:") {
+      throw new Error("GitLab base URL must use HTTPS");
+    }
+    const hostname = parsed.hostname.toLowerCase();
+    const isPrivate =
+      hostname === "localhost" ||
+      hostname.startsWith("127.") ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("169.254.") ||
+      /^172\.(1[6-9]|2\d|3[01])\./.test(hostname);
+    if (isPrivate) {
+      throw new Error("GitLab base URL must not point to private networks");
+    }
+
     this.baseUrl = baseUrl.replace(/\/$/, "");
     this.client = axios.create({
       baseURL: `${this.baseUrl}/api/v4`,
@@ -33,8 +50,7 @@ export class GitLabApiClient {
         if (status === 403) {
           throw new AppError(403, "GitLab access denied");
         }
-        const message = error.message || "GitLab request failed";
-        throw new AppError(status || 502, message);
+        throw new AppError(status || 502, "GitLab request failed");
       },
     );
   }

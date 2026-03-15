@@ -3,12 +3,17 @@ import crypto from "crypto";
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 16;
 
+let cachedKey: Buffer | null = null;
+
 /**
  * 取得加密金鑰
  * 使用環境變數 GITLAB_ENCRYPTION_SALT 作為 salt
  * 生產環境必須提供，開發環境有預設值向後相容
+ * 結果快取於模組層級，避免重複執行 scrypt
  */
 function getEncryptionKey(): Buffer {
+  if (cachedKey) return cachedKey;
+
   const key = process.env.GITLAB_ENCRYPTION_KEY;
   if (!key) {
     throw new Error("GITLAB_ENCRYPTION_KEY environment variable is required");
@@ -19,7 +24,12 @@ function getEncryptionKey(): Buffer {
       "GITLAB_ENCRYPTION_SALT environment variable is required in production",
     );
   }
-  return crypto.scryptSync(key, salt || "progresshub-gitlab-default-salt", 32);
+  cachedKey = crypto.scryptSync(
+    key,
+    salt || "progresshub-gitlab-default-salt",
+    32,
+  );
+  return cachedKey;
 }
 
 /**
