@@ -259,7 +259,7 @@ export class AuthService {
         permissionLevel: employee.permissionLevel,
       },
       env.JWT_SECRET,
-      { expiresIn: env.JWT_EXPIRES_IN } as SignOptions,
+      { expiresIn: env.JWT_EXPIRES_IN, algorithm: "HS256" } as SignOptions,
     );
   }
 
@@ -271,7 +271,7 @@ export class AuthService {
     email: string;
     permissionLevel: PermissionLevel;
   } {
-    return jwt.verify(token, env.JWT_SECRET) as {
+    return jwt.verify(token, env.JWT_SECRET, { algorithms: ["HS256"] }) as {
       userId: string;
       email: string;
       permissionLevel: PermissionLevel;
@@ -290,7 +290,10 @@ export class AuthService {
         type: "refresh",
       },
       env.JWT_REFRESH_SECRET,
-      { expiresIn: env.JWT_REFRESH_EXPIRES_IN } as SignOptions,
+      {
+        expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+        algorithm: "HS256",
+      } as SignOptions,
     );
 
     const expiresInMs = this.parseExpiresIn(env.JWT_REFRESH_EXPIRES_IN);
@@ -320,7 +323,9 @@ export class AuthService {
    * Verify a refresh token: check JWT signature and ensure it exists in the database.
    */
   async verifyRefreshToken(token: string): Promise<{ userId: string }> {
-    const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET) as {
+    const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET, {
+      algorithms: ["HS256"],
+    }) as {
       userId: string;
       type: string;
     };

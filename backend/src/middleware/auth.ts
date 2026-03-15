@@ -62,7 +62,9 @@ export const authenticate = async (
 
     const token = authHeader.substring(7);
 
-    const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as JwtPayload;
 
     const cached = authCache.get(decoded.userId);
     const now = Date.now();
