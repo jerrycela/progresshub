@@ -166,3 +166,36 @@
 
 ### Wave 3 (P2) — Optional improvements
 All P2s as time permits
+
+---
+
+## Round 2: Frontend Pages Review (16:17)
+
+### Scope
+LoginPage.vue, UserManagementPage.vue, TaskCreatePage.vue, ProjectsPage.vue
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 38%, VERDICT: NO)
+- Gemini 2.5 Pro (READINESS: 82%, VERDICT: NO)
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| F1 | ~~P0~~ | createdBy spoofing | Codex | REJECT — backend uses req.user.userId from JWT | None |
+| F2 | ~~P0~~ | route.query.error XSS | Gemini | REJECT — Vue {{ }} auto-escapes, Toast uses text | None |
+| F3 | P1 | functionType edit not saved | Codex | AGREE | Fixed (commit 3e6981f) |
+| F4 | P1 | createUser/saveUser silent failure | Codex | AGREE | Fixed (commit 3e6981f) |
+| F5 | P1 | Project create shows status selector | Codex | AGREE | Fixed (commit 3e6981f) |
+| F6 | P1 | saveProject no isSaving guard | Codex | AGREE | Fixed (commit 3e6981f) |
+| F7 | P2 | EMPLOYEE can forge ASSIGNED task | Codex | Backend has role check — frontend-only | Deferred |
+| F8 | P2 | saveUser no submit-time auth check | Codex | Backend middleware handles — P2 | Deferred |
+| F9 | P2 | Slack authUrl no scheme check | Codex | Backend generates trusted URL — low risk | Deferred |
+| F10 | P2 | getProjectStats O(N*M) | Both | Small dataset (<20 projects) — P3 | Deferred |
+
+### Verification
+- Type check: frontend passed
+- Unit tests: 311 passed
+- Playwright E2E: 111 passed, 0 failed
+- Deployed: frontend + backend
