@@ -177,9 +177,12 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         name,
         permissionLevel: requestedLevel,
       } = req.body;
-      // In production, ignore client-supplied permissionLevel to prevent privilege escalation
+      // In production, cap demo login to EMPLOYEE to prevent privilege escalation.
+      // Dev/staging can use any level for testing.
       const permissionLevel =
-        process.env.NODE_ENV === "production" ? undefined : requestedLevel;
+        process.env.NODE_ENV === "production"
+          ? "EMPLOYEE"
+          : requestedLevel || "EMPLOYEE";
 
       try {
         // Demo login mode: name + permissionLevel
