@@ -227,3 +227,36 @@ stores/auth.ts, services/api.ts, stores/tasks.ts, stores/employees.ts
 - Unit tests: 311 passed
 - Playwright E2E: 111 passed, 0 failed
 - Deployed: frontend
+
+---
+
+## Round 4: Frontend Composables Review (18:17)
+
+### Scope
+useGantt.ts, useGanttData.ts, useFormValidation.ts, useTaskModal.ts, useStatusUtils.ts, useToast.ts, useFormatDate.ts, useTheme.ts
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 42%, VERDICT: NO) — 8 P1 + 1 P2
+- Gemini 2.5 Pro (READINESS: 82%, VERDICT: NO) — 2 P1 + 4 P2 + 2 P3
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| Q1 | P1 | getAncestorChain infinite loop on cycles | Both | AGREE | Fixed (5cf7bcc) |
+| Q2 | P1 | useTaskModal.execute no loading guard | Both | AGREE | Fixed (5cf7bcc) |
+| Q3 | P1 | Invalid dates poison Gantt range (NaN) | Codex | AGREE | Fixed (5cf7bcc) |
+| Q4 | P2 | Date UTC parsing in useFormatDate | Codex | PARTIAL — UTC+8 only | Deferred |
+| Q5 | P2 | toISOString returns UTC date | Codex | PARTIAL — same | Deferred |
+| Q6 | P2 | getRelativeDays off-by-one | Codex | AGREE — display only | Deferred |
+| Q7 | P2 | dateRange stale closure | Codex | PARTIAL — inline call | Deferred |
+| Q8 | P2 | canSubmit true before validation | Codex | PARTIAL — pages own logic | Deferred |
+| Q9 | P2 | Theme SSR unsafe | Both | PARTIAL — SPA only | Deferred |
+| Q10 | P2 | matchMedia listener never removed | Both | AGREE — P2 | Deferred |
+
+### Round 4 Verification
+- Type check: frontend passed
+- Unit tests: 311 passed
+- Playwright E2E: 111 passed, 0 failed
+- Deployed: frontend
