@@ -38,7 +38,11 @@ export function useGantt(
       .filter((t: Task) => t.startDate && t.dueDate)
       .flatMap((t: Task) => [new Date(t.startDate!), new Date(t.dueDate!)])
     const msDates = msArr.map((ms: MilestoneData) => new Date(ms.date))
-    const allDates = [...taskDates, ...msDates]
+    const allDates = [...taskDates, ...msDates].filter((d: Date) => !isNaN(d.getTime()))
+
+    if (allDates.length === 0) {
+      return { start: idealStart, end: idealEnd }
+    }
 
     const dataMin = new Date(Math.min(...allDates.map((d: Date) => d.getTime())))
     const dataMax = new Date(Math.max(...allDates.map((d: Date) => d.getTime())))

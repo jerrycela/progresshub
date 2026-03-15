@@ -72,8 +72,11 @@ export function useGanttData(
 
     function getAncestorChain(taskId: string): string[] {
       const chain: string[] = []
+      const visited = new Set<string>()
       let current = taskId
       while (parentMap.has(current)) {
+        if (visited.has(current)) break // cycle detected
+        visited.add(current)
         chain.unshift(current)
         current = parentMap.get(current)!
       }

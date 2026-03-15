@@ -30,7 +30,7 @@ export function useTaskModal<T>() {
     successMessage: string,
     errorFallback: string,
   ) => {
-    if (!task.value) return
+    if (!task.value || loading.value) return
     loading.value = true
     try {
       const result = await action(task.value)
