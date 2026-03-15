@@ -40,6 +40,8 @@ const ALLOWED_URL_PROTOCOLS = /^https?:\/\//i;
 function sanitizeUrl(value: string): string {
   const trimmed = value.trim();
   if (trimmed === "") return trimmed;
+  // Block protocol-relative URLs (//evil.com/...) which bypass protocol checks
+  if (trimmed.startsWith("//")) return "";
   // Only a value that contains ":" before any "/" could be a protocol scheme
   const colonIndex = trimmed.indexOf(":");
   const slashIndex = trimmed.indexOf("/");

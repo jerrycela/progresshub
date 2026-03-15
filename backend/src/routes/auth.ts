@@ -171,7 +171,15 @@ if (env.NODE_ENV === "development" || env.ENABLE_DEV_LOGIN) {
         return;
       }
 
-      const { email, employeeId, name, permissionLevel } = req.body;
+      const {
+        email,
+        employeeId,
+        name,
+        permissionLevel: requestedLevel,
+      } = req.body;
+      // In production, ignore client-supplied permissionLevel to prevent privilege escalation
+      const permissionLevel =
+        process.env.NODE_ENV === "production" ? undefined : requestedLevel;
 
       try {
         // Demo login mode: name + permissionLevel

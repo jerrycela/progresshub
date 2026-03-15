@@ -315,9 +315,12 @@ router.put(
 
       const employee = await employeeService.updateEmployee(id, updateData);
 
-      // Immediately evict from auth cache when an account is disabled,
-      // so the 5-minute TTL cannot be exploited for continued access.
-      if (isAdmin && isActive === false) {
+      // Immediately evict from auth cache when account is disabled or
+      // permission level changes, preventing stale privilege retention.
+      if (
+        isAdmin &&
+        (isActive === false || req.body.permissionLevel !== undefined)
+      ) {
         invalidateAuthCache(id);
       }
 
@@ -369,6 +372,7 @@ router.delete(
       }
 
       await employeeService.softDeleteEmployee(req.params.id);
+      invalidateAuthCache(req.params.id);
       res.status(204).send();
     } catch (error) {
       logger.error("Delete employee error:", error);

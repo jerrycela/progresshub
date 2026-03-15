@@ -57,8 +57,8 @@ function verifySlackSignature(req: Request): boolean {
  * 根據 Slack User ID 取得員工
  */
 async function getEmployeeBySlackId(slackUserId: string) {
-  return prisma.employee.findUnique({
-    where: { slackUserId },
+  return prisma.employee.findFirst({
+    where: { slackUserId, isActive: true },
   });
 }
 

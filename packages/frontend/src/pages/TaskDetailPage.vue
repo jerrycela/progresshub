@@ -54,7 +54,7 @@ const canAddNote = computed(() => {
 
 // 檢查是否有刪除任務權限（PM、製作人、系統管理員）
 const canDeleteTask = computed(() => {
-  return authStore.user ? ['PM', 'PRODUCER', 'ADMIN'].includes(authStore.user.role) : false
+  return authStore.user ? ['PM', 'ADMIN'].includes(authStore.user.role) : false
 })
 
 // 檢查是否有指派任務權限（PM、製作人、系統管理員）

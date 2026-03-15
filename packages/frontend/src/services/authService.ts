@@ -61,11 +61,13 @@ class ApiAuthService implements AuthServiceInterface {
 
   async logout(): Promise<void> {
     try {
-      await apiPostUnwrap('/auth/logout')
+      const refreshToken = localStorage.getItem('refresh_token')
+      await apiPostUnwrap('/auth/logout', { refreshToken })
     } catch (e) {
       console.warn('Logout API failed, proceeding with local cleanup:', e)
     }
     localStorage.removeItem('auth_token')
+    localStorage.removeItem('refresh_token')
   }
 }
 

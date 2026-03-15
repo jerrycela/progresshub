@@ -395,6 +395,17 @@ router.put(
         return;
       }
 
+      // Block modifications to non-pending entries (approved/rejected are immutable)
+      if (existing.status !== "PENDING" && !isAdmin) {
+        sendError(
+          res,
+          ErrorCodes.TIME_ENTRY_UPDATE_FAILED,
+          "Cannot modify a non-pending time entry",
+          400,
+        );
+        return;
+      }
+
       // If moving to a different project, verify membership on the new project
       if (
         req.body.projectId &&
@@ -467,6 +478,17 @@ router.delete(
       const isOwner = existing.employeeId === req.user?.userId;
       if (!isAdmin && !isOwner) {
         sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+        return;
+      }
+
+      // Block deletion of non-pending entries (approved/rejected are immutable)
+      if (existing.status !== "PENDING" && !isAdmin) {
+        sendError(
+          res,
+          ErrorCodes.TIME_ENTRY_DELETE_FAILED,
+          "Cannot delete a non-pending time entry",
+          400,
+        );
         return;
       }
 
