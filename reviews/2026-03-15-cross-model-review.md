@@ -292,3 +292,34 @@ task/TaskForm.vue, task/TaskDetailModals.vue, task/TaskRelationModal.vue, task/T
 - Unit tests: 311 passed
 - Playwright E2E: 112 passed, 0 failed
 - Deployed: frontend
+
+---
+
+## Round 6: Backend Deep Review — dashboard, scheduler, projects (20:17)
+
+### Scope
+routes/dashboard.ts, scheduler/reminder.ts, routes/projects.ts
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 74%, VERDICT: NO) — 2 P0 + 2 P1 + 2 P2
+- Gemini 2.5 Pro (READINESS: 75%, VERDICT: NO) — 1 P0 + 4 P1 + 1 P2 + 1 P3
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| T1 | P0→P2 | /names unauthenticated endpoint | Both | PARTIAL — intentional for demo login, minimal data | Deferred |
+| T2 | P0→P1 | Mass-assignment req.body to service | Both | AGREE — whitelist fields | Fixed (0de5a98) |
+| T3 | P1 | Slack mrkdwn injection via employee name | Codex | AGREE | Fixed (0de5a98) |
+| T4 | P1 | requireProjectMember blocks ADMIN | Codex | REJECT — ADMIN bypass exists in middleware | No action |
+| T5 | P1→P2 | Advisory lock ID collision | Gemini | Theoretical — single scheduler | Deferred |
+| T6 | P1→P2 | N+1 query in reminder | Both | Perf issue, <50 employees | Deferred |
+| T7 | P1 | req.user?.userId optional chain | Gemini | REJECT — authenticate guarantees presence | No action |
+| T8 | P2→P3 | PII in logs | Codex | Internal system | Deferred |
+
+### Round 6 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- Playwright E2E: 112 passed, 0 failed
+- Deployed: backend
