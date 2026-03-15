@@ -358,3 +358,37 @@ utils/sanitize.ts, utils/gitlab/encryption.ts, utils/gitlab/apiClient.ts, utils/
 - CI: Backend Lint, Frontend Lint, Test, Build all success
 - Playwright E2E: 110 passed, 0 failed
 - Deployed: backend
+
+---
+
+## Round 8: Backend Middleware Deep Review (22:30)
+
+### Scope
+middleware/auth.ts, middleware/errorHandler.ts, middleware/auditLog.ts
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 78%, VERDICT: NO) — 2 P0 + 3 P1
+- Gemini 2.5 Pro (READINESS: 82%, VERDICT: NO) — 1 P0 + 2 P1 + 2 P2 + 1 P3
+
+### Fix Plan Review
+- Codex: Safe as hardening, but recommended also pinning jwt.sign — expanded plan
+- Gemini: **SAFE**
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| V1 | P0→P2 | Stale cache preserves elevated privileges | Codex | Already fixed in Round 1 (P0-1) | No action |
+| V2 | P0→P2 | authorizeSelfOrAdmin bypass for MANAGER | Codex | Design decision, Round 2 P1-22 enforced | No action |
+| V3 | P0→P2 | Distributed cache inconsistency | Gemini | Single-instance deployment | Deferred |
+| V4 | P1 | JWT algorithm not pinned | Both | AGREE — algorithm confusion risk | Fixed (e956ca8) |
+| V5 | P1→P2 | Audit logs before outcome | Both | Architecture improvement | Deferred |
+| V6 | P1→P2 | Auth denials not in audit stream | Codex | Already logged via logger.warn | Deferred |
+| V7 | P2 | Cache eviction O(n log n) | Gemini | 500 entries, negligible | Deferred |
+
+### Round 8 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- Playwright E2E: 110 passed, 0 failed
+- Deployed: backend
