@@ -24,6 +24,7 @@ jest.mock('../../../src/config/database', () => ({
       findMany: jest.fn().mockResolvedValue([{ projectId: 'proj-1' }, { projectId: 'proj-2' }]),
     },
     $transaction: jest.fn((queries: Promise<unknown>[]) => Promise.all(queries)),
+    $queryRawUnsafe: jest.fn().mockResolvedValue([]),
   },
 }));
 
@@ -136,27 +137,36 @@ describe('DashboardService', () => {
 
     it('快取未命中時應查詢 7 種職能的負載', async () => {
       mockCacheGet.mockReturnValue(undefined);
-      (mockedPrisma.employee.count as jest.Mock).mockResolvedValue(3);
-      (mockedPrisma.task.count as jest.Mock).mockResolvedValue(5);
+      (mockedPrisma.$queryRawUnsafe as jest.Mock)
+        .mockResolvedValueOnce([
+          { function_type: 'PLANNING', total_tasks: BigInt(10), unclaimed_tasks: BigInt(2), in_progress_tasks: BigInt(5) },
+          { function_type: 'PROGRAMMING', total_tasks: BigInt(8), unclaimed_tasks: BigInt(1), in_progress_tasks: BigInt(3) },
+        ])
+        .mockResolvedValueOnce([
+          { function_type: 'PLANNING', member_count: BigInt(3) },
+          { function_type: 'PROGRAMMING', member_count: BigInt(5) },
+        ]);
 
       const result = await service.getWorkloads();
 
       expect(result).toHaveLength(7); // 7 function types
       expect(result[0].functionType).toBe('PLANNING');
       expect(result[1].functionType).toBe('PROGRAMMING');
+      expect(result[0].totalTasks).toBe(10);
+      expect(result[1].memberCount).toBe(5);
       expect(mockCacheSet).toHaveBeenCalledWith('dashboard_workloads', result);
     });
 
-    it('每種職能應查詢 4 個計數', async () => {
+    it('應使用 2 個聚合查詢取代 28 個個別 COUNT', async () => {
       mockCacheGet.mockReturnValue(undefined);
-      (mockedPrisma.employee.count as jest.Mock).mockResolvedValue(0);
-      (mockedPrisma.task.count as jest.Mock).mockResolvedValue(0);
+      (mockedPrisma.$queryRawUnsafe as jest.Mock)
+        .mockResolvedValueOnce([]) // task stats
+        .mockResolvedValueOnce([]); // employee stats
 
       await service.getWorkloads();
 
-      // 7 types × 3 task.count + 7 employee.count = 21 + 7 = 28
-      expect(mockedPrisma.employee.count).toHaveBeenCalledTimes(7);
-      expect(mockedPrisma.task.count).toHaveBeenCalledTimes(21);
+      // Should use 2 raw SQL queries instead of 28 individual counts
+      expect(mockedPrisma.$queryRawUnsafe).toHaveBeenCalledTimes(2);
     });
   });
 });

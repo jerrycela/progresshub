@@ -14,20 +14,30 @@ jest.mock('../../../src/config/database', () => ({
       findMany: jest.fn(),
     },
     $transaction: jest.fn(),
+    $queryRawUnsafe: jest.fn(),
   },
 }));
+
+// Mock node-cache
+jest.mock('node-cache', () => {
+  return jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockReturnValue(undefined),
+    set: jest.fn(),
+    flushAll: jest.fn(),
+  }));
+});
 
 import prisma from '../../../src/config/database';
 import { DashboardService } from '../../../src/services/dashboardService';
 
-const FUNCTION_TYPES = [
-  'PLANNING',
-  'PROGRAMMING',
-  'ART',
-  'ANIMATION',
-  'SOUND',
-  'VFX',
-  'COMBAT',
+const mockTaskStats = [
+  { function_type: 'PLANNING', total_tasks: BigInt(10), unclaimed_tasks: BigInt(3), in_progress_tasks: BigInt(4) },
+  { function_type: 'PROGRAMMING', total_tasks: BigInt(8), unclaimed_tasks: BigInt(2), in_progress_tasks: BigInt(3) },
+];
+
+const mockEmployeeStats = [
+  { function_type: 'PLANNING', member_count: BigInt(5) },
+  { function_type: 'PROGRAMMING', member_count: BigInt(7) },
 ];
 
 describe('DashboardService.getWorkloads', () => {
@@ -36,14 +46,13 @@ describe('DashboardService.getWorkloads', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     service = new DashboardService();
-    // Clear cache before each test
     service.invalidateCache();
   });
 
   it('should return global workloads for ADMIN (no project filter)', async () => {
-    // 7 function types x 4 queries = 28 results
-    const mockResults = FUNCTION_TYPES.flatMap(() => [5, 10, 3, 4]);
-    (prisma.$transaction as jest.Mock).mockResolvedValue(mockResults);
+    (prisma.$queryRawUnsafe as jest.Mock)
+      .mockResolvedValueOnce(mockTaskStats)
+      .mockResolvedValueOnce(mockEmployeeStats);
 
     const result = await service.getWorkloads('admin-1', PermissionLevel.ADMIN);
 
@@ -65,26 +74,29 @@ describe('DashboardService.getWorkloads', () => {
       { projectId: 'proj-2' },
     ];
     (prisma.projectMember.findMany as jest.Mock).mockResolvedValue(pmProjects);
-
-    const mockResults = FUNCTION_TYPES.flatMap(() => [2, 6, 1, 3]);
-    (prisma.$transaction as jest.Mock).mockResolvedValue(mockResults);
+    (prisma.$queryRawUnsafe as jest.Mock)
+      .mockResolvedValueOnce(mockTaskStats)
+      .mockResolvedValueOnce(mockEmployeeStats);
 
     const result = await service.getWorkloads('pm-1', PermissionLevel.PM);
 
     expect(result).toHaveLength(7);
-    // Should have queried for PM's project memberships
     expect(prisma.projectMember.findMany).toHaveBeenCalledWith({
       where: { employeeId: 'pm-1' },
       select: { projectId: true },
     });
+    // Task query should include project filter parameter
+    expect(prisma.$queryRawUnsafe).toHaveBeenCalledTimes(2);
+    const taskQueryCall = (prisma.$queryRawUnsafe as jest.Mock).mock.calls[0];
+    expect(taskQueryCall[0]).toContain('ANY($1::text[])');
+    expect(taskQueryCall[1]).toEqual(['proj-1', 'proj-2']);
   });
 
   it('should return zero-count workloads for PM with no projects', async () => {
     (prisma.projectMember.findMany as jest.Mock).mockResolvedValue([]);
-
-    // All task counts are 0, employee counts are non-zero (global capacity)
-    const mockResults = FUNCTION_TYPES.flatMap(() => [3, 0, 0, 0]);
-    (prisma.$transaction as jest.Mock).mockResolvedValue(mockResults);
+    (prisma.$queryRawUnsafe as jest.Mock)
+      .mockResolvedValueOnce([]) // no task stats
+      .mockResolvedValueOnce(mockEmployeeStats);
 
     const result = await service.getWorkloads('pm-lonely', PermissionLevel.PM);
 
@@ -93,19 +105,21 @@ describe('DashboardService.getWorkloads', () => {
       expect(w.totalTasks).toBe(0);
       expect(w.unclaimedTasks).toBe(0);
       expect(w.inProgressTasks).toBe(0);
-      // Employee counts remain global
-      expect(w.memberCount).toBe(3);
     });
+    // Employee counts still populated from global query
+    expect(result[0].memberCount).toBe(5); // PLANNING
   });
 
   it('should default to global workloads when no userId provided (backward compat)', async () => {
-    const mockResults = FUNCTION_TYPES.flatMap(() => [4, 8, 2, 5]);
-    (prisma.$transaction as jest.Mock).mockResolvedValue(mockResults);
+    (prisma.$queryRawUnsafe as jest.Mock)
+      .mockResolvedValueOnce(mockTaskStats)
+      .mockResolvedValueOnce(mockEmployeeStats);
 
     const result = await service.getWorkloads();
 
     expect(result).toHaveLength(7);
-    // No userId means global — no project member lookup
     expect(prisma.projectMember.findMany).not.toHaveBeenCalled();
+    // Should use 2 aggregation queries
+    expect(prisma.$queryRawUnsafe).toHaveBeenCalledTimes(2);
   });
 });

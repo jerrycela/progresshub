@@ -123,39 +123,68 @@ export class DashboardService {
       "COMBAT",
     ];
 
-    // 使用 $transaction 批次處理所有查詢，減少 DB round-trips
-    const queries = functionTypes.flatMap((functionType) => [
-      // Employee counts remain global (org capacity)
-      prisma.employee.count({
-        where: { functionType, isActive: true },
-      }),
-      prisma.task.count({
-        where: { functionTags: { has: functionType }, ...projectFilter },
-      }),
-      prisma.task.count({
-        where: {
-          functionTags: { has: functionType },
-          status: "UNCLAIMED",
-          ...projectFilter,
-        },
-      }),
-      prisma.task.count({
-        where: {
-          functionTags: { has: functionType },
-          status: { in: ["CLAIMED", "IN_PROGRESS"] },
-          ...projectFilter,
-        },
-      }),
+    // Single aggregation query instead of 28 individual COUNTs
+    const projectCondition = projectFilter.projectId
+      ? `AND t."project_id" = ANY($1::text[])`
+      : "";
+    const params: any[] = projectFilter.projectId
+      ? [projectFilter.projectId.in]
+      : [];
+
+    const taskStatsQuery = `
+      SELECT
+        unnest(t."function_tags") AS function_type,
+        COUNT(*) AS total_tasks,
+        COUNT(*) FILTER (WHERE t."status" = 'UNCLAIMED') AS unclaimed_tasks,
+        COUNT(*) FILTER (WHERE t."status" IN ('CLAIMED', 'IN_PROGRESS')) AS in_progress_tasks
+      FROM "tasks" t
+      WHERE TRUE ${projectCondition}
+      GROUP BY function_type
+    `;
+
+    const employeeStatsQuery = `
+      SELECT
+        e."function_type",
+        COUNT(*) AS member_count
+      FROM "employees" e
+      WHERE e."is_active" = true AND e."function_type" IS NOT NULL
+      GROUP BY e."function_type"
+    `;
+
+    const [taskStats, employeeStats] = await Promise.all([
+      prisma.$queryRawUnsafe(taskStatsQuery, ...params) as Promise<
+        Array<{
+          function_type: string;
+          total_tasks: bigint;
+          unclaimed_tasks: bigint;
+          in_progress_tasks: bigint;
+        }>
+      >,
+      prisma.$queryRawUnsafe(employeeStatsQuery) as Promise<
+        Array<{ function_type: string; member_count: bigint }>
+      >,
     ]);
 
-    const results = await prisma.$transaction(queries);
+    const taskMap = new Map(
+      taskStats.map((r) => [
+        r.function_type,
+        {
+          totalTasks: Number(r.total_tasks),
+          unclaimedTasks: Number(r.unclaimed_tasks),
+          inProgressTasks: Number(r.in_progress_tasks),
+        },
+      ]),
+    );
+    const empMap = new Map(
+      employeeStats.map((r) => [r.function_type, Number(r.member_count)]),
+    );
 
-    const workloads = functionTypes.map((functionType, i) => ({
+    const workloads = functionTypes.map((functionType) => ({
       functionType,
-      memberCount: results[i * 4] as number,
-      totalTasks: results[i * 4 + 1] as number,
-      unclaimedTasks: results[i * 4 + 2] as number,
-      inProgressTasks: results[i * 4 + 3] as number,
+      memberCount: empMap.get(functionType) || 0,
+      totalTasks: taskMap.get(functionType)?.totalTasks || 0,
+      unclaimedTasks: taskMap.get(functionType)?.unclaimedTasks || 0,
+      inProgressTasks: taskMap.get(functionType)?.inProgressTasks || 0,
     }));
 
     cache.set(cacheKey, workloads);

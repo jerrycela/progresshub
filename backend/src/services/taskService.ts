@@ -176,7 +176,7 @@ export class TaskService {
         orderBy: { createdAt: "desc" },
         include: {
           ...TASK_INCLUDE,
-          taskNotes: { select: { id: true } },
+          _count: { select: { taskNotes: true } },
         },
       }),
       prisma.task.count({ where }),
