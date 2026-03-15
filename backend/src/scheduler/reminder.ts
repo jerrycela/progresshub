@@ -38,34 +38,29 @@ async function checkUnreportedEmployees(): Promise<void> {
 
     const today = getStartOfToday();
 
-    // Get all employees with active tasks
+    // Single query: employees with IN_PROGRESS tasks who haven't reported today
+    // Avoids N+1 pattern that degrades with 150+ employees
     const employees = await prisma.employee.findMany({
       where: {
+        isActive: true,
+        slackUserId: { not: null },
         assignedTasks: {
           some: { status: "IN_PROGRESS" },
         },
-      },
-      include: {
-        assignedTasks: {
-          where: { status: "IN_PROGRESS" },
+        progressLogs: {
+          none: { reportedAt: { gte: today } },
         },
+      },
+      select: {
+        id: true,
+        name: true,
+        slackUserId: true,
       },
     });
 
     for (const employee of employees) {
-      // Check if employee has reported today
-      const todayReport = await prisma.progressLog.findFirst({
-        where: {
-          employeeId: employee.id,
-          reportedAt: { gte: today },
-        },
-      });
-
-      // If no report today, send reminder
-      if (!todayReport) {
-        if (employee.slackUserId) {
-          await sendReminder(employee.slackUserId, employee.name);
-        }
+      if (employee.slackUserId) {
+        await sendReminder(employee.slackUserId, employee.name);
       }
     }
 
