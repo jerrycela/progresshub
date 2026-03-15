@@ -392,3 +392,39 @@ middleware/auth.ts, middleware/errorHandler.ts, middleware/auditLog.ts
 - Unit tests: 308 passed
 - Playwright E2E: 110 passed, 0 failed
 - Deployed: backend
+
+---
+
+## Round 9: Backend AuthService Deep Review (23:30)
+
+### Scope
+services/authService.ts (OAuth, JWT, demo login, refresh tokens)
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 93%, VERDICT: NO) — 5 P0 + 2 P1 + 1 P2
+- Gemini 2.5 Pro (READINESS: 60%, VERDICT: NO) — 2 P0 + 2 P1 + 2 P2 + 1 P3
+
+### Fix Plan Review
+- Codex: **RISKY** → adjusted Fix 4 per feedback (all DB ops in same tx client)
+- Gemini: **SAFE**
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| W1 | P0→P1 | OAuth state not verified in service | Codex | Route layer verifies — but service should too | Deferred (route handles) |
+| W2 | P0→P1 | Slack no tenant verification | Both | AGREE | Fixed (72c4364) |
+| W3 | P0→P2 | Dev/demo login no env guard in service | Both | Route already caps → added defense-in-depth | Fixed (72c4364) |
+| W4 | P0→P2 | Refresh token stored plaintext | Codex | Needs DB schema change | Deferred |
+| W5 | P0→P1 | Refresh rotation race condition | Both | AGREE — atomic tx | Fixed (72c4364) |
+| W6 | P0→P1 | client_secret in URL params | Gemini | AGREE | Fixed (72c4364) |
+| W7 | P1→P2 | Refresh token no jti | Codex | Needs DB schema | Deferred |
+| W8 | P1→P2 | Employee linking TOCTOU | Codex | DB constraints prevent duplicate | Deferred |
+| W9 | P2→P3 | Dev login error leaks email | Both | Dev-only endpoint | Deferred |
+
+### Round 9 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- Playwright E2E: 111 passed, 0 failed
+- Deployed: backend
