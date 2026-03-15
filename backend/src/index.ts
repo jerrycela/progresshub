@@ -80,15 +80,24 @@ app.use(cors(corsOptions));
 
 // Rate Limiting
 
-// Auth rate limiter (IP-based, before authenticate)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 分鐘
-  max:
-    parseInt(
-      process.env.RATE_LIMIT_AUTH_MAX ||
-        process.env.AUTH_RATE_LIMIT_MAX ||
-        "1000",
-    ) || 1000,
+// Login rate limiter (strict — brute force protection)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_LOGIN_MAX || "30") || 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: { code: "RATE_LIMITED", message: "登入嘗試過於頻繁，請稍後再試" },
+    });
+  },
+});
+
+// Refresh token rate limiter (lenient — supports 100+ concurrent sessions)
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.RATE_LIMIT_REFRESH_MAX || "200") || 200,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
@@ -103,7 +112,7 @@ const authLimiter = rateLimit({
 // Note: userId-based fine-grained limiting should be added at router level after authenticate
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 分鐘
-  max: parseInt(process.env.RATE_LIMIT_API_MAX || "2000") || 2000,
+  max: parseInt(process.env.RATE_LIMIT_API_MAX || "6000") || 6000,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (_req, res) => {
@@ -115,10 +124,10 @@ const globalLimiter = rateLimit({
 });
 
 // Auth rate limiter on sensitive endpoints (IP-based, before authenticate)
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/dev-login", authLimiter);
-app.use("/api/auth/slack", authLimiter);
-app.use("/api/auth/refresh", authLimiter);
+app.use("/api/auth/login", loginLimiter);
+app.use("/api/auth/dev-login", loginLimiter);
+app.use("/api/auth/slack", loginLimiter);
+app.use("/api/auth/refresh", refreshLimiter);
 // Global API rate limiter (IP-based, high threshold for DDoS protection)
 app.use("/api/", globalLimiter);
 
@@ -181,6 +190,10 @@ const startServer = async () => {
         logger.info(`API Docs: http://localhost:${env.PORT}/api-docs`);
       }
     });
+
+    // Tune server timeouts for overload resilience
+    server.requestTimeout = 30000; // 30s max per request
+    server.headersTimeout = 15000; // 15s to receive headers
 
     // Unified graceful shutdown
     const shutdown = (signal: string) => {
