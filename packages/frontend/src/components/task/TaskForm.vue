@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import type { FunctionType, MockEmployee } from 'shared/types'
 import { DepartmentLabels } from 'shared/types'
 import SearchableSelect from '@/components/common/SearchableSelect.vue'
@@ -82,6 +82,18 @@ const toggleFunctionTag = (tag: FunctionType): void => {
     : [...current, tag]
   emit('update:functionTags', newTags)
 }
+
+// Clear assignee/collaborators when department changes and they're no longer valid
+watch(
+  () => props.form.department,
+  () => {
+    const validIds = new Set(filteredEmployees.value.map(e => e.id))
+    if (props.form.assigneeId && !validIds.has(props.form.assigneeId)) {
+      props.form.assigneeId = ''
+    }
+    props.form.collaboratorIds = props.form.collaboratorIds.filter(id => validIds.has(id))
+  },
+)
 </script>
 
 <template>
@@ -153,6 +165,7 @@ const toggleFunctionTag = (tag: FunctionType): void => {
         <button
           v-for="tag in functionTagOptions"
           :key="tag.value"
+          type="button"
           :class="[
             'px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 cursor-pointer',
             form.functionTags.includes(tag.value)

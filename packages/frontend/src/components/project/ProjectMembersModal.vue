@@ -7,6 +7,7 @@ import { useProjectStore } from '@/stores/projects'
 import { useEmployeeStore } from '@/stores/employees'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { DepartmentLabels, type Department } from 'shared/types'
 import type { SearchableOption } from '@/components/common/SearchableSelect.vue'
 
@@ -26,6 +27,7 @@ const projectStore = useProjectStore()
 const employeeStore = useEmployeeStore()
 const authStore = useAuthStore()
 const { showSuccess, showError } = useToast()
+const { showConfirm } = useConfirm()
 
 const selectedEmployeeIds = ref<string[]>([])
 const adding = ref(false)
@@ -54,14 +56,17 @@ const availableEmployeeOptions = computed<SearchableOption[]>(() => {
 
 // Load members AND employees when modal opens
 watch(
-  () => props.modelValue,
-  isOpen => {
-    if (isOpen) {
-      projectStore.fetchProjectMembers(props.projectId)
-      if (employeeStore.employees.length === 0) {
-        employeeStore.fetchEmployees()
+  () => [props.modelValue, props.projectId] as const,
+  ([isOpen, projectId], [wasOpen]) => {
+    if (isOpen && projectId) {
+      // Refetch when opening or when projectId changes while open
+      if (!wasOpen || isOpen) {
+        projectStore.fetchProjectMembers(projectId)
+        if (employeeStore.employees.length === 0) {
+          employeeStore.fetchEmployees()
+        }
+        selectedEmployeeIds.value = []
       }
-      selectedEmployeeIds.value = []
     }
   },
 )
@@ -84,6 +89,16 @@ const addMembers = async () => {
 }
 
 const removeMember = async (employeeId: string) => {
+  const employee = projectStore.projectMembers.find(m => m.employeeId === employeeId)
+  const name = employee?.employee?.name || '此成員'
+  const confirmed = await showConfirm({
+    title: '移除成員',
+    message: `確定要將「${name}」從專案中移除嗎？`,
+    type: 'danger',
+    confirmText: '移除',
+    cancelText: '取消',
+  })
+  if (!confirmed) return
   const success = await projectStore.removeProjectMember(props.projectId, employeeId)
   if (success) {
     showSuccess('已移除成員')

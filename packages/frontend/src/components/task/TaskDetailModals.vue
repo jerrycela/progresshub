@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { MockEmployee, UserRole } from 'shared/types'
 import { getRoleBadgeClass } from '@/composables/useStatusUtils'
 import Modal from '@/components/common/Modal.vue'
@@ -8,7 +9,7 @@ import Modal from '@/components/common/Modal.vue'
 // 包含：進度回報、指派任務、GitLab 關聯、新增註記
 // ============================================
 
-defineProps<{
+const props = defineProps<{
   showProgressModal: boolean
   showAssignModal: boolean
   showGitLabModal: boolean
@@ -33,6 +34,15 @@ const emit = defineEmits<{
   linkGitLab: []
   submitNote: []
 }>()
+
+const isValidGitlabUrl = computed(() => {
+  try {
+    const url = new URL(props.gitlabUrl)
+    return url.protocol === 'https:'
+  } catch {
+    return false
+  }
+})
 
 const getRoleLabel = (role: string): string => {
   switch (role) {
@@ -151,12 +161,17 @@ const getRoleLabel = (role: string): string => {
           @input="emit('update:gitlabUrl', ($event.target as HTMLInputElement).value)"
         />
         <p class="mt-2 text-xs text-muted">請輸入 GitLab Issue 的完整 URL</p>
+        <p v-if="props.gitlabUrl && !isValidGitlabUrl" class="mt-1 text-xs text-red-500">
+          請輸入有效的 HTTPS URL
+        </p>
       </div>
     </div>
 
     <template #footer>
       <button class="btn-secondary" @click="emit('update:showGitLabModal', false)">取消</button>
-      <button class="btn-primary" @click="emit('linkGitLab')">確認關聯</button>
+      <button class="btn-primary" :disabled="!isValidGitlabUrl" @click="emit('linkGitLab')">
+        確認關聯
+      </button>
     </template>
   </Modal>
 
