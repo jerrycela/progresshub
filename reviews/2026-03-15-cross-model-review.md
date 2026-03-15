@@ -506,3 +506,40 @@ stores/tasks.ts, pages/TaskPoolPage.vue, pages/MyTasksPage.vue, pages/GanttPage.
 - Unit tests: 311 passed
 - Playwright E2E: 21 passed, 0 failed
 - Deployed: frontend
+
+---
+
+## Round 12: Infrastructure Config — DB Pool, Rate Limiting (02:30)
+
+### Scope
+config/database.ts (pool sizing), index.ts (rate limiters, server timeouts), deployment config
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 30%, VERDICT: NO) — 1 P0 + 3 P1 + 2 P2
+- Gemini 2.5 Pro (READINESS: 65%, VERDICT: NO) — 1 P0 + 2 P1 + 2 P2 + 1 P3
+
+### Fix Plan Review
+- Gemini: **SAFE**
+- Codex: in background (plan was safe directionally)
+
+### Implemented Changes (committed, NOT yet deployed successfully)
+
+| # | Fix | Status |
+|---|-----|--------|
+| 1 | DB pool size 50→20, timeout 30→10s | Committed |
+| 2 | Global rate limit 2000→6000/min/IP | Committed |
+| 3 | Auth limiter split: login(30/15min) + refresh(200/15min) | Committed |
+| 4 | Server timeouts (requestTimeout/headersTimeout) | **REVERTED** — caused 502 |
+
+### INCIDENT: Deployment Failure
+- **Root cause:** Migration `20260316000000_performance_indexes` (from Round 10) failed on Zeabur PostgreSQL — likely column name mismatch with Prisma `@@map` or failed migration recorded in `_prisma_migrations` table
+- **Impact:** Backend 502 for ~30 minutes, requires manual DB intervention
+- **Attempted fixes:** Emptied migration SQL, adjusted pool size, reverted timeouts, multiple redeploys — all 502
+- **Resolution needed:** Manual SQL in production DB: `UPDATE _prisma_migrations SET finished_at=now(), rolled_back_at=NULL WHERE migration_name='20260316000000_performance_indexes' AND finished_at IS NULL`
+- **Lesson:** Migration SQL must use exact `@@map` column names (snake_case), and should be tested against a staging DB before deploying to production
+
+### Round 12 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- **Deployment: FAILED — pending manual DB fix**
