@@ -323,3 +323,38 @@ routes/dashboard.ts, scheduler/reminder.ts, routes/projects.ts
 - Unit tests: 308 passed
 - Playwright E2E: 112 passed, 0 failed
 - Deployed: backend
+
+---
+
+## Round 7: Backend Mappers + Utils Review (21:30)
+
+### Scope
+utils/sanitize.ts, utils/gitlab/encryption.ts, utils/gitlab/apiClient.ts, utils/response.ts, mappers/taskMapper.ts, utils/gitlab/webhookVerifier.ts
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 90%, VERDICT: NO) — 2 P0 + 1 P1 + 1 P3
+- Gemini 2.5 Pro (READINESS: 60%, VERDICT: NO) — 2 P0 + 3 P1 + 1 P2
+
+### Fix Plan Review
+- Gemini: **SAFE** — 計畫設計嚴謹，沒有迴歸風險
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| U1 | P0→P1 | SSRF via GitLab baseUrl | Both | AGREE — admin-only but needs validation | Fixed (3e98258) |
+| U2 | P0→P1 | sendError details leaks in production | Both | AGREE | Fixed (3e98258) |
+| U3 | P0→P1 | scryptSync DoS — key not cached | Gemini | AGREE | Fixed (3e98258) |
+| U4 | P0→P2 | AES-GCM IV 16→12 | Gemini | PARTIAL — breaks existing data | Deferred |
+| U5 | P1 | Axios error.message exposed | Codex | AGREE | Fixed (3e98258) |
+| U6 | P1→P3 | Regex sanitizer bypass risk | Gemini | PARTIAL — entity escape makes it safe | Deferred |
+| U7 | P1→P2 | Hardcoded default salt | Gemini | Production has guard | Deferred |
+| U8 | P3 | sanitize naming | Codex | AGREE — low priority | Deferred |
+
+### Round 7 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- CI: Backend Lint, Frontend Lint, Test, Build all success
+- Playwright E2E: 110 passed, 0 failed
+- Deployed: backend
