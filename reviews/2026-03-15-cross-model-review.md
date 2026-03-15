@@ -543,3 +543,30 @@ config/database.ts (pool sizing), index.ts (rate limiters, server timeouts), dep
 - Type check: backend passed
 - Unit tests: 308 passed
 - **Deployment: FAILED — pending manual DB fix**
+
+---
+
+## Round 13: API Contract Performance Review (03:30) — Review Only
+
+### Scope
+services/timeStatsService.ts, services/taskNoteService.ts, services/employeeService.ts, prisma/schema.prisma (TimeEntry indexes)
+
+### Reviewers
+- Claude Opus 4.6 (self-review) — 5 findings
+- Codex GPT-5.4 (READINESS: 88%, VERDICT: NO) — 3 P1 + 3 P2
+- Gemini 2.5 Pro (READINESS: 60%, VERDICT: NO) — 2 P1 + 2 P2 + 1 P3
+
+### Key Findings (no fixes — backend down)
+
+| # | Sev | Finding | Source | Priority |
+|---|-----|---------|--------|----------|
+| X1 | P1 | timeStats loads 5K-10K rows for in-memory aggregation | Both | Phase 2 |
+| X2 | P1 | timeStats silently truncates at MAX cap | Both | Phase 2 |
+| X3 | P1 | TimeEntry lacks composite indexes (employeeId+date, projectId+date) | Codex | Phase 2 |
+| X4 | P2 | getEmployeeById loads all assigned tasks | Both | Phase 3 |
+| X5 | P2 | taskNotes take:200 no pagination | Both | Phase 3 |
+| X6 | P2 | timeStats no caching | Both | Phase 3 |
+
+### Output
+- Full optimization plan: `docs/plans/2026-03-16-performance-optimization-plan.md`
+- No code changes (backend deployment blocked)
