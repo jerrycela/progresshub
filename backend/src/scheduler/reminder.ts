@@ -80,6 +80,17 @@ async function checkUnreportedEmployees(): Promise<void> {
 }
 
 /**
+ * Escape Slack mrkdwn control characters to prevent injection
+ * (e.g., <@U...> mentions, <!channel>, links)
+ */
+function escapeSlackMrkdwn(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+/**
  * Send reminder message to employee via Slack
  */
 async function sendReminder(
@@ -97,13 +108,13 @@ async function sendReminder(
 
     await client.chat.postMessage({
       channel: slackUserId,
-      text: `嗨 ${employeeName}! 👋\n今天還沒看到你的進度回報喔~\n請用 \`/report\` 指令回報你的工作進度`,
+      text: `嗨 ${escapeSlackMrkdwn(employeeName)}! 👋\n今天還沒看到你的進度回報喔~\n請用 \`/report\` 指令回報你的工作進度`,
       blocks: [
         {
           type: "section",
           text: {
             type: "mrkdwn",
-            text: `嗨 ${employeeName}! 👋`,
+            text: `嗨 ${escapeSlackMrkdwn(employeeName)}! 👋`,
           },
         },
         {

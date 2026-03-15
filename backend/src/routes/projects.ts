@@ -298,7 +298,13 @@ router.post(
         return;
       }
 
-      const project = await projectService.createProject(req.body);
+      const { name, description, startDate, endDate } = req.body;
+      const project = await projectService.createProject({
+        name,
+        description,
+        startDate,
+        endDate,
+      });
       sendSuccess(res, project, 201);
     } catch (error) {
       logger.error("Create project error:", error);
@@ -358,15 +364,20 @@ router.put(
         return;
       }
 
-      // 驗證日期（如果有更新）
-      const startDate = req.body.startDate
-        ? new Date(req.body.startDate)
-        : existing.startDate;
-      const endDate = req.body.endDate
-        ? new Date(req.body.endDate)
-        : existing.endDate;
+      // Whitelist allowed fields to prevent mass-assignment
+      const {
+        name,
+        description,
+        startDate: rawStart,
+        endDate: rawEnd,
+        status,
+      } = req.body;
 
-      if (endDate <= startDate) {
+      // 驗證日期（如果有更新）
+      const effectiveStart = rawStart ? new Date(rawStart) : existing.startDate;
+      const effectiveEnd = rawEnd ? new Date(rawEnd) : existing.endDate;
+
+      if (effectiveEnd <= effectiveStart) {
         sendError(
           res,
           ErrorCodes.INVALID_DATE_RANGE,
@@ -376,10 +387,13 @@ router.put(
         return;
       }
 
-      const project = await projectService.updateProject(
-        req.params.id,
-        req.body,
-      );
+      const project = await projectService.updateProject(req.params.id, {
+        name,
+        description,
+        startDate: rawStart,
+        endDate: rawEnd,
+        status,
+      });
       sendSuccess(res, project);
     } catch (error) {
       if (
