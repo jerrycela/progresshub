@@ -78,6 +78,7 @@ const projectStatusOptions = computed(() => [
 // 新增/編輯專案對話框
 const showProjectModal = ref(false)
 const isEditing = ref(false)
+const isSaving = ref(false)
 const editingProject = ref<Partial<Project>>({
   name: '',
   description: '',
@@ -159,30 +160,35 @@ const saveProject = async () => {
     showError('請修正表單錯誤')
     return
   }
-
-  if (isEditing.value && editingProject.value.id) {
-    const result = await projectStore.updateProject(editingProject.value.id, editingProject.value)
-    if (result.success) {
-      showSuccess('專案已更新')
+  if (isSaving.value) return
+  isSaving.value = true
+  try {
+    if (isEditing.value && editingProject.value.id) {
+      const result = await projectStore.updateProject(editingProject.value.id, editingProject.value)
+      if (result.success) {
+        showSuccess('專案已更新')
+      } else {
+        showError(result.error?.message || '更新專案失敗')
+        return
+      }
     } else {
-      showError(result.error?.message || '更新專案失敗')
-      return
+      const result = await projectStore.createProject({
+        name: editingProject.value.name || '',
+        description: editingProject.value.description,
+        startDate: editingProject.value.startDate || new Date().toISOString().split('T')[0],
+        endDate: editingProject.value.endDate || undefined,
+      })
+      if (result.success) {
+        showSuccess('專案已建立')
+      } else {
+        showError(result.error?.message || '建立專案失敗')
+        return
+      }
     }
-  } else {
-    const result = await projectStore.createProject({
-      name: editingProject.value.name || '',
-      description: editingProject.value.description,
-      startDate: editingProject.value.startDate || new Date().toISOString().split('T')[0],
-      endDate: editingProject.value.endDate || undefined,
-    })
-    if (result.success) {
-      showSuccess('專案已建立')
-    } else {
-      showError(result.error?.message || '建立專案失敗')
-      return
-    }
+    showProjectModal.value = false
+  } finally {
+    isSaving.value = false
   }
-  showProjectModal.value = false
 }
 
 // 格式化日期
@@ -403,12 +409,19 @@ const handleDeleteProject = async (project: Project) => {
             :error="formErrors.endDate"
           />
         </div>
-        <Select v-model="editingProject.status" label="狀態" :options="projectStatusOptions" />
+        <Select
+          v-if="isEditing"
+          v-model="editingProject.status"
+          label="狀態"
+          :options="projectStatusOptions"
+        />
       </div>
 
       <template #footer>
-        <Button variant="secondary" @click="showProjectModal = false"> 取消 </Button>
-        <Button @click="saveProject">
+        <Button variant="secondary" :disabled="isSaving" @click="showProjectModal = false">
+          取消
+        </Button>
+        <Button :loading="isSaving" @click="saveProject">
           {{ isEditing ? '儲存變更' : '建立專案' }}
         </Button>
       </template>

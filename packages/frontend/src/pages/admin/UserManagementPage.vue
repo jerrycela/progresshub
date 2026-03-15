@@ -126,14 +126,29 @@ const saveUser = async () => {
   if (isSaving.value) return
   isSaving.value = true
   try {
+    const deptMap: Record<string, Department> = {
+      PROGRAMMING: 'PROGRAMMING',
+      ART: 'ART',
+      PLANNING: 'PLANNING',
+      SOUND: 'SOUND',
+      QA: 'QA',
+      VFX: 'ART',
+      ANIMATION: 'ART',
+      COMBAT: 'PROGRAMMING',
+    }
+    const functionType = editingUser.value.functionType || 'PROGRAMMING'
+    const dept: Department = deptMap[functionType] || 'PROGRAMMING'
     const result = await employeeStore.updateEmployee(editingUser.value.id, {
       name: editingUser.value.name,
       email: editingUser.value.email,
       userRole: editingUser.value.role,
+      department: dept,
     })
     if (result.success) {
       showSuccess('員工資料已更新')
       showEditModal.value = false
+    } else {
+      showError(result.error?.message || '儲存失敗，請稍後再試')
     }
   } catch {
     showError('儲存失敗，請稍後再試')
@@ -212,6 +227,8 @@ const createUser = async () => {
     })
     if (result.success) {
       showCreateModal.value = false
+    } else {
+      showError(result.error?.message || '新增成員失敗，請稍後再試')
     }
   } catch {
     showError('儲存失敗，請稍後再試')
