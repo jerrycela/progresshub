@@ -428,3 +428,45 @@ services/authService.ts (OAuth, JWT, demo login, refresh tokens)
 - Unit tests: 308 passed
 - Playwright E2E: 111 passed, 0 failed
 - Deployed: backend
+
+---
+
+## Round 10: Performance Optimization — Backend Hot Queries (00:30)
+
+### Direction Change
+From Round 10: focus shifted from security to **high-load performance** (100+ concurrent users).
+
+### Scope
+services/taskService.ts (getPoolTasks, getEmployeeTasks), services/dashboardService.ts (getStats, getWorkloads), prisma/schema.prisma (indexes)
+
+### Reviewers
+- Claude Opus 4.6 (self-review) — 7 findings
+- Codex GPT-5.4 (READINESS: 89%, VERDICT: NO) — 4 P1 + 2 P2
+- Gemini 2.5 Pro (READINESS: 65%, VERDICT: NO) — 3 P1 + 3 P2 + 1 P3
+
+### Fix Plan Review
+- Codex: **RISKY** → adjusted plan (removed pagination/Promise.all changes, kept indexes + query optimization)
+- Gemini: **SAFE**
+
+### Implemented Optimizations
+
+| # | Type | Fix | Impact |
+|---|------|-----|--------|
+| 1 | Index | GIN on tasks.function_tags | has() filter O(n) → O(log n) |
+| 2 | Index | GIN on tasks.collaborators | Same for collaborator queries |
+| 3 | Index | tasks(project_id, created_at DESC) | Pool query sort |
+| 4 | Index | tasks(assigned_to_id, planned_end_date) | Employee tasks sort |
+| 5 | Index | tasks(planned_end_date) WHERE status!='DONE' | Overdue count |
+| 6 | Query | taskNotes select → _count | Avoid loading N note IDs |
+| 7 | Query | 28 COUNTs → 2 SQL aggregations | 14x fewer DB round-trips |
+
+### Deferred (needs frontend changes)
+- getPoolTasks pagination (take:500 → paginated) — requires server-side filtering redesign
+- $transaction → Promise.all — needs load testing
+- Cache stampede protection — architectural change
+
+### Round 10 Verification
+- Type check: backend passed
+- Unit tests: 308 passed
+- Playwright E2E: 26 passed, 0 failed (rate limiting reduced test count)
+- Deployed: backend + indexes applied
