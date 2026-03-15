@@ -191,10 +191,6 @@ const startServer = async () => {
       }
     });
 
-    // Tune server timeouts for overload resilience
-    server.requestTimeout = 30000; // 30s max per request
-    server.headersTimeout = 15000; // 15s to receive headers
-
     // Unified graceful shutdown
     const shutdown = (signal: string) => {
       logger.info(`[SHUTDOWN] Received ${signal}, closing gracefully...`);
