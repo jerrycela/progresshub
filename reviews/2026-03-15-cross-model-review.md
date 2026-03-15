@@ -470,3 +470,39 @@ services/taskService.ts (getPoolTasks, getEmployeeTasks), services/dashboardServ
 - Unit tests: 308 passed
 - Playwright E2E: 26 passed, 0 failed (rate limiting reduced test count)
 - Deployed: backend + indexes applied
+
+---
+
+## Round 11: Frontend Performance — Stores + Pages (01:30)
+
+### Scope
+stores/tasks.ts, pages/TaskPoolPage.vue, pages/MyTasksPage.vue, pages/GanttPage.vue
+
+### Reviewers
+- Claude Opus 4.6 (self-review) — 6 findings
+- Codex GPT-5.4 (READINESS: 38%, VERDICT: NO) — 5 P1 + 4 P2 + 1 P3
+- Gemini 2.5 Pro (READINESS: 62%, VERDICT: NO) — 1 P0 + 3 P1 + 2 P2 + 1 P3
+
+### Implemented Optimizations
+
+| # | Type | Fix | Impact |
+|---|------|-----|--------|
+| 1 | CPU | taskStats 3x filter → 1x reduce | 3x fewer array scans |
+| 2 | CPU | Search input 300ms debounce | Avoid per-keystroke recomputation |
+| 3 | Memory | syncPoolTask map → index assignment | No full array rebuild |
+
+### Deferred (needs larger refactoring)
+
+| # | Issue | Reason |
+|---|-------|--------|
+| D1 | MyTasksPage N+1 log requests | Needs backend batch endpoint |
+| D2 | Gantt virtual scrolling | Needs vue-virtual-scroller library |
+| D3 | Gantt row precomputed view model | Component refactoring |
+| D4 | progressLog store per-task Map | Store architecture change |
+| D5 | latestNotes O(N*M) | Tied to D4 |
+
+### Round 11 Verification
+- Type check: frontend passed
+- Unit tests: 311 passed
+- Playwright E2E: 21 passed, 0 failed
+- Deployed: frontend
