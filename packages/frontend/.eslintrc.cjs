@@ -1,6 +1,7 @@
 /* eslint-env node */
 module.exports = {
   root: true,
+  ignorePatterns: ['dist/', 'node_modules/', 'e2e/', 'qa-*.mjs'],
   env: {
     browser: true,
     es2022: true,
