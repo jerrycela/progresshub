@@ -199,3 +199,31 @@ LoginPage.vue, UserManagementPage.vue, TaskCreatePage.vue, ProjectsPage.vue
 - Unit tests: 311 passed
 - Playwright E2E: 111 passed, 0 failed
 - Deployed: frontend + backend
+
+---
+
+## Round 3: Frontend Stores + Services Review (17:17)
+
+### Scope
+stores/auth.ts, services/api.ts, stores/tasks.ts, stores/employees.ts
+
+### Reviewers
+- Claude Opus 4.6 (self-review)
+- Codex GPT-5.4 (READINESS: 38%, VERDICT: NO)
+
+### Adjudicated Findings
+
+| # | Sev | Finding | Source | Verdict | Action |
+|---|-----|---------|--------|---------|--------|
+| S1 | ~~P0~~ | localStorage tokens XSS-vulnerable | Codex | PARTIAL → P2 — standard SPA pattern, no known XSS | Deferred |
+| S2 | P1 | forceLogout doesn't clear Pinia state | Codex | AGREE | Fixed (commit e7e70b0) |
+| S3 | P1 | Concurrent per-task optimistic mutations race | Codex | AGREE | Fixed (commit e7e70b0) |
+| S4 | P1 | poolTasks not synced after mutations | Codex | AGREE | Fixed (commit e7e70b0) |
+| S5 | P1 | Employee updateEmployee no rollback on failure | Codex | AGREE | Fixed (commit e7e70b0) |
+| S6 | P2 | getByDepartment creates fresh computed per call | Codex | AGREE — low impact | Deferred |
+
+### Verification
+- Type check: frontend passed
+- Unit tests: 311 passed
+- Playwright E2E: 111 passed, 0 failed
+- Deployed: frontend
