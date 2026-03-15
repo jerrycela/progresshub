@@ -37,6 +37,14 @@ const selectedDepartment = ref<Department | ''>('')
 const selectedFunction = ref<FunctionType | ''>('')
 const selectedStatus = ref<string>('')
 const searchQuery = ref('')
+const debouncedSearch = ref('')
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, val => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    debouncedSearch.value = val
+  }, 300)
+})
 
 // 快速篩選：只看待認領
 const showOnlyUnclaimed = ref(false)
@@ -69,8 +77,8 @@ const filteredTasks = computed(() => {
     if (selectedStatus.value && task.status !== selectedStatus.value) {
       return false
     }
-    if (searchQuery.value) {
-      const query = searchQuery.value.toLowerCase()
+    if (debouncedSearch.value) {
+      const query = debouncedSearch.value.toLowerCase()
       return (
         task.title.toLowerCase().includes(query) || task.description?.toLowerCase().includes(query)
       )
@@ -123,12 +131,21 @@ watch(
 )
 
 // 任務統計
-const taskStats = computed(() => ({
-  total: taskStore.poolTasksTotal > 0 ? taskStore.poolTasksTotal : taskStore.poolTasks.length,
-  available: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'UNCLAIMED').length,
-  inProgress: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'IN_PROGRESS').length,
-  completed: taskStore.poolTasks.filter((t: PoolTask) => t.status === 'DONE').length,
-}))
+const taskStats = computed(() => {
+  const counts = taskStore.poolTasks.reduce(
+    (acc, t: PoolTask) => {
+      if (t.status === 'UNCLAIMED') acc.available++
+      else if (t.status === 'IN_PROGRESS') acc.inProgress++
+      else if (t.status === 'DONE') acc.completed++
+      return acc
+    },
+    { available: 0, inProgress: 0, completed: 0 },
+  )
+  return {
+    total: taskStore.poolTasksTotal > 0 ? taskStore.poolTasksTotal : taskStore.poolTasks.length,
+    ...counts,
+  }
+})
 
 // 截斷警告：當後端回報的總數大於本地已載入的數量時
 const isTruncated = computed(() => taskStore.poolTasksTotal > taskStore.poolTasks.length)

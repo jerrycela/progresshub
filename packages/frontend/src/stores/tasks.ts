@@ -104,7 +104,7 @@ export const useTaskStore = defineStore('tasks', () => {
   const syncPoolTask = (taskId: string, updates: Partial<PoolTask>) => {
     const idx = poolTasks.value.findIndex(t => t.id === taskId)
     if (idx !== -1) {
-      poolTasks.value = poolTasks.value.map((t, i) => (i === idx ? { ...t, ...updates } : t))
+      poolTasks.value[idx] = { ...poolTasks.value[idx], ...updates }
     }
   }
 
