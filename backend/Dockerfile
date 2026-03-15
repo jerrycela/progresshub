@@ -58,4 +58,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health/ready || exit 1
 
 # Start application (auto migrate + start)
-CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.js && node dist/index.js"]
+# Step 1: Resolve any failed migrations (mark as rolled-back so deploy can retry)
+# Step 2: Run migrations
+# Step 3: Seed + start
+CMD ["sh", "-c", "npx prisma migrate resolve --rolled-back 20260316000000_performance_indexes 2>/dev/null; npx prisma migrate deploy && node prisma/seed.js && node dist/index.js"]
