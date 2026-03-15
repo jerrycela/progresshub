@@ -59,13 +59,13 @@ export class AuthService {
   async loginWithSlackCode(code: string): Promise<LoginResult> {
     const tokenResponse = await axios.post(
       "https://slack.com/api/oauth.v2.access",
-      null,
+      new URLSearchParams({
+        client_id: env.SLACK_CLIENT_ID || "",
+        client_secret: env.SLACK_CLIENT_SECRET || "",
+        code,
+      }).toString(),
       {
-        params: {
-          client_id: env.SLACK_CLIENT_ID,
-          client_secret: env.SLACK_CLIENT_SECRET,
-          code,
-        },
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
       },
     );
 
@@ -79,6 +79,14 @@ export class AuthService {
     const { authed_user } = tokenResponse.data;
     if (!authed_user?.id) {
       throw new AppError(502, "Slack OAuth: missing user identity");
+    }
+
+    // Validate Slack workspace to prevent cross-workspace login
+    if (env.SLACK_TEAM_ID) {
+      const teamId = tokenResponse.data.team?.id;
+      if (!teamId || teamId !== env.SLACK_TEAM_ID) {
+        throw new AppError(403, "This Slack workspace is not authorized");
+      }
     }
 
     // Get user profile from Slack
@@ -179,6 +187,12 @@ export class AuthService {
     permissionLevel: PermissionLevel,
     projectIds?: string[],
   ): Promise<LoginResult> {
+    // Defense-in-depth: cap permission to EMPLOYEE in production
+    // (route layer also caps, but service adds second barrier)
+    if (process.env.NODE_ENV === "production") {
+      permissionLevel = PermissionLevel.EMPLOYEE;
+    }
+
     const nameSlug = name
       .toLowerCase()
       .replace(/\s+/g, "-")
@@ -364,29 +378,68 @@ export class AuthService {
 
   /**
    * Use a refresh token to generate a new access token.
-   * The old refresh token remains valid (rotation is optional).
+   * Atomic rotation: delete old token and create new one in the same transaction
+   * to prevent replay attacks where two concurrent requests use the same token.
    */
   async refreshAccessToken(
     refreshToken: string,
   ): Promise<{ token: string; refreshToken: string }> {
-    const { userId } = await this.verifyRefreshToken(refreshToken);
+    // Verify JWT signature first (outside transaction — no DB needed)
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET, {
+      algorithms: ["HS256"],
+    }) as { userId: string; type: string };
 
-    const employee = await prisma.employee.findUnique({
-      where: { id: userId },
-    });
-
-    if (!employee || !employee.isActive) {
-      await this.revokeRefreshToken(refreshToken);
-      throw new AppError(401, "User not found or account is disabled");
+    if (decoded.type !== "refresh") {
+      throw new AppError(401, "Invalid token type");
     }
 
-    // Revoke old refresh token and issue a new one (token rotation)
-    await this.revokeRefreshToken(refreshToken);
+    // Atomic rotation: delete old + verify employee + create new in one transaction
+    return prisma.$transaction(async (tx) => {
+      // Conditionally delete — if count === 0, token was already consumed
+      const deleted = await tx.refreshToken.deleteMany({
+        where: { token: refreshToken },
+      });
 
-    const newAccessToken = this.generateToken(employee);
-    const newRefreshToken = await this.generateRefreshToken(employee);
+      if (deleted.count === 0) {
+        throw new AppError(
+          401,
+          "Refresh token has been revoked or already used",
+        );
+      }
 
-    return { token: newAccessToken, refreshToken: newRefreshToken };
+      const employee = await tx.employee.findUnique({
+        where: { id: decoded.userId },
+      });
+
+      if (!employee || !employee.isActive) {
+        throw new AppError(401, "User not found or account is disabled");
+      }
+
+      // Generate new tokens
+      const newAccessToken = this.generateToken(employee);
+
+      const expiresInMs = this.parseExpiresIn(env.JWT_REFRESH_EXPIRES_IN);
+      const expiresAt = new Date(Date.now() + expiresInMs);
+
+      const newRefreshToken = jwt.sign(
+        { userId: employee.id, type: "refresh" },
+        env.JWT_REFRESH_SECRET,
+        {
+          expiresIn: env.JWT_REFRESH_EXPIRES_IN,
+          algorithm: "HS256",
+        } as SignOptions,
+      );
+
+      await tx.refreshToken.create({
+        data: {
+          token: newRefreshToken,
+          userId: employee.id,
+          expiresAt,
+        },
+      });
+
+      return { token: newAccessToken, refreshToken: newRefreshToken };
+    });
   }
 
   /**

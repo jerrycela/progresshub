@@ -15,6 +15,7 @@ interface EnvConfig {
   SLACK_CLIENT_SECRET: string;
   SLACK_SIGNING_SECRET: string;
   SLACK_BOT_TOKEN: string;
+  SLACK_TEAM_ID: string;
   ALLOWED_ORIGINS: string[];
   API_BASE_URL: string;
   FRONTEND_URL: string;
@@ -73,6 +74,7 @@ export const env: EnvConfig = {
   SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET || "",
   SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || "",
   SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || "",
+  SLACK_TEAM_ID: process.env.SLACK_TEAM_ID || "",
   ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS?.split(",") || [],
   API_BASE_URL: process.env.API_BASE_URL || "http://localhost:3000",
   FRONTEND_URL:
