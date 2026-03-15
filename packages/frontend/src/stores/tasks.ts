@@ -165,6 +165,13 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const claimTask = async (taskId: string, userId: string): Promise<ActionResult<Task>> => {
+    if (isTaskLoading(taskId)) {
+      return {
+        success: false,
+        error: { code: 'TASK_UPDATE_FAILED', message: '任務操作進行中，請稍後再試' },
+      }
+    }
+
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
     // 驗證任務狀態（僅在本地有該任務時才做前端驗證，直接進入 TaskDetailPage 時 tasks[] 可能為空）
@@ -242,6 +249,13 @@ export const useTaskStore = defineStore('tasks', () => {
   }
 
   const unclaimTask = async (taskId: string): Promise<ActionResult<Task>> => {
+    if (isTaskLoading(taskId)) {
+      return {
+        success: false,
+        error: { code: 'TASK_UPDATE_FAILED', message: '任務操作進行中，請稍後再試' },
+      }
+    }
+
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
     if (task && !['CLAIMED', 'IN_PROGRESS'].includes(task.status)) {
@@ -292,6 +306,7 @@ export const useTaskStore = defineStore('tasks', () => {
 
       if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
+        syncPoolTask(taskId, result.data)
       }
 
       return { success: true, data: tasks.value.find(t => t.id === taskId)! }
@@ -318,6 +333,13 @@ export const useTaskStore = defineStore('tasks', () => {
     progress: number,
     notes?: string,
   ): Promise<ActionResult<Task>> => {
+    if (isTaskLoading(taskId)) {
+      return {
+        success: false,
+        error: { code: 'TASK_UPDATE_FAILED', message: '任務操作進行中，請稍後再試' },
+      }
+    }
+
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
     if (!task) {
@@ -376,6 +398,7 @@ export const useTaskStore = defineStore('tasks', () => {
 
       if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
+        syncPoolTask(taskId, result.data)
       }
 
       return { success: true, data: tasks.value.find(t => t.id === taskId)! }
@@ -399,6 +422,13 @@ export const useTaskStore = defineStore('tasks', () => {
     status: TaskStatus,
     payload?: import('@/services/taskService').StatusUpdatePayload,
   ): Promise<ActionResult<Task>> => {
+    if (isTaskLoading(taskId)) {
+      return {
+        success: false,
+        error: { code: 'TASK_UPDATE_FAILED', message: '任務操作進行中，請稍後再試' },
+      }
+    }
+
     const task = tasks.value.find((t: Task) => t.id === taskId)
 
     if (!task) {
@@ -453,6 +483,7 @@ export const useTaskStore = defineStore('tasks', () => {
 
       if (result.data) {
         tasks.value = tasks.value.map(t => (t.id === taskId ? { ...t, ...result.data } : t))
+        syncPoolTask(taskId, result.data)
       }
 
       return { success: true, data: tasks.value.find(t => t.id === taskId)! }

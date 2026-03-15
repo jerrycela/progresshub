@@ -72,6 +72,16 @@ const forceLogout = async (): Promise<void> => {
   localStorage.removeItem('auth_token')
   localStorage.removeItem('auth_refresh_token')
 
+  // Clear all store state to prevent stale data exposure
+  try {
+    const { useAuthStore } = await import('@/stores/auth')
+    const authStore = useAuthStore()
+    authStore.user = null
+    authStore.error = null
+  } catch {
+    // Store may not be initialized yet
+  }
+
   try {
     const { default: router } = await import('@/router')
     const currentPath = router.currentRoute.value.fullPath

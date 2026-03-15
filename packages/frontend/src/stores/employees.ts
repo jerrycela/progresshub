@@ -98,7 +98,15 @@ export const useEmployeeStore = defineStore('employees', () => {
     try {
       const result = await service.updateEmployee(id, input)
 
-      if (result.success && result.data) {
+      if (!result.success) {
+        employees.value = snapshot
+        return {
+          success: false,
+          error: result.error || { code: 'UNKNOWN_ERROR', message: '更新員工失敗' },
+        }
+      }
+
+      if (result.data) {
         employees.value = employees.value.map(e => (e.id === id ? { ...e, ...result.data } : e))
       }
 
