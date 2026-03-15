@@ -61,6 +61,7 @@ router.get(
       if (
         role !== PermissionLevel.ADMIN &&
         role !== PermissionLevel.PM &&
+        role !== PermissionLevel.PRODUCER &&
         role !== PermissionLevel.MANAGER
       ) {
         employeeId = req.user?.userId ?? "";

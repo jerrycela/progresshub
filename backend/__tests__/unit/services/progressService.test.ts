@@ -165,6 +165,7 @@ describe('ProgressService', () => {
         task: {
           findUnique: jest.fn().mockResolvedValue({
             id: 'task-001',
+            status: 'IN_PROGRESS',
             actualStartDate: new Date(),
           }),
           update: jest.fn().mockResolvedValue({}),

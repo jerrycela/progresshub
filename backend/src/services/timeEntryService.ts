@@ -136,6 +136,21 @@ export class TimeEntryService {
     // 驗證業務規則
     await this.validateTimeEntry(data);
 
+    // Verify task belongs to the specified project
+    if (data.taskId && data.projectId) {
+      const task = await prisma.task.findUnique({
+        where: { id: data.taskId },
+        select: { projectId: true },
+      });
+      if (task && task.projectId !== data.projectId) {
+        throw new AppError(
+          400,
+          "Task does not belong to the specified project",
+          "TASK_PROJECT_MISMATCH",
+        );
+      }
+    }
+
     return prisma.timeEntry.create({
       data: {
         employeeId: data.employeeId,

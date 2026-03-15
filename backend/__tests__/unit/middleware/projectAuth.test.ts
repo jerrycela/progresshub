@@ -312,6 +312,7 @@ describe('requireResourceOwner', () => {
 
     const mockLog = {
       id: 'log1',
+      employeeId: 'u1',
       task: {
         project: {
           members: [{ employeeId: 'u1' }],

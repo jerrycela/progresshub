@@ -48,10 +48,14 @@ async function canManageMembers(
     if (targetEmployeeIds && targetEmployeeIds.length > 0) {
       const targets = await prisma.employee.findMany({
         where: { id: { in: targetEmployeeIds } },
-        select: { department: true },
+        select: { department: true, permissionLevel: true },
       });
+      // MANAGER can only manage EMPLOYEE-level users in their department
       return targets.every(
-        (t) => t.department !== null && t.department === manager.department,
+        (t) =>
+          t.department !== null &&
+          t.department === manager.department &&
+          t.permissionLevel === "EMPLOYEE",
       );
     }
     return true;

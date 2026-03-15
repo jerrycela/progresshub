@@ -3,7 +3,7 @@ import { body, param, query, validationResult } from "express-validator";
 import prisma from "../../config/database";
 import { gitLabActivityService } from "../../services/gitlab";
 import { authenticate, AuthRequest } from "../../middleware/auth";
-import { GitLabActivityType } from "@prisma/client";
+import { GitLabActivityType, PermissionLevel } from "@prisma/client";
 import {
   sendSuccess,
   sendError,
@@ -244,6 +244,32 @@ router.post(
       if (!req.user) {
         sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
+      }
+
+      // Verify user has access to the task's project
+      if (req.body.taskId) {
+        const task = await prisma.task.findUnique({
+          where: { id: req.body.taskId },
+          select: { projectId: true },
+        });
+        if (!task) {
+          sendError(res, ErrorCodes.NOT_FOUND, "Task not found", 404);
+          return;
+        }
+        if (req.user.permissionLevel !== PermissionLevel.ADMIN) {
+          const isMember = await prisma.projectMember.findUnique({
+            where: {
+              projectId_employeeId: {
+                projectId: task.projectId,
+                employeeId: req.user.userId,
+              },
+            },
+          });
+          if (!isMember) {
+            sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+            return;
+          }
+        }
       }
 
       const timeEntryId = await gitLabActivityService.convertToTimeEntry(

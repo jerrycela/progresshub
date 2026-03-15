@@ -11,6 +11,7 @@ import { toTaskDTO } from "../mappers";
 import { AppError } from "../middleware/errorHandler";
 
 import { ErrorCodes } from "../types/shared-api";
+import prisma from "../config/database";
 const router = Router();
 
 /**
@@ -180,6 +181,33 @@ router.post(
         req.body.assigneeId && canAssignToOthers
           ? req.body.assigneeId
           : req.user.userId;
+
+      // Validate assignee is a member of the task's project
+      if (req.body.assigneeId && canAssignToOthers) {
+        const task = await prisma.task.findUnique({
+          where: { id: req.params.id },
+          select: { projectId: true },
+        });
+        if (task) {
+          const isMember = await prisma.projectMember.findUnique({
+            where: {
+              projectId_employeeId: {
+                projectId: task.projectId,
+                employeeId: targetUserId,
+              },
+            },
+          });
+          if (!isMember) {
+            sendError(
+              res,
+              ErrorCodes.VALIDATION_FAILED,
+              "Assignee is not a member of this project",
+              400,
+            );
+            return;
+          }
+        }
+      }
 
       const task = await taskService.claimTask(req.params.id, targetUserId);
       sendSuccess(res, toTaskDTO(task));

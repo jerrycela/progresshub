@@ -122,7 +122,7 @@ if (missingSlackVars.length > 0) {
 // server doesn't silently start and then crash with 500 on the first GitLab API
 // call.
 
-const gitlabInstanceVars = ["GITLAB_ENCRYPTION_KEY"];
+const gitlabInstanceVars = ["GITLAB_ENCRYPTION_KEY", "GITLAB_ENCRYPTION_SALT"];
 
 const missingGitlabVars = gitlabInstanceVars.filter((v) => !process.env[v]);
 
@@ -137,7 +137,7 @@ if (!gitlabEnabled) {
   console.warn(
     `[GitLab] Required GitLab variables not set: ${missingGitlabVars.join(", ")}. ` +
       "GitLab features will return errors when accessed. " +
-      "Set GITLAB_ENCRYPTION_KEY to enable GitLab integration.",
+      "Set GITLAB_ENCRYPTION_KEY and GITLAB_ENCRYPTION_SALT to enable GitLab integration.",
   );
 }
 

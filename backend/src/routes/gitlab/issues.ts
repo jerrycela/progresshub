@@ -7,6 +7,8 @@ import {
   sendError,
   getSafeErrorMessage,
 } from "../../utils/response";
+import prisma from "../../config/database";
+import { PermissionLevel } from "@prisma/client";
 
 import { ErrorCodes } from "../../types/shared-api";
 const router = Router();
@@ -86,6 +88,32 @@ router.post(
       if (!req.user) {
         sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
+      }
+
+      // Verify user has access to the task's project
+      if (req.body.taskId) {
+        const task = await prisma.task.findUnique({
+          where: { id: req.body.taskId },
+          select: { projectId: true },
+        });
+        if (!task) {
+          sendError(res, ErrorCodes.NOT_FOUND, "Task not found", 404);
+          return;
+        }
+        if (req.user.permissionLevel !== PermissionLevel.ADMIN) {
+          const isMember = await prisma.projectMember.findUnique({
+            where: {
+              projectId_employeeId: {
+                projectId: task.projectId,
+                employeeId: req.user.userId,
+              },
+            },
+          });
+          if (!isMember) {
+            sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+            return;
+          }
+        }
       }
 
       const mappingId = await gitLabIssueService.createIssueMapping(

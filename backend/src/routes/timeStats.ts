@@ -109,9 +109,10 @@ router.get(
 
     try {
       // Users can only view stats for employees they share projects with
+      let scopedProjectIds: string[] | undefined;
       if (req.params.employeeId !== req.user?.userId) {
         if (req.user?.permissionLevel === PermissionLevel.ADMIN) {
-          // ADMIN can view anyone
+          // ADMIN can view anyone — no project scoping
         } else if (
           req.user?.permissionLevel === PermissionLevel.PM ||
           req.user?.permissionLevel === PermissionLevel.MANAGER ||
@@ -135,6 +136,17 @@ router.get(
             );
             return;
           }
+          // Get all shared project IDs to scope the stats
+          const sharedProjects = await prisma.projectMember.findMany({
+            where: {
+              employeeId: req.params.employeeId,
+              project: {
+                members: { some: { employeeId: req.user.userId } },
+              },
+            },
+            select: { projectId: true },
+          });
+          scopedProjectIds = sharedProjects.map((p) => p.projectId);
         } else {
           sendError(res, ErrorCodes.AUTH_UNAUTHORIZED, "Access denied", 403);
           return;
@@ -152,6 +164,7 @@ router.get(
       const stats = await timeStatsService.getEmployeeStats(
         req.params.employeeId,
         dateRange,
+        scopedProjectIds,
       );
       sendSuccess(res, stats);
     } catch (error: unknown) {

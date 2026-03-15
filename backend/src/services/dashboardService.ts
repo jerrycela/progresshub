@@ -34,21 +34,24 @@ export class DashboardService {
     userId?: string,
     permissionLevel?: PermissionLevel,
   ): Promise<DashboardStats> {
-    const isGlobalRole =
-      permissionLevel === PermissionLevel.ADMIN ||
-      permissionLevel === PermissionLevel.PM ||
-      permissionLevel === PermissionLevel.PRODUCER;
+    const isGlobalRole = permissionLevel === PermissionLevel.ADMIN;
     const cacheKey = isGlobalRole
       ? "dashboard_stats"
       : `dashboard_stats_${userId || "global"}`;
     const cached = cache.get<DashboardStats>(cacheKey);
     if (cached) return cached;
 
-    // Global roles (ADMIN/PM/PRODUCER) see all tasks; others see only their own
-    const userFilter =
-      isGlobalRole || !userId
-        ? {}
-        : { OR: [{ assignedToId: userId }, { creatorId: userId }] };
+    // Only ADMIN sees all tasks; non-ADMIN scoped to their own projects
+    let userFilter: any = {};
+    if (!isGlobalRole && userId) {
+      // Non-ADMIN: scope to tasks in user's projects
+      const memberProjects = await prisma.projectMember.findMany({
+        where: { employeeId: userId },
+        select: { projectId: true },
+      });
+      const projectIds = memberProjects.map((m) => m.projectId);
+      userFilter = { projectId: { in: projectIds } };
+    }
 
     const [
       totalTasks,

@@ -167,6 +167,7 @@ export class TimeStatsService {
   async getEmployeeStats(
     employeeId: string,
     dateRange?: DateRangeParams,
+    scopedProjectIds?: string[],
   ): Promise<EmployeeTimeStats> {
     const employee = await prisma.employee.findUnique({
       where: { id: employeeId },
@@ -180,6 +181,9 @@ export class TimeStatsService {
     const where: Prisma.TimeEntryWhereInput = { employeeId };
     if (dateRange) {
       where.date = { gte: dateRange.startDate, lte: dateRange.endDate };
+    }
+    if (scopedProjectIds) {
+      where.projectId = { in: scopedProjectIds };
     }
 
     const entries = await prisma.timeEntry.findMany({

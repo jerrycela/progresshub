@@ -1,0 +1,194 @@
+[
+  {
+    "area": "LOGIN",
+    "item": "Select ADMIN role (管理者)",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "LOGIN",
+    "item": "Select projects",
+    "status": "PASS",
+    "detail": "Checked 3 projects"
+  },
+  {
+    "area": "LOGIN",
+    "item": "Demo login API",
+    "status": "PASS",
+    "detail": "HTTP 200"
+  },
+  {
+    "area": "LOGIN",
+    "item": "Login redirect",
+    "status": "PASS",
+    "detail": "Redirected to https://progresshub-cb.zeabur.app/dashboard"
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Page accessible",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Statistics data",
+    "status": "PASS",
+    "detail": "Values: 0, 0, 0, 0"
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Quick actions",
+    "status": "PASS",
+    "detail": "Found: 任務池, 我的任務, 專案管理,  查看全部 → ,  前往需求池認領任務 "
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Chase list section",
+    "status": "PASS",
+    "detail": "Visible"
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Workload section",
+    "status": "PASS",
+    "detail": "Visible"
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Page accessible",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Task content visible",
+    "status": "PASS",
+    "detail": "Task-related content found"
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Filter/group controls",
+    "status": "PASS",
+    "detail": "selects=1, filterBtns=0, tabs=0"
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Task card info - assignee",
+    "status": "WARN",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Task card info - due date",
+    "status": "WARN",
+    "detail": ""
+  },
+  {
+    "area": "PM-CHASE",
+    "item": "Page accessible",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "PM-CHASE",
+    "item": "Chase content",
+    "status": "PASS",
+    "detail": "Chase data found"
+  },
+  {
+    "area": "PM-CHASE",
+    "item": "Stats cards",
+    "status": "PASS",
+    "detail": "5 elements found"
+  },
+  {
+    "area": "PM-WORKLOAD",
+    "item": "Page accessible",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "PM-WORKLOAD",
+    "item": "Workload content",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "PM-WORKLOAD",
+    "item": "Member data",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "PM Chase mobile (375px) overflow",
+    "status": "PASS",
+    "detail": "OK"
+  },
+  {
+    "area": "RWD",
+    "item": "PM Chase mobile body width",
+    "status": "PASS",
+    "detail": "body=375px, viewport=375px"
+  },
+  {
+    "area": "RWD",
+    "item": "PM Chase tablet (768px) overflow",
+    "status": "PASS",
+    "detail": "OK"
+  },
+  {
+    "area": "RWD",
+    "item": "PM Chase tablet body width",
+    "status": "PASS",
+    "detail": "body=768px, viewport=768px"
+  },
+  {
+    "area": "RWD",
+    "item": "PM Workload mobile (375px) overflow",
+    "status": "PASS",
+    "detail": "OK"
+  },
+  {
+    "area": "RWD",
+    "item": "PM Workload mobile body width",
+    "status": "PASS",
+    "detail": "body=375px, viewport=375px"
+  },
+  {
+    "area": "RWD",
+    "item": "Dashboard mobile (375px) overflow",
+    "status": "PASS",
+    "detail": "OK"
+  },
+  {
+    "area": "RWD",
+    "item": "Dashboard mobile body width",
+    "status": "PASS",
+    "detail": "body=375px, viewport=375px"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Sidebar element exists",
+    "status": "FAIL",
+    "detail": "Not found"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Navigation links",
+    "status": "FAIL",
+    "detail": "No internal links found on page"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Admin menu items (ADMIN role)",
+    "status": "WARN",
+    "detail": "No admin links"
+  },
+  {
+    "area": "NETWORK",
+    "item": "Failed requests",
+    "status": "WARN",
+    "detail": "7 failed: GET https://progress-hub.zeabur.app/api/milestones - net::ERR_ABORTED; GET https://progress-hub.zeabur.app/api/employees - net::ERR_ABORTED; GET https://progress-hub.zeabur.app/api/dashboard/workloads"
+  }
+]

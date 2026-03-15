@@ -356,6 +356,23 @@ export class TaskService {
       updateData.dependencies = data.dependencies;
     if (data.estimatedHours !== undefined)
       updateData.estimatedHours = data.estimatedHours;
+    if (data.milestoneId !== undefined && data.milestoneId) {
+      // Verify milestone belongs to same project as the task
+      const [task, milestone] = await Promise.all([
+        prisma.task.findUnique({ where: { id }, select: { projectId: true } }),
+        prisma.milestone.findUnique({
+          where: { id: data.milestoneId },
+          select: { projectId: true },
+        }),
+      ]);
+      if (task && milestone && task.projectId !== milestone.projectId) {
+        throw new AppError(
+          400,
+          "Milestone does not belong to the same project as the task",
+          "MILESTONE_PROJECT_MISMATCH",
+        );
+      }
+    }
     if (data.milestoneId !== undefined) {
       updateData.milestone = data.milestoneId
         ? { connect: { id: data.milestoneId } }
@@ -442,6 +459,13 @@ export class TaskService {
             status: "UNCLAIMED",
             assignedToId: null,
             progressPercentage: 0,
+            actualStartDate: null,
+            actualEndDate: null,
+            closedAt: null,
+            pauseReason: null,
+            pauseNote: null,
+            pausedAt: null,
+            blockerReason: null,
             updatedAt: new Date(),
           },
         });
@@ -581,8 +605,11 @@ export class TaskService {
       });
 
       // 狀態轉移邏輯（與 progressService 一致）
+      // Only allow DONE transition from active states (CLAIMED/IN_PROGRESS)
+      // PAUSED/BLOCKED must be resumed before completing
+      const canComplete = ["CLAIMED", "IN_PROGRESS"].includes(task.status);
       const newStatus: TaskStatus =
-        progressPercentage === 100
+        progressPercentage === 100 && canComplete
           ? "DONE"
           : progressPercentage > 0 && task.status === "CLAIMED"
             ? "IN_PROGRESS"

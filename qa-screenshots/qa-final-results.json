@@ -1,0 +1,230 @@
+[
+  {
+    "area": "LOGIN",
+    "item": "Demo login as ADMIN",
+    "status": "PASS",
+    "detail": "https://progresshub-cb.zeabur.app/dashboard"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Sidebar links found",
+    "status": "FAIL",
+    "detail": "No links in sidebar area"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"儀表板\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"任務池\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"我的任務\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"甘特圖\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"角色權限\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"追殺清單\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"職能負載\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"專案管理\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"員工管理\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"個人設定\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Menu item \"登出\" visible",
+    "status": "WARN",
+    "detail": "Not in sidebar"
+  },
+  {
+    "area": "SIDEBAR",
+    "item": "Admin section \"系統管理\" visible",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Welcome message",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Stat card \"總任務數\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Stat card \"已完成\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Stat card \"進行中\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Stat card \"待認領\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Quick action \"進度回報\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Quick action \"認領新任務\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "Quick action \"查看甘特圖\"",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "DASHBOARD",
+    "item": "In-progress tasks section",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Page title",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Status filter",
+    "status": "PASS",
+    "detail": "Options: 全部狀態, 已認領, 進行中, 暫停中, 卡關"
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Filter interaction",
+    "status": "PASS",
+    "detail": "Selected: 已認領"
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Show completed checkbox",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Task count badges",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "MY-TASKS",
+    "item": "Empty state or task list",
+    "status": "PASS",
+    "detail": "Empty state shown (no assigned tasks)"
+  },
+  {
+    "area": "RWD",
+    "item": "Dashboard mobile auth preserved",
+    "status": "PASS",
+    "detail": "Authenticated"
+  },
+  {
+    "area": "RWD",
+    "item": "Dashboard mobile no overflow",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "Mobile hamburger menu",
+    "status": "WARN",
+    "detail": "Not found via selector"
+  },
+  {
+    "area": "RWD",
+    "item": "Chase mobile auth preserved",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "Chase mobile no overflow",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "Chase mobile stat cards layout",
+    "status": "PASS",
+    "detail": "Cards stack vertically on mobile (verified from screenshot)"
+  },
+  {
+    "area": "RWD",
+    "item": "Workload mobile auth preserved",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "Chase tablet auth preserved",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "area": "RWD",
+    "item": "Chase tablet no overflow",
+    "status": "PASS",
+    "detail": ""
+  }
+]

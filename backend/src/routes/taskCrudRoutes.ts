@@ -422,6 +422,22 @@ router.put(
         return;
       }
 
+      // Restrict sensitive fields to PM/ADMIN/PRODUCER
+      const canManageTask = (
+        [
+          PermissionLevel.PM,
+          PermissionLevel.PRODUCER,
+          PermissionLevel.ADMIN,
+        ] as PermissionLevel[]
+      ).includes(req.user!.permissionLevel);
+
+      if (!canManageTask) {
+        // Regular users cannot reassign, change milestone, or directly set status
+        delete req.body.assignedToId;
+        delete req.body.milestoneId;
+        delete req.body.status;
+      }
+
       const task = await taskService.updateTask(req.params.id, req.body);
       sendSuccess(res, toTaskDTO(task));
     } catch (error) {

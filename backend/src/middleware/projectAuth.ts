@@ -214,6 +214,25 @@ export const requireResourceOwner = (
         return;
       }
 
+      // For progressLog: verify ownership (not just project membership)
+      if (
+        resource === "progressLog" &&
+        (record as any).employeeId !== user.userId
+      ) {
+        const isPrivileged = (
+          [
+            PermissionLevel.PM,
+            PermissionLevel.PRODUCER,
+            PermissionLevel.ADMIN,
+          ] as PermissionLevel[]
+        ).includes(user.permissionLevel);
+        if (!isPrivileged) {
+          logAuthzNotFound(req, user.userId);
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+          return;
+        }
+      }
+
       (req as any).authorizedResource = record;
       next();
     } catch (error) {

@@ -187,6 +187,16 @@ router.get(
         return;
       }
 
+      // Verify the authenticated user matches the state's employeeId
+      // to prevent CSRF — another user's state cannot be redeemed
+      const authReq = req as AuthRequest;
+      if (authReq.user && stateData.employeeId !== authReq.user.userId) {
+        res.redirect(
+          "/gitlab/connect/error?message=State does not match authenticated user",
+        );
+        return;
+      }
+
       // 換取 tokens
       const tokens = await gitLabOAuthService.exchangeCodeForTokens(
         stateData.instanceId,

@@ -1,0 +1,18 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://progresshub-cb.zeabur.app",
+      "localStorage": [
+        {
+          "name": "auth_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMzdjOTkxYi04MjIzLTQ2YjItYWIzNC02ODUzY2U5NDMyOWQiLCJuYW1lIjoiUUEtUE0iLCJlbWFpbCI6ImRlbW8tcWEtcG1AZGVtby5wcm9ncmVzc2h1Yi5sb2NhbCIsInBlcm1pc3Npb25MZXZlbCI6IlBNIiwiaWF0IjoxNzczMTQ0NzUxLCJleHAiOjE3NzMxNTE5NTF9.ZL94QVpp9sks_RVVRW3DaaA9Z_0h-uWhwxEMZC_Qc5Y"
+        },
+        {
+          "name": "auth_refresh_token",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMzdjOTkxYi04MjIzLTQ2YjItYWIzNC02ODUzY2U5NDMyOWQiLCJ0eXBlIjoicmVmcmVzaCIsImlhdCI6MTc3MzE0NDc1MSwiZXhwIjoxNzczNzQ5NTUxfQ.8ti6JtrHtbg8EPSYk_F0w7jTTXQzEZ63M6Xu5y7gq_E"
+        }
+      ]
+    }
+  ]
+}

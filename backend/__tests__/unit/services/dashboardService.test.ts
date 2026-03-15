@@ -20,6 +20,9 @@ jest.mock('../../../src/config/database', () => ({
     employee: {
       count: jest.fn(),
     },
+    projectMember: {
+      findMany: jest.fn().mockResolvedValue([{ projectId: 'proj-1' }, { projectId: 'proj-2' }]),
+    },
     $transaction: jest.fn((queries: Promise<unknown>[]) => Promise.all(queries)),
   },
 }));
@@ -99,15 +102,12 @@ describe('DashboardService', () => {
 
       await service.getStats('user-123');
 
-      // Verify all count calls include user filter
+      // Verify all count calls include project-scoped filter
       const calls = (mockedPrisma.task.count as jest.Mock).mock.calls;
       for (const call of calls) {
         const where = call[0]?.where;
-        expect(where).toHaveProperty('OR');
-        expect(where.OR).toEqual([
-          { assignedToId: 'user-123' },
-          { creatorId: 'user-123' },
-        ]);
+        expect(where).toHaveProperty('projectId');
+        expect(where.projectId).toEqual({ in: ['proj-1', 'proj-2'] });
       }
     });
 

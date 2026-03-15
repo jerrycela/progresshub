@@ -9,6 +9,7 @@ import { sendSuccess, sendError } from "../utils/response";
 import { toTaskDTO } from "../mappers";
 import { toProgressLogDTO } from "../mappers/progressLogMapper";
 import { AppError } from "../middleware/errorHandler";
+import { PermissionLevel } from "@prisma/client";
 
 import { ErrorCodes } from "../types/shared-api";
 const router = Router();
@@ -174,6 +175,24 @@ router.post(
       if (!req.user) {
         sendError(res, ErrorCodes.AUTH_REQUIRED, "Not authenticated", 401);
         return;
+      }
+
+      // Verify user is assignee or collaborator (not just any project member)
+      const taskRecord = (req as any).authorizedResource;
+      if (taskRecord && req.user) {
+        const isAssignee = taskRecord.assignedToId === req.user.userId;
+        const isCreator = taskRecord.creatorId === req.user.userId;
+        const isPrivileged = (
+          [
+            PermissionLevel.PM,
+            PermissionLevel.PRODUCER,
+            PermissionLevel.ADMIN,
+          ] as PermissionLevel[]
+        ).includes(req.user.permissionLevel);
+        if (!isAssignee && !isCreator && !isPrivileged) {
+          sendError(res, ErrorCodes.NOT_FOUND, "Resource not found", 404);
+          return;
+        }
       }
 
       const task = await taskService.updateTaskProgress(

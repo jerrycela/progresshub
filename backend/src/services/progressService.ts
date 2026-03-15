@@ -120,7 +120,9 @@ export class ProgressService {
       }
 
       let status = task?.status;
-      if (data.progressPercentage === 100) {
+      const canComplete =
+        task?.status && ["CLAIMED", "IN_PROGRESS"].includes(task.status);
+      if (data.progressPercentage === 100 && canComplete) {
         status = "DONE";
       } else if (data.progressPercentage > 0 && task?.status === "CLAIMED") {
         // CLAIMED -> IN_PROGRESS 遵循狀態機
